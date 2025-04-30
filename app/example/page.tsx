@@ -1,5 +1,5 @@
 import { MultipleLine } from "@/components/charts/multiple-line";
-import { getGrowThePie } from "@/hooks/getGrowThePie";
+import { getTxcounts } from "@/hooks/getGrowThePie";
 import {
   dehydrate,
   HydrationBoundary,
@@ -11,8 +11,8 @@ export default async function Page() {
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["growthepie"],
-    queryFn: getGrowThePie,
+    queryKey: ["getTxcounts"],
+    queryFn: getTxcounts,
   });
 
   const dehydratedState = dehydrate(queryClient);

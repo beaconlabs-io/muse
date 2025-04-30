@@ -1,4 +1,4 @@
-export async function getGrowThePie() {
+export async function getTxcounts() {
   const response = await fetch(
     "https://api.growthepie.xyz/v1/export/txcount.json",
     {

@@ -59,7 +59,7 @@ export function MultipleLine() {
   // State
   const [timeRange, setTimeRange] = useState("90d");
   const queryClient = useQueryClient();
-  const data = queryClient.getQueryData(["growthepie"]);
+  const data = queryClient.getQueryData(["getTxcounts"]);
 
   // Data processing
   const processedData = useMemo(() => {
