@@ -1,11 +1,13 @@
+
 import { MultipleLine } from "@/components/charts/multiple-line";
+import { Scatter } from "@/components/charts/scatter";
 import { getTxcounts } from "@/hooks/getGrowThePie";
 import {
   dehydrate,
   HydrationBoundary,
   QueryClient,
 } from "@tanstack/react-query";
-import React from "react";
+import { Suspense } from "react";
 
 export default async function Page() {
   const queryClient = new QueryClient();
@@ -20,7 +22,10 @@ export default async function Page() {
     <main>
       <HydrationBoundary state={dehydratedState}>
         <div className="container flex flex-col mx-auto items-center gap-4 p-8">
-          <MultipleLine />
+          <Suspense fallback={<div>Loading...</div>}>
+            <MultipleLine />
+            <Scatter />
+          </Suspense>
         </div>
       </HydrationBoundary>
     </main>
