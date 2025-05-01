@@ -1,4 +1,4 @@
-
+import { BoxPlot } from "@/components/charts/box-plot";
 import { MultipleLine } from "@/components/charts/multiple-line";
 import { Scatter } from "@/components/charts/scatter";
 import { getTxcounts } from "@/hooks/getGrowThePie";
@@ -25,6 +25,7 @@ export default async function Page() {
           <Suspense fallback={<div>Loading...</div>}>
             <MultipleLine />
             <Scatter />
+            <BoxPlot />
           </Suspense>
         </div>
       </HydrationBoundary>

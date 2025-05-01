@@ -29,6 +29,7 @@ const data1 = [
   { x: 210, y: 220, z: 230 },
 ];
 
+// Docs: https://recharts.org/en-US/examples/SimpleScatterChart
 export function Scatter() {
   return (
     <ResponsiveContainer width="100%" height={400}>
