@@ -12,11 +12,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DecodedEvidence } from "@/types";
+import { Evidence } from "@/types";
 import Link from "next/link";
 
 interface DataTableRowActionsProps<TData> {
-  row: Row<TData & DecodedEvidence>;
+  row: Row<TData & Evidence>;
 }
 
 export function TableDropdown<TData>({ row }: DataTableRowActionsProps<TData>) {
@@ -32,7 +32,7 @@ export function TableDropdown<TData>({ row }: DataTableRowActionsProps<TData>) {
         <DropdownMenuItem>
           <div className="flex flex-col gap-2 items-center w-max">
             <Link
-              href={`https://base-sepolia.easscan.org/attestation/view/${row.original.id}`}
+              href={`https://base-sepolia.easscan.org/attestation/view/${row.original.evidence_id}`}
               target="_blank"
               rel="noopener noreferrer"
             >

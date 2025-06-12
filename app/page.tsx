@@ -1,6 +1,8 @@
 import { DataTable } from "@/components/table/data-table";
 import { columns } from "@/components/table/table-column";
 import { getAllEvidence } from "@/hooks/useEAS";
+import { getAllPostsMeta } from "@/utils";
+
 import {
   dehydrate,
   HydrationBoundary,
@@ -21,11 +23,13 @@ export default async function Home() {
 
   const dehydratedState = dehydrate(queryClient);
 
+  const evidence = await getAllPostsMeta();
+
   return (
     <main>
       <HydrationBoundary state={dehydratedState}>
         <div className="container mx-auto p-4">
-          <DataTable columns={columns} />
+          <DataTable data={evidence} columns={columns} />
         </div>
       </HydrationBoundary>
     </main>
