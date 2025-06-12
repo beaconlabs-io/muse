@@ -118,7 +118,6 @@ export const columns = [
     id: "timeCreated",
     header: "Created At",
     cell: ({ row }) => {
-      // return new Date(row.original.timeCreated * 1000).toLocaleDateString();
       return row.original.date;
     },
   }),

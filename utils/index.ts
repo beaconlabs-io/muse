@@ -46,9 +46,6 @@ export const getPostBySlug = async (
     },
   });
 
-  console.log("content", content);
-  console.log("typeof", typeof content);
-
   return {
     meta: { evidence_id: realSlug, ...frontmatter } as Evidence,
     content: content,
