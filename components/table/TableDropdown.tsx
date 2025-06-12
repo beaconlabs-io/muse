@@ -1,10 +1,9 @@
 "use client";
 
 import React from "react";
-
+import Link from "next/link";
 import { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Evidence } from "@/types";
-import Link from "next/link";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData & Evidence>;

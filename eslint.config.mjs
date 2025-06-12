@@ -1,16 +1,83 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import pluginNext from "@next/eslint-plugin-next";
+import parser from "@typescript-eslint/parser";
+import * as importX from "eslint-plugin-import-x";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+export default [
+  {
+    name: "ESLint Config - nextjs",
+    plugins: {
+      "@next/next": pluginNext,
+      "import-x": importX,
+    },
+    languageOptions: {
+      parser: parser,
+    },
+    files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
+    ignores: [
+      "*.config.js",
+      "node_modules/",
+      "dist/",
+      ".next/",
+      "public/",
+      "**/components/ui/**",
+    ],
+    rules: {
+      ...pluginNext.configs.recommended.rules,
+      ...pluginNext.configs["core-web-vitals"].rules,
+      "no-unused-vars": "warn",
+      "import-x/no-duplicates": "error",
+      "import-x/order": [
+        "warn",
+        {
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            ["parent", "sibling"],
+            "object",
+            "type",
+            "index",
+          ],
+          "newlines-between": "never",
+          pathGroups: [
+            {
+              pattern: "react",
+              group: "builtin",
+              position: "before",
+            },
+            {
+              pattern: "next/**",
+              group: "builtin",
+              position: "before",
+            },
+            {
+              pattern: "react-**",
+              group: "builtin",
+              position: "before",
+            },
+            {
+              pattern: "@/components/**",
+              group: "internal",
+              position: "before",
+            },
+            {
+              pattern: "@/components/ui/**",
+              group: "internal",
+              position: "after",
+            },
+            {
+              pattern: "**/*.css",
+              group: "index",
+              position: "after",
+            },
+          ],
+          pathGroupsExcludedImportTypes: ["react", "next"],
+          alphabetize: {
+            order: "asc",
+            caseInsensitive: true,
+          },
+        },
+      ],
+    },
+  },
 ];
-
-export default eslintConfig;

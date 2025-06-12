@@ -1,14 +1,14 @@
-import { BoxPlot } from "@/components/charts/box-plot";
-import { Histogram } from "@/components/charts/histogram";
-import { MultipleLine } from "@/components/charts/multiple-line";
-import { Scatter } from "@/components/charts/scatter";
-import { getTxcounts } from "@/hooks/getGrowThePie";
+import { Suspense } from "react";
 import {
   dehydrate,
   HydrationBoundary,
   QueryClient,
 } from "@tanstack/react-query";
-import { Suspense } from "react";
+import { BoxPlot } from "@/components/charts/box-plot";
+import { Histogram } from "@/components/charts/histogram";
+import { MultipleLine } from "@/components/charts/multiple-line";
+import { Scatter } from "@/components/charts/scatter";
+import { getTxcounts } from "@/hooks/getGrowThePie";
 
 export default async function Page() {
   const queryClient = new QueryClient();

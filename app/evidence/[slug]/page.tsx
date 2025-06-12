@@ -1,7 +1,7 @@
+import React from "react";
+import { Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 // import { shortAddr } from "@/utils";
-import { Star } from "lucide-react";
-import React from "react";
 import { getPostBySlug } from "@/utils";
 
 export default async function EvidencePage({
