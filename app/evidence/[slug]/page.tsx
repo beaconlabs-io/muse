@@ -2,7 +2,7 @@ import React from "react";
 import { Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 // import { shortAddr } from "@/utils";
-import { getPostBySlug } from "@/utils";
+import { getEvidenceBySlug } from "@/utils";
 
 export default async function EvidencePage({
   params,
@@ -11,7 +11,7 @@ export default async function EvidencePage({
 }) {
   const { slug } = await params;
 
-  const response = await getPostBySlug(slug);
+  const response = await getEvidenceBySlug(slug);
 
   if (!response) {
     return (

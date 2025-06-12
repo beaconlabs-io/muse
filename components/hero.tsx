@@ -12,9 +12,9 @@ export function Hero() {
                 Causal Oracle
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-600">
-                Explore and interact with the Causal Oracle. View
-                evidence, verify claims, and participate in the decentralized
-                oracle ecosystem.
+                Explore and interact with the Causal Oracle. View evidence,
+                verify claims, and participate in the decentralized oracle
+                ecosystem.
               </p>
               <div className="mt-10 flex items-center gap-x-6">
                 <Link
