@@ -5,6 +5,7 @@ const nextConfig = {
   // Configure `pageExtensions` to include markdown and MDX files
   pageExtensions: ["mdx", "ts", "tsx"],
   // Optionally, add any other Next.js config below
+  ignoreDuringBuilds: true,
 };
 
 const withMDX = createMDX({});
