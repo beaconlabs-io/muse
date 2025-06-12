@@ -2,6 +2,7 @@ import { DataTable } from "@/components/table/data-table";
 import { columns } from "@/components/table/table-column";
 import { getAllEvidence } from "@/hooks/useEAS";
 import { getAllPostsMeta } from "@/utils";
+import { Hero } from "@/components/hero";
 
 import {
   dehydrate,
@@ -27,6 +28,7 @@ export default async function Home() {
 
   return (
     <main>
+      <Hero />
       <HydrationBoundary state={dehydratedState}>
         <div className="container mx-auto p-4">
           <DataTable data={evidence} columns={columns} />
