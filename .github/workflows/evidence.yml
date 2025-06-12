@@ -158,7 +158,7 @@ jobs:
           script: |
             const evidencePaths = '${{ steps.evidence-paths.outputs.paths }}';
             const evidenceCount = '${{ steps.evidence-paths.outputs.count }}';
-            const diffContent = '${{ steps.evidence-diff.outputs.diff_content }}';
+            const diffContent = `${{ steps.evidence-diff.outputs.diff_content }}`;
 
             if (!evidencePaths || evidenceCount === '0') {
               console.log('No evidence files to comment about');
