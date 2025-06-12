@@ -1,0 +1,148 @@
+name: Detect Evidence Changes in PR
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["app/contents/evidence/**/*.mdx"]
+    types: [opened, synchronize]
+
+jobs:
+  detect-evidence-changes:
+    runs-on: ubuntu-latest
+
+    outputs:
+      changed-evidence-paths: ${{ steps.evidence-paths.outputs.paths }}
+      evidence-count: ${{ steps.evidence-paths.outputs.count }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get changed evidence files
+        id: changed-files
+        run: |
+          echo "🔍 Detecting evidence changes in PR"
+
+          # Ensure main branch is fetched
+          echo "Fetching main branch..."
+          git fetch origin main:main 2>/dev/null || echo "Could not fetch origin/main, using local main"
+
+          # Try multiple methods to get diff (in order of priority)
+          CHANGED_FILES=""
+
+          echo "=== Method 1: Direct main comparison ==="
+          if git show-ref --verify --quiet refs/heads/main; then
+            ALL_CHANGED=$(git diff --name-only main 2>/dev/null || true)
+            echo "All changed files:"
+            echo "$ALL_CHANGED"
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            echo "Evidence files found:"
+            echo "$CHANGED_FILES"
+          else
+            echo "Local main branch not found"
+          fi
+
+          # Fallback if Method 1 fails
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "=== Method 2: Using origin/main ==="
+            ALL_CHANGED=$(git diff --name-only origin/main 2>/dev/null || true)
+            echo "All changed files:"
+            echo "$ALL_CHANGED"
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            echo "Evidence files found:"
+            echo "$CHANGED_FILES"
+          fi
+
+          # Final fallback if Method 2 also fails
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "=== Method 3: Using HEAD~1 ==="
+            ALL_CHANGED=$(git diff --name-only HEAD~1 2>/dev/null || true)
+            echo "All changed files:"
+            echo "$ALL_CHANGED"
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            echo "Evidence files found:"
+            echo "$CHANGED_FILES"
+          fi
+
+          echo ""
+          echo "Final result - Changed MDX files:"
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "$CHANGED_FILES"
+          else
+            echo "(no evidence files changed)"
+          fi
+
+          # Set as GitHub Actions output
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Extract evidence paths
+        id: evidence-paths
+        run: |
+          # Extract relative paths from changed files
+          CHANGED_FILES="${{ steps.changed-files.outputs.files }}"
+          EVIDENCE_PATHS=""
+          COUNT=0
+
+          if [ -n "$CHANGED_FILES" ]; then
+            while IFS= read -r file; do
+              if [ -n "$file" ]; then
+                # Remove app/contents/evidence/ prefix to get relative path
+                RELATIVE_PATH=$(echo "$file" | sed 's|^app/contents/evidence/||')
+                
+                if [ -n "$EVIDENCE_PATHS" ]; then
+                  EVIDENCE_PATHS="$EVIDENCE_PATHS,$RELATIVE_PATH"
+                else
+                  EVIDENCE_PATHS="$RELATIVE_PATH"
+                fi
+                
+                COUNT=$((COUNT + 1))
+                echo "Found evidence path: $RELATIVE_PATH"
+              fi
+            done <<< "$CHANGED_FILES"
+          fi
+
+          echo "Evidence paths: $EVIDENCE_PATHS"
+          echo "Total count: $COUNT"
+
+          # Set as GitHub Actions output
+          echo "paths=$EVIDENCE_PATHS" >> $GITHUB_OUTPUT
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+      - name: Display results
+        run: |
+          echo "## Evidence Change Detection Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**PR #${{ github.event.pull_request.number }}:** ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Author:** @${{ github.event.pull_request.user.login }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Base:** \`${{ github.event.pull_request.base.ref }}\` → **Head:** \`${{ github.event.pull_request.head.ref }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Changed Evidence Files:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          EVIDENCE_PATHS="${{ steps.evidence-paths.outputs.paths }}"
+          COUNT="${{ steps.evidence-paths.outputs.count }}"
+
+          if [ "$COUNT" -gt 0 ]; then
+            echo "**📊 Total evidence files changed:** $COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**📋 Evidence paths:**" >> $GITHUB_STEP_SUMMARY
+            
+            IFS=',' read -ra PATHS <<< "$EVIDENCE_PATHS"
+            for path in "${PATHS[@]}"; do
+              echo "- 📄 \`$path\`" >> $GITHUB_STEP_SUMMARY
+            done
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "💡 **Next steps:** These evidence files will be ready for attestation when this PR is merged to main." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 **Verification:** You can review the changes in the [Files changed](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/files) tab." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No evidence files were changed in this PR." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This PR does not contain any changes to evidence files that would trigger attestation creation." >> $GITHUB_STEP_SUMMARY
+          fi
