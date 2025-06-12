@@ -67,8 +67,12 @@ export default async function EvidencePage({
               </div>
             </div>
             <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">Methodology</h3>
-              <p className="text-gray-700">{response.meta.methodologies}</p>
+              <h3 className="text-lg font-semibold mb-2">Methodologies</h3>
+              <ul className="list-disc list-inside text-gray-700">
+                {response.meta.data_sources.map((index) => (
+                  <li key={index}>{response.meta.methodologies}</li>
+                ))}
+              </ul>
             </div>
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-2">Data Sources</h3>
