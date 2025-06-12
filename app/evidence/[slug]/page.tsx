@@ -23,7 +23,7 @@ export default async function EvidencePage({
 
   const stars = Array.from(
     { length: 5 },
-    (_, i) => i < Number(response.meta.evidence_level)
+    (_, i) => i < Number(response.meta.strength)
   );
 
   return (
@@ -63,7 +63,7 @@ export default async function EvidencePage({
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2">Effect</h3>
-                <p className="text-gray-700">{response.meta.effect}</p>
+                <p className="text-gray-700">{response.meta.effectiveness}</p>
               </div>
             </div>
             <div className="mb-6">

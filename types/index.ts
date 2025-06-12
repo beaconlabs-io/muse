@@ -1,7 +1,7 @@
 export interface Evidence {
   evidence_id: string;
-  evidence_level: string;
-  effect: string;
+  strength: string;
+  effectiveness: string;
   methodologies: string;
   data_sources: string[];
   title: string;

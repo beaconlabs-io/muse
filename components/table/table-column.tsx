@@ -57,11 +57,11 @@ export const columns = [
     },
   }),
 
-  columnHelper.accessor("evidence_level", {
+  columnHelper.accessor("strength", {
     id: "evidence_level",
     header: "Evidence Level",
     cell: ({ row }) => {
-      const level = Number(row.original.evidence_level);
+      const level = Number(row.original.strength);
       const stars = Array.from({ length: 5 }, (_, i) => i < level);
       return (
         <div className="flex items-center gap-0.5">
@@ -80,11 +80,11 @@ export const columns = [
       );
     },
   }),
-  columnHelper.accessor("effect", {
+  columnHelper.accessor("effectiveness", {
     id: "effect",
     header: "Effect",
     cell: ({ row }) => {
-      return row.original.effect;
+      return row.original.effectiveness;
     },
   }),
   columnHelper.accessor("methodologies", {

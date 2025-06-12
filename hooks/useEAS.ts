@@ -56,7 +56,7 @@ export const getAllEvidence = async () => {
     ALL_EVIDENCE_QUERY,
     {
       schemaId:
-        "0xae5d0564fcfd066bceb82851c631bdd4a371f023d37787885f294b8b8541d5aa",
+        "0xec36c273dbad9291925f533236d8d637e2dfbb4ede1f2d44665cf35f265373c3",
     }
   );
   if (!response) {
