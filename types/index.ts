@@ -3,11 +3,12 @@ export interface Evidence {
   evidence_level: string;
   effect: string;
   methodologies: string;
-  data_sources: string;
+  data_sources: string[];
   title: string;
-  description: string;
   tags: string[];
   citation: string;
+  author: string;
+  date?: string;
 }
 
 export interface AttestationResponse {

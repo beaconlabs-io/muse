@@ -5,11 +5,11 @@ import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { Checkbox } from "../ui/checkbox";
 
 import { TableDropdown } from "./TableDropdown";
-import { DecodedEvidence } from "@/types";
+import { Evidence } from "@/types";
 import Link from "next/link";
 import { Star } from "lucide-react";
 
-const columnHelper = createColumnHelper<DecodedEvidence>();
+const columnHelper = createColumnHelper<Evidence>();
 
 export const columns = [
   {
@@ -47,7 +47,7 @@ export const columns = [
     cell: ({ row }) => {
       return (
         <Link
-          href={`/evidence/${row.original.id}`}
+          href={`/evidence/${row.original.evidence_id}`}
           key={row.id}
           className="hover:bg-muted transition-colors cursor-pointer"
         >
@@ -87,12 +87,12 @@ export const columns = [
       return row.original.effect;
     },
   }),
-  columnHelper.accessor("methodology", {
+  columnHelper.accessor("methodologies", {
     id: "methodology",
     header: "Methodology",
     cell: ({ row }) => {
       return (
-        <p className="truncate max-w-[200px]">{row.original.methodology}</p>
+        <p className="truncate max-w-[200px]">{row.original.methodologies}</p>
       );
     },
   }),
@@ -114,11 +114,11 @@ export const columns = [
       );
     },
   }),
-  columnHelper.accessor("timeCreated", {
+  columnHelper.accessor("date", {
     id: "timeCreated",
     header: "Created At",
     cell: ({ row }) => {
-      return new Date(row.original.timeCreated * 1000).toLocaleDateString();
+      return row.original.date;
     },
   }),
   columnHelper.display({
@@ -127,4 +127,4 @@ export const columns = [
       return <TableDropdown row={row} />;
     },
   }),
-] as ColumnDef<DecodedEvidence>[];
+] as ColumnDef<Evidence>[];

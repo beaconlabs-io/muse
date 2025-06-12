@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -25,21 +25,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DecodedEvidence } from "@/types";
+import { Evidence } from "@/types";
 
 interface DataTableProps {
-  columns: ColumnDef<DecodedEvidence>[];
+  data: Evidence[];
+  columns: ColumnDef<Evidence>[];
 }
 
-export function DataTable({ columns }: DataTableProps) {
+export function DataTable({ data, columns }: DataTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState({});
 
-  const queryClient = useQueryClient();
-  const data = queryClient.getQueryData([
-    "getAllEvidence",
-  ]) as DecodedEvidence[];
+  // const queryClient = useQueryClient();
+  // const data = queryClient.getQueryData([
+  //   "getAllEvidence",
+  // ]) as DecodedEvidence[];
 
   const table = useReactTable({
     data,
