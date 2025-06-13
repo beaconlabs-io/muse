@@ -140,6 +140,16 @@ jobs:
           PINATA_JWT: ${{ secrets.PINATA_JWT }}
         run: |
           echo "📤 Processing and uploading evidence files to IPFS"
+          echo "🔑 Checking environment variables..."
+
+          # Verify PINATA_JWT is available (without exposing the value)
+          if [ -z "$PINATA_JWT" ]; then
+            echo "❌ PINATA_JWT environment variable is not set"
+            echo "Please ensure the PINATA_JWT secret is configured in your repository settings"
+            exit 1
+          else
+            echo "✅ PINATA_JWT is available"
+          fi
 
           # Create results file to track uploads
           echo "[]" > ipfs-results.json
@@ -193,15 +203,20 @@ jobs:
                     if [ -f "$temp_file" ]; then
                       echo "🌐 Uploading to IPFS via Pinata..."
                       
-                      # Use the Pinata upload script
-                      node -e "
+                      # Use the Pinata upload script with explicit environment variable passing
+                      PINATA_JWT="$PINATA_JWT" node -e "
                         const fs = require('fs');
                         const pinataUpload = require('./.github/scripts/pinata.js');
                         
+                        const relativePath = '$relative_path';
+                        const tempFile = '$temp_file';
+                        
                         async function uploadFile() {
                           try {
-                            const relativePath = '$relative_path';
-                            const tempFile = '$temp_file';
+                            // Verify environment variable is available in Node.js context  
+                            if (!process.env.PINATA_JWT) {
+                              throw new Error('PINATA_JWT environment variable is not available in Node.js context');
+                            }
                             
                             // Read the extracted content
                             const content = fs.readFileSync(tempFile, 'utf8');
@@ -210,6 +225,7 @@ jobs:
                             const filename = \`\${relativePath.replace('.mdx', '')}_evidence.md\`;
                             
                             console.log(\`📤 Uploading \${filename} to IPFS...\`);
+                            console.log(\`📊 Content size: \${content.length} characters\`);
                             
                             // Upload to IPFS
                             const result = await pinataUpload({
@@ -249,11 +265,15 @@ jobs:
                             
                           } catch (error) {
                             console.error(\`❌ Upload failed for \${relativePath}:\`, error.message);
+                            console.error('Error details:', error);
                             process.exit(1);
                           }
                         }
                         
-                        uploadFile();
+                        uploadFile().catch(error => {
+                          console.error(\`❌ Unexpected error during upload for \${relativePath}:\`, error.message);
+                          process.exit(1);
+                        });
                       "
                       
                       # Clean up temp file
