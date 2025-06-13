@@ -133,7 +133,7 @@ importers:
         specifier: ^4
         version: 4.1.4
       '@types/node':
-        specifier: ^20
+        specifier: ^20.17.30
         version: 20.17.30
       '@types/react':
         specifier: ^19
@@ -151,7 +151,7 @@ importers:
         specifier: ^4
         version: 4.1.4
       typescript:
-        specifier: ^5
+        specifier: ^5.8.3
         version: 5.8.3
 
 packages:

@@ -1,0 +1,419 @@
+name: Evidence Processing and Attestation
+on:
+  pull_request:
+    branches: [main]
+    paths: ["app/contents/evidence/**/*.mdx"]
+    types: closed
+
+jobs:
+  detect-evidence-changes:
+    runs-on: ubuntu-latest
+
+    outputs:
+      changed-evidence-paths: ${{ steps.evidence-paths.outputs.paths }}
+      evidence-count: ${{ steps.evidence-paths.outputs.count }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get changed evidence files
+        id: changed-files
+        run: |
+          echo "🔍 Detecting evidence changes in PR"
+
+          # Ensure main branch is fetched
+          echo "Fetching main branch..."
+          git fetch origin main:main 2>/dev/null || echo "Could not fetch origin/main, using local main"
+
+          # Try multiple methods to get diff (in order of priority)
+          CHANGED_FILES=""
+
+          echo "=== Method 1: Direct main comparison ==="
+          if git show-ref --verify --quiet refs/heads/main; then
+            ALL_CHANGED=$(git diff --name-only main 2>/dev/null || true)
+            echo "All changed files:"
+            echo "$ALL_CHANGED"
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            echo "Evidence files found:"
+            echo "$CHANGED_FILES"
+          else
+            echo "Local main branch not found"
+          fi
+
+          # Fallback if Method 1 fails
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "=== Method 2: Using origin/main ==="
+            ALL_CHANGED=$(git diff --name-only origin/main 2>/dev/null || true)
+            echo "All changed files:"
+            echo "$ALL_CHANGED"
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            echo "Evidence files found:"
+            echo "$CHANGED_FILES"
+          fi
+
+          # Final fallback if Method 2 also fails
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "=== Method 3: Using HEAD~1 ==="
+            ALL_CHANGED=$(git diff --name-only HEAD~1 2>/dev/null || true)
+            echo "All changed files:"
+            echo "$ALL_CHANGED"
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            echo "Evidence files found:"
+            echo "$CHANGED_FILES"
+          fi
+
+          echo ""
+          echo "Final result - Changed MDX files:"
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "$CHANGED_FILES"
+          else
+            echo "(no evidence files changed)"
+          fi
+
+          # Set as GitHub Actions output
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Extract evidence paths
+        id: evidence-paths
+        run: |
+          # Extract relative paths from changed files
+          CHANGED_FILES="${{ steps.changed-files.outputs.files }}"
+          EVIDENCE_PATHS=""
+          COUNT=0
+
+          if [ -n "$CHANGED_FILES" ]; then
+            while IFS= read -r file; do
+              if [ -n "$file" ]; then
+                # Remove app/contents/evidence/ prefix to get relative path
+                RELATIVE_PATH=$(echo "$file" | sed 's|^app/contents/evidence/||')
+                
+                if [ -n "$EVIDENCE_PATHS" ]; then
+                  EVIDENCE_PATHS="$EVIDENCE_PATHS,$RELATIVE_PATH"
+                else
+                  EVIDENCE_PATHS="$RELATIVE_PATH"
+                fi
+                
+                COUNT=$((COUNT + 1))
+                echo "Found evidence path: $RELATIVE_PATH"
+              fi
+            done <<< "$CHANGED_FILES"
+          fi
+
+          echo "Evidence paths: $EVIDENCE_PATHS"
+          echo "Total count: $COUNT"
+
+          # Set as GitHub Actions output
+          echo "paths=$EVIDENCE_PATHS" >> $GITHUB_OUTPUT
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+  upload-to-ipfs:
+    runs-on: ubuntu-latest
+    needs: detect-evidence-changes
+    if: needs.detect-evidence-changes.outputs.evidence-count > 0
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x.x"
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10.x.x"
+      - name: Install dependencies
+        run: |
+          pnpm install @ethereum-attestation-service/eas-sdk ethers dotenv gray-matter
+
+      - name: Process and upload evidence files
+        env:
+          PINATA_JWT: ${{ secrets.PINATA_JWT }}
+        run: |
+          echo "📤 Processing and uploading evidence files to IPFS"
+          echo "🔑 Checking environment variables..."
+          # Create results file to track uploads
+          echo "[]" > ipfs-results.json
+
+          EVIDENCE_PATHS="${{ needs.detect-evidence-changes.outputs.changed-evidence-paths }}"
+
+          if [ -n "$EVIDENCE_PATHS" ]; then
+            IFS=',' read -ra PATHS <<< "$EVIDENCE_PATHS"
+            for relative_path in "${PATHS[@]}"; do
+              if [ -n "$relative_path" ]; then
+                full_path="app/contents/evidence/$relative_path"
+                echo ""
+                echo "🔄 Processing: $relative_path"
+                
+                if [ -f "$full_path" ]; then
+                  # Extract content using Node.js script
+                  node -e "
+                    const fs = require('fs');
+                    const matter = require('gray-matter');
+                    const path = require('path');
+                    
+                    const filePath = '$full_path';
+                    const relativePath = '$relative_path';
+                    
+                    try {
+                      // Read the MDX file
+                      const fileContent = fs.readFileSync(filePath, 'utf8');
+                      
+                      // Parse frontmatter and content
+                      const { data: frontmatter, content } = matter(fileContent);
+                      
+                      console.log(\`📄 File: \${relativePath}\`);
+                      console.log(\`📊 Content length: \${content.length} characters\`);
+                      
+                      // Save extracted content to temporary file
+                      const tempFileName = path.basename(relativePath, '.mdx') + '_content.md';
+                      fs.writeFileSync(\`temp_\${tempFileName}\`, content);
+                      
+                      console.log(\`✅ Content extracted to temp_\${tempFileName}\`);
+                      
+                    } catch (error) {
+                      console.error(\`❌ Error processing \${filePath}:\`, error.message);
+                      process.exit(1);
+                    }
+                  "
+                  
+                  # If content extraction was successful, upload to IPFS
+                  if [ $? -eq 0 ]; then
+                    temp_file="temp_$(basename "$relative_path" .mdx)_content.md"
+                    
+                    if [ -f "$temp_file" ]; then
+                      echo "🌐 Uploading to IPFS via Pinata..."
+                      
+                      # Use the Pinata upload script with explicit environment variable passing
+                      PINATA_JWT="$PINATA_JWT" node -e "
+                        const fs = require('fs');
+                        const pinataUpload = require('./.github/scripts/pinata.js');
+                        
+                        const relativePath = '$relative_path';
+                        const tempFile = '$temp_file';
+                        
+                        async function uploadFile() {
+                          try {
+                            // Verify environment variable is available in Node.js context  
+                            if (!process.env.PINATA_JWT) {
+                              throw new Error('PINATA_JWT environment variable is not available in Node.js context');
+                            }
+                            
+                            // Read the extracted content
+                            const content = fs.readFileSync(tempFile, 'utf8');
+                            
+                            // Generate filename for IPFS
+                            const filename = 'evidence.md';
+                            
+                            console.log(\`📤 Uploading \${filename} to IPFS...\`);
+                            console.log(\`📊 Content size: \${content.length} characters\`);
+                            
+                            // Upload to IPFS
+                            const result = await pinataUpload({
+                              text: content,
+                              filename: filename
+                            });
+                            
+                            console.log(\`✅ Upload successful!\`);
+                            console.log(\`📍 IPFS Hash: \${result.hash}\`);
+                            console.log(\`📏 Size: \${result.size} bytes\`);
+                            
+                            // Save result to JSON file
+                            const resultData = {
+                              relativePath: relativePath,
+                              filename: filename,
+                              ipfsHash: result.hash,
+                              size: result.size,
+                              timestamp: result.timestamp,
+                              uploadedAt: new Date().toISOString()
+                            };
+                            
+                            // Read existing results
+                            let results = [];
+                            try {
+                              results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                            } catch (e) {
+                              results = [];
+                            }
+                            
+                            // Add new result
+                            results.push(resultData);
+                            
+                            // Write back to file
+                            fs.writeFileSync('ipfs-results.json', JSON.stringify(results, null, 2));
+                            
+                            console.log(\`💾 Result saved to ipfs-results.json\`);
+                            
+                          } catch (error) {
+                            console.error(\`❌ Upload failed for \${relativePath}:\`, error.message);
+                            console.error('Error details:', error);
+                            process.exit(1);
+                          }
+                        }
+                        
+                        uploadFile().catch(error => {
+                          console.error(\`❌ Unexpected error during upload for \${relativePath}:\`, error.message);
+                          process.exit(1);
+                        });
+                      "
+                      
+                      # Clean up temp file
+                      rm -f "$temp_file"
+                    else
+                      echo "❌ Temp file not found: $temp_file"
+                    fi
+                  else
+                    echo "❌ Content extraction failed for: $relative_path"
+                  fi
+                else
+                  echo "❌ File not found: $full_path"
+                fi
+              fi
+            done
+          fi
+
+      - name: Display IPFS upload results
+        run: |
+          echo "## IPFS Upload Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**PR #${{ github.event.pull_request.number }}:** ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Author:** @${{ github.event.pull_request.user.login }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "ipfs-results.json" ]; then
+            # Check if results file has content
+            RESULT_COUNT=$(node -e "
+              const fs = require('fs');
+              try {
+                const results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                console.log(results.length);
+              } catch (e) {
+                console.log(0);
+              }
+            ")
+
+            if [ "$RESULT_COUNT" -gt 0 ]; then
+              echo "### 🌐 Successfully Uploaded to IPFS:" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**📊 Total files uploaded:** $RESULT_COUNT" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+
+              # Generate detailed results
+              node -e "
+                const fs = require('fs');
+                const results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                
+                results.forEach((result, index) => {
+                  console.log(\`#### 📄 \${result.relativePath}\`);
+                  console.log('');
+                  console.log(\`- **IPFS Hash:** \\\`\${result.ipfsHash}\\\`\`);
+                  console.log(\`- **Gateway URL:** [View on IPFS](https://gateway.pinata.cloud/ipfs/\${result.ipfsHash})\`);
+                  console.log(\`- **File Size:** \${result.size} bytes\`);
+                  console.log(\`- **Uploaded:** \${new Date(result.uploadedAt).toLocaleString()}\`);
+                  console.log('');
+                });
+              " >> $GITHUB_STEP_SUMMARY
+
+              echo "---" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "💡 **Next Steps:**" >> $GITHUB_STEP_SUMMARY
+              echo "- Evidence content has been uploaded to IPFS and is now permanently accessible" >> $GITHUB_STEP_SUMMARY
+              echo "- IPFS hashes can be used for attestation and verification processes" >> $GITHUB_STEP_SUMMARY
+              echo "- Content is distributed across the IPFS network for decentralized access" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ No files were successfully uploaded to IPFS." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ No IPFS upload results found." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This may indicate an error during the upload process." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload IPFS results as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ipfs-upload-results
+          path: ipfs-results.json
+          retention-days: 30
+
+  create-eas-attestation:
+    runs-on: ubuntu-latest
+    needs: upload-to-ipfs
+    if: needs.detect-evidence-changes.outputs.evidence-count > 0
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x.x"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10.x.x"
+
+      - name: Install dependencies
+        run: |
+          pnpm install @ethereum-attestation-service/eas-sdk ethers dotenv gray-matter
+
+      - name: Create EAS attestation
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        run: |
+          echo "📝 Creating EAS attestation for IPFS content"
+
+          # Read IPFS results
+          if [ -f "ipfs-results.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const { execSync } = require('child_process');
+              const eas = require('./.github/scripts/eas.js');
+              
+              async function createAttestations() {
+                try {
+                  const results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                  
+                  for (const result of results) {
+                    console.log(\`Processing attestation for \${result.relativePath}\`);
+                    
+                    // Read the original MDX file to get frontmatter
+                    const mdxPath = \`app/contents/evidence/\${result.relativePath}\`;
+                    const mdxContent = fs.readFileSync(mdxPath, 'utf8');
+                    
+                    // Extract frontmatter using gray-matter
+                    const matter = require('gray-matter');
+                    const { data: frontmatter } = matter(mdxContent);
+                    
+                    // Prepare data object for EAS
+                    const data = {
+                      meta: frontmatter,
+                      content: result.ipfsHash
+                    };
+                    
+                    // Create attestation
+                    const attestationUID = await eas({ data });
+                    console.log(\`✅ Attestation created with UID: \${attestationUID}\`);
+                  }
+                } catch (error) {
+                  console.error('Error creating attestations:', error);
+                  process.exit(1);
+                }
+              }
+              
+              createAttestations().catch(console.error);
+            "
+          else
+            echo "❌ No IPFS results found"
+            exit 1
+          fi

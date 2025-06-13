@@ -24,7 +24,7 @@ const blogsContentDirectory = path.join(
   "evidence"
 );
 
-export const getPostBySlug = async (
+export const getEvidenceBySlug = async (
   slug: string
 ): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
   const realSlug = slug.replace(/\.mdx$/, "");
@@ -52,13 +52,13 @@ export const getPostBySlug = async (
   };
 };
 
-export const getAllPostsMeta = async () => {
+export const getAllEvidenceMeta = async () => {
   const files = fs.readdirSync(blogsContentDirectory);
 
   const posts: Evidence[] = [];
 
   for (const file of files) {
-    const data = await getPostBySlug(file);
+    const data = await getEvidenceBySlug(file);
     posts.push(data?.meta as Evidence);
   }
 
