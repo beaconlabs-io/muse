@@ -6,7 +6,7 @@ const {
 const ethers = require("ethers");
 require("dotenv").config();
 
-module.exports = async ({ response }) => {
+module.exports = async ({ data }) => {
   const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
   const SCHEMA_UID =
     "0xec36c273dbad9291925f533236d8d637e2dfbb4ede1f2d44665cf35f265373c3";
@@ -26,42 +26,42 @@ module.exports = async ({ response }) => {
   const encodedData = schemaEncoder.encodeData([
     {
       name: "evidence_id",
-      value: BigInt(response.meta.evidence_id) || BigInt(0),
+      value: BigInt(data.meta.evidence_id) || BigInt(0),
       type: "uint256",
     },
-    { name: "title", value: response.meta.title || "Untitled", type: "string" },
-    { name: "description", value: response.content, type: "string" },
-    { name: "strength", value: response.meta.strength || "", type: "string" },
+    { name: "title", value: data.meta.title || "Untitled", type: "string" },
+    { name: "description", value: data.content, type: "string" },
+    { name: "strength", value: data.meta.strength || "", type: "string" },
     {
       name: "effectiveness",
-      value: response.meta.effectiveness || "",
+      value: data.meta.effectiveness || "",
       type: "string",
     },
     {
       name: "methodologies",
-      value: Array.isArray(response.meta.methodologies)
-        ? response.meta.methodologies
-        : [response.meta.methodologies].filter(Boolean),
+      value: Array.isArray(data.meta.methodologies)
+        ? data.meta.methodologies
+        : [data.meta.methodologies].filter(Boolean),
       type: "string[]",
     },
     {
       name: "data_sources",
-      value: Array.isArray(response.meta.data_sources)
-        ? response.meta.data_sources
-        : [response.meta.data_sources].filter(Boolean),
+      value: Array.isArray(data.meta.data_sources)
+        ? data.meta.data_sources
+        : [data.meta.data_sources].filter(Boolean),
       type: "string[]",
     },
-    { name: "citation", value: response.meta.citation || "", type: "string" },
+    { name: "citation", value: data.meta.citation || "", type: "string" },
     {
       name: "tags",
-      value: Array.isArray(response.meta.tags)
-        ? response.meta.tags
-        : [response.meta.tags].filter(Boolean),
+      value: Array.isArray(data.meta.tags)
+        ? data.meta.tags
+        : [data.meta.tags].filter(Boolean),
       type: "string[]",
     },
     {
       name: "author",
-      value: response.meta.author || "Unknown",
+      value: data.meta.author || "Unknown",
       type: "string",
     },
   ]);
