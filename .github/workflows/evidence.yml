@@ -141,16 +141,6 @@ jobs:
         run: |
           echo "📤 Processing and uploading evidence files to IPFS"
           echo "🔑 Checking environment variables..."
-
-          # Verify PINATA_JWT is available (without exposing the value)
-          if [ -z "$PINATA_JWT" ]; then
-            echo "❌ PINATA_JWT environment variable is not set"
-            echo "Please ensure the PINATA_JWT secret is configured in your repository settings"
-            exit 1
-          else
-            echo "✅ PINATA_JWT is available"
-          fi
-
           # Create results file to track uploads
           echo "[]" > ipfs-results.json
 
