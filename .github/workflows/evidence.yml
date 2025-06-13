@@ -1,4 +1,4 @@
-name: Detect Evidence Changes in PR
+name: Detect Evidence Changes and Upload to IPFS
 
 on:
   pull_request:
@@ -113,36 +113,222 @@ jobs:
           echo "paths=$EVIDENCE_PATHS" >> $GITHUB_OUTPUT
           echo "count=$COUNT" >> $GITHUB_OUTPUT
 
-      - name: Display results
+  upload-to-ipfs:
+    runs-on: ubuntu-latest
+    needs: detect-evidence-changes
+    if: needs.detect-evidence-changes.outputs.evidence-count > 0
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
         run: |
-          echo "## Evidence Change Detection Results" >> $GITHUB_STEP_SUMMARY
+          # Install gray-matter for frontmatter parsing
+          npm install gray-matter
+
+      - name: Process and upload evidence files
+        env:
+          PINATA_JWT: ${{ secrets.PINATA_JWT }}
+        run: |
+          echo "📤 Processing and uploading evidence files to IPFS"
+
+          # Create results file to track uploads
+          echo "[]" > ipfs-results.json
+
+          EVIDENCE_PATHS="${{ needs.detect-evidence-changes.outputs.changed-evidence-paths }}"
+
+          if [ -n "$EVIDENCE_PATHS" ]; then
+            IFS=',' read -ra PATHS <<< "$EVIDENCE_PATHS"
+            for relative_path in "${PATHS[@]}"; do
+              if [ -n "$relative_path" ]; then
+                full_path="app/contents/evidence/$relative_path"
+                echo ""
+                echo "🔄 Processing: $relative_path"
+                
+                if [ -f "$full_path" ]; then
+                  # Extract content using Node.js script
+                  node -e "
+                    const fs = require('fs');
+                    const matter = require('gray-matter');
+                    const path = require('path');
+                    
+                    const filePath = '$full_path';
+                    const relativePath = '$relative_path';
+                    
+                    try {
+                      // Read the MDX file
+                      const fileContent = fs.readFileSync(filePath, 'utf8');
+                      
+                      // Parse frontmatter and content
+                      const { data: frontmatter, content } = matter(fileContent);
+                      
+                      console.log(\`📄 File: \${relativePath}\`);
+                      console.log(\`📊 Content length: \${content.length} characters\`);
+                      
+                      // Save extracted content to temporary file
+                      const tempFileName = path.basename(relativePath, '.mdx') + '_content.md';
+                      fs.writeFileSync(\`temp_\${tempFileName}\`, content);
+                      
+                      console.log(\`✅ Content extracted to temp_\${tempFileName}\`);
+                      
+                    } catch (error) {
+                      console.error(\`❌ Error processing \${filePath}:\`, error.message);
+                      process.exit(1);
+                    }
+                  "
+                  
+                  # If content extraction was successful, upload to IPFS
+                  if [ $? -eq 0 ]; then
+                    temp_file="temp_$(basename "$relative_path" .mdx)_content.md"
+                    
+                    if [ -f "$temp_file" ]; then
+                      echo "🌐 Uploading to IPFS via Pinata..."
+                      
+                      # Use the Pinata upload script
+                      node -e "
+                        const fs = require('fs');
+                        const pinataUpload = require('./.github/scripts/pinata.js');
+                        
+                        async function uploadFile() {
+                          try {
+                            const relativePath = '$relative_path';
+                            const tempFile = '$temp_file';
+                            
+                            // Read the extracted content
+                            const content = fs.readFileSync(tempFile, 'utf8');
+                            
+                            // Generate filename for IPFS
+                            const filename = \`\${relativePath.replace('.mdx', '')}_evidence.md\`;
+                            
+                            console.log(\`📤 Uploading \${filename} to IPFS...\`);
+                            
+                            // Upload to IPFS
+                            const result = await pinataUpload({
+                              text: content,
+                              filename: filename
+                            });
+                            
+                            console.log(\`✅ Upload successful!\`);
+                            console.log(\`📍 IPFS Hash: \${result.hash}\`);
+                            console.log(\`📏 Size: \${result.size} bytes\`);
+                            
+                            // Save result to JSON file
+                            const resultData = {
+                              relativePath: relativePath,
+                              filename: filename,
+                              ipfsHash: result.hash,
+                              size: result.size,
+                              timestamp: result.timestamp,
+                              uploadedAt: new Date().toISOString()
+                            };
+                            
+                            // Read existing results
+                            let results = [];
+                            try {
+                              results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                            } catch (e) {
+                              results = [];
+                            }
+                            
+                            // Add new result
+                            results.push(resultData);
+                            
+                            // Write back to file
+                            fs.writeFileSync('ipfs-results.json', JSON.stringify(results, null, 2));
+                            
+                            console.log(\`💾 Result saved to ipfs-results.json\`);
+                            
+                          } catch (error) {
+                            console.error(\`❌ Upload failed for \${relativePath}:\`, error.message);
+                            process.exit(1);
+                          }
+                        }
+                        
+                        uploadFile();
+                      "
+                      
+                      # Clean up temp file
+                      rm -f "$temp_file"
+                    else
+                      echo "❌ Temp file not found: $temp_file"
+                    fi
+                  else
+                    echo "❌ Content extraction failed for: $relative_path"
+                  fi
+                else
+                  echo "❌ File not found: $full_path"
+                fi
+              fi
+            done
+          fi
+
+      - name: Display IPFS upload results
+        run: |
+          echo "## IPFS Upload Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**PR #${{ github.event.pull_request.number }}:** ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
           echo "**Author:** @${{ github.event.pull_request.user.login }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Base:** \`${{ github.event.pull_request.base.ref }}\` → **Head:** \`${{ github.event.pull_request.head.ref }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Changed Evidence Files:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          EVIDENCE_PATHS="${{ steps.evidence-paths.outputs.paths }}"
-          COUNT="${{ steps.evidence-paths.outputs.count }}"
+          if [ -f "ipfs-results.json" ]; then
+            # Check if results file has content
+            RESULT_COUNT=$(node -e "
+              const fs = require('fs');
+              try {
+                const results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                console.log(results.length);
+              } catch (e) {
+                console.log(0);
+              }
+            ")
 
-          if [ "$COUNT" -gt 0 ]; then
-            echo "**📊 Total evidence files changed:** $COUNT" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**📋 Evidence paths:**" >> $GITHUB_STEP_SUMMARY
-            
-            IFS=',' read -ra PATHS <<< "$EVIDENCE_PATHS"
-            for path in "${PATHS[@]}"; do
-              echo "- 📄 \`$path\`" >> $GITHUB_STEP_SUMMARY
-            done
-            
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "💡 **Next steps:** These evidence files will be ready for attestation when this PR is merged to main." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "🔗 **Verification:** You can review the changes in the [Files changed](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/files) tab." >> $GITHUB_STEP_SUMMARY
+            if [ "$RESULT_COUNT" -gt 0 ]; then
+              echo "### 🌐 Successfully Uploaded to IPFS:" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**📊 Total files uploaded:** $RESULT_COUNT" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+
+              # Generate detailed results
+              node -e "
+                const fs = require('fs');
+                const results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                
+                results.forEach((result, index) => {
+                  console.log(\`#### 📄 \${result.relativePath}\`);
+                  console.log('');
+                  console.log(\`- **IPFS Hash:** \\\`\${result.ipfsHash}\\\`\`);
+                  console.log(\`- **Gateway URL:** [View on IPFS](https://gateway.pinata.cloud/ipfs/\${result.ipfsHash})\`);
+                  console.log(\`- **File Size:** \${result.size} bytes\`);
+                  console.log(\`- **Uploaded:** \${new Date(result.uploadedAt).toLocaleString()}\`);
+                  console.log('');
+                });
+              " >> $GITHUB_STEP_SUMMARY
+
+              echo "---" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "💡 **Next Steps:**" >> $GITHUB_STEP_SUMMARY
+              echo "- Evidence content has been uploaded to IPFS and is now permanently accessible" >> $GITHUB_STEP_SUMMARY
+              echo "- IPFS hashes can be used for attestation and verification processes" >> $GITHUB_STEP_SUMMARY
+              echo "- Content is distributed across the IPFS network for decentralized access" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ No files were successfully uploaded to IPFS." >> $GITHUB_STEP_SUMMARY
+            fi
           else
-            echo "✅ No evidence files were changed in this PR." >> $GITHUB_STEP_SUMMARY
+            echo "❌ No IPFS upload results found." >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "This PR does not contain any changes to evidence files that would trigger attestation creation." >> $GITHUB_STEP_SUMMARY
+            echo "This may indicate an error during the upload process." >> $GITHUB_STEP_SUMMARY
           fi
+
+      - name: Upload IPFS results as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ipfs-upload-results
+          path: ipfs-results.json
+          retention-days: 30
