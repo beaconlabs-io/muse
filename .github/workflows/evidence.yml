@@ -1,5 +1,4 @@
-name: Detect Evidence Changes and Upload to IPFS
-
+name: Evidence Processing and Attestation
 on:
   pull_request:
     branches: [main]
@@ -132,8 +131,7 @@ jobs:
           version: "10.x.x"
       - name: Install dependencies
         run: |
-          # Install gray-matter for frontmatter parsing
-          pnpm install gray-matter
+          pnpm install @ethereum-attestation-service/eas-sdk ethers dotenv gray-matter
 
       - name: Process and upload evidence files
         env:
@@ -345,3 +343,77 @@ jobs:
           name: ipfs-upload-results
           path: ipfs-results.json
           retention-days: 30
+
+  create-eas-attestation:
+    runs-on: ubuntu-latest
+    needs: upload-to-ipfs
+    if: needs.detect-evidence-changes.outputs.evidence-count > 0
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x.x"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10.x.x"
+
+      - name: Install dependencies
+        run: |
+          pnpm install @ethereum-attestation-service/eas-sdk ethers dotenv gray-matter
+
+      - name: Create EAS attestation
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        run: |
+          echo "📝 Creating EAS attestation for IPFS content"
+
+          # Read IPFS results
+          if [ -f "ipfs-results.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const { execSync } = require('child_process');
+              const eas = require('./.github/scripts/eas.js');
+              
+              async function createAttestations() {
+                try {
+                  const results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                  
+                  for (const result of results) {
+                    console.log(\`Processing attestation for \${result.relativePath}\`);
+                    
+                    // Read the original MDX file to get frontmatter
+                    const mdxPath = \`app/contents/evidence/\${result.relativePath}\`;
+                    const mdxContent = fs.readFileSync(mdxPath, 'utf8');
+                    
+                    // Extract frontmatter using gray-matter
+                    const matter = require('gray-matter');
+                    const { data: frontmatter } = matter(mdxContent);
+                    
+                    // Prepare data object for EAS
+                    const data = {
+                      meta: frontmatter,
+                      content: result.ipfsHash
+                    };
+                    
+                    // Create attestation
+                    const attestationUID = await eas({ data });
+                    console.log(\`✅ Attestation created with UID: \${attestationUID}\`);
+                  }
+                } catch (error) {
+                  console.error('Error creating attestations:', error);
+                  process.exit(1);
+                }
+              }
+              
+              createAttestations().catch(console.error);
+            "
+          else
+            echo "❌ No IPFS results found"
+            exit 1
+          fi
