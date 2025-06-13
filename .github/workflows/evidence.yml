@@ -212,7 +212,7 @@ jobs:
                             const content = fs.readFileSync(tempFile, 'utf8');
                             
                             // Generate filename for IPFS
-                            const filename = \`\${relativePath.replace('.mdx', '')}_evidence.md\`;
+                            const filename = 'evidence.md';
                             
                             console.log(\`📤 Uploading \${filename} to IPFS...\`);
                             console.log(\`📊 Content size: \${content.length} characters\`);
