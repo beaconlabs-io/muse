@@ -3,8 +3,10 @@ import path from "path";
 import { compileMDX } from "next-mdx-remote/rsc";
 import { Evidence } from "@/types";
 
-export function formatDate(timestamp: string) {
+export function formatDate(timestamp: string | undefined): string {
+  if (!timestamp) return "-";
   const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return "-";
 
   const year = date.getUTCFullYear();
   const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
@@ -67,6 +69,7 @@ export const getEvidenceBySlug = async (
     meta: {
       evidence_id: realSlug,
       ...frontmatter,
+      ...deploymentData,
       attestationUID: deploymentData?.attestationUID,
     } as Evidence,
     content: content,
