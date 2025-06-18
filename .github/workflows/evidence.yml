@@ -550,14 +550,15 @@ jobs:
           # Configure git to use the token
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 
-          # Create a new branch if needed
-          git checkout -b temp-branch || git checkout temp-branch
+          # Fetch the latest changes
+          git fetch origin $BRANCH_NAME
 
-          # Pull the latest changes from the target branch
-          git pull origin $BRANCH_NAME --rebase || echo "No changes to pull"
+          # Create a new branch from the latest state
+          git checkout -b temp-branch origin/$BRANCH_NAME || git checkout temp-branch
 
+          # Add and commit changes
           git add app/contents/deployments/
-          git commit -m "chore(actions) deployment files for evidence attestations" || echo "No changes to commit"
+          git commit -m "chore(actions): add deployment files for evidence attestations" || echo "No changes to commit"
 
           # Push to the original branch
           git push origin temp-branch:$BRANCH_NAME
