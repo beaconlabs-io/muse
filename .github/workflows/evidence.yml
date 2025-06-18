@@ -529,6 +529,8 @@ jobs:
           fi
 
       - name: Commit and push deployment files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
@@ -545,6 +547,9 @@ jobs:
 
           git add app/contents/deployments/
           git commit -m "chore(actions) deployment files for evidence attestations" || echo "No changes to commit"
+
+          # Configure git to use the token
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 
           # Push to the original branch
           git push origin temp-branch:$BRANCH_NAME
