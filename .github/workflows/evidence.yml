@@ -5,6 +5,11 @@ on:
     paths: ["app/contents/evidence/**/*.mdx"]
     types: closed
 
+# Add permissions configuration
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   detect-evidence-changes:
     runs-on: ubuntu-latest
@@ -320,13 +325,6 @@ jobs:
                   console.log('');
                 });
               " >> $GITHUB_STEP_SUMMARY
-
-              echo "---" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "💡 **Next Steps:**" >> $GITHUB_STEP_SUMMARY
-              echo "- Evidence content has been uploaded to IPFS and is now permanently accessible" >> $GITHUB_STEP_SUMMARY
-              echo "- IPFS hashes can be used for attestation and verification processes" >> $GITHUB_STEP_SUMMARY
-              echo "- Content is distributed across the IPFS network for decentralized access" >> $GITHUB_STEP_SUMMARY
             else
               echo "⚠️ No files were successfully uploaded to IPFS." >> $GITHUB_STEP_SUMMARY
             fi
@@ -385,10 +383,12 @@ jobs:
               const fs = require('fs');
               const { execSync } = require('child_process');
               const eas = require('./.github/scripts/eas.js');
+              const path = require('path');
               
               async function createAttestations() {
                 try {
                   const results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                  const attestationResults = [];
                   
                   for (const result of results) {
                     console.log(\`Processing attestation for \${result.relativePath}\`);
@@ -401,16 +401,45 @@ jobs:
                     const matter = require('gray-matter');
                     const { data: frontmatter } = matter(mdxContent);
                     
+                    // Get the latest attestation UID from deployment file if it exists
+                    const evidenceId = path.basename(path.dirname(result.relativePath));
+                    const deploymentPath = \`app/contents/deployments/\${evidenceId}.json\`;
+                    let refUID = '';
+                    
+                    if (fs.existsSync(deploymentPath)) {
+                      try {
+                        const deploymentData = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
+                        if (deploymentData.attestationUID) {
+                          refUID = deploymentData.attestationUID;
+                          console.log(\`📎 Found previous attestation UID: \${refUID}\`);
+                        }
+                      } catch (error) {
+                        console.warn(\`⚠️ Error reading deployment file: \${error.message}\`);
+                      }
+                    }
+                    
                     // Prepare data object for EAS
                     const data = {
                       meta: frontmatter,
-                      content: result.ipfsHash
+                      content: result.ipfsHash,
+                      refUID: refUID
                     };
                     
                     // Create attestation
                     const attestationUID = await eas({ data });
                     console.log(\`✅ Attestation created with UID: \${attestationUID}\`);
+                    
+                    // Store result for deployment file creation
+                    attestationResults.push({
+                      ...result,
+                      attestationUID,
+                      timestamp: new Date().toISOString()
+                    });
                   }
+                  
+                  // Save attestation results for the next step
+                  fs.writeFileSync('attestation-results.json', JSON.stringify(attestationResults, null, 2));
+                  
                 } catch (error) {
                   console.error('Error creating attestations:', error);
                   process.exit(1);
@@ -423,3 +452,106 @@ jobs:
             echo "❌ No IPFS results found"
             exit 1
           fi
+
+      - name: Create deployment files
+        run: |
+          echo "📝 Creating deployment files for attestations"
+
+          if [ -f "attestation-results.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const path = require('path');
+              
+              try {
+                const results = JSON.parse(fs.readFileSync('attestation-results.json', 'utf8'));
+                
+                for (const result of results) {
+                  // Extract evidenceId from the relative path
+                  const evidenceId = path.basename(path.dirname(result.relativePath));
+                  
+                  // Create deployment file path
+                  const deploymentPath = \`app/contents/deployments/\${evidenceId}.json\`;
+                  
+                  // Read existing deployment data if it exists
+                  let existingData = {};
+                  if (fs.existsSync(deploymentPath)) {
+                    try {
+                      existingData = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
+                      console.log(\`📄 Found existing deployment file: \${deploymentPath}\`);
+                    } catch (error) {
+                      console.warn(\`⚠️ Error reading existing deployment file: \${error.message}\`);
+                    }
+                  }
+                  
+                  // Create history entry from existing data if it exists
+                  const history = existingData.history || [];
+                  if (existingData.attestationUID) {
+                    history.push({
+                      ipfsHash: existingData.ipfsHash,
+                      attestationUID: existingData.attestationUID,
+                      timestamp: existingData.timestamp,
+                      size: existingData.size
+                    });
+                  }
+                  
+                  // Create deployment data, preserving existing data
+                  const deploymentData = {
+                    ...existingData,
+                    evidenceId,
+                    ipfsHash: result.ipfsHash,
+                    attestationUID: result.attestationUID,
+                    timestamp: result.timestamp,
+                    size: result.size,
+                    updatedAt: new Date().toISOString(),
+                    history: history
+                  };
+                  
+                  // Ensure deployments directory exists
+                  const deploymentsDir = path.dirname(deploymentPath);
+                  if (!fs.existsSync(deploymentsDir)) {
+                    fs.mkdirSync(deploymentsDir, { recursive: true });
+                  }
+                  
+                  // Write deployment file
+                  fs.writeFileSync(deploymentPath, JSON.stringify(deploymentData, null, 2));
+                  console.log(\`✅ \${fs.existsSync(deploymentPath) ? 'Updated' : 'Created'} deployment file: \${deploymentPath}\`);
+                }
+              } catch (error) {
+                console.error('Error creating deployment files:', error);
+                process.exit(1);
+              }
+            "
+          else
+            echo "❌ No attestation results found"
+            exit 1
+          fi
+
+      - name: Commit and push deployment files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+          # Get the current branch name
+          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+          if [ "$BRANCH_NAME" = "HEAD" ]; then
+            # If we're in detached HEAD state, use the target branch
+            BRANCH_NAME="main"
+          fi
+
+          # Configure git to use the token
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+
+          # Fetch the latest changes
+          git fetch origin $BRANCH_NAME
+
+          # Create a new branch from the latest state
+          git checkout -b temp-branch origin/$BRANCH_NAME || git checkout temp-branch
+
+          # Add and commit changes
+          git add app/contents/deployments/
+          git commit -m "chore(actions): add deployment files for evidence attestations" || echo "No changes to commit"
+
+          # Push to the original branch
+          git push origin temp-branch:$BRANCH_NAME
