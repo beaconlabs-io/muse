@@ -42,7 +42,6 @@ export const getEvidenceBySlug = async (
   let deploymentData;
 
   try {
-    console.log(filePath);
     fileContent = fs.readFileSync(filePath, { encoding: "utf8" });
 
     // Try to read deployment file
@@ -51,7 +50,10 @@ export const getEvidenceBySlug = async (
         fs.readFileSync(deploymentPath, { encoding: "utf8" })
       );
     } catch (error) {
-      console.log("No deployment file found");
+      console.error(
+        `Deployment data for ${realSlug} not found or invalid.`,
+        error
+      );
     }
   } catch (error) {
     console.log(error);

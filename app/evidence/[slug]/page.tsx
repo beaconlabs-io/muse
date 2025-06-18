@@ -26,7 +26,6 @@ export default async function EvidencePage({
     { length: 5 },
     (_, i) => i < Number(response.meta.strength)
   );
-  console.log("Response:", response);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
