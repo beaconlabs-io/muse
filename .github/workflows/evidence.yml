@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [main]
     paths: ["app/contents/evidence/**/*.mdx"]
-    types: [opened, synchronize]
+    types: closed
 
 # Add permissions configuration
 permissions:
@@ -325,13 +325,6 @@ jobs:
                   console.log('');
                 });
               " >> $GITHUB_STEP_SUMMARY
-
-              echo "---" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "💡 **Next Steps:**" >> $GITHUB_STEP_SUMMARY
-              echo "- Evidence content has been uploaded to IPFS and is now permanently accessible" >> $GITHUB_STEP_SUMMARY
-              echo "- IPFS hashes can be used for attestation and verification processes" >> $GITHUB_STEP_SUMMARY
-              echo "- Content is distributed across the IPFS network for decentralized access" >> $GITHUB_STEP_SUMMARY
             else
               echo "⚠️ No files were successfully uploaded to IPFS." >> $GITHUB_STEP_SUMMARY
             fi
