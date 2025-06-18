@@ -30,8 +30,7 @@ export function TableDropdown<TData>({ row }: DataTableRowActionsProps<TData>) {
         <DropdownMenuItem>
           <div className="flex flex-col gap-2 items-center w-max">
             <Link
-              // TODO: Update the URL
-              href={`https://base-sepolia.easscan.org/attestation/view/${row.original.evidence_id}`}
+              href={`https://base-sepolia.easscan.org/attestation/view/${row.original.attestationUID}`}
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -1,8 +1,9 @@
 import React from "react";
+import Link from "next/link";
 import { Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-// import { shortAddr } from "@/utils";
-import { getEvidenceBySlug } from "@/utils";
+import { formatDate, getEvidenceBySlug } from "@/utils";
 
 export default async function EvidencePage({
   params,
@@ -25,6 +26,7 @@ export default async function EvidencePage({
     { length: 5 },
     (_, i) => i < Number(response.meta.strength)
   );
+  console.log("Response:", response);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -99,29 +101,76 @@ export default async function EvidencePage({
                 ))}
               </div>
             </div>
-            {/* <div className="border-t pt-6 mt-6">
-              <h3 className="text-lg font-semibold mb-2">Metadata</h3>
-              <dl className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <dt className="text-gray-500">Attester</dt>
-                  <dd className="text-gray-900">
-                    {shortAddr(response.meta.attester, 6)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-gray-500">Schema ID</dt>
-                  <dd className="text-gray-900">
-                    {shortAddr(response.schemaId, 6)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-gray-500">Revocable</dt>
-                  <dd className="text-gray-900">
-                    {response.revocable ? "Yes" : "No"}
-                  </dd>
-                </div>
-              </dl>
-            </div> */}
+
+            {/* Attestation History Section */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-4">
+                Attestation History
+              </h3>
+              <div className="space-y-4">
+                {/* Current Attestation */}
+                {response.meta.attestationUID && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="font-medium text-gray-900">
+                          Current Attestation
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          {formatDate(response.meta.timestamp)}
+                        </p>
+                      </div>
+                      <Link
+                        href={`https://base-sepolia.easscan.org/attestation/view/${response.meta.attestationUID}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="cursor-pointer"
+                        >
+                          View on EAS
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {/* Historical Attestations */}
+                {response.meta.history && response.meta.history.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-gray-900">
+                      Previous Attestations
+                    </h4>
+                    {response.meta.history.map((attestation, index) => (
+                      <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-sm text-gray-500">
+                              {formatDate(attestation.timestamp)}
+                            </p>
+                          </div>
+                          <Link
+                            href={`https://base-sepolia.easscan.org/attestation/view/${attestation.attestationUID}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="cursor-pointer"
+                            >
+                              View on EAS
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

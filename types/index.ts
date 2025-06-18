@@ -9,6 +9,14 @@ export interface Evidence {
   citation: string;
   author: string;
   date?: string;
+  attestationUID: `0x${string}`;
+  timestamp: string;
+  history?: {
+    ipfsHash: string;
+    attestationUID: `0x${string}`;
+    timestamp: string;
+    size: number;
+  }[];
 }
 
 export interface AttestationResponse {
