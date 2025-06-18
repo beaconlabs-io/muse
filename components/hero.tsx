@@ -1,5 +1,14 @@
 import Link from "next/link";
 
+const text = `// Example evidence data
+{
+  "id": "0",
+  "title": "Causal Oracle",
+  "description": "Causal Oracle is a bank of evidence.",
+  "author": "Beacon Labs",
+  "timestamp": "2025-05-01T10:00:00Z"
+}`;
+
 export function Hero() {
   return (
     <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20">
@@ -19,6 +28,8 @@ export function Hero() {
               <div className="mt-10 flex items-center gap-x-6">
                 <Link
                   href="https://github.com/beaconlabs-io"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm font-semibold leading-6 text-gray-900"
                 >
                   Learn more <span aria-hidden="true">→</span>
@@ -48,16 +59,7 @@ export function Hero() {
                     <div className="px-6 pt-6 pb-14">
                       <pre className="text-[0.8125rem] leading-6 text-gray-300">
                         {/* TODO: to be fixed */}
-                        <code>
-                          {`// Example evidence data
-{
-  "id": "0x123...",
-  "timestamp": "2024-03-20T10:00:00Z",
-  "claim": "Temperature in Tokyo",
-  "value": "15.5°C",
-  "attestation": "Verified"
-}`}
-                        </code>
+                        <code>{text}</code>
                       </pre>
                     </div>
                   </div>

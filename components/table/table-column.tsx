@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { Star } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TableDropdown } from "./TableDropdown";
-import { Checkbox } from "../ui/checkbox";
 import { Evidence } from "@/types";
 
 const columnHelper = createColumnHelper<Evidence>();

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -8,7 +9,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import Breadcrumbs from "./components/Breadcrumbs";
 import Providers from "./providers";
 export const metadata: Metadata = {
   title: "Causal Oracle Interface",
