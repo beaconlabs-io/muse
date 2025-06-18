@@ -35,7 +35,7 @@ export function TableDropdown<TData>({ row }: DataTableRowActionsProps<TData>) {
               rel="noopener noreferrer"
             >
               <Button className="cursor-pointer" variant="outline">
-                View row evidence
+                View on EAS scan
               </Button>
             </Link>
           </div>

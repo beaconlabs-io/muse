@@ -130,7 +130,7 @@ export default async function EvidencePage({
                           size="sm"
                           className="cursor-pointer"
                         >
-                          View on EAS
+                          View on EAS scan
                         </Button>
                       </Link>
                     </div>
@@ -161,7 +161,7 @@ export default async function EvidencePage({
                               size="sm"
                               className="cursor-pointer"
                             >
-                              View on EAS
+                              View on EAS scan
                             </Button>
                           </Link>
                         </div>
