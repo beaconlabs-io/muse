@@ -1,7 +1,6 @@
 import React from "react";
 import { Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-// import { shortAddr } from "@/utils";
 import { getEvidenceBySlug } from "@/utils";
 
 export default async function EvidencePage({
@@ -36,7 +35,6 @@ export default async function EvidencePage({
             </h1>
             <div className="flex items-center text-sm text-gray-500 space-x-4">
               <span>Created {response.meta.date}</span>
-
               <span>•</span>
               <span>By {response.meta.author}</span>
             </div>
@@ -99,29 +97,6 @@ export default async function EvidencePage({
                 ))}
               </div>
             </div>
-            {/* <div className="border-t pt-6 mt-6">
-              <h3 className="text-lg font-semibold mb-2">Metadata</h3>
-              <dl className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <dt className="text-gray-500">Attester</dt>
-                  <dd className="text-gray-900">
-                    {shortAddr(response.meta.attester, 6)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-gray-500">Schema ID</dt>
-                  <dd className="text-gray-900">
-                    {shortAddr(response.schemaId, 6)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-gray-500">Revocable</dt>
-                  <dd className="text-gray-900">
-                    {response.revocable ? "Yes" : "No"}
-                  </dd>
-                </div>
-              </dl>
-            </div> */}
           </div>
         </CardContent>
       </Card>

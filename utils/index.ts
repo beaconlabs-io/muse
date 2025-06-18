@@ -29,11 +29,28 @@ export const getEvidenceBySlug = async (
 ): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
   const realSlug = slug.replace(/\.mdx$/, "");
   const filePath = path.join(blogsContentDirectory, `${realSlug}`, "page.mdx");
+  const deploymentPath = path.join(
+    process.cwd(),
+    "app",
+    "contents",
+    "deployments",
+    `${realSlug}.json`
+  );
   let fileContent;
+  let deploymentData;
 
   try {
     console.log(filePath);
     fileContent = fs.readFileSync(filePath, { encoding: "utf8" });
+
+    // Try to read deployment file
+    try {
+      deploymentData = JSON.parse(
+        fs.readFileSync(deploymentPath, { encoding: "utf8" })
+      );
+    } catch (error) {
+      console.log("No deployment file found");
+    }
   } catch (error) {
     console.log(error);
     return undefined;
@@ -47,7 +64,11 @@ export const getEvidenceBySlug = async (
   });
 
   return {
-    meta: { evidence_id: realSlug, ...frontmatter } as Evidence,
+    meta: {
+      evidence_id: realSlug,
+      ...frontmatter,
+      attestationUID: deploymentData?.attestationUID,
+    } as Evidence,
     content: content,
   };
 };

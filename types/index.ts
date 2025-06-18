@@ -9,6 +9,7 @@ export interface Evidence {
   citation: string;
   author: string;
   date?: string;
+  attestationUID: `0x${string}`;
 }
 
 export interface AttestationResponse {
