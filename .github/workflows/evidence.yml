@@ -404,7 +404,7 @@ jobs:
                     const { data: frontmatter } = matter(mdxContent);
                     
                     // Get the latest attestation UID from deployment file if it exists
-                    const evidenceId = path.basename(result.relativePath, '.mdx');
+                    const evidenceId = path.basename(path.dirname(result.relativePath));
                     const deploymentPath = \`app/contents/deployments/\${evidenceId}.json\`;
                     let refUID = '';
                     
@@ -469,7 +469,7 @@ jobs:
                 
                 for (const result of results) {
                   // Extract evidenceId from the relative path
-                  const evidenceId = path.basename(result.relativePath, '.mdx');
+                  const evidenceId = path.basename(path.dirname(result.relativePath));
                   
                   // Create deployment file path
                   const deploymentPath = \`app/contents/deployments/\${evidenceId}.json\`;
@@ -533,6 +533,18 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
+          # Get the current branch name
+          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+          if [ "$BRANCH_NAME" = "HEAD" ]; then
+            # If we're in detached HEAD state, use the target branch
+            BRANCH_NAME="main"
+          fi
+
+          # Create a new branch if needed
+          git checkout -b temp-branch || git checkout temp-branch
+
           git add app/contents/deployments/
-          git commit -m "Add deployment files for evidence attestations" || echo "No changes to commit"
-          git push
+          git commit -m "chore(actions) deployment files for evidence attestations" || echo "No changes to commit"
+
+          # Push to the original branch
+          git push origin temp-branch:$BRANCH_NAME
