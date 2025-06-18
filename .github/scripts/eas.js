@@ -73,7 +73,7 @@ module.exports = async ({ data }) => {
       expirationTime: NO_EXPIRATION,
       revocable: false,
       data: encodedData,
-      // refUID : ""
+      refUID: data.refUID || "",
     },
   });
   const newAttestationUID = await transaction.wait();

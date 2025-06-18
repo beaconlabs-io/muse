@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [main]
     paths: ["app/contents/evidence/**/*.mdx"]
-    types: closed
+    types: [opened, synchronize]
 
 jobs:
   detect-evidence-changes:
@@ -385,10 +385,12 @@ jobs:
               const fs = require('fs');
               const { execSync } = require('child_process');
               const eas = require('./.github/scripts/eas.js');
+              const path = require('path');
               
               async function createAttestations() {
                 try {
                   const results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                  const attestationResults = [];
                   
                   for (const result of results) {
                     console.log(\`Processing attestation for \${result.relativePath}\`);
@@ -401,16 +403,45 @@ jobs:
                     const matter = require('gray-matter');
                     const { data: frontmatter } = matter(mdxContent);
                     
+                    // Get the latest attestation UID from deployment file if it exists
+                    const evidenceId = path.basename(result.relativePath, '.mdx');
+                    const deploymentPath = \`app/contents/deployments/\${evidenceId}.json\`;
+                    let refUID = '';
+                    
+                    if (fs.existsSync(deploymentPath)) {
+                      try {
+                        const deploymentData = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
+                        if (deploymentData.attestationUID) {
+                          refUID = deploymentData.attestationUID;
+                          console.log(\`📎 Found previous attestation UID: \${refUID}\`);
+                        }
+                      } catch (error) {
+                        console.warn(\`⚠️ Error reading deployment file: \${error.message}\`);
+                      }
+                    }
+                    
                     // Prepare data object for EAS
                     const data = {
                       meta: frontmatter,
-                      content: result.ipfsHash
+                      content: result.ipfsHash,
+                      refUID: refUID
                     };
                     
                     // Create attestation
                     const attestationUID = await eas({ data });
                     console.log(\`✅ Attestation created with UID: \${attestationUID}\`);
+                    
+                    // Store result for deployment file creation
+                    attestationResults.push({
+                      ...result,
+                      attestationUID,
+                      timestamp: new Date().toISOString()
+                    });
                   }
+                  
+                  // Save attestation results for the next step
+                  fs.writeFileSync('attestation-results.json', JSON.stringify(attestationResults, null, 2));
+                  
                 } catch (error) {
                   console.error('Error creating attestations:', error);
                   process.exit(1);
@@ -423,3 +454,85 @@ jobs:
             echo "❌ No IPFS results found"
             exit 1
           fi
+
+      - name: Create deployment files
+        run: |
+          echo "📝 Creating deployment files for attestations"
+
+          if [ -f "attestation-results.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const path = require('path');
+              
+              try {
+                const results = JSON.parse(fs.readFileSync('attestation-results.json', 'utf8'));
+                
+                for (const result of results) {
+                  // Extract evidenceId from the relative path
+                  const evidenceId = path.basename(result.relativePath, '.mdx');
+                  
+                  // Create deployment file path
+                  const deploymentPath = \`app/contents/deployments/\${evidenceId}.json\`;
+                  
+                  // Read existing deployment data if it exists
+                  let existingData = {};
+                  if (fs.existsSync(deploymentPath)) {
+                    try {
+                      existingData = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
+                      console.log(\`📄 Found existing deployment file: \${deploymentPath}\`);
+                    } catch (error) {
+                      console.warn(\`⚠️ Error reading existing deployment file: \${error.message}\`);
+                    }
+                  }
+                  
+                  // Create history entry from existing data if it exists
+                  const history = existingData.history || [];
+                  if (existingData.attestationUID) {
+                    history.push({
+                      ipfsHash: existingData.ipfsHash,
+                      attestationUID: existingData.attestationUID,
+                      timestamp: existingData.timestamp,
+                      size: existingData.size
+                    });
+                  }
+                  
+                  // Create deployment data, preserving existing data
+                  const deploymentData = {
+                    ...existingData,
+                    evidenceId,
+                    ipfsHash: result.ipfsHash,
+                    attestationUID: result.attestationUID,
+                    timestamp: result.timestamp,
+                    size: result.size,
+                    updatedAt: new Date().toISOString(),
+                    history: history
+                  };
+                  
+                  // Ensure deployments directory exists
+                  const deploymentsDir = path.dirname(deploymentPath);
+                  if (!fs.existsSync(deploymentsDir)) {
+                    fs.mkdirSync(deploymentsDir, { recursive: true });
+                  }
+                  
+                  // Write deployment file
+                  fs.writeFileSync(deploymentPath, JSON.stringify(deploymentData, null, 2));
+                  console.log(\`✅ \${fs.existsSync(deploymentPath) ? 'Updated' : 'Created'} deployment file: \${deploymentPath}\`);
+                }
+              } catch (error) {
+                console.error('Error creating deployment files:', error);
+                process.exit(1);
+              }
+            "
+          else
+            echo "❌ No attestation results found"
+            exit 1
+          fi
+
+      - name: Commit and push deployment files
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+          git add app/contents/deployments/
+          git commit -m "Add deployment files for evidence attestations" || echo "No changes to commit"
+          git push
