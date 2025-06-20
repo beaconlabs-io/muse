@@ -64,10 +64,10 @@ export async function AppSidebar() {
           <SidebarMenu key={item.title}>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <a href={item.href}>
+                <Link href={item.href}>
                   <item.icon />
                   <span>{item.title}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -90,11 +90,11 @@ export async function AppSidebar() {
                     {evidence.map((item) => (
                       <SidebarMenuSubItem key={item.evidence_id}>
                         <SidebarMenuSubButton asChild>
-                          <a href={`/evidence/${item.evidence_id}`}>
+                          <Link href={`/evidence/${item.evidence_id}`}>
                             <span className="text-sm truncate">
                               {item.title}
                             </span>
-                          </a>
+                          </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
