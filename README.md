@@ -1,11 +1,5 @@
 # Causal Oracle Interface
 
-## Overview
-
-## Features
-
-## Sequence Diagram
-
 ## Getting Started
 
 ### Prerequisites
