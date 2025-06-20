@@ -2,11 +2,6 @@
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js 18+
-- pnpm (recommended) or npm
-
 ### Installation
 
 1. Clone the repository:
