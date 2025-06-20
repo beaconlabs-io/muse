@@ -58,3 +58,19 @@ export interface DecodedEvidence extends ReturnedAttestation, AttestationData {}
 export interface SingleDecodedEvidence
   extends ReturnedAttestation,
     AttestationData {}
+
+export type Node = {
+  [key: string]: unknown;
+  id: string;
+  value?: number;
+  color?: string;
+  size?: number;
+};
+
+export type Link = {
+  source: string;
+  target: string;
+  time?: string;
+  width?: number;
+  color?: string;
+};
