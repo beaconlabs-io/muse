@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { ChevronDown, ChevronRight, Command, Search } from "lucide-react";
+import {
+  ChartNetwork,
+  ChevronDown,
+  ChevronRight,
+  Command,
+  Search,
+} from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -19,6 +25,19 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarFooterComponent } from "./sidebar-footer";
 import { getAllEvidenceMeta } from "@/utils";
+
+const menu = [
+  {
+    title: "Search Evidence",
+    icon: Search,
+    href: "/search",
+  },
+  {
+    title: "Graph View",
+    icon: ChartNetwork,
+    href: "/graph",
+  },
+];
 
 export async function AppSidebar() {
   const evidence = await getAllEvidenceMeta();
@@ -41,16 +60,18 @@ export async function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <a href={"/search"}>
-                <Search />
-                <span>Search</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {menu.map((item) => (
+          <SidebarMenu key={item.title}>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <a href={item.href}>
+                  <item.icon />
+                  <span>{item.title}</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        ))}
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
