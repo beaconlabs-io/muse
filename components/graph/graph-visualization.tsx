@@ -80,7 +80,7 @@ export function GraphVisualization() {
           nodeColor="rgba(80, 105, 180, 0.75)"
           linkWidth={(l: Link) => l.width ?? null}
           linkColor={(l: Link) => l.color ?? null}
-          // curvedLinks
+          curvedLinks
           onClick={onCosmographClick}
         />
         <div className="absolute bottom-[70px] w-[350px] flex flex-col m-1">
