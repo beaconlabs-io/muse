@@ -1,3 +1,5 @@
+import { useQuery } from "@tanstack/react-query";
+import { request, gql } from "graphql-request";
 import { hexToBigInt } from "viem";
 import {
   AttestationData,
@@ -7,9 +9,6 @@ import {
   SingleDecodedEvidence,
 } from "@/types";
 import { EAS_GRAPHQL_URL } from "@/utils/config";
-import { useQuery } from "@tanstack/react-query";
-
-import { request, gql } from "graphql-request";
 
 const ALL_EVIDENCE_QUERY = gql`
   query Attestations($schemaId: String!) {
@@ -56,7 +55,7 @@ export const getAllEvidence = async () => {
     ALL_EVIDENCE_QUERY,
     {
       schemaId:
-        "0xec36c273dbad9291925f533236d8d637e2dfbb4ede1f2d44665cf35f265373c3",
+        "0x5541dbf2591e283a0ba21f358754257985a87f6985a9429830b68328a3a6f82a",
     }
   );
   if (!response) {
