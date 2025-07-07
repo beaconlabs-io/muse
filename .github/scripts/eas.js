@@ -9,7 +9,7 @@ require("dotenv").config();
 module.exports = async ({ data }) => {
   const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
   const SCHEMA_UID =
-    "0xec36c273dbad9291925f533236d8d637e2dfbb4ede1f2d44665cf35f265373c3";
+    "0x5541dbf2591e283a0ba21f358754257985a87f6985a9429830b68328a3a6f82a";
   const PRIVATE_KEY = process.env.PRIVATE_KEY;
   const RPC_URL = "https://sepolia.base.org";
 
@@ -71,7 +71,7 @@ module.exports = async ({ data }) => {
     data: {
       recipient: ethers.ZeroAddress,
       expirationTime: NO_EXPIRATION,
-      revocable: false,
+      revocable: true,
       data: encodedData,
       refUID:
         data.refUID ||
