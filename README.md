@@ -41,6 +41,6 @@ causal-oracle-interface/
 
 ### Adding New Evidence
 
-1. Create a new directory in `app/contents/evidence/[evidence-id]/`
+1. Create a new directory in `contents/evidence/[evidence-id]/`
 2. Add a `page.mdx` file with evidence content and frontmatter
-3. Github actions will create corresponding JSON file in `app/contents/deployments/[evidence-id].json` when PR is merged including attestation UID and metadata
+3. Github actions will create corresponding JSON file in `contents/deployments/[evidence-id].json` when PR is merged including attestation UID and metadata
