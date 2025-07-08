@@ -20,6 +20,7 @@ module.exports = async ({ data }) => {
 
   eas.connect(signer);
 
+  // TODO: change schema
   const schemaEncoder = new SchemaEncoder(
     "uint256 evidence_id,string title,string description,string strength, string effectiveness, string[] methodologies, string[] data_sources, string citation, string[] tags, string author"
   );

@@ -1,12 +1,19 @@
 export interface Evidence {
   evidence_id: string;
-  strength: string;
-  effectiveness: string;
-  methodologies: string;
-  data_sources: string[];
+  results: {
+    intervention: string;
+    outcome_variable: string;
+    outcome: string;
+  }[];
+  methodologies: string[];
+  datasets: string[];
   title: string;
   tags: string[];
-  citation: string;
+  citation: {
+    type: string;
+    src: string;
+    name: string;
+  }[];
   author: string;
   date?: string;
   attestationUID: `0x${string}`;

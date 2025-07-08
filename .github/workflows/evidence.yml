@@ -1,8 +1,9 @@
 name: Evidence Processing and Attestation
+# TODO: rethink this workflow, contents path
 on:
   pull_request:
     branches: [main]
-    paths: ["app/contents/evidence/**/*.mdx"]
+    paths: ["contents/evidence/**/*.mdx"]
     types: closed
 
 # Add permissions configuration
@@ -42,7 +43,7 @@ jobs:
             ALL_CHANGED=$(git diff --name-only main 2>/dev/null || true)
             echo "All changed files:"
             echo "$ALL_CHANGED"
-            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/.*\.mdx$" || true)
             echo "Evidence files found:"
             echo "$CHANGED_FILES"
           else
@@ -55,7 +56,7 @@ jobs:
             ALL_CHANGED=$(git diff --name-only origin/main 2>/dev/null || true)
             echo "All changed files:"
             echo "$ALL_CHANGED"
-            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/.*\.mdx$" || true)
             echo "Evidence files found:"
             echo "$CHANGED_FILES"
           fi
@@ -66,7 +67,7 @@ jobs:
             ALL_CHANGED=$(git diff --name-only HEAD~1 2>/dev/null || true)
             echo "All changed files:"
             echo "$ALL_CHANGED"
-            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/.*\.mdx$" || true)
             echo "Evidence files found:"
             echo "$CHANGED_FILES"
           fi
@@ -95,8 +96,8 @@ jobs:
           if [ -n "$CHANGED_FILES" ]; then
             while IFS= read -r file; do
               if [ -n "$file" ]; then
-                # Remove app/contents/evidence/ prefix to get relative path
-                RELATIVE_PATH=$(echo "$file" | sed 's|^app/contents/evidence/||')
+                # Remove contents/evidence/ prefix to get relative path
+                RELATIVE_PATH=$(echo "$file" | sed 's|^contents/evidence/||')
                 
                 if [ -n "$EVIDENCE_PATHS" ]; then
                   EVIDENCE_PATHS="$EVIDENCE_PATHS,$RELATIVE_PATH"
@@ -153,7 +154,7 @@ jobs:
             IFS=',' read -ra PATHS <<< "$EVIDENCE_PATHS"
             for relative_path in "${PATHS[@]}"; do
               if [ -n "$relative_path" ]; then
-                full_path="app/contents/evidence/$relative_path"
+                full_path="contents/evidence/$relative_path"
                 echo ""
                 echo "🔄 Processing: $relative_path"
                 
@@ -394,7 +395,7 @@ jobs:
                     console.log(\`Processing attestation for \${result.relativePath}\`);
                     
                     // Read the original MDX file to get frontmatter
-                    const mdxPath = \`app/contents/evidence/\${result.relativePath}\`;
+                    const mdxPath = \`contents/evidence/\${result.relativePath}\`;
                     const mdxContent = fs.readFileSync(mdxPath, 'utf8');
                     
                     // Extract frontmatter using gray-matter
@@ -403,7 +404,7 @@ jobs:
                     
                     // Get the latest attestation UID from deployment file if it exists
                     const evidenceId = path.basename(path.dirname(result.relativePath));
-                    const deploymentPath = \`app/contents/deployments/\${evidenceId}.json\`;
+                    const deploymentPath = \`contents/deployments/\${evidenceId}.json\`;
                     let refUID = '';
                     
                     if (fs.existsSync(deploymentPath)) {
@@ -470,7 +471,7 @@ jobs:
                   const evidenceId = path.basename(path.dirname(result.relativePath));
                   
                   // Create deployment file path
-                  const deploymentPath = \`app/contents/deployments/\${evidenceId}.json\`;
+                  const deploymentPath = \`contents/deployments/\${evidenceId}.json\`;
                   
                   // Read existing deployment data if it exists
                   let existingData = {};
@@ -550,7 +551,7 @@ jobs:
           git checkout -b temp-branch origin/$BRANCH_NAME || git checkout temp-branch
 
           # Add and commit changes
-          git add app/contents/deployments/
+          git add contents/deployments/
           git commit -m "chore(actions): add deployment files for evidence attestations" || echo "No changes to commit"
 
           # Push to the original branch

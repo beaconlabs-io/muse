@@ -19,12 +19,7 @@ export function shortAddr(address: string, num: number) {
   return address.slice(0, num) + "..." + address.slice(-num);
 }
 
-const blogsContentDirectory = path.join(
-  process.cwd(),
-  "app",
-  "contents",
-  "evidence"
-);
+const blogsContentDirectory = path.join(process.cwd(), "contents", "evidence");
 
 export const getEvidenceBySlug = async (
   slug: string
@@ -33,7 +28,6 @@ export const getEvidenceBySlug = async (
   const filePath = path.join(blogsContentDirectory, `${realSlug}`, "page.mdx");
   const deploymentPath = path.join(
     process.cwd(),
-    "app",
     "contents",
     "deployments",
     `${realSlug}.json`

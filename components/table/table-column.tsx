@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { Star } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TableDropdown } from "./TableDropdown";
 import { Evidence } from "@/types";
@@ -55,36 +54,6 @@ export const columns = [
     },
   }),
 
-  columnHelper.accessor("strength", {
-    id: "evidence_level",
-    header: "Evidence Level",
-    cell: ({ row }) => {
-      const level = Number(row.original.strength);
-      const stars = Array.from({ length: 5 }, (_, i) => i < level);
-      return (
-        <div className="flex items-center gap-0.5">
-          {stars.map((filled, i) =>
-            filled ? (
-              <Star
-                key={i}
-                size={18}
-                className="text-yellow-400 fill-yellow-400"
-              />
-            ) : (
-              <Star key={i} size={18} className="text-gray-300" />
-            )
-          )}
-        </div>
-      );
-    },
-  }),
-  columnHelper.accessor("effectiveness", {
-    id: "effect",
-    header: "Effect",
-    cell: ({ row }) => {
-      return row.original.effectiveness;
-    },
-  }),
   columnHelper.accessor("methodologies", {
     id: "methodology",
     header: "Methodology",
