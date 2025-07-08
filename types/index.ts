@@ -5,6 +5,7 @@ export interface Evidence {
     outcome_variable: string;
     outcome: string;
   }[];
+  version: string;
   methodologies: string[];
   datasets: string[];
   title: string;
@@ -14,7 +15,7 @@ export interface Evidence {
     src: string;
     name: string;
   }[];
-  author: string;
+  author: string; // TODO: consider making this an array
   date?: string;
   attestationUID: `0x${string}`;
   timestamp: string;
