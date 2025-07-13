@@ -1,0 +1,28 @@
+---
+evidence_id: "3"
+results:
+  - intervention: "個々のスポンサーシップの前と後（メンテナーが新しいスポンサーシップを受け取るたびにその前後期間）"
+    outcome_variable: "コミット数、, 議論数"
+    outcome: "個々のスポンサーシップを受けた後にコミット数が短期的に有意に増加することが示されましたが、議論数には有意な変化は見られませんでした。"
+methodologies:
+  - "Wilcoxon paired test"
+version: "1.0.0"
+datasets:
+  - "Hidalgo-Cabrillana, A., & Lopez-Mayan, C. (2018). ..."
+title: "Who, What, Why and How? Towards the Monetary Incentive in Crowd Collaboration: A Case Study of Github’s Sponsor Mechanism"
+date: "2021-11-26"
+tags:
+  - "qf"
+  - "oss"
+  - "public goods funding"
+citation:
+  - type: "external"
+    name: "Gitcoin"
+    src: "https://gitcoin.co"
+  - type: "internal"
+    name: "Evidence1"
+    src: "1"
+author: "BeaconLabs"
+---
+
+## Write up contents here
