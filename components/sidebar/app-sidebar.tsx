@@ -53,7 +53,7 @@ export async function AppSidebar() {
                   <Command className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Causal Oracle</span>
+                  <span className="truncate font-medium">MUSE</span>
                   <span className="truncate text-xs">by Beacon Labs</span>
                 </div>
               </Link>

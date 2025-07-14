@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/sidebar";
 import Providers from "./providers";
 export const metadata: Metadata = {
-  title: "Causal Oracle Interface",
-  description: "Interface for interacting with the Causal Oracle",
+  title: "MUSE",
+  description: "Interface for interacting with the MUSE",
 };
 
 export default function RootLayout({

@@ -1,4 +1,4 @@
-# Causal Oracle Interface
+# MUSE Interface
 
 ## Getting Started
 
@@ -7,8 +7,8 @@
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/beaconlabs-io/causal-oracle-interface.git
-cd causal-oracle-interface
+git clone https://github.com/beaconlabs-io/muse-interface.git
+cd muse-interface
 ```
 
 2. Install dependencies:
@@ -28,7 +28,7 @@ pnpm dev
 ## Project Structure
 
 ```
-causal-oracle-interface/
+muse-interface/
 ├── app/                    # Next.js App Router pages
 ├── components/           # React components
 ├── hooks/               # Custom React hooks
