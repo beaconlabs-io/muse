@@ -1,4 +1,4 @@
-# MUSE Interface
+# MUSE
 
 ## Getting Started
 
@@ -7,8 +7,8 @@
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/beaconlabs-io/muse-interface.git
-cd muse-interface
+git clone https://github.com/beaconlabs-io/muse.git
+cd muse
 ```
 
 2. Install dependencies:
@@ -28,7 +28,7 @@ pnpm dev
 ## Project Structure
 
 ```
-muse-interface/
+muse/
 ├── app/                    # Next.js App Router pages
 ├── components/           # React components
 ├── hooks/               # Custom React hooks
