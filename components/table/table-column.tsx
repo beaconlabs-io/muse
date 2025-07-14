@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import { ArrowUpDown, Star } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TableDropdown } from "./TableDropdown";
+import { Button } from "../ui/button";
 import { Evidence } from "@/types";
 
 const columnHelper = createColumnHelper<Evidence>();
@@ -77,6 +79,37 @@ export const columns = [
               {tag}
             </span>
           ))}
+        </div>
+      );
+    },
+  }),
+  columnHelper.accessor("strength", {
+    id: "strength",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Evidence Level
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const level = Number(row.original.strength);
+      const stars = Array.from({ length: 5 }, (_, i) => i < level);
+      return (
+        <div className="flex items-center gap-0.5">
+          {stars.map((filled, i) =>
+            filled ? (
+              <Star
+                key={i}
+                size={18}
+                className="text-yellow-400 fill-yellow-400"
+              />
+            ) : (
+              <Star key={i} size={18} className="text-gray-300" />
+            )
+          )}
         </div>
       );
     },
