@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { ArrowUpDown, Star } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
+import { StarsComponent } from "@/components/stars";
+import { TableDropdown } from "@/components/table/TableDropdown";
+import { TooltipStrength } from "@/components/tooltip/tooltip-strength";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { TableDropdown } from "./TableDropdown";
-import { Button } from "../ui/button";
 import { Evidence } from "@/types";
 
 const columnHelper = createColumnHelper<Evidence>();
@@ -86,32 +88,20 @@ export const columns = [
   columnHelper.accessor("strength", {
     id: "strength",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <div className="flex flex-row gap-1 items-center">
         Evidence Level
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
+        <TooltipStrength />
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      </div>
     ),
     cell: ({ row }) => {
       const level = Number(row.original.strength);
-      const stars = Array.from({ length: 5 }, (_, i) => i < level);
-      return (
-        <div className="flex items-center gap-0.5">
-          {stars.map((filled, i) =>
-            filled ? (
-              <Star
-                key={i}
-                size={18}
-                className="text-yellow-400 fill-yellow-400"
-              />
-            ) : (
-              <Star key={i} size={18} className="text-gray-300" />
-            )
-          )}
-        </div>
-      );
+      return <StarsComponent max={level} />;
     },
   }),
   columnHelper.accessor("date", {
