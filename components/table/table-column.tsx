@@ -4,9 +4,10 @@ import Link from "next/link";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { StarsComponent } from "@/components/stars";
+import { TableDropdown } from "@/components/table/TableDropdown";
+import { TooltipStrength } from "@/components/tooltip/tooltip-strength";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { TableDropdown } from "./TableDropdown";
-import { Button } from "../ui/button";
 import { Evidence } from "@/types";
 
 const columnHelper = createColumnHelper<Evidence>();
@@ -87,13 +88,16 @@ export const columns = [
   columnHelper.accessor("strength", {
     id: "strength",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <div className="flex flex-row gap-1 items-center">
         Evidence Level
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
+        <TooltipStrength />
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      </div>
     ),
     cell: ({ row }) => {
       const level = Number(row.original.strength);
