@@ -2,6 +2,13 @@ import fs from "fs";
 import path from "path";
 import { compileMDX } from "next-mdx-remote/rsc";
 import { Evidence } from "@/types";
+import remarkGfm from "remark-gfm";
+import rehypeKatex from "rehype-katex";
+import rehypePrettyCode from "rehype-pretty-code";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeSlug from "rehype-slug";
+import rehypeToc from "rehype-toc";
+import remarkMath from "remark-math";
 
 export function formatDate(timestamp: string | undefined): string {
   if (!timestamp) return "-";
@@ -58,6 +65,17 @@ export const getEvidenceBySlug = async (
     source: fileContent,
     options: {
       parseFrontmatter: true,
+      mdxOptions: {
+        remarkPlugins: [remarkGfm, remarkMath],
+        rehypePlugins: [
+          rehypeSlug,
+          // rehypeHighlight,
+          [rehypeToc, { headings: ["h2", "h3"] }],
+          [rehypeAutolinkHeadings, { behavior: "wrap" }],
+          [rehypeKatex, { output: "mathml" }],
+          rehypePrettyCode,
+        ],
+      },
     },
   });
 
