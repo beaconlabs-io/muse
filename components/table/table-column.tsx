@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { ArrowUpDown, Star } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
+import { StarsComponent } from "@/components/stars";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TableDropdown } from "./TableDropdown";
 import { Button } from "../ui/button";
@@ -96,22 +97,7 @@ export const columns = [
     ),
     cell: ({ row }) => {
       const level = Number(row.original.strength);
-      const stars = Array.from({ length: 5 }, (_, i) => i < level);
-      return (
-        <div className="flex items-center gap-0.5">
-          {stars.map((filled, i) =>
-            filled ? (
-              <Star
-                key={i}
-                size={18}
-                className="text-yellow-400 fill-yellow-400"
-              />
-            ) : (
-              <Star key={i} size={18} className="text-gray-300" />
-            )
-          )}
-        </div>
-      );
+      return <StarsComponent max={level} />;
     },
   }),
   columnHelper.accessor("date", {
