@@ -40,7 +40,7 @@ export const getEvidenceBySlug = async (
     `${realSlug}.json`
   );
   let fileContent;
-  let deploymentData;
+  let deploymentData = {};
 
   try {
     fileContent = fs.readFileSync(filePath, { encoding: "utf8" });
@@ -50,11 +50,8 @@ export const getEvidenceBySlug = async (
       deploymentData = JSON.parse(
         fs.readFileSync(deploymentPath, { encoding: "utf8" })
       );
-    } catch (error) {
-      console.error(
-        `Deployment data for ${realSlug} not found or invalid.`,
-        error
-      );
+    } catch {
+      deploymentData = {};
     }
   } catch (error) {
     console.log(error);
@@ -84,20 +81,27 @@ export const getEvidenceBySlug = async (
       evidence_id: realSlug,
       ...frontmatter,
       ...deploymentData,
-      attestationUID: deploymentData?.attestationUID,
+      attestationUID:
+        deploymentData && typeof deploymentData === "object"
+          ? (deploymentData as any).attestationUID
+          : undefined,
     } as Evidence,
     content: content,
   };
 };
 
 export const getAllEvidenceMeta = async () => {
-  const files = fs.readdirSync(blogsContentDirectory);
+  const files = fs
+    .readdirSync(blogsContentDirectory)
+    .filter((file) => file.endsWith(".mdx"));
 
   const posts: Evidence[] = [];
 
   for (const file of files) {
     const data = await getEvidenceBySlug(file);
-    posts.push(data?.meta as Evidence);
+    if (data?.meta) {
+      posts.push(data.meta as Evidence);
+    }
   }
 
   posts.sort((a, b) => {
