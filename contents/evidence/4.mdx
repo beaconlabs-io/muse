@@ -14,8 +14,6 @@ title: "Sponsorship Funding in Open-Source Software: Incentivize or Crowd-Out Mo
 date: "2023-06-25"
 tags:
   - "oss"
-  - ""
-  - ""
 citation:
   - type: "external"
     name: "Angrist JD, Pischke JS (2009) Mostly Harmless Econometrics: An Empiricist’s Companion (Princeton University Press)."
@@ -29,55 +27,59 @@ author: "BeaconLabs"
 ## Write up contents here
 
 ### 要点
+
 プルリクエストの提出は、一時的な短期的な増加は見られましたが、その後は治療前の水準に戻り、時間が経つにつれてクラウドアウト効果が生じました。コミュニティへの関与度が高い貢献者（例：他者のプロジェクトへの貢献が多い、フォロワー数が多い）においては、知識創造活動に対する負の影響（クラウドアウト効果）が示されました。より高いアクティブゴール（目標額）を設定している貢献者については、スポンサーシップが知識創造活動に正の効果をもたらすことが示唆されました。
 
 ### 背景 (Background)
 
 世界のデジタルインフラは、GitHub (GH) のようなプラットフォームで開発されるオープンソースソフトウェア (OSS) によって構築され、Stack Overflow (SO) のような補完的な知識共有プラットフォームによって支えられています。これらのプラットフォームでは、多数のプログラマー、メンテナー、研究者がコードの構築と維持、ユーザーへのサポート提供に献身的に取り組んでいます。貢献者は、コードを寄稿して新機能を追加する**知識創造活動**だけでなく、コミュニティが提出したコードをレビューし統合する**知識維持活動**においても重要な役割を果たしています。
 
-しかし、OSS プロジェクトは、新規コードの作成意欲の欠如よりも、作成されたコードの維持の必要性が増大していること、そして維持作業に対する内発的動機付けが不足しているために、多くのプロジェクトが失敗する原因となっていることが指摘されています。維持活動は、しばしば「地味だが不可欠な (mundane but necessary)」仕事とされ、内発的な動機に乏しい傾向があります。例えば、2020年のLinux財団のOSS貢献者調査では、参加者は維持関連活動に多くの時間を割くことには最小限の関心しか示さなかったものの、OSSプロジェクトに必要な最も重要なサポートが維持活動、特にセキュリティ改善のためのものであると強調しました。
+しかし、OSS プロジェクトは、新規コードの作成意欲の欠如よりも、作成されたコードの維持の必要性が増大していること、そして維持作業に対する内発的動機付けが不足しているために、多くのプロジェクトが失敗する原因となっていることが指摘されています。維持活動は、しばしば「地味だが不可欠な (mundane but necessary)」仕事とされ、内発的な動機に乏しい傾向があります。例えば、2020 年の Linux 財団の OSS 貢献者調査では、参加者は維持関連活動に多くの時間を割くことには最小限の関心しか示さなかったものの、OSS プロジェクトに必要な最も重要なサポートが維持活動、特にセキュリティ改善のためのものであると強調しました。
 
-このような状況を背景に、ボランティアの貢献者を奨励し、貢献を持続させるための資金提供のトレンドが強まっています。GHは2019年5月に、個々のOSS開発者がコミュニティから寄付を受け取れる機能「GitHub Sponsors」を立ち上げました。従来のプロジェクトや活動に特化した資金提供とは異なり、GitHub Sponsorsは**個々の貢献者**に焦点を当てており、貢献者が特定のプロジェクトや活動に縛られずに、ホストプラットフォーム内だけでなく、参加している他の補完的なプラットフォーム間でも労力を再配分できる自由を提供します。本研究は、このスポンサーシップによる資金提供がOSS貢献者の行動に与える影響、特にGH上での**知識創造**および**維持活動**への影響、そして補完的な知識共有プラットフォームであるSOへの波及効果を調査することを目的としています。
+このような状況を背景に、ボランティアの貢献者を奨励し、貢献を持続させるための資金提供のトレンドが強まっています。GH は 2019 年 5 月に、個々の OSS 開発者がコミュニティから寄付を受け取れる機能「GitHub Sponsors」を立ち上げました。従来のプロジェクトや活動に特化した資金提供とは異なり、GitHub Sponsors は**個々の貢献者**に焦点を当てており、貢献者が特定のプロジェクトや活動に縛られずに、ホストプラットフォーム内だけでなく、参加している他の補完的なプラットフォーム間でも労力を再配分できる自由を提供します。本研究は、このスポンサーシップによる資金提供が OSS 貢献者の行動に与える影響、特に GH 上での**知識創造**および**維持活動**への影響、そして補完的な知識共有プラットフォームである SO への波及効果を調査することを目的としています。
 
 ### データセット
 
-*   **データ収集**: GitHub（GH）とStack Overflow（SO）の両方で活動している貢献者の行動に基づいたデータセットを使用しています。このデータは、両プラットフォームが提供するAPIを通じて取得しました。データは、2018年1月から2021年12月までの4年間のパネルデータです。
-    *   初期のデータ収集期間中、GH SponsorsはSTRIPE決済をサポートする30カ国で利用可能だったため、サンプルをこれらの国のGH貢献者に限定しています。
-    *   GHの貢献者の選定基準として、少なくとも5つのリポジトリを所有し、10人以上のフォロワーを持ち、2018年以前にGHに参加していることを条件としました。これにより、20,841人のGH貢献者がサンプルに含まれました。
-    *   SOプロファイルの特定には、GHに記載されている名前、メールアドレス、ログインIDを利用し、SOプロファイル上のGH URLが一致する場合のみサンプルに含めました。最終的に、両プラットフォームに観察期間開始前に参加していた5,910人のGH貢献者のSOプロファイルを特定しました。このうち1,467人が観察期間中にGHでスポンサーシップ対象としてリストされました。
-    *   活動関連データは月ごとに集計されました。
+- **データ収集**: GitHub（GH）と Stack Overflow（SO）の両方で活動している貢献者の行動に基づいたデータセットを使用しています。このデータは、両プラットフォームが提供する API を通じて取得しました。データは、2018 年 1 月から 2021 年 12 月までの 4 年間のパネルデータです。
+  - 初期のデータ収集期間中、GH Sponsors は STRIPE 決済をサポートする 30 カ国で利用可能だったため、サンプルをこれらの国の GH 貢献者に限定しています。
+  - GH の貢献者の選定基準として、少なくとも 5 つのリポジトリを所有し、10 人以上のフォロワーを持ち、2018 年以前に GH に参加していることを条件としました。これにより、20,841 人の GH 貢献者がサンプルに含まれました。
+  - SO プロファイルの特定には、GH に記載されている名前、メールアドレス、ログイン ID を利用し、SO プロファイル上の GH URL が一致する場合のみサンプルに含めました。最終的に、両プラットフォームに観察期間開始前に参加していた 5,910 人の GH 貢献者の SO プロファイルを特定しました。このうち 1,467 人が観察期間中に GH でスポンサーシップ対象としてリストされました。
+  - 活動関連データは月ごとに集計されました。
 
 ### 分析手法 (Analytical Methods)
+
 #### 評価指標（従属変数）
 
-* **GitHubにおける知識創造活動**:
+- **GitHub における知識創造活動**:
 
-  * 月ごとの**プルリクエスト提出数 (Pull Requests: PRs)**。
+  - 月ごとの**プルリクエスト提出数 (Pull Requests: PRs)**。
 
-    * 新しい機能、バグ修正、改善などのコードベースへの変更提案。
+    - 新しい機能、バグ修正、改善などのコードベースへの変更提案。
 
 #### 識別戦略
 
-* **差分の差分 (DID)** 推定を用いて、スポンサーシップによる**プルリクエスト提出数の変化**を測定。
-* **粗粒化厳密マッチング (CEM)** により、スポンサーシップリスト前の活動に基づき貢献者をマッチング。
+- **差分の差分 (DID)** 推定を用いて、スポンサーシップによる**プルリクエスト提出数の変化**を測定。
+- **粗粒化厳密マッチング (CEM)** により、スポンサーシップリスト前の活動に基づき貢献者をマッチング。
 
 #### ロバストネスチェック
 
-* PR提出に関する以下の補足分析を実施：
+- PR 提出に関する以下の補足分析を実施：
 
-  * **代替の従属変数としてのPR提出数**の使用。
-  * \*\*PRの特性（サイズ、ファイル数、コミット数、マージまでの期間など）\*\*の管理。
-  * **自己マージされたPR**の考慮。
-  * **イシューに関連するPR**の考慮。
+  - **代替の従属変数としての PR 提出数**の使用。
+  - \*\*PR の特性（サイズ、ファイル数、コミット数、マージまでの期間など）\*\*の管理。
+  - **自己マージされた PR**の考慮。
+  - **イシューに関連する PR**の考慮。
 
 ### 結果（プルリクエスト提出への影響）
 
-* **GitHub上での知識創造活動（PR提出）に対する全体的な効果は有意でない**。
+- **GitHub 上での知識創造活動（PR 提出）に対する全体的な効果は有意でない**。
 
-  * 短期的には一時的な増加が見られるが、時間とともに\*\*群衆排除効果（crowding-out effect）\*\*が発生。
-  * 長期的には内発的動機の低下により、PR提出数への影響は消失。
-* **コミュニティへの関与が高い貢献者**や**高い目標額を設定している貢献者**では、より強い負の影響（PR提出数の減少）が観察される。
-* **人気のないプロジェクトへのPR提出が増加**する傾向あり。
+  - 短期的には一時的な増加が見られるが、時間とともに\*\*群衆排除効果（crowding-out effect）\*\*が発生。
+  - 長期的には内発的動機の低下により、PR 提出数への影響は消失。
+
+- **コミュニティへの関与が高い貢献者**や**高い目標額を設定している貢献者**では、より強い負の影響（PR 提出数の減少）が観察される。
+- **人気のないプロジェクトへの PR 提出が増加**する傾向あり。
 
 ### Source
+
 https://download.ssrn.com/24/07/17/ssrn_id4484403_code2842526.pdf?response-content-disposition=inline&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEL%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJHMEUCIQCVjc%2FFHZ33w0i7HAmAtYnTEdpgdcQ6UZwOc4n67Tl60gIgZB6Uq5N%2FqP%2B4K20cAeIk52jv644E%2FeVlpwPPQ8dkJpgqxQUI2P%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwzMDg0NzUzMDEyNTciDGAtKXuhQgasRUApeiqZBcalab7rv%2BFmzkC0HZPY3mSLdk4vD%2BiU2er03hIvbf8eMj8igRna5QuCbZbCsW7GePAR2ZVjrE2Kc%2BLigLblL1QvKnpiptI5DA%2FyhM%2BHJU4DyLeNrGe2VQkFSesnc0SCfknLoxs1MSWAIyzOx7hahS2Gmuyv%2FIiauI5IHbchapMskP6TnQJtLubha63W9IKRj9g%2Fp%2B98q3UeIRELJgCGek8JumnFeoyQja%2BJ5zFpOOnzbyjzADk15wOizj801PVEQ4IpQ9L7YGkJXuTFkhsysipO80ALBSpNWT03ShqvBkhqvlR4IbhVE1i%2B4%2Fnr%2FakU%2BnDY%2BvlD%2FTklE%2B1AO3KgKzoi1nNH%2B7F%2FAVQEkyc%2FxvhuUYDQ%2BN10QRGgBM%2Fq5lwBoZ%2FUWR4mLzj8wGzETFkQ8%2F67wu%2FgIloV5BYMiIiEYfo%2FdW4iRD6PFjL4lz5kuSXKy1byMqgAzXOELDpLfMo0nDuok1JFOEzH%2Bh032MQ%2F3P167yeXaEPgHOJO9iH3oKRLkdyykjZRaC4GjV6X%2Fs6vIEkjsCdELkRmvhhDjdwsrraQWZVYrxHvvZuwtBnopzYM84WYnUxf7G51NxqB0%2B0YAv9M6ZlhTHsRrljf1rt8ePWRnPy00zvtjF8dkpW2%2FG3e9RlpxGM4BXPEjCzYBjPbuzQz3TtshMMHHSBj7MJuN0RtIpUw0Ss1%2F8LHgc%2B3LRGEMbQB0oJ8aniRd709PO6jU6cncM9s61L4l2V4c1f76j2CY2UmDMna5S7YCxvTmoucq%2BTmg97SU698%2Fh84OCuy2HKViOfiVAd6vHHnSyiflgNvKUR%2FVUzzEqY2vLPixekNtXum22Gi9LWo9xFTMKnsx1Ta69dwhU9F4qB8JOdizJEnldZbND42mVYzMLms%2BcMGOrEBwyMSRsDbPcBIm6qlkSdFxzJ4w6T1yjroN4xU9Z8dicm9Cge6JAztjPAJQthXMe90DbQp2xBGxeauGif2bWRyQ02t4XziAX7lXyBOPLJhpJdjc273%2BysmLZ68aJ1mOdRw62QKzqmNaN2%2BXKb8zEJ%2B%2BBMh%2BKVhAi5NObOFYE491zio5z1E8LsQTM%2Fv0MKn7X2bCUGoz%2BOjfCJZdI6OT3gqr%2BrbWWVBLtuWssXsBBB0RBJZ&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20250721T153800Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=ASIAUPUUPRWEUWLXFSAT%2F20250721%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=d5734119b1eab43ae1a33536df99bfee85c22702c6cb963d32946a325b79ce2f&abstractId=4484403

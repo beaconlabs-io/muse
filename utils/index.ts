@@ -105,8 +105,10 @@ export const getAllEvidenceMeta = async () => {
   }
 
   posts.sort((a, b) => {
-    if (!a.date || !b.date) return 0;
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
+    const idA = parseInt(a.evidence_id, 10);
+    const idB = parseInt(b.evidence_id, 10);
+    if (isNaN(idA) || isNaN(idB)) return 0;
+    return idA - idB;
   });
 
   return posts;
