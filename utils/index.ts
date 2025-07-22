@@ -1,14 +1,14 @@
 import fs from "fs";
 import path from "path";
 import { compileMDX } from "next-mdx-remote/rsc";
-import { Evidence } from "@/types";
-import remarkGfm from "remark-gfm";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeKatex from "rehype-katex";
 import rehypePrettyCode from "rehype-pretty-code";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import rehypeToc from "rehype-toc";
+import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import { Evidence } from "@/types";
 
 export function formatDate(timestamp: string | undefined): string {
   if (!timestamp) return "-";
