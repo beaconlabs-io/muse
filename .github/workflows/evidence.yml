@@ -539,7 +539,22 @@ jobs:
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "**📊 Total attestations:** $RESULT_COUNT" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              node -e "const fs = require('fs'); const results = JSON.parse(fs.readFileSync('attestation-results.json', 'utf8')); results.forEach((result, index) => { console.log(`#### 📄 ${result.relativePath}`); console.log(''); console.log(`- **Attestation UID:** \`${result.attestationUID}\``); if(result.transactionHash) console.log(`- **Transaction Hash:** \`${result.transactionHash}\``); if(result.blockNumber) console.log(`- **Block Number:** ${result.blockNumber}`); console.log(`- **IPFS Hash:** \`${result.ipfsHash}\``); console.log(`- **File Size:** ${result.size} bytes`); console.log(`- **Attested:** ${new Date(result.timestamp).toLocaleString()}`); console.log(''); });" >> $GITHUB_STEP_SUMMARY
+              node -e "
+                const fs = require('fs');
+                const results = JSON.parse(fs.readFileSync('attestation-results.json', 'utf8'));
+                
+                results.forEach((result, index) => {
+                  console.log(`#### 📄 ${result.relativePath}`);
+                  console.log('');
+                  console.log(`- **Attestation UID:** \`${result.attestationUID}\``);
+                  if(result.transactionHash) console.log(`- **Transaction Hash:** \`${result.transactionHash}\``);
+                  if(result.blockNumber) console.log(`- **Block Number:** ${result.blockNumber}`);
+                  console.log(`- **IPFS Hash:** \`${result.ipfsHash}\``);
+                  console.log(`- **File Size:** ${result.size} bytes`);
+                  console.log(`- **Attested:** ${new Date(result.timestamp).toLocaleString()}`);
+                  console.log('');
+                });
+              " >> $GITHUB_STEP_SUMMARY
             else
               echo "⚠️ No attestations were created." >> $GITHUB_STEP_SUMMARY
             fi
