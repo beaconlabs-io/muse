@@ -3,9 +3,10 @@ name: Evidence Processing and Attestation
 # TODO: fix target branch to main
 on:
   pull_request:
-    branches: [dev] # main
+    branches: [main]
     paths: ["contents/evidence/*.mdx"]
-    types: [opened, synchronize, reopened] # closed
+    types: closed
+    # types: [opened, synchronize, reopened] # closed
 
 # Add permissions configuration
 permissions:
@@ -560,33 +561,32 @@ jobs:
             echo "This may indicate an error during the attestation process." >> $GITHUB_STEP_SUMMARY
           fi
 
-      # TODO: enable below lines
-      # - name: Commit and push deployment files
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     git config --global user.name "GitHub Actions"
-      #     git config --global user.email "actions@github.com"
+      - name: Commit and push deployment files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
 
-      #     # Get the current branch name
-      #     BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-      #     if [ "$BRANCH_NAME" = "HEAD" ]; then
-      #       # If we're in detached HEAD state, use the target branch
-      #       BRANCH_NAME="main"
-      #     fi
+          # Get the current branch name
+          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+          if [ "$BRANCH_NAME" = "HEAD" ]; then
+            # If we're in detached HEAD state, use the target branch
+            BRANCH_NAME="main"
+          fi
 
-      #     # Configure git to use the token
-      #     git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          # Configure git to use the token
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 
-      #     # Fetch the latest changes
-      #     git fetch origin $BRANCH_NAME
+          # Fetch the latest changes
+          git fetch origin $BRANCH_NAME
 
-      #     # Create a new branch from the latest state
-      #     git checkout -b temp-branch origin/$BRANCH_NAME || git checkout temp-branch
+          # Create a new branch from the latest state
+          git checkout -b temp-branch origin/$BRANCH_NAME || git checkout temp-branch
 
-      #     # Add and commit changes
-      #     git add contents/deployments/
-      #     git commit -m "chore(actions): add deployment files for evidence attestations" || echo "No changes to commit"
+          # Add and commit changes
+          git add contents/deployments/
+          git commit -m "chore(actions): add deployment files for evidence attestations" || echo "No changes to commit"
 
-      #     # Push to the original branch
-      #     git push origin temp-branch:$BRANCH_NAME
+          # Push to the original branch
+          git push origin temp-branch:$BRANCH_NAME
