@@ -5,6 +5,12 @@ import { Separator } from "@/components/ui/separator";
 export default function EffectsPage() {
   const effectData = [
     {
+      id: 0,
+      title: "Unclear",
+      description:
+        "Classified as unclear when the sample size is insufficient or analytical methods are inadequate. Interventions judged as unclear require additional testing.",
+    },
+    {
       id: 1,
       title: "Effect Present",
       description:
@@ -27,12 +33,6 @@ export default function EffectsPage() {
       title: "Side Effects",
       description:
         "Indicates that unintended effects other than the intervention's intended outcomes were observed. In many cases, these are statistically significant and represent practically undesirable effects of considerable magnitude.",
-    },
-    {
-      id: 0,
-      title: "Unclear",
-      description:
-        "Classified as unclear when the sample size is insufficient or analytical methods are inadequate. Interventions judged as unclear require additional testing.",
     },
   ];
 
