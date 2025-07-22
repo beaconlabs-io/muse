@@ -93,7 +93,7 @@ export async function AppSidebar() {
                         <SidebarMenuSubButton asChild>
                           <Link href={`/evidence/${item.evidence_id}`}>
                             <span className="text-sm truncate">
-                              {item.title}
+                              {`[${item.evidence_id}] ${item.title}`}
                             </span>
                           </Link>
                         </SidebarMenuSubButton>
