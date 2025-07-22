@@ -3,8 +3,8 @@ import Link from "next/link";
 const text = `// Example evidence data
 {
   "id": "0",
-  "title": "Causal Oracle",
-  "description": "Causal Oracle is a bank of evidence.",
+  "title": "MUSE",
+  "description": "MUSE is a bank of evidence.",
   "author": "Beacon Labs",
   "timestamp": "2025-05-01T10:00:00Z"
 }`;
@@ -16,14 +16,13 @@ export function Hero() {
         <div className="px-6 lg:px-0 lg:pt-4">
           <div className="mx-auto max-w-2xl">
             <div className="max-w-lg">
-              {/* TODO: to be modified */}
               <h1 className="mt-10 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                Causal Oracle
+                MUSE
               </h1>
+              {/* TODO: to be modified */}
               <p className="mt-6 text-lg leading-8 text-gray-600">
-                Explore and interact with the Causal Oracle. View evidence,
-                verify claims, and participate in the decentralized oracle
-                ecosystem.
+                Explore and interact with the MUSE. View evidence, verify
+                claims, and participate in the decentralized oracle ecosystem.
               </p>
               <div className="mt-10 flex items-center gap-x-6">
                 <Link

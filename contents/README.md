@@ -14,6 +14,7 @@ results:
   - intervention: "OSSに対しQFを実施"
     outcome_variable: "project_health"
     outcome: "効果あり"
+strength: "3"
 methodologies:
   - "RCT"
 version: "1.0.0"

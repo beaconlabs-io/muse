@@ -9,7 +9,7 @@ require("dotenv").config();
 module.exports = async ({ data }) => {
   const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
   const SCHEMA_UID =
-    "0x5541dbf2591e283a0ba21f358754257985a87f6985a9429830b68328a3a6f82a";
+    "0xaec128d2b0ed11303f1d7ca6c0a7387607b61f1181c36b378022b4fda73df68f";
   const PRIVATE_KEY = process.env.PRIVATE_KEY;
   const RPC_URL = "https://sepolia.base.org";
 
@@ -20,9 +20,8 @@ module.exports = async ({ data }) => {
 
   eas.connect(signer);
 
-  // TODO: change schema
   const schemaEncoder = new SchemaEncoder(
-    "uint256 evidence_id,string title,string description,string strength, string effectiveness, string[] methodologies, string[] data_sources, string citation, string[] tags, string author"
+    "uint256 evidence_id,string title,string description,string[] results,string strength,string version,string[] methodologies,string[] datasets,string[] citation,string[] tags,string author"
   );
   const encodedData = schemaEncoder.encodeData([
     {
@@ -32,12 +31,19 @@ module.exports = async ({ data }) => {
     },
     { name: "title", value: data.meta.title || "Untitled", type: "string" },
     { name: "description", value: data.content, type: "string" },
-    { name: "strength", value: data.meta.strength || "", type: "string" },
     {
-      name: "effectiveness",
-      value: data.meta.effectiveness || "",
-      type: "string",
+      name: "results",
+      value: Array.isArray(data.meta.results)
+        ? data.meta.results.map((r) =>
+            typeof r === "object" ? JSON.stringify(r) : r
+          )
+        : [data.meta.results]
+            .filter(Boolean)
+            .map((r) => (typeof r === "object" ? JSON.stringify(r) : r)),
+      type: "string[]",
     },
+    { name: "strength", value: data.meta.strength || "", type: "string" },
+    { name: "version", value: data.meta.version || "", type: "string" },
     {
       name: "methodologies",
       value: Array.isArray(data.meta.methodologies)
@@ -46,13 +52,23 @@ module.exports = async ({ data }) => {
       type: "string[]",
     },
     {
-      name: "data_sources",
-      value: Array.isArray(data.meta.data_sources)
-        ? data.meta.data_sources
-        : [data.meta.data_sources].filter(Boolean),
+      name: "datasets",
+      value: Array.isArray(data.meta.datasets)
+        ? data.meta.datasets
+        : [data.meta.datasets].filter(Boolean),
       type: "string[]",
     },
-    { name: "citation", value: data.meta.citation || "", type: "string" },
+    {
+      name: "citation",
+      value: Array.isArray(data.meta.citation)
+        ? data.meta.citation.map((c) =>
+            typeof c === "object" ? JSON.stringify(c) : c
+          )
+        : [data.meta.citation]
+            .filter(Boolean)
+            .map((c) => (typeof c === "object" ? JSON.stringify(c) : c)),
+      type: "string[]",
+    },
     {
       name: "tags",
       value: Array.isArray(data.meta.tags)

@@ -1,6 +1,13 @@
 import fs from "fs";
 import path from "path";
 import { compileMDX } from "next-mdx-remote/rsc";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeKatex from "rehype-katex";
+import rehypePrettyCode from "rehype-pretty-code";
+import rehypeSlug from "rehype-slug";
+import rehypeToc from "rehype-toc";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 import { Evidence } from "@/types";
 
 export function formatDate(timestamp: string | undefined): string {
@@ -25,7 +32,7 @@ export const getEvidenceBySlug = async (
   slug: string
 ): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
   const realSlug = slug.replace(/\.mdx$/, "");
-  const filePath = path.join(blogsContentDirectory, `${realSlug}`, "page.mdx");
+  const filePath = path.join(blogsContentDirectory, `${realSlug}.mdx`);
   const deploymentPath = path.join(
     process.cwd(),
     "contents",
@@ -58,6 +65,17 @@ export const getEvidenceBySlug = async (
     source: fileContent,
     options: {
       parseFrontmatter: true,
+      mdxOptions: {
+        remarkPlugins: [remarkGfm, remarkMath],
+        rehypePlugins: [
+          rehypeSlug,
+          // rehypeHighlight,
+          [rehypeToc, { headings: ["h2", "h3"] }],
+          [rehypeAutolinkHeadings, { behavior: "wrap" }],
+          [rehypeKatex, { output: "mathml" }],
+          rehypePrettyCode,
+        ],
+      },
     },
   });
 

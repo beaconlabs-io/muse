@@ -5,6 +5,7 @@ export interface Evidence {
     outcome_variable: string;
     outcome: string;
   }[];
+  strength: string;
   version: string;
   methodologies: string[];
   datasets: string[];
