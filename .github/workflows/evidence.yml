@@ -528,6 +528,27 @@ jobs:
             exit 1
           fi
 
+      - name: Display EAS attestation results
+        run: |
+          echo "## EAS Attestation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "attestation-results.json" ]; then
+            RESULT_COUNT=$(node -e "const fs = require('fs'); try { const results = JSON.parse(fs.readFileSync('attestation-results.json', 'utf8')); console.log(results.length); } catch (e) { console.log(0); }")
+            if [ "$RESULT_COUNT" -gt 0 ]; then
+              echo "### 🛡️ Successfully Created EAS Attestations:" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**📊 Total attestations:** $RESULT_COUNT" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              node -e "const fs = require('fs'); const results = JSON.parse(fs.readFileSync('attestation-results.json', 'utf8')); results.forEach((result, index) => { console.log(`#### 📄 ${result.relativePath}`); console.log(''); console.log(`- **Attestation UID:** \`${result.attestationUID}\``); if(result.transactionHash) console.log(`- **Transaction Hash:** \`${result.transactionHash}\``); if(result.blockNumber) console.log(`- **Block Number:** ${result.blockNumber}`); console.log(`- **IPFS Hash:** \`${result.ipfsHash}\``); console.log(`- **File Size:** ${result.size} bytes`); console.log(`- **Attested:** ${new Date(result.timestamp).toLocaleString()}`); console.log(''); });" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ No attestations were created." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ No EAS attestation results found." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This may indicate an error during the attestation process." >> $GITHUB_STEP_SUMMARY
+          fi
+
       # TODO: enable below lines
       # - name: Commit and push deployment files
       #   env:
