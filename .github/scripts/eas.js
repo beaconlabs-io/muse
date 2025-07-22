@@ -34,8 +34,12 @@ module.exports = async ({ data }) => {
     {
       name: "results",
       value: Array.isArray(data.meta.results)
-        ? data.meta.results
-        : [data.meta.results].filter(Boolean),
+        ? data.meta.results.map((r) =>
+            typeof r === "object" ? JSON.stringify(r) : r
+          )
+        : [data.meta.results]
+            .filter(Boolean)
+            .map((r) => (typeof r === "object" ? JSON.stringify(r) : r)),
       type: "string[]",
     },
     { name: "strength", value: data.meta.strength || "", type: "string" },
@@ -57,8 +61,12 @@ module.exports = async ({ data }) => {
     {
       name: "citation",
       value: Array.isArray(data.meta.citation)
-        ? data.meta.citation
-        : [data.meta.citation].filter(Boolean),
+        ? data.meta.citation.map((c) =>
+            typeof c === "object" ? JSON.stringify(c) : c
+          )
+        : [data.meta.citation]
+            .filter(Boolean)
+            .map((c) => (typeof c === "object" ? JSON.stringify(c) : c)),
       type: "string[]",
     },
     {
