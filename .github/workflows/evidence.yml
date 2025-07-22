@@ -4,7 +4,7 @@ name: Evidence Processing and Attestation
 on:
   pull_request:
     branches: [dev] # main
-    paths: ["contents/evidence/**/*.mdx"]
+    paths: ["contents/evidence/*.mdx"]
     types: [opened, synchronize, reopened] # closed
 
 # Add permissions configuration
@@ -44,7 +44,7 @@ jobs:
             ALL_CHANGED=$(git diff --name-only main 2>/dev/null || true)
             echo "All changed files:"
             echo "$ALL_CHANGED"
-            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/.*\.mdx$" || true)
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/[^/]*\\.mdx$" || true)
             echo "Evidence files found:"
             echo "$CHANGED_FILES"
           else
@@ -57,7 +57,7 @@ jobs:
             ALL_CHANGED=$(git diff --name-only origin/main 2>/dev/null || true)
             echo "All changed files:"
             echo "$ALL_CHANGED"
-            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/.*\.mdx$" || true)
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/[^/]*\\.mdx$" || true)
             echo "Evidence files found:"
             echo "$CHANGED_FILES"
           fi
@@ -68,7 +68,7 @@ jobs:
             ALL_CHANGED=$(git diff --name-only HEAD~1 2>/dev/null || true)
             echo "All changed files:"
             echo "$ALL_CHANGED"
-            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/.*\.mdx$" || true)
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/[^/]*\\.mdx$" || true)
             echo "Evidence files found:"
             echo "$CHANGED_FILES"
           fi
@@ -396,7 +396,7 @@ jobs:
                     console.log(\`Processing attestation for \${result.relativePath}\`);
                     
                     // Read the original MDX file to get frontmatter
-                    const mdxPath = \`contents/evidence/\${result.relativePath}\`;
+                    const mdxPath = `contents/evidence/${result.relativePath}`;
                     const mdxContent = fs.readFileSync(mdxPath, 'utf8');
                     
                     // Extract frontmatter using gray-matter
@@ -404,8 +404,8 @@ jobs:
                     const { data: frontmatter } = matter(mdxContent);
                     
                     // Get the latest attestation UID from deployment file if it exists
-                    const evidenceId = path.basename(path.dirname(result.relativePath));
-                    const deploymentPath = \`contents/deployments/\${evidenceId}.json\`;
+                    const evidenceId = path.basename(result.relativePath, '.mdx');
+                    const deploymentPath = `contents/deployments/${evidenceId}.json`;
                     let refUID = '';
                     
                     if (fs.existsSync(deploymentPath)) {
@@ -413,10 +413,10 @@ jobs:
                         const deploymentData = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
                         if (deploymentData.attestationUID) {
                           refUID = deploymentData.attestationUID;
-                          console.log(\`📎 Found previous attestation UID: \${refUID}\`);
+                          console.log(`📎 Found previous attestation UID: ${refUID}`);
                         }
                       } catch (error) {
-                        console.warn(\`⚠️ Error reading deployment file: \${error.message}\`);
+                        console.warn(`⚠️ Error reading deployment file: ${error.message}`);
                       }
                     }
                     
@@ -429,7 +429,7 @@ jobs:
                     
                     // Create attestation
                     const attestationUID = await eas({ data });
-                    console.log(\`✅ Attestation created with UID: \${attestationUID}\`);
+                    console.log(`✅ Attestation created with UID: ${attestationUID}`);
                     
                     // Store result for deployment file creation
                     attestationResults.push({
@@ -469,19 +469,19 @@ jobs:
                 
                 for (const result of results) {
                   // Extract evidenceId from the relative path
-                  const evidenceId = path.basename(path.dirname(result.relativePath));
+                  const evidenceId = path.basename(result.relativePath, '.mdx');
                   
                   // Create deployment file path
-                  const deploymentPath = \`contents/deployments/\${evidenceId}.json\`;
+                  const deploymentPath = `contents/deployments/${evidenceId}.json`;
                   
                   // Read existing deployment data if it exists
                   let existingData = {};
                   if (fs.existsSync(deploymentPath)) {
                     try {
                       existingData = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
-                      console.log(\`📄 Found existing deployment file: \${deploymentPath}\`);
+                      console.log(`📄 Found existing deployment file: ${deploymentPath}`);
                     } catch (error) {
-                      console.warn(\`⚠️ Error reading existing deployment file: \${error.message}\`);
+                      console.warn(`⚠️ Error reading existing deployment file: ${error.message}`);
                     }
                   }
                   
@@ -516,7 +516,7 @@ jobs:
                   
                   // Write deployment file
                   fs.writeFileSync(deploymentPath, JSON.stringify(deploymentData, null, 2));
-                  console.log(\`✅ \${fs.existsSync(deploymentPath) ? 'Updated' : 'Created'} deployment file: \${deploymentPath}\`);
+                  console.log(`✅ ${fs.existsSync(deploymentPath) ? 'Updated' : 'Created'} deployment file: ${deploymentPath}`);
                 }
               } catch (error) {
                 console.error('Error creating deployment files:', error);

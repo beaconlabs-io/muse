@@ -32,7 +32,7 @@ export const getEvidenceBySlug = async (
   slug: string
 ): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
   const realSlug = slug.replace(/\.mdx$/, "");
-  const filePath = path.join(blogsContentDirectory, `${realSlug}`, "page.mdx");
+  const filePath = path.join(blogsContentDirectory, `${realSlug}.mdx`);
   const deploymentPath = path.join(
     process.cwd(),
     "contents",
