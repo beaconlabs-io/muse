@@ -1,108 +1,114 @@
 ---
 evidence_id: "12"
 results:
-  - intervention: "「Code for America Brigade（brigade.codeforamerica.org）」**の構築と展開"
-    outcome_variable: "既存の市民テックプロジェクトにおける**「勢い」の生成**（例：LocalWikiでのページ編集数、マップ追加数、写真追加数）。"
+  - intervention: "Construction and Deployment of **Code for America Brigade**"
+    outcome_variable: "Generation of "momentum" in existing civic tech projects (e.g., number of page edits, map additions, and photo uploads on LocalWiki)."
     outcome: "3"
-strength: "1"
+strength: "0"
 methodologies:
-  - "インタビュー、アンケート、Google Analitics"
+  - "Interview, Survey, Google Analitics"
 version: "1.0.0"
 datasets:
-  - "インタビュー、アンケート、Google Analitics"
-title: "Code for America Brigade: Connecting People, Places, and Apps within the Civic Hacker Community"
+  - "Interview, Survey, Google Analitics"
+title: ""
 date: "2016-10-07"
 tags:
   - "oss"
 citation: 
-  - N/A
+  - type: "external"
+    name: "Code for America Brigade: Connecting People, Places, and Apps within the Civic Hacker Community"
+    URL: "https://www.ischool.berkeley.edu/sites/default/files/student_projects/karimcglynn_codeforamericabrigade_finalreport.pdf"
 author: "BeaconLabs"
 ---
 
 ## Write up contents here
 
-### 要点
-LocalWikiのプロジェクトでは、一日のイベントで633ページの編集、100枚の地図追加、138枚の新しい写真追加という大きな進捗が見られました。
+### Key Points
+The LocalWiki project saw significant progress during a single-day event, with 633 pages edited, 100 maps added, and 138 new photos uploaded.
 
-### 背景
-Code for America (CfA)は、サンフランシスコに拠点を置く非営利団体で、**テクノロジーを通じて市役所をより効率的、透明性があり、住民のニーズに応えるものにすること**をミッションとしています。
+### Background
+Code for America (CfA) is a nonprofit organization based in San Francisco, with a mission to make city governments more efficient, transparent, and responsive to resident needs through technology.
 
-毎年、CfAはフェローシッププログラムを組織し、選ばれたプログラマー、デザイナー、その他の技術者からなる小規模なチームが、協力都市に入り、ウェブやモバイルアプリケーションを構築することで地方自治体やコミュニティグループの課題解決を支援しています。
+Each year, CfA organizes a fellowship program in which small teams of selected programmers, designers, and other technologists partner with local governments to build web and mobile applications that address community issues.
 
-しかし、2011年秋には2つの大きな課題に直面していました:
-1.  組織外の個人からのボランティア貢献を調整・処理するインフラが不足していた。フェローシップ応募者が550人以上、ソーシャルネットワークのファン・フォロワーが1万人以上という「**熱意の余剰 (enthusiasm surplus)**」があったにもかかわらず、それらを活用できていませんでした。
-2.  今後3〜5年でフェローシッププログラムを大幅に拡大する計画があったものの、現在のプログラム構造では小規模な都市や町まで拡大することは困難だと懸念していました。
+However, in Fall 2011, CfA faced two major challenges:
 
-これらの課題に対応するため、2011年秋にUC BerkeleyのISSDクラスのプロジェクトとして「CFA Everywhere」という基盤が築かれました。この提案が2012年初頭に資金を獲得し、**「Code for America Brigade」**と改名され、消防団 (fire brigades) にちなんで、孤立したシビックハッカーの散発的な活動をより大きな、包括的なムーブメントに統合することを目指しました。これは、CfAの活動とより大規模なシビックハッカーコミュニティを結びつけるためのオープンソースプラットフォームです。
+1. There was a lack of infrastructure to coordinate and manage volunteer contributions from outside the organization. Despite receiving over 550 fellowship applications and having more than 10,000 fans and followers on social media—an “enthusiasm surplus”—CfA was unable to effectively leverage this support.
 
-### データセット (調査・デザインに利用された情報源)
-Brigadeプラットフォームの設計と改善のために、様々なデータや情報源が活用されました。
+2. While CfA planned to significantly expand the fellowship program over the next 3–5 years, the current program structure was seen as unsuitable for scaling to smaller cities and towns.
 
-*   **インタビューデータ**:
-    *   **オープンソース開発プロジェクトのボランティア**: 技術的なプロジェクト（オープンソース開発やハッカソン）と非技術的なプロジェクト（Habitat for Humanityなど）のボランティアにインタビューを実施しました。
-    *   **Code for Americaのフェローおよびスタッフ**: プロジェクト初期に複数のフェローやスタッフにインタビューを実施しました。
-*   **ソーシャルネットワークデータ**:
-    *   **Code for Americaのフェローシップ応募者とTwitterフォロワー**: 彼らのスキルや興味の分析に用いられました。
-    *   **Twitterストリームデータ**: 「Code Across America」イベント中に#codeacrossハッシュタグが使用されたTwitter投稿のライブストリームと、イベント後のツイート活動の世界地図作成に使用されました。
-*   **イベント参加者データ**:
-    *   **「Code Across America」ハッカソン参加者アンケート**: 参加者の情報収集と意図を把握するために開発されたアンケートが用いられました。
-*   **サイト利用状況データ**:
-    *   **Google Analytics**: Brigadeサイトのトラフィック、訪問者数、滞在時間、ページビュー、離脱率、リピーター率、参照元などのデータが分析されました。
-*   **ユーザーフィードバックデータ**:
-    *   **非公式フィードバック**: Brigadeメーリングリストやその他のチャネルを通じて、ローンチ後にユーザーから寄せられた非公式なフィードバックが収集されました。
-    *   **公式アンケート**: Brigade v.1の更新後、登録ユーザーからユーザー体験に関するオープン回答形式の短いアンケートが実施されました。
+To address these challenges, the foundation for a new initiative, “CFA Everywhere,” was laid in Fall 2011 as a class project in UC Berkeley’s ISSD course. The proposal received funding in early 2012 and was renamed Code for America Brigade, inspired by fire brigades, with the goal of transforming isolated civic hacker efforts into a broader, integrated movement. It aimed to be an open-source platform connecting CfA’s activities with the wider civic hacker community.
 
-### 分析手法
-Brigadeプラットフォームの設計と開発、およびその後の改善において、いくつかの分析手法が用いられました。
+### Analysis Methods
 
-*   **事前調査とインサイト抽出**:
-    *   **オープンソース開発インタビュー**: ボランティアの最も重要な動機付け要因が「**同じ興味を持つ人々のコミュニティの一部となる機会**」であることが判明し、プラットフォームはプロジェクト管理ツールではなく、**コミュニティ組織化プラットフォーム**として設計すべきであるという主要なインサイトを得ました。
-    *   **ソーシャルネットワーク分析**: CfAのフォロワーや応募者の多くがグラフィックデザイン、UX、プロジェクト管理、コミュニティ活動など非コーディングスキルに関心を持っていることが明らかになり、プラットフォームは**開発者だけでなく、多様な種類のボランティアのために設計されるべき**というインサイトを得ました.
-    *   **フェローおよびスタッフインタビュー**: CfAのスタッフには外部プロジェクトを管理する追加の帯域幅がないことが判明し、CfAの役割は「**全国の支援者の可能性を解き放つ触媒**」であるべきというインサイトを得ました。これにより、自己組織化を支援し、リソースを提供することに重点が置かれました.
-*   **リーンスタートアップとアジャイル開発への移行**:
-    *   学術的な提案から実際の開発プロジェクトへの移行に伴い、**リーンスタートアップの「MVP (Minimum Viable Product)」**の要件を定義する必要がありました。
-    *   **アジャイルインセプションイベント**: 2012年1月にCfAオフィスで開催され、ステークホルダーが集まりました。このイベントは、アフィニティダイアグラミングのようなインデックスカード作成プロセスやドット投票を用いて、MVPに必須となる「ユーザー・ストーリー」を定義しました。
-*   **事後評価と改善**:
-    *   **非公式フィードバックの収集と分析**: ローンチ後、メーリングリストなどを通じてユーザーからの非公式なフィードバックを収集し、サイト改善点（コンテンツ不足、アプリステータスの不明瞭さ、編集機能の不足）を特定しました。
-    *   **ユーザーアンケートの分析**: 登録ユーザーへのオープン回答形式のアンケート（5つの質問）を通じて、Brigadeサイトの利用経験、最も価値のある機能、欠けている機能、改善提案などを収集しました。回答は手動でパースし、カテゴリ分けされ、頻度順の棒グラフでまとめられました。これにより、ユーザーが接続されることに興奮している一方で、接続支援の強化、機能不足によるエンゲージメントの低下、ドキュメントやケーススタディ、チュートリアルの拡充の要望などが明らかになりました.
-    *   **Google Analyticsの分析**: サイトローンチ後のトラフィックとエンゲージメントの概要統計を確認しました。トラフィックの大部分は「直接アクセス」であり、エンゲージメント率が低い（約90%が5分未満の滞在、85%が5回以下のリピート訪問）ことが課題として浮上しました。
+#### Dataset
+- Interview Data:
+  - Volunteers in open source development projects: Interviews were conducted with volunteers involved in both technical (open source development, hackathons) and non-technical (e.g., Habitat for Humanity) projects.
+  - Code for America fellows and staff: Interviews were conducted during the project's early stages.
 
-### 結果
-Brigadeプラットフォームの立ち上げと初期運用、およびユーザーからのフィードバックは以下の結果をもたらしました。
+- Social Network Data:
+  - CfA fellowship applicants and Twitter followers: Analyzed to understand their skills and interests.
+  - Twitter stream data: Live tweets using the #codeacross hashtag during the “Code Across America” events and post-event tweets were used to generate a world map of activity.
 
-*   **プラットフォームの現状 (ローンチ時点)**:
-    *   brigade.codeforamerica.orgは、現在、再利用可能な9つのシビックアプリをホストしており、利用者がローカルインスタンスを立ち上げるための指示とリソースへのリンクを提供しています。
-    *   250人以上の登録メンバー、80以上の拠点、約40のBrigadeが形成されています。
-    *   MVPの初期機能として、メールまたはGithubアカウントでのサインアップ、基本プロフィールの作成、Brigadeへの参加または立ち上げ、アプリ、Brigade、人々、地域に関するリストと詳細ページの表示、コミュニティへの「課題」の提出と閲覧、ソーシャルネットワークでのアプリやBrigadeの共有機能が含まれていました。
-    *   「車輪の再発明をしない」「ユーザーのインタラクションを独占しようとしない」という**オープンな設計戦略**に基づき、Civic CommonsやGravatarなどのサードパーティAPIを活用し、Google Groupsのような既存のツールを推奨しました。
-    *   「Brigade」を純粋にバーチャルなアソシエーションとすることで、ユーザーが自由にグループを形成できるようにしました。ただし、この情報アーキテクチャは新しいユーザーにとって分かりにくいという課題も残りました。
-    *   アプリデプロイのチェックリスト機能は、当初の包括的なタスクリストと進捗バーの構想から、ドキュメント不足やデプロイプロセスの多様性により、簡素化され、**管理者の負担**となりました。
+- Event Participant Data:
+  - Code Across America hackathon surveys: Surveys were developed and used to gather participant intentions and feedback.
 
-*   **SXSWでのローンチと初期成果**:
-    *   2012年3月14日、SXSW Interactiveの基調講演でBrigadeプラットフォームが正式にローンチされました。
-    *   ローンチは大きな成功を収め、**最初の24時間で45の地域から120人以上のユーザーが登録**しました。
-    *   「Code Across America」ハッカソンシリーズ（2月）では、16都市でイベントが開催され、既存のシビックテクノロジープロジェクトに勢いを与えました。例えば、ノースカロライナ州ローリーでは、LocalWikiプロジェクトで約50人のボランティアが1日で633ページの編集、100の地図、138枚の新しい写真を追加し、これまでの6ヶ月間の作業をほぼ倍増させました。また、異なる都市のシビックテクノロジストの取り組みを結びつけ、オープンソースソフトウェアプロジェクトに関するサポートコミュニティを形成するのに役立ちました。
+- Site Usage Data:
+  - Google Analytics: Provided insights on Brigade site traffic, visitor count, time-on-site, page views, bounce rates, return visitor ratios, and referrers.
 
-*   **初期のフィードバックと課題**:
-    *   ローンチ後のユーザーからの非公式フィードバックでは、**コンテンツの不足、アプリの「展開可能 (deployable)」と「展開済み (deployed)」の状態の区別が不明瞭、ユーザーによる編集機能の不足**が指摘されました。
-    *   Brigadeサイトローンチ後も、Brigadeスタッフとシビックハッカー間のやり取りの大部分は、**メール、電話会議、Googleハングアウトビデオチャット**などのオフラインチャネルで行われていました。これは、新たな関係構築、主要パートナーの特定、緊急課題への対応に有効でした。Brigadeのディレクターは、サイトの機能が低い間は、スタッフがユーザーと直接コミュニケーションを取り、ギャップを埋めることが予想されていたと述べました。
-    *   Brigadeサイトの機能が、必ずしもコミュニティの活動の主要な推進力になっているわけではないという課題も浮上しました。サイトは主に「**人、場所、プロジェクト間のつながりの象徴的な記録**」として機能している状況でした。
-    *   具体的な課題として、アプリが実際に作業されているかどうかの追跡不足（Githubへのリンクのみでタスク管理機能なし）、初期段階のBrigadeがアウトリーチや組織化を改善するための支援不足が挙げられました。
+- User Feedback Data:
+  - Unofficial feedback: Gathered from users via the Brigade mailing list and other channels after launch.
+  - Official surveys: A brief open-ended survey was conducted after the launch of Brigade v.1 to collect user experience feedback from registered users.
 
-*   **Brigade v.1アップデート**:
-    *   2012年4月上旬にサイトデザインの修正が行われました。
-    *   サイトのナビゲーションがより明確に「アプリケーション」「Brigade」「人々」を中心に再編成されました。
-    *   リソース不足のため「課題」機能は一時的に棚上げされました。
-    *   サイトの用語（アプリ、デプロイ、Brigade）を説明するコンテンツが追加されました。
-    *   「展開済みアプリ」リストに「ステータス」列が追加され、アプリの作業進捗がより明確に示されるようになりました。
+#### Preliminary Research and Insight Extraction:
+- **Open Source Development Interviews**: Found that the top motivator for volunteers was “becoming part of a community of people with shared interests,” leading to the insight that the platform should be designed not as a project management tool but as a community organizing platform.
+- **Social Network Analysis**: Revealed that many CfA followers and applicants were interested in non-coding skills such as graphic design, UX, project management, and community work, indicating the platform should be designed not only for developers but for a diverse range of volunteers.
+- **Fellow and Staff Interviews**: Highlighted that CfA staff lacked bandwidth to manage external projects, leading to the insight that CfA should act as a “catalyst for unleashing the potential of supporters nationwide,” focusing on enabling self-organization and resource sharing.
 
-*   **アンケート結果とGoogle Analyticsによる評価**:
-    *   アンケート結果から、シビックハッカーたちはプラットフォームを通じて互いにつながれることに興奮している一方で、**より多くの接続支援（例：コミュニケーションツール、Wikiスペース、メーリングリスト機能）を求めている**ことが明らかになりました。
-    *   サイトの機能不足が一部のユーザーのエンゲージメント低下につながっていると感じられました。
-    *   「ケーススタディ」や「チュートリアル」などのコンテンツ拡充、および「Wiki/フォーラム」機能が特に多く提案されました。
-    *   Google Analyticsデータからは、SXSWでのローンチ時にトラフィックが急増したものの、その後はペースが落ち、**ユーザーのエンゲージメントは比較的低い**（訪問時間の短さ、リピート訪問頻度の低さ）ことが示されました。ソーシャルメディアからの参照も改善の余地がありました。
+#### Shift to Lean Startup and Agile Development:
+- Transitioning from an academic proposal to an actual development project required defining the requirements of a Lean Startup-style Minimum Viable Product (MVP).
+- Agile Inception Event: Held at the CfA office in January 2012, where stakeholders gathered to define MVP “user stories” using index card brainstorming and dot-voting techniques.
 
-これらの結果に基づき、Brigade v.2ではユーザーによるコンテンツ投稿機能（アプリの「レシピ」のWiki形式編集、技術情報の更新）や、場所に基づくサイトコンテンツの発見機能の改善（Brigadeマップ、人々のフィルタリング）、ソーシャルネットワークでの共有機能の視覚的強調、Brigadeブログの追加などが推奨されました。
+#### Post-Launch Evaluation and Improvements:
+- Analysis of Unofficial Feedback: Post-launch feedback helped identify areas for improvement (e.g., lack of content, unclear app status, absence of editing tools).
+- User Survey Analysis: Open-ended responses from a five-question survey were manually parsed, categorized, and visualized in bar charts. Key findings included user excitement about connecting with others, the need for better support for collaboration, and demands for documentation, case studies, and tutorials.
+- Google Analytics Analysis: Tracked post-launch traffic and engagement, revealing that most traffic was direct and engagement was low (approx. 90% stayed less than five minutes, 85% had fewer than five return visits).
 
-### ソース
+### Result
+
+- **Platform Status at Launch**:
+  - brigade.codeforamerica.org hosted 9 reusable civic apps and provided links and instructions for deploying local instances.
+  - Over 250 registered users, more than 80 locations, and approximately 40 Brigades were formed.
+  - MVP features included sign-up via email or GitHub, profile creation, joining/starting Brigades, viewing apps, Brigades, people, and location detail pages, submitting/viewing challenges, and sharing via social media.
+  - Based on an open design strategy—“don’t reinvent the wheel” and “don’t monopolize user interactions”—the platform integrated with third-party APIs like Civic Commons and Gravatar and recommended using existing tools like Google Groups.
+  - Brigades were designed as purely virtual associations, allowing users to freely form groups, though this information architecture proved confusing for new users.
+  - The app deployment checklist was simplified from its original concept due to documentation gaps and varied deployment processes, leading to increased burden on administrators.
+
+- **Launch and Early Impact at SXSW**:
+  - On March 14, 2012, the Brigade platform officially launched during the SXSW Interactive keynote.
+  - The launch was a significant success, with over 120 users from 45 locations signing up within the first 24 hours.
+  - The February “Code Across America” hackathon series spanned 16 cities, boosting existing civic tech projects. For example, in Raleigh, NC, the LocalWiki project saw ~50 volunteers contribute 633 page edits, 100 maps, and 138 new photos—nearly doubling six months’ worth of progress in a single day. The events also helped forge connections among civic technologists across cities and build a support community around open source software.
+
+- **Initial Feedback and Challenges**:
+  - Unofficial user feedback pointed out content gaps, unclear distinctions between "deployable" and "deployed" apps, and a lack of editing functionality.
+  - Most communication between Brigade staff and civic hackers continued through offline channels such as email, conference calls, and Google Hangouts—useful for forming new relationships, identifying partners, and addressing urgent issues. The Brigade director noted that during early platform development, staff were expected to bridge functionality gaps through direct interaction.
+  - The site wasn’t always the main driver of community activity. Instead, it functioned more as a symbolic record of connections between people, places, and projects.
+  - Notable challenges included the lack of task tracking (relying only on GitHub links) and inadequate support for outreach and organization by fledgling Brigades.
+
+- **Brigade v.1 Updates**:
+  - A site design update was deployed in early April 2012.
+  - Navigation was clarified and restructured around “Applications,” “Brigades,” and “People.”
+  - Due to resource constraints, the “Challenges” feature was temporarily shelved.
+  - Informational content was added to explain site terminology (apps, deploy, Brigade).
+  - A new “status” column was added to the list of deployed apps to better indicate progress.
+
+- **Survey and Google Analytics Evaluation**:
+  - Survey results showed that civic hackers were excited to connect via the platform but also desired more connection support (e.g., communication tools, wiki spaces, mailing list features).
+  - Feature limitations were found to contribute to reduced engagement among some users.
+  - High demand was expressed for content expansions like case studies, tutorials, and wiki/forum features.
+  - Google Analytics showed a major spike in traffic during the SXSW launch, followed by a slowdown and relatively low user engagement (short visit times, low repeat visits). There was also room for improvement in social media referrals.
+
+Based on these findings, recommendations for Brigade v.2 included enabling user-generated content (e.g., wiki-style app “recipes,” technical updates), enhancing content discovery via location-based features (e.g., Brigade maps, filtering by people), increasing visibility of social sharing features, and launching a Brigade blog.
+
+### Citation
 https://www.ischool.berkeley.edu/sites/default/files/student_projects/karimcglynn_codeforamericabrigade_finalreport.pdf
