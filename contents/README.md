@@ -42,6 +42,19 @@ author: "BeaconLabs"
 - Markdown 記法で本文を記述します。
 - セクションごとに `##` などの見出しを使って整理します。
 
+template: 
+```
+## Key Points
+## Background
+## Analysis Methods
+### Dataset
+### Intervation / Explanatory Variable
+### Dependent Variable
+### Identification Strategy
+## Results
+## Citation
+```
+
 ## 3. Effect（効果のカテゴリ）
 
 ### English
