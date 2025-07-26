@@ -37,14 +37,17 @@ On average, there was an observed increase of approximately 150 to 200 monthly a
 - OSO is currently rolling out a suite of timeseries metrics. These models allow metrics to be computed for any cohort over any time period, enabling "time travel" to evaluate past performance.
 - Most timeseries metrics are computed using a rolling window with daily buckets. For example, rather than measuring monthly active developers as a static monthly count, OSO uses 30-day and 90-day rolling windows to provide a more detailed view of cohort performance.
 - Sample SQL queries show the use of tables such as `timeseries_metrics_by_collection_v0`, `metrics_v0`, and `collections_v1`.
-- In the specific analysis, the dependent variable is `active_developers_over_90_day` (90-day active developers), while the predictive variables include `new_contributors_over_90_day` (new contributors over 90 days), `commits_over_90_day` (commits over 90 days), and `issues_opened_over_90_day` (issues opened over 90 days).
 
-### Intervention
+### Intervation / Explanatory Variable
 - OSO is interested in measuring the impact of specific types of interventions on public goods ecosystems.
 - Specifically, it seeks to assess how grants and incentives affect outcomes such as developer retention, user activity, and network TVL (Total Value Locked).
 - The initial experiment evaluates an intervention targeting a cohort of projects that received Optimism Retro Funding in January 2024.
+- The explanatory variable is `new_contributors_over_90_day` (new contributors over 90 days), `commits_over_90_day` (commits over 90 days), and `issues_opened_over_90_day` (issues opened over 90 days).
 
-### AAA
+### Dependent Variable
+- The dependent variable is `active_developers_over_90_day` (90-day active developers)
+
+### Identification Strategy
 - As an early experiment in crypto network economics, OSO is exploring methods such as synthetic controls and causal inference.
 - Synthetic control methods are widely used to assess the impact of interventions in complex systems.
 - In this approach, a synthetic control is a weighted average of several units, constructed to replicate the trajectory that the treated unit would have followed in the absence of the intervention.
