@@ -1,62 +1,64 @@
 ---
 evidence_id: "14"
 results:
-  - intervention: "助成金受領の有無やトークンインセンティブの付与"
-    outcome_variable: "開発者の定着率、ユーザー活動、および**ネットワークの合計ロック価値（TVL）"
+  - intervention: "Whether grants were received or token incentives were provided"
+    outcome_variable: "Developer retention, user activity, and Total Value Locked (TVL) of the network"
     outcome: "3"
 strength: "3"
 methodologies:
-  - "合成コントロール法（Synthetic Control Method）"
+  - "Synthetic Control Method"
 version: "1.0.0"
 datasets:
   - "https://github.com/opensource-observer/insights/tree/main/analysis/optimism/syncon"
-title: "Early experiments with synthetic controls and causal inference"
+title: ""
 date: "2024-11-18"
 tags:
   - "oss"
   - "public goods funding"
 citation:
-  - 
+  - name: "Early experiments with synthetic controls and causal inference"
+    URL: "https://docs.opensource.observer/blog/synthetic-controls/"
 author: "BeaconLabs"
 ---
 
-## Write up contents here
-### 要点
-平均して約150～200人の月間アクティブ開発者数の増加が見られました。
+## Key Points
+On average, there was an observed increase of approximately 150 to 200 monthly active developers.
 
-### 背景 (Background)
-    *   Open Source Observer (OSO) は、特定の種類の介入が公共財エコシステムに与える影響をより良く測定することを目指し、高度な指標について検討しています。
-    *   例えば、トークンインセンティブを受け取ったプロジェクトやユーザーと、そうでないプロジェクトやユーザーのパフォーマンスを比較したいと考えています。
-    *   しかし、現実世界の経済では、制御されたA/Bテストのように処理グループと対照グループを無作為に割り当てることは不可能です。
-    *   そのため、市場状況、競合するインセンティブ、地政学的イベントなどの他の要因を制御しながら、**ターゲットコホートに対する処置の因果効果を推定する**ために高度な統計的手法を用いる必要があります。
+## Background
+- Open Source Observer (OSO) is exploring advanced metrics to better measure the impact of certain types of interventions on public goods ecosystems.
+- For example, it aims to compare the performance of projects or users who received token incentives against those who did not.
+- However, in real-world economies, it is impossible to randomly assign treatment and control groups like in controlled A/B tests.
+- Therefore, advanced statistical techniques must be employed to estimate the causal effect of a treatment on a target cohort, while controlling for other factors such as market conditions, competing incentives, and geopolitical events.
 
-### 介入 (Intervention)
-    *   OSOは、公共財エコシステムに影響を与える「特定の種類の介入」の測定に関心を持っています。
-    *   具体的には、**助成金やインセンティブ**が、開発者の維持、ユーザー活動、ネットワークのTVL（Total Value Locked）などの成果に与える影響を測定することを目的としています。
-    *   初期の実験では、**2024年1月にOptimism Retro Fundingを受け取ったプロジェクトのコホート**を対象とした介入を評価しています。
+## Analysis Method
 
-### データセット (Dataset)
-    *   合成コントロールの作業は、時間の経過とともにほぼすべてのメトリックを分析できる柔軟な分析エンジンを構築する広範なイニシアチブの一部です。
-    *   OSOは現在、「**時系列メトリック（timeseries metrics）**」のスイートを展開しています。これらのモデルは、任意のコホートに対して任意の期間のメトリックを計算でき、「タイムトラベル」して過去のパフォーマンスを評価することを可能にします。
-    *   ほとんどの時系列メトリックは、日次バケットを使用した**ローリングウィンドウ**で計算されます。例えば、月間アクティブ開発者を測定する代わりに、30日および90日の移動ウィンドウで計算され、コホートのパフォーマンスをより詳細に把握できます。
-    *   サンプルクエリ（SQL）では、`timeseries_metrics_by_collection_v0`、`metrics_v0`、`collections_v1`といったテーブルが使われていることが示されています。
-    *   具体的な分析では、従属変数として「`active_developers_over_90_day`（90日間のアクティブ開発者数）」を、予測変数として「`new_contributors_over_90_day`（90日間の新規貢献者数）」、「`commits_over_90_day`（90日間のコミット数）」、「`issues_opened_over_90_day`（90日間にオープンされたイシュー数）」を使用しています。
+### Dataset
+- The synthetic control work is part of a broader initiative to build a flexible analytics engine capable of analyzing virtually all metrics over time.
+- OSO is currently rolling out a suite of timeseries metrics. These models allow metrics to be computed for any cohort over any time period, enabling "time travel" to evaluate past performance.
+- Most timeseries metrics are computed using a rolling window with daily buckets. For example, rather than measuring monthly active developers as a static monthly count, OSO uses 30-day and 90-day rolling windows to provide a more detailed view of cohort performance.
+- Sample SQL queries show the use of tables such as `timeseries_metrics_by_collection_v0`, `metrics_v0`, and `collections_v1`.
+- In the specific analysis, the dependent variable is `active_developers_over_90_day` (90-day active developers), while the predictive variables include `new_contributors_over_90_day` (new contributors over 90 days), `commits_over_90_day` (commits over 90 days), and `issues_opened_over_90_day` (issues opened over 90 days).
 
-### 分析方法 (Analysis Method)
-    *   OSOは、暗号ネットワーク経済における初期の実験として、**合成コントロール（synthetic controls）と因果推論（causal inference）**の手法を探求しています。
-    *   **合成コントロール法**は、複雑なシステムにおける介入の効果を評価するために広く使用されています。
-    *   この方法では、**合成コントロール**とは、介入がなかった場合に処置された単位がたどったであろう軌跡を再現するために、いくつかの単位を重み付け平均したものです。
-    *   重みは、結果として得られる合成コントロールが、結果変数の主要な予測子に関して処置された単位に密接に類似するように、データ駆動型で選択されます。
-    *   差分の差分（difference-in-differences）アプローチとは異なり、この方法では、**介入前にコントロールグループを処理グループによりよく一致させるために重み付けを行うことで、時間の経過とともに変化する交絡因子の影響を考慮できます**。
-    *   経済学者は、非実験的な設定での政策影響評価に合成コントロールを頻繁に使用します（例：アバディとガルデアサバルがバスク分離主義運動の経済への影響を推定した事例）。
-    *   合成コントロールの重要な利点の一つは、比較グループを系統的に選択できることです。OSOの作業では、助成金受給者と助成金を受けていない類似のプロジェクトを比較することを意味します。
-    *   OSOは、Counterfactual Labsからヒントを得て、**pysynconパッケージ**を使用して、OSOで利用可能なさまざまな時系列メトリックに対する処置効果を推定しています。
-    *   分析リクエストには、事前期間の開始日と終了日、最適化期間の開始日と終了日、従属変数、処置識別子、コントロール識別子、および予測変数が含まれます。
+### Intervention
+- OSO is interested in measuring the impact of specific types of interventions on public goods ecosystems.
+- Specifically, it seeks to assess how grants and incentives affect outcomes such as developer retention, user activity, and network TVL (Total Value Locked).
+- The initial experiment evaluates an intervention targeting a cohort of projects that received Optimism Retro Funding in January 2024.
 
-### 結果 (Results)
-    *   初期の発見として、2024年1月にOptimism Retro Fundingを受け取ったプロジェクトのコホートについて、90日間の移動ウィンドウでの月間アクティブ開発者数を分析しました。
-    *   その結果、**処置グループと合成コントロールグループ間のギャップが処置効果を示しており、平均して約150〜200人の月間アクティブ開発者数の増加が見られました**。
-    *   OSOは、合成コントロールのような高度なメトリックを暗号ネットワークのインセンティブ効果の測定に適用する初期段階にあり、今後さらなる知見を共有する予定です。
+### AAA
+- As an early experiment in crypto network economics, OSO is exploring methods such as synthetic controls and causal inference.
+- Synthetic control methods are widely used to assess the impact of interventions in complex systems.
+- In this approach, a synthetic control is a weighted average of several units, constructed to replicate the trajectory that the treated unit would have followed in the absence of the intervention.
+- Weights are selected in a data-driven way so that the resulting synthetic control closely resembles the treated unit with respect to key predictors of the outcome variable.
+- Unlike difference-in-differences approaches, this method allows for adjustments for time-varying confounders by weighting the control group to better match the treatment group in the pre-intervention period.
+- Economists frequently use synthetic controls to evaluate policy impacts in non-experimental settings (e.g., Abadie and Gardeazabal’s study on the economic impact of the Basque separatist conflict).
+- One key advantage of synthetic controls is the ability to systematically select comparison groups. In OSO’s case, this means comparing grant recipients to similar non-recipient projects.
+- Inspired by work from Counterfactual Labs, OSO uses the pysyncon package to estimate treatment effects across the range of timeseries metrics available within OSO.
+- Each analysis request includes a pre-period start and end date, an optimization period start and end date, a dependent variable, treatment identifier, control identifiers, and predictor variables.
 
-### ソース
+### Results
+- In early findings, OSO analyzed monthly active developers over a 90-day rolling window for a cohort of projects that received Optimism Retro Funding in January 2024.
+- The results indicate that the gap between the treated group and the synthetic control group reflects the treatment effect, with an average increase of approximately 150 to 200 monthly active developers.
+- OSO is in the early stages of applying advanced metrics like synthetic control to measure the impact of incentives in crypto networks and plans to share further insights in the future.
+
+### Citation
 https://docs.opensource.observer/blog/synthetic-controls/
