@@ -19,8 +19,8 @@ methodologies:
   - "RCT"
 version: "1.0.0"
 datasets:
-  - "Hidalgo-Cabrillana, A., & Lopez-Mayan, C. (2018). ..."
-title: "OSSに対しQFを実施すると、Project Healthに正の効果あり"
+  - "<How to collect data>"
+title: "Effect of <intervention> for <outcome_variable>"
 date: "2022-01-17"
 tags:
   - "qf"
@@ -28,11 +28,8 @@ tags:
   - "public goods funding"
 citation:
   - type: "external"
-    name: "Gitcoin"
-    src: "https://gitcoin.co"
-  - type: "internal"
-    name: "Evidence1"
-    src: "1"
+    name: "paper_title_1"
+    src: "https://xxx"
 author: "BeaconLabs"
 ---
 ```
