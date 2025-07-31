@@ -1,9 +1,12 @@
 name: Evidence Processing and Attestation
+
+# TODO: fix target branch to main
 on:
   pull_request:
     branches: [main]
-    paths: ["app/contents/evidence/**/*.mdx"]
+    paths: ["contents/evidence/*.mdx"]
     types: closed
+    # types: [opened, synchronize, reopened] # closed
 
 # Add permissions configuration
 permissions:
@@ -42,7 +45,7 @@ jobs:
             ALL_CHANGED=$(git diff --name-only main 2>/dev/null || true)
             echo "All changed files:"
             echo "$ALL_CHANGED"
-            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/[^/]*\\.mdx$" || true)
             echo "Evidence files found:"
             echo "$CHANGED_FILES"
           else
@@ -55,7 +58,7 @@ jobs:
             ALL_CHANGED=$(git diff --name-only origin/main 2>/dev/null || true)
             echo "All changed files:"
             echo "$ALL_CHANGED"
-            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/[^/]*\\.mdx$" || true)
             echo "Evidence files found:"
             echo "$CHANGED_FILES"
           fi
@@ -66,7 +69,7 @@ jobs:
             ALL_CHANGED=$(git diff --name-only HEAD~1 2>/dev/null || true)
             echo "All changed files:"
             echo "$ALL_CHANGED"
-            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "app/contents/evidence/.*\.mdx$" || true)
+            CHANGED_FILES=$(echo "$ALL_CHANGED" | grep "contents/evidence/[^/]*\\.mdx$" || true)
             echo "Evidence files found:"
             echo "$CHANGED_FILES"
           fi
@@ -95,8 +98,8 @@ jobs:
           if [ -n "$CHANGED_FILES" ]; then
             while IFS= read -r file; do
               if [ -n "$file" ]; then
-                # Remove app/contents/evidence/ prefix to get relative path
-                RELATIVE_PATH=$(echo "$file" | sed 's|^app/contents/evidence/||')
+                # Remove contents/evidence/ prefix to get relative path
+                RELATIVE_PATH=$(echo "$file" | sed 's|^contents/evidence/||')
                 
                 if [ -n "$EVIDENCE_PATHS" ]; then
                   EVIDENCE_PATHS="$EVIDENCE_PATHS,$RELATIVE_PATH"
@@ -153,7 +156,7 @@ jobs:
             IFS=',' read -ra PATHS <<< "$EVIDENCE_PATHS"
             for relative_path in "${PATHS[@]}"; do
               if [ -n "$relative_path" ]; then
-                full_path="app/contents/evidence/$relative_path"
+                full_path="contents/evidence/$relative_path"
                 echo ""
                 echo "🔄 Processing: $relative_path"
                 
@@ -394,7 +397,7 @@ jobs:
                     console.log(\`Processing attestation for \${result.relativePath}\`);
                     
                     // Read the original MDX file to get frontmatter
-                    const mdxPath = \`app/contents/evidence/\${result.relativePath}\`;
+                    const mdxPath = \`contents/evidence/\${result.relativePath}\`;	
                     const mdxContent = fs.readFileSync(mdxPath, 'utf8');
                     
                     // Extract frontmatter using gray-matter
@@ -402,8 +405,8 @@ jobs:
                     const { data: frontmatter } = matter(mdxContent);
                     
                     // Get the latest attestation UID from deployment file if it exists
-                    const evidenceId = path.basename(path.dirname(result.relativePath));
-                    const deploymentPath = \`app/contents/deployments/\${evidenceId}.json\`;
+                    const evidenceId = path.basename(result.relativePath, '.mdx');
+                    const deploymentPath = \`contents/deployments/\${evidenceId}.json\`;	
                     let refUID = '';
                     
                     if (fs.existsSync(deploymentPath)) {
@@ -411,10 +414,10 @@ jobs:
                         const deploymentData = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
                         if (deploymentData.attestationUID) {
                           refUID = deploymentData.attestationUID;
-                          console.log(\`📎 Found previous attestation UID: \${refUID}\`);
+                          console.log(\`📎 Found previous attestation UID: \${refUID}\`);	
                         }
                       } catch (error) {
-                        console.warn(\`⚠️ Error reading deployment file: \${error.message}\`);
+                        console.warn(\`⚠️ Error reading deployment file: \${error.message}\`);	
                       }
                     }
                     
@@ -427,8 +430,7 @@ jobs:
                     
                     // Create attestation
                     const attestationUID = await eas({ data });
-                    console.log(\`✅ Attestation created with UID: \${attestationUID}\`);
-                    
+                    console.log(\`✅ Attestation created with UID: \${attestationUID}\`);                    
                     // Store result for deployment file creation
                     attestationResults.push({
                       ...result,
@@ -467,20 +469,19 @@ jobs:
                 
                 for (const result of results) {
                   // Extract evidenceId from the relative path
-                  const evidenceId = path.basename(path.dirname(result.relativePath));
+                  const evidenceId = path.basename(result.relativePath, '.mdx');
                   
                   // Create deployment file path
-                  const deploymentPath = \`app/contents/deployments/\${evidenceId}.json\`;
+                  const deploymentPath = \`contents/deployments/\${evidenceId}.json\`;	
                   
                   // Read existing deployment data if it exists
                   let existingData = {};
                   if (fs.existsSync(deploymentPath)) {
                     try {
                       existingData = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
-                      console.log(\`📄 Found existing deployment file: \${deploymentPath}\`);
+                      console.log(\`📄 Found existing deployment file: \${deploymentPath}\`);	
                     } catch (error) {
-                      console.warn(\`⚠️ Error reading existing deployment file: \${error.message}\`);
-                    }
+                      console.warn(\`⚠️ Error reading existing deployment file: \${error.message}\`);                    }
                   }
                   
                   // Create history entry from existing data if it exists
@@ -514,8 +515,7 @@ jobs:
                   
                   // Write deployment file
                   fs.writeFileSync(deploymentPath, JSON.stringify(deploymentData, null, 2));
-                  console.log(\`✅ \${fs.existsSync(deploymentPath) ? 'Updated' : 'Created'} deployment file: \${deploymentPath}\`);
-                }
+                  console.log(\`✅ \${fs.existsSync(deploymentPath) ? 'Updated' : 'Created'} deployment file: \${deploymentPath}\`);	                }
               } catch (error) {
                 console.error('Error creating deployment files:', error);
                 process.exit(1);
@@ -524,6 +524,41 @@ jobs:
           else
             echo "❌ No attestation results found"
             exit 1
+          fi
+
+      - name: Display EAS attestation results
+        run: |
+          echo "## EAS Attestation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "attestation-results.json" ]; then
+            RESULT_COUNT=$(node -e "const fs = require('fs'); try { const results = JSON.parse(fs.readFileSync('attestation-results.json', 'utf8')); console.log(results.length); } catch (e) { console.log(0); }")
+            if [ "$RESULT_COUNT" -gt 0 ]; then
+              echo "### 🛡️ Successfully Created EAS Attestations:" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**📊 Total attestations:** $RESULT_COUNT" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              node -e '
+                const fs = require("fs");
+                const results = JSON.parse(fs.readFileSync("attestation-results.json", "utf8"));
+                results.forEach((result, index) => {
+                  console.log(`#### 📄 ${result.relativePath}`);
+                  console.log("");
+                  console.log(`- **Attestation UID:** \`${result.attestationUID}\``);
+                  if(result.transactionHash) console.log(`- **Transaction Hash:** \`${result.transactionHash}\``);
+                  if(result.blockNumber) console.log(`- **Block Number:** ${result.blockNumber}`);
+                  console.log(`- **IPFS Hash:** \`${result.ipfsHash}\``);
+                  console.log(`- **File Size:** ${result.size} bytes`);
+                  console.log(`- **Attested:** ${new Date(result.timestamp).toLocaleString()}`);
+                  console.log("");
+                });
+              ' >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ No attestations were created." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ No EAS attestation results found." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This may indicate an error during the attestation process." >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Commit and push deployment files
@@ -550,7 +585,7 @@ jobs:
           git checkout -b temp-branch origin/$BRANCH_NAME || git checkout temp-branch
 
           # Add and commit changes
-          git add app/contents/deployments/
+          git add contents/deployments/
           git commit -m "chore(actions): add deployment files for evidence attestations" || echo "No changes to commit"
 
           # Push to the original branch

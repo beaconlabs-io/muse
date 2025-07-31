@@ -1,11 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import {
-  ChartNetwork,
-  ChevronDown,
-  ChevronRight,
-  Command,
-  Search,
-} from "lucide-react";
+import { ChartNetwork, ChevronDown, ChevronRight, Search } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -49,11 +44,17 @@ export async function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Command className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <Image
+                    src="/beaconlabs01.jpg"
+                    alt="BeaconLabsLogo"
+                    width={100}
+                    height={100}
+                    className="object-contain"
+                  />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Causal Oracle</span>
+                  <span className="truncate font-medium">MUSE</span>
                   <span className="truncate text-xs">by Beacon Labs</span>
                 </div>
               </Link>
@@ -92,7 +93,7 @@ export async function AppSidebar() {
                         <SidebarMenuSubButton asChild>
                           <Link href={`/evidence/${item.evidence_id}`}>
                             <span className="text-sm truncate">
-                              {item.title}
+                              {`[${item.evidence_id}] ${item.title}`}
                             </span>
                           </Link>
                         </SidebarMenuSubButton>
