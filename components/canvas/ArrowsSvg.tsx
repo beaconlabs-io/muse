@@ -8,9 +8,15 @@ interface ArrowsSvgProps {
   onDeleteArrow: (arrowId: string) => void;
 }
 
-export function ArrowsSvg({ arrows, cards, zoom, canvasOffset, onDeleteArrow }: ArrowsSvgProps) {
+export function ArrowsSvg({
+  arrows,
+  cards,
+  zoom,
+  canvasOffset,
+  onDeleteArrow,
+}: ArrowsSvgProps) {
   const getCardCenter = (cardId: string) => {
-    const card = cards.find(c => c.id === cardId);
+    const card = cards.find((c) => c.id === cardId);
     if (!card) return { x: 0, y: 0 };
     return {
       x: (card.x + 75) * zoom + canvasOffset.x, // 75 is half of min-width
@@ -19,18 +25,15 @@ export function ArrowsSvg({ arrows, cards, zoom, canvasOffset, onDeleteArrow }: 
   };
 
   return (
-    <svg 
-      className="absolute inset-0 w-full h-full" 
-      style={{ zIndex: 0 }}
-    >
+    <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 0 }}>
       {arrows.map((arrow) => {
         const from = getCardCenter(arrow.fromCardId);
         const to = getCardCenter(arrow.toCardId);
-        
+
         // Calculate arrow head position
         const angle = Math.atan2(to.y - from.y, to.x - from.x);
         const arrowLength = 10;
-        
+
         return (
           <g key={arrow.id}>
             {/* Clickable invisible line for deletion */}
@@ -60,14 +63,18 @@ export function ArrowsSvg({ arrows, cards, zoom, canvasOffset, onDeleteArrow }: 
             />
             {/* Arrow head */}
             <polygon
-              points={`${to.x},${to.y} ${to.x - arrowLength * Math.cos(angle - Math.PI / 6)},${to.y - arrowLength * Math.sin(angle - Math.PI / 6)} ${to.x - arrowLength * Math.cos(angle + Math.PI / 6)},${to.y - arrowLength * Math.sin(angle + Math.PI / 6)}`}
+              points={`${to.x},${to.y} ${
+                to.x - arrowLength * Math.cos(angle - Math.PI / 6)
+              },${to.y - arrowLength * Math.sin(angle - Math.PI / 6)} ${
+                to.x - arrowLength * Math.cos(angle + Math.PI / 6)
+              },${to.y - arrowLength * Math.sin(angle + Math.PI / 6)}`}
               fill="#374151"
               className="pointer-events-none"
             />
           </g>
         );
       })}
-      
+
       {/* SVG definitions */}
       <defs>
         <marker
@@ -78,10 +85,7 @@ export function ArrowsSvg({ arrows, cards, zoom, canvasOffset, onDeleteArrow }: 
           refY="3.5"
           orient="auto"
         >
-          <polygon
-            points="0 0, 10 3.5, 0 7"
-            fill="#374151"
-          />
+          <polygon points="0 0, 10 3.5, 0 7" fill="#374151" />
         </marker>
       </defs>
     </svg>

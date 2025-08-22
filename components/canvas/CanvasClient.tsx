@@ -142,10 +142,6 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
     ));
   }, []);
 
-  const toggleConnectionMode = useCallback(() => {
-    setConnectionMode(prev => !prev);
-    setConnectionStart(null);
-  }, []);
 
   const startConnectionFromCard = useCallback((cardId: string) => {
     setConnectionMode(true);
