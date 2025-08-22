@@ -8,27 +8,82 @@ export async function getCanvasData(): Promise<{
   // In a real app, this would fetch from a database
   // For now, return default data that can be SSR'd
   const defaultCards: PostItCard[] = [
+    // Activities Section
     {
-      id: "welcome-card",
-      x: 200,
+      id: "activity-1",
+      x: 100,
       y: 150,
-      content: "Welcome to Canvas!\n\nDouble-click to edit\nDrag to move\nClick + to connect",
-      color: CARD_COLORS[0],
+      content: "Research evidence\ncollection",
+      color: CARD_COLORS[3], // blue
     },
     {
-      id: "features-card", 
+      id: "activity-2",
+      x: 100,
+      y: 300,
+      content: "Policy development\nworkshops",
+      color: CARD_COLORS[3], // blue
+    },
+    
+    // Outputs Section
+    {
+      id: "output-1",
       x: 450,
-      y: 250,
-      content: "Canvas Features:\n• Post-it notes\n• Drag & drop\n• Arrow connections\n• Zoom & pan",
-      color: CARD_COLORS[2],
+      y: 150,
+      content: "Evidence database\nwith attestations",
+      color: CARD_COLORS[4], // green
+    },
+    {
+      id: "output-2",
+      x: 450,
+      y: 300,
+      content: "Policy proposal\ndocuments",
+      color: CARD_COLORS[4], // green
+    },
+    
+    // Outcomes Section
+    {
+      id: "outcome-1",
+      x: 800,
+      y: 200,
+      content: "Improved policy\ndecision making",
+      color: CARD_COLORS[0], // yellow
+    },
+    
+    // Impact Section
+    {
+      id: "impact-1",
+      x: 1150,
+      y: 200,
+      content: "Better societal\noutcomes",
+      color: CARD_COLORS[5], // purple
     }
   ];
 
   const defaultArrows: Arrow[] = [
     {
-      id: "welcome-arrow",
-      fromCardId: "welcome-card",
-      toCardId: "features-card",
+      id: "activity-to-output-1",
+      fromCardId: "activity-1",
+      toCardId: "output-1",
+    },
+    {
+      id: "activity-to-output-2", 
+      fromCardId: "activity-2",
+      toCardId: "output-2",
+    },
+    {
+      id: "output-to-outcome-1",
+      fromCardId: "output-1",
+      toCardId: "outcome-1",
+    },
+    {
+      id: "output-to-outcome-2",
+      fromCardId: "output-2", 
+      toCardId: "outcome-1",
+    },
+    {
+      id: "outcome-to-impact",
+      fromCardId: "outcome-1",
+      toCardId: "impact-1",
     }
   ];
 

@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { ArrowsSvg } from "./ArrowsSvg";
 import { CanvasToolbar } from "./CanvasToolbar";
+import { LogicModelSections } from "./LogicModelSections";
 import { PostItCard as PostItCardComponent } from "./PostItCard";
 import { PostItCard, Arrow, CARD_COLORS } from "@/types";
 
@@ -26,13 +27,29 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  const addCard = useCallback(() => {
+  const addCard = useCallback((section?: string) => {
+    const getSectionPosition = (sectionType?: string) => {
+      switch (sectionType) {
+        case "activities":
+          return { x: 100 + Math.random() * 200, y: 150 + Math.random() * 300, color: CARD_COLORS[3] }; // blue
+        case "outputs":
+          return { x: 450 + Math.random() * 200, y: 150 + Math.random() * 300, color: CARD_COLORS[4] }; // green
+        case "outcomes":
+          return { x: 800 + Math.random() * 200, y: 150 + Math.random() * 300, color: CARD_COLORS[0] }; // yellow
+        case "impact":
+          return { x: 1150 + Math.random() * 200, y: 150 + Math.random() * 300, color: CARD_COLORS[5] }; // purple
+        default:
+          return { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100, color: CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)] };
+      }
+    };
+
+    const position = getSectionPosition(section);
     const newCard: PostItCard = {
       id: Date.now().toString(),
-      x: Math.random() * 400 + 100,
-      y: Math.random() * 300 + 100,
-      content: "New note",
-      color: CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)],
+      x: position.x,
+      y: position.y,
+      content: section ? `New ${section} note` : "New note",
+      color: position.color,
     };
     setCards(prev => [...prev, newCard]);
   }, []);
@@ -156,8 +173,6 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
     <div className="h-screen w-full flex flex-col">
       <CanvasToolbar
         onAddCard={addCard}
-        connectionMode={connectionMode}
-        onToggleConnectionMode={toggleConnectionMode}
         zoom={zoom}
         onZoomChange={handleZoom}
       />
@@ -175,6 +190,13 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
           backgroundPosition: `${canvasOffset.x}px ${canvasOffset.y}px`
         }}
       >
+        {/* Logic Model Sections */}
+        <LogicModelSections
+          zoom={zoom}
+          canvasOffset={canvasOffset}
+          onAddCardToSection={addCard}
+        />
+
         <ArrowsSvg
           arrows={arrows}
           cards={cards}
