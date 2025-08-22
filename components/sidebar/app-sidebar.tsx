@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChartNetwork, ChevronDown, ChevronRight, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, Palette } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -27,10 +27,15 @@ const menu = [
     icon: Search,
     href: "/search",
   },
+  // {
+  //   title: "Graph View",
+  //   icon: ChartNetwork,
+  //   href: "/graph",
+  // },
   {
-    title: "Graph View",
-    icon: ChartNetwork,
-    href: "/graph",
+    title: "Canvas (Beta)",
+    icon: Palette,
+    href: "/canvas",
   },
 ];
 
