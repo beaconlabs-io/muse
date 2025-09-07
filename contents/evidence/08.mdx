@@ -1,0 +1,62 @@
+---
+evidence_id: "08"
+results:
+  - intervention: "The platform owner enters the market by introducing its proprietary product, which is based on the complementary firm’s OSS."
+    outcome_variable: "Overall OSS contributions by combining both existing and new contributors(the number of commits, lines of code changed/added, and files of code changed/added)"
+    outcome: "+"
+strength: "3"
+methodologies:
+  - "DID"
+version: "1.0.0"
+datasets:
+  - ""
+title: "How Platform Owner Entry Affects Open Source Contribution? Evidence from GitHub Developers"
+date: "2024-06-20"
+tags:
+  - "oss"
+  - "public goods funding"
+citation:
+  - name: "How Platform Owner Entry Affects Open Source Contribution? Evidence from GitHub Developers"
+    URL: "https://questromworld.bu.edu/platformstrategy/wp-content/uploads/sites/49/2024/06/PlatStrat2024_paper_100.pdf"
+author: "BeaconLabs"
+---
+
+## Key Points
+
+This study explores how a platform owner’s market entry—by leveraging a complementary firm’s open-source technology—affects the external knowledge sourcing of the complementary firm, focusing on the willingness of GitHub developers to contribute. Using the staggered rollout of Amazon AWS’s Elasticsearch as a natural experiment, the analysis shows that the platform owner’s entry reduces contributions from existing contributors but substantially increases contributions from new contributors, leading to an overall increase in contributions to the open-source technology. This finding provides a new perspective: contrary to common concerns that platform owners’ entry harms open-source startups, from a technology development standpoint, such entry may not necessarily be detrimental.
+
+## Background
+
+Given the opposing effects of reduced contributions by existing contributors and increased contributions by new contributors, it was an important question to assess how the platform owner’s entry affects total contributions to the open-source project.
+
+## Analysis Method
+
+### Dataset
+
+Weekly contributions from all cloud developers were aggregated at the country level and analyzed at the country-week level.
+
+### Intervation / Explanatory Variable
+
+- AWS’s market entry with Amazon Elasticsearch Service.
+  - Entry is a dummy variable equal to 1 if AWS entered the country where the contributor resides, and 0 otherwise.
+  - After is a dummy variable equal to 1 if AWS had already entered the contributor’s country during or before a given period, and 0 otherwise.
+  - The interaction term Entry × After was used to measure the treatment effect.
+
+### Dependent Variable
+
+- Overall OSS contributions by combining both existing and new contributors(the number of commits, lines of code changed/added, and files of code changed/added)
+  - Overall contributions were measured as the natural logarithm of the total number of commits by all contributors.
+  - Robustness checks also included the natural logarithm of lines of code and files changed/added.
+
+### Identification Strategy
+
+- After aggregating data from both existing and new contributors, stacked difference-in-differences analysis was applied at the country-week level.
+
+### Results
+
+- The analysis shows that the platform owner’s entry increases overall contributions to the open-source software project by cloud developers.
+- This result suggests that, contrary to concerns that platform owners’ entry harms open-source startups or communities, such entry may actually enhance the complementary firm’s ability to attract external knowledge contributions.
+
+### Citation
+
+[https://questromworld.bu.edu/platformstrategy/wp-content/uploads/sites/49/2024/06/PlatStrat2024_paper_100.pdf](https://questromworld.bu.edu/platformstrategy/wp-content/uploads/sites/49/2024/06/PlatStrat2024_paper_100.pdf)
