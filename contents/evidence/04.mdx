@@ -22,11 +22,23 @@ author: "BeaconLabs"
 ---
 
 ## Key Points
-
+- The SuperStacks program achieved **$58.0M in net TVL inflows** during its implementation period, with **$53.7M retained 30 days after the program concluded**. This translates to **$23.2/OP and $21.5/OP** after costs, respectively.
+- Findings supported the theory that strong demand-side activity can lift post-incentive equilibrium levels, though a more rigorous analysis is still needed.
+- **Incentivized lending pools generally demonstrated higher liquidity retention**.
+- However, TVL retention in DEXs appeared **inflated by Uniswap's concurrent Gauntlet campaign**. Specifically, when the two co-incentivized DEX pools were excluded, retained TVL inflows dropped to $48.2M, revealing a significant divergence between the lending and DEX verticals.
+- Metrics for measuring demand-side traction included trading volume per TVL for DEX pools and utilization rate for lending pools. For DEX pools, a moderate correlation was observed between peak net TVL inflows and trading volume per TVL, hinting at possible synergistic effects.
+- A key limitation was that isolating the program's causal effect alone was extremely difficult due to numerous confounding variables, such as external co-incentives and broader market volatility.
 
 ## Background
 
+SuperStacks was the **Optimism Foundation's first proactive DeFi incentive pilot program**. It was designed with the goal of **increasing liquidity for interoperable assets (e.g., USD₮0) across the Superchain**. At its core, the program aimed to help these assets overcome the cold start problem and **test new mechanisms for establishing sustainable DeFi growth loops**.
 
+The program's design was based on a theoretical framework suggesting that a two-pronged approach, focusing on both supply-side and demand-side activity, could initiate a sustainable flywheel effect for interoperable assets on the Superchain, ultimately catalyzing lasting liquidity growth.
+
+This theory is broken down into three phases:
+1.  **Supply-Side Growth**: Available incentives attract deposits into DEX pools, which creates deeper liquidity and improves the execution quality for trades. On the lending side, an increase in lending supply reduces the borrow rate.
+2.  **Demand-Side Growth**: Improved trading conditions draw in more trades that are routed through the incentivized DEX pools, which increases trading volumes and generates more fees for LPs. Similarly, more competitive borrow rates attract more borrowers, which raises utilization rates and generates a higher yield for lenders.
+3.  **Sustainable Traction**: Once incentives are switched off, a portion of the TVL (Total Value Locked) and net liquidity leaves the incentivized pools, but due to higher fee and yield generation for LPs and lenders, liquidity settles at higher baseline levels compared to the pre-incentives period.
 
 ## Analysis Method
 
