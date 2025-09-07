@@ -1,0 +1,67 @@
+---
+evidence_id: "09"
+results:
+  - intervention: "Type of offline meeting (work-oriented vs. social)"
+    outcome_variable: "Increase the volume of users’ editing activity (number of edits) and the posibility of presence of editing"
+    outcome: "+-"
+strength: "3"
+methodologies:
+  - "DID, Covariate matching"
+version: "1.0.0"
+datasets:
+  - ""
+title: "How offline meetings affect online activities: the case of Wikipedia"
+date: "2024-11-05"
+tags:
+  - "oss"
+  - "public goods funding"
+citation:
+  - name: "How offline meetings affect online activities: the case of Wikipedia"
+    URL: "https://epjdatascience.springeropen.com/articles/10.1140/epjds/s13688-024-00506-w"
+author: "BeaconLabs"
+---
+
+## Key Points
+
+- In the short term (1 week), work-related meetings showed a stronger positive effect than social meetings in terms of raising the likelihood of resuming editing.
+- However, this effect did not extend to the level (intensity) of editing, and in the medium term (1 month) and long term (1 year), no significant differences were observed between work-oriented and social meetings.
+- Overall, the value of social meetings for community building appears to match the effect of work meetings on long-term editor productivity.
+
+## Background
+
+Offline meetings include those primarily for social interaction and those that are work-oriented, directly focusing on improving Wikipedia. Theoretically, work-oriented meetings could yield larger increases in contributions by enhancing users’ capacity to contribute or heightening their awareness of needs.
+
+## Analysis Method
+
+### Dataset
+
+- We combine a comprehensive dataset on informal offline meetings in the German-language Wikipedia community from 2001 to 2020 with large-scale online activity data.
+- The dataset includes information on 4,408 small-scale meetings and 4,013 participating users.
+- All online actions on Wikipedia are recorded, and users’ editing activities are measured from metadata dumps.
+- Meetings are classified mainly into social (77%) and work-oriented (23%).
+
+### Intervation / Explanatory Variable
+
+- The intervention for this outcome is the type of offline meeting (work-oriented vs. social).
+- The models include indicators for meeting type and their interaction terms.
+
+### Dependent Variable
+
+- Outcome variables are the volume of users’ editing activity (number of edits) and the presence/absence of editing.
+- Analyses are conducted over short (1 week), medium (1 month), and long (1 year) horizons.
+
+### Identification Strategy
+
+- Quasi-experimental approach: We employ a difference-in-differences (DiD) design comparing meeting participants (treatment group) with comparable non-participants selected via matching (control group).
+- Covariate matching: From a pool of non-participants, we construct a control group most similar to participants based on five features (days since registration; cumulative activity in mainspace and outside mainspace from registration to the meeting; and recent activity in mainspace and outside mainspace over the 7-day, 1-month, 2-month, and 1-year periods prior to the meeting). This aims to minimize pre-existing differences between groups.
+- Statistical models: For the binary outcome of resuming activity, we use a multilevel linear probability model (LPM); for changes in activity volume, we use multilevel negative binomial models. Control variables (prior activity level, tenure, administrator status, and meeting year) are included.
+
+### Results
+
+- Short term (1 week): For the likelihood that previously inactive users resume editing, work-related meetings showed a stronger positive effect than social meetings. However, they did not affect the intensity of editing itself.
+- Medium term (1 month) and long term (1 year): No significant differences were observed between work-oriented and social meetings in either resuming editing or editing intensity.
+- These results provide only limited support for Hypothesis that work-related meetings increase contributions more than social meetings. While there is a short-term difference in re-engagement, there is no clear difference in long-term contribution growth.
+
+### Citation
+
+[https://epjdatascience.springeropen.com/articles/10.1140/epjds/s13688-024-00506-w](https://epjdatascience.springeropen.com/articles/10.1140/epjds/s13688-024-00506-w)
