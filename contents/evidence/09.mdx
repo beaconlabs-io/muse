@@ -1,0 +1,68 @@
+---
+evidence_id: "09"
+results:
+  - intervention: "Participation in Wikipedia offline meetings"
+    outcome_variable: "Increase in contributions to Wikipedia(overall change in editing activity)"
+    outcome: "+"
+strength: "3"
+methodologies:
+  - "DID, Covariate matching"
+version: "1.0.0"
+datasets:
+  - ""
+title: "How offline meetings affect online activities: the case of Wikipedia"
+date: "2024-11-05"
+tags:
+  - "oss"
+  - "public goods funding"
+citation:
+  - name: "How offline meetings affect online activities: the case of Wikipedia"
+    URL: "https://epjdatascience.springeropen.com/articles/10.1140/epjds/s13688-024-00506-w"
+author: "BeaconLabs"
+---
+
+## Key Points
+
+- Participation in offline meetings exerts a positive, statistically significant effect on users’ contribution behavior over the short term (1 week), medium term (1 month), and long term (1 year).
+- The magnitude of decline in editing activity among participants is significantly smaller than the decline observed among comparable non-participants.
+- Notably, users attending their first meeting were observed to increase their editing thereafter.
+
+## Background
+
+Open-source communities and peer-production projects face challenges in long-term sustainability, and offline gatherings are increasingly recognized for promoting community resilience. Although Wikipedia struggles with declining activity and retention of new users, the German-language Wikipedia hosts regular offline meetings. These meetings provide opportunities to form personal ties, and face-to-face interaction is thought to strengthen commitment to the project and reinforce identity.
+
+## Analysis Method
+
+### Dataset
+
+- We combine a comprehensive dataset on informal offline meetings in the German-language Wikipedia community from 2001 to 2020 with large-scale online activity data.
+- The dataset includes information on 4,408 small-scale meetings and 4,013 participating users.
+- All online actions on Wikipedia are recorded, and users’ editing activities are measured from metadata dumps.
+
+### Intervation / Explanatory Variable
+
+- The intervention for this outcome is participation in offline meetings.
+- The analysis examines whether a user attended a meeting, and in particular whether it was their first meeting.
+
+### Dependent Variable
+
+- The outcome variable is the volume of a user’s editing activity on Wikipedia (number of edits).
+- This is measured separately as the total number of edits across all namespaces and edits in the article main namespace.
+- Activity is analyzed over windows of 1 week (7 days), 1 month (28 days), and 1 year (364 days) before and after the meeting.
+
+### Identification Strategy
+
+- Quasi-experimental approach: We employ a difference-in-differences (DiD) design comparing meeting participants (treatment group) with comparable non-participants selected via matching (control group).
+- Covariate matching: From a pool of non-participants, we construct a control group most similar to participants based on five features (days since registration; cumulative activity in mainspace and outside mainspace from registration to the meeting; and recent activity in mainspace and outside mainspace over the 7-day, 1-month, 2-month, and 1-year periods prior to the meeting). This aims to minimize pre-existing differences between groups.
+- Statistical models: For the binary outcome of resuming activity, we use a multilevel linear probability model (LPM); for changes in activity volume, we use multilevel negative binomial models. Control variables (prior activity level, tenure, administrator status, and meeting year) are included.
+
+### Results
+
+- Compared to the control group, participants’ contributions increased significantly over the short, medium, and long terms.
+- Among users inactive before the meeting, the probability of resuming editing after the meeting increased substantially relative to the control group (e.g., the probability of resuming edits in mainspace rose from 16.7% in the control group to 33.4% among participants).
+- While the control group tended to reduce their editing, the decline among participants was significantly smaller, suggesting that offline interaction helps mitigate the broader decline of online communities.
+- Attending a first meeting showed a particularly strong positive effect, increasing editing activity more than attending other meetings.
+
+### Citation
+
+[https://epjdatascience.springeropen.com/articles/10.1140/epjds/s13688-024-00506-w](https://epjdatascience.springeropen.com/articles/10.1140/epjds/s13688-024-00506-w)
