@@ -1,0 +1,76 @@
+---
+evidence_id: "03"
+results:
+  - intervention: "SuperStacks: A New Approach to Rewards on the Superchain"
+    outcome_variable: "Growth and retention of TVL"
+    outcome: "+"
+strength: "3"
+methodologies:
+  - "pro-rata model, One-sided t-tests"
+version: "1.0.0"
+datasets:
+  - ""
+title: "SuperStacks Impact Analysis"
+date: "2025-08-15"
+tags:
+  - "oss"
+  - "public goods funding"
+citation:
+  - name: "SuperStacks Impact Analysis"
+    URL: "https://gov.optimism.io/t/superstacks-impact-analysis/10225"
+author: "BeaconLabs"
+---
+
+## Key Points
+
+
+## Background
+
+
+
+## Analysis Method
+
+### Dataset
+
+The datasets and methods used for the SuperStacks analysis were:
+
+- Period: 76-day incentive period (April 16 – June 30) and a 30-day retention evaluation period after program end (through July 30).
+- Data sources: 25 pools and vaults targeted by SuperStacks incentives.
+- Metrics:
+  - TVL (Total Value Locked): Net TVL inflows during the program and retained inflows after program end.
+  - Trading volume: Indicator of demand-side activity in DEX pools.
+  - Utilization: Indicator of demand-side activity in lending pools.
+  - Cost efficiency: Net TVL inflows per OP token ($/OP).
+
+### Intervation / Explanatory Variable
+
+SuperStacks Program: 
+
+SuperStacks was the Optimism Foundation’s first attempt at a “proactive DeFi incentive,” designed as a pilot program to increase liquidity of interoperable assets across the Superchain. The program was built on a two-pronged approach targeting both supply-side and demand-side activities. Specifically, incentives were provided to encourage supply-side actions (deposits into DEX pools, increased lending supply), which in turn aimed to stimulate demand-side activities (higher trading volume, increased utilization).
+
+### Dependent Variable
+
+Growth and retention of TVL (Total Value Locked): Measuring both the increase in TVL through incentives and the extent to which that TVL was maintained after incentives ended. The analysis centered on “retained TVL inflows.”
+
+### Identification Strategy
+
+A pro-rata model was applied to disentangle the complexity of overlapping incentive programs, attributing impact based on each program’s share of total USD incentives.
+
+To evaluate pool-level performance, incentivized pools (treatment group) were paired with comparable non-incentivized pools (control group) on the same chain and protocol. One-sided t-tests were conducted on changes in TVL and trading volume.
+
+The analysis focused on DEX pools (9 pairs) that passed statistical filtering.
+
+### Results
+- Overall TVL Inflow and Retention:
+  - During the program, the SuperStacks initiative achieved $58M in net TVL inflows, with $53.7M retained 30 days after the program ended.
+  - Considering costs, this corresponds to $23.2 net TVL per 1 OP during the program, and $21.5 per 1 OP after the program.
+  - Across all incentivized pools and vaults, $87.7M of TVL was retained 30 days after incentives ended.
+  - Net TVL inflows peaked before the program ended, at $15.7M in DEXs and $70M in lending markets.
+- DEX vs. Lending Markets:
+  - Of the net TVL inflows during the program, DEXs accounted for 31.6% and lending markets 68.4%.
+  - Lending markets showed stronger liquidity retention compared to DEXs. Lending pools, especially deposit-only vaults such as Morpho’s, often showed growth.
+  - DEX TVL retention appeared inflated by concurrent incentive programs run by the Uniswap Foundation and Gauntlet. Excluding the two DEX pools covered by these joint incentives, retained TVL inflows fell to $48.2M, revealing a notable divergence between lending and DEX outcomes.
+
+### Citation
+
+[https://gov.optimism.io/t/superstacks-impact-analysis/10225](https://gov.optimism.io/t/superstacks-impact-analysis/10225)
