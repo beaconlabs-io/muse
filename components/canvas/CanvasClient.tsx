@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { extractEffectData } from "@/components/effect-icons";
 import { ArrowsSvg } from "./ArrowsSvg";
 import { CanvasToolbar } from "./CanvasToolbar";
+import { EvidencePanel } from "./EvidencePanel";
 import { LogicModelSections } from "./LogicModelSections";
 import { PostItCard as PostItCardComponent } from "./PostItCard";
-import { PostItCard, Arrow, CARD_COLORS } from "@/types";
+import { PostItCard, Arrow, CARD_COLORS, Evidence } from "@/types";
 
 interface CanvasClientProps {
   initialCards?: PostItCard[];
@@ -25,6 +27,8 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
   const [connectionMode, setConnectionMode] = useState(false);
   const [connectionStart, setConnectionStart] = useState<string | null>(null);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [showEvidencePanel, setShowEvidencePanel] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<string>("");
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const addCard = useCallback((section?: string) => {
@@ -152,6 +156,51 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
     setArrows(prev => prev.filter(a => a.id !== arrowId));
   }, []);
 
+  const addEvidenceToCanvas = useCallback((evidence: Evidence) => {
+    // Convert evidence to canvas cards based on its components
+    const newCards: PostItCard[] = [];
+    const newArrows: Arrow[] = [];
+    const baseId = `evidence-${evidence.evidence_id}-${Date.now()}`;
+    
+    // Add cards for each result (intervention -> outcome)
+    evidence.results.forEach((result, index) => {
+      const outputCardId = `${baseId}-output-${index}`;
+      const outcomeCardId = `${baseId}-outcome-${index}`;
+
+      // Output card (intervention)
+      newCards.push({
+        id: outputCardId,
+        x: 450 + Math.random() * 200,
+        y: 150 + index * 120 + Math.random() * 50,
+        content: result.intervention,
+        color: CARD_COLORS[4], // green for outputs
+      });
+
+      // Outcome card with variable and effect information
+      const effectId = parseInt(result.outcome) || 0;
+      const effectData = extractEffectData(effectId);
+      const effectTitle = effectData?.title || "Unclear";
+      
+      newCards.push({
+        id: outcomeCardId,
+        x: 800 + Math.random() * 200,
+        y: 200 + index * 120 + Math.random() * 50,
+        content: `${effectTitle} effect on ${result.outcome_variable}`,
+        color: CARD_COLORS[0], // yellow for outcomes
+      });
+
+      // Create arrow connecting intervention to outcome
+      newArrows.push({
+        id: `${baseId}-arrow-${index}`,
+        fromCardId: outputCardId,
+        toCardId: outcomeCardId,
+      });
+    });
+
+    setCards(prev => [...prev, ...newCards]);
+    setArrows(prev => [...prev, ...newArrows]);
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -171,70 +220,81 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
         onAddCard={addCard}
         zoom={zoom}
         onZoomChange={handleZoom}
+        onToggleEvidencePanel={() => setShowEvidencePanel(prev => !prev)}
+        showEvidencePanel={showEvidencePanel}
+        selectedGoal={selectedGoal}
+        onGoalChange={setSelectedGoal}
       />
 
-      {/* Canvas */}
-      <div 
-        ref={canvasRef}
-        className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing"
-        onMouseDown={(e) => handleMouseDown(e)}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        style={{ 
-          backgroundImage: "radial-gradient(circle, #e5e7eb 1px, transparent 1px)",
-          backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
-          backgroundPosition: `${canvasOffset.x}px ${canvasOffset.y}px`
-        }}
-      >
-        {/* Logic Model Sections */}
-        <LogicModelSections
-          zoom={zoom}
-          canvasOffset={canvasOffset}
-          onAddCardToSection={addCard}
-        />
-
-        <ArrowsSvg
-          arrows={arrows}
-          cards={cards}
-          zoom={zoom}
-          canvasOffset={canvasOffset}
-          onDeleteArrow={deleteArrow}
-        />
-
-        {/* Post-it Cards */}
-        {cards.map((card) => (
-          <PostItCardComponent
-            key={card.id}
-            card={card}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Canvas */}
+        <div 
+          ref={canvasRef}
+          className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing"
+          onMouseDown={(e) => handleMouseDown(e)}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          style={{ 
+            backgroundImage: "radial-gradient(circle, #e5e7eb 1px, transparent 1px)",
+            backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+            backgroundPosition: `${canvasOffset.x}px ${canvasOffset.y}px`
+          }}
+        >
+          {/* Logic Model Sections */}
+          <LogicModelSections
             zoom={zoom}
             canvasOffset={canvasOffset}
-            isDragged={draggedCard === card.id}
-            isEditing={editingCard === card.id}
-            isConnectionMode={connectionMode}
-            isConnectionStart={connectionStart === card.id}
-            isHovered={hoveredCard === card.id}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              handleMouseDown(e, card.id);
-            }}
-            onMouseEnter={() => setHoveredCard(card.id)}
-            onMouseLeave={() => setHoveredCard(null)}
-            onDoubleClick={(e) => {
-              e.stopPropagation();
-              if (!connectionMode) {
-                handleCardDoubleClick(card.id);
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Delete" || e.key === "Backspace") {
-                deleteCard(card.id);
-              }
-            }}
-            onContentChange={(newContent) => handleCardContentChange(card.id, newContent)}
-            onEditComplete={() => setEditingCard(null)}
-            onStartConnection={() => startConnectionFromCard(card.id)}
+            onAddCardToSection={addCard}
           />
-        ))}
+
+          <ArrowsSvg
+            arrows={arrows}
+            cards={cards}
+            zoom={zoom}
+            canvasOffset={canvasOffset}
+            onDeleteArrow={deleteArrow}
+          />
+
+          {/* Post-it Cards */}
+          {cards.map((card) => (
+            <PostItCardComponent
+              key={card.id}
+              card={card}
+              zoom={zoom}
+              canvasOffset={canvasOffset}
+              isDragged={draggedCard === card.id}
+              isEditing={editingCard === card.id}
+              isConnectionMode={connectionMode}
+              isConnectionStart={connectionStart === card.id}
+              isHovered={hoveredCard === card.id}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                handleMouseDown(e, card.id);
+              }}
+              onMouseEnter={() => setHoveredCard(card.id)}
+              onMouseLeave={() => setHoveredCard(null)}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                if (!connectionMode) {
+                  handleCardDoubleClick(card.id);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Delete" || e.key === "Backspace") {
+                  deleteCard(card.id);
+                }
+              }}
+              onContentChange={(newContent) => handleCardContentChange(card.id, newContent)}
+              onEditComplete={() => setEditingCard(null)}
+              onStartConnection={() => startConnectionFromCard(card.id)}
+            />
+          ))}
+        </div>
+
+        {/* Evidence Panel */}
+        {showEvidencePanel && (
+          <EvidencePanel onAddEvidenceToCanvas={addEvidenceToCanvas} />
+        )}
       </div>
     </div>
   );

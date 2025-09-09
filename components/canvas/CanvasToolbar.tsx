@@ -1,10 +1,16 @@
-import { Plus, Move, ZoomIn, ZoomOut } from "lucide-react";
+import { Plus, Move, ZoomIn, ZoomOut, FileText, Target } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CanvasToolbarProps {
   onAddCard: (section?: string) => void;
   zoom: number;
   onZoomChange: (delta: number) => void;
+  onToggleEvidencePanel: () => void;
+  showEvidencePanel: boolean;
+  selectedGoal?: string;
+  onGoalChange: (goal: string) => void;
 }
 
 const LOGIC_MODEL_SECTIONS = [
@@ -14,13 +20,53 @@ const LOGIC_MODEL_SECTIONS = [
   { value: "impact", label: "Impact", color: "#e9d5ff" },
 ] as const;
 
+const PROJECT_GOALS = [
+  { value: "reduce-poverty", label: "Reduce Poverty" },
+  { value: "improve-education", label: "Improve Education" },
+  { value: "enhance-healthcare", label: "Enhance Healthcare" },
+  { value: "promote-equality", label: "Promote Gender Equality" },
+  { value: "environmental-sustainability", label: "Environmental Sustainability" },
+  { value: "economic-growth", label: "Economic Growth" },
+  { value: "social-cohesion", label: "Social Cohesion" },
+  { value: "public-safety", label: "Public Safety" },
+  { value: "digital-inclusion", label: "Digital Inclusion" },
+  { value: "mental-health", label: "Mental Health and Wellbeing" },
+] as const;
+
 export function CanvasToolbar({
   onAddCard,
   zoom,
   onZoomChange,
+  onToggleEvidencePanel,
+  showEvidencePanel,
+  selectedGoal,
+  onGoalChange,
 }: CanvasToolbarProps) {
   return (
     <div className="flex flex-col gap-3 p-3 sm:p-4 border-b bg-background">
+      {/* Goal Selection */}
+      <div className="flex items-center gap-2">
+        <Target className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium">Project Goal:</span>
+        <Select value={selectedGoal} onValueChange={onGoalChange}>
+          <SelectTrigger className="w-64">
+            <SelectValue placeholder="Select your project goal" />
+          </SelectTrigger>
+          <SelectContent>
+            {PROJECT_GOALS.map((goal) => (
+              <SelectItem key={goal.value} value={goal.value}>
+                {goal.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {selectedGoal && (
+          <Badge variant="secondary">
+            {PROJECT_GOALS.find(g => g.value === selectedGoal)?.label}
+          </Badge>
+        )}
+      </div>
+
       {/* Section buttons */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {LOGIC_MODEL_SECTIONS.map((section) => (
@@ -44,6 +90,17 @@ export function CanvasToolbar({
 
       {/* Controls and help text */}
       <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+        {/* Evidence panel toggle */}
+        <Button
+          onClick={onToggleEvidencePanel}
+          size="sm"
+          variant={showEvidencePanel ? "default" : "outline"}
+          className="flex items-center gap-2"
+        >
+          <FileText className="h-4 w-4" />
+          <span className="hidden sm:inline">Evidence</span>
+        </Button>
+
         {/* Zoom controls */}
         <div className="flex items-center gap-1">
           <Button
