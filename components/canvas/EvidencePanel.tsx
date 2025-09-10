@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Check } from "lucide-react";
 import { extractEffectData, EffectIcons } from "@/components/effect-icons";
 import { Badge } from "@/components/ui/badge";
@@ -15,48 +16,19 @@ interface EvidencePanelProps {
 }
 
 export function EvidencePanel({ onAddEvidenceToCanvas }: EvidencePanelProps) {
-  const [allEvidence, setAllEvidence] = useState<Evidence[]>([]);
   const [filteredEvidence, setFilteredEvidence] = useState<Evidence[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadEvidence = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch("/api/evidence");
-        if (!response.ok) {
-          throw new Error("Failed to fetch evidence");
-        }
-        const evidence = await response.json();
-        setAllEvidence(evidence);
-        setFilteredEvidence(evidence);
-      } catch (err) {
-        console.error("Failed to load evidence:", err);
-        setError("Failed to load evidence data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Use React Query to get prefetched evidence data
+  const queryClient = useQueryClient();
+  const allEvidence =
+    (queryClient.getQueryData(["evidence"]) as Evidence[]) || [];
 
-    loadEvidence();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="w-96 border-l bg-background p-4">
-        <div className="text-center">Loading evidence...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="w-96 border-l bg-background p-4">
-        <div className="text-center text-destructive">{error}</div>
-      </div>
-    );
-  }
+  // Initialize filtered evidence when allEvidence changes
+  React.useEffect(() => {
+    if (allEvidence.length > 0 && filteredEvidence.length === 0) {
+      setFilteredEvidence(allEvidence);
+    }
+  }, [allEvidence, filteredEvidence.length]);
 
   return (
     <div className="w-96 border-l bg-background flex flex-col">
