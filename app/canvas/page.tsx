@@ -1,10 +1,10 @@
 import React from "react";
-import { Metadata } from "next";
 import {
   dehydrate,
   HydrationBoundary,
   QueryClient,
 } from "@tanstack/react-query";
+import { Metadata } from "next";
 import { CanvasClient } from "@/components/canvas/CanvasClient";
 import { getCanvasData } from "@/lib/canvas/server-data";
 import { getAllEvidenceMeta } from "@/utils";

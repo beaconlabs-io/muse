@@ -16,7 +16,13 @@ interface CardMetrics {
   description?: string;
   measurementMethod?: string;
   targetValue?: string;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
+  frequency?:
+    | "daily"
+    | "weekly"
+    | "monthly"
+    | "quarterly"
+    | "annually"
+    | "other";
 }
 
 interface CanvasClientProps {
@@ -49,6 +55,7 @@ export function CanvasClient({
     {}
   );
   const [selectedGoal, setSelectedGoal] = useState<string>("");
+  const [addedGoalCard, setAddedGoalCard] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const addCard = useCallback((section?: string) => {
@@ -56,31 +63,31 @@ export function CanvasClient({
       switch (sectionType) {
         case "activities":
           return {
-            x: 100 + Math.random() * 200,
+            x: 50 + Math.random() * 150,
             y: 150 + Math.random() * 300,
             color: CARD_COLORS[3],
           }; // blue
         case "outputs":
           return {
-            x: 450 + Math.random() * 200,
+            x: 300 + Math.random() * 150,
             y: 150 + Math.random() * 300,
             color: CARD_COLORS[4],
           }; // green
         case "outcomes":
           return {
-            x: 800 + Math.random() * 200,
+            x: 550 + Math.random() * 150,
             y: 150 + Math.random() * 300,
             color: CARD_COLORS[0],
           }; // yellow
         case "impact":
           return {
-            x: 1150 + Math.random() * 200,
+            x: 800 + Math.random() * 150,
             y: 150 + Math.random() * 300,
             color: CARD_COLORS[5],
           }; // purple
         default:
           return {
-            x: Math.random() * 400 + 100,
+            x: Math.random() * 300 + 50,
             y: Math.random() * 300 + 100,
             color: CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)],
           };
@@ -240,8 +247,54 @@ export function CanvasClient({
         setShowMetricsPanel(false);
         setSelectedCardForMetrics(null);
       }
+      // Clear goal card reference if this was a goal card
+      if (addedGoalCard === cardId) {
+        setAddedGoalCard(null);
+      }
     },
-    [selectedCardForMetrics]
+    [selectedCardForMetrics, addedGoalCard]
+  );
+
+  const handleGoalChange = useCallback(
+    (goalValue: string) => {
+      setSelectedGoal(goalValue);
+
+      if (!goalValue) {
+        // If no goal selected, remove any existing goal card
+        if (addedGoalCard) {
+          deleteCard(addedGoalCard);
+          setAddedGoalCard(null);
+        }
+        return;
+      }
+
+      // Remove previous goal card if exists
+      if (addedGoalCard) {
+        deleteCard(addedGoalCard);
+      }
+
+      // Get goal label from the PROJECT_GOALS
+      const goalLabels = {
+        "environmental-sustainability": "Environmental Sustainability",
+        "economic-growth": "Economic Growth",
+      } as const;
+
+      const goalLabel =
+        goalLabels[goalValue as keyof typeof goalLabels] || goalValue;
+
+      // Create impact card for the selected goal
+      const impactCard: PostItCard = {
+        id: `goal-${Date.now().toString()}`,
+        x: 800 + Math.random() * 150, // Impact section position
+        y: 150 + Math.random() * 300,
+        content: goalLabel,
+        color: CARD_COLORS[5], // Purple for impact
+      };
+
+      setCards((prev) => [...prev, impactCard]);
+      setAddedGoalCard(impactCard.id);
+    },
+    [addedGoalCard, deleteCard]
   );
 
   const startConnectionFromCard = useCallback((cardId: string) => {
@@ -267,7 +320,7 @@ export function CanvasClient({
       // Output card (intervention)
       newCards.push({
         id: outputCardId,
-        x: 450 + Math.random() * 200,
+        x: 300 + Math.random() * 150,
         y: 150 + index * 120 + Math.random() * 50,
         content: result.intervention,
         color: CARD_COLORS[4], // green for outputs
@@ -280,7 +333,7 @@ export function CanvasClient({
 
       newCards.push({
         id: outcomeCardId,
-        x: 800 + Math.random() * 200,
+        x: 550 + Math.random() * 150,
         y: 200 + index * 120 + Math.random() * 50,
         content: `${effectTitle} effect on ${result.outcome_variable}`,
         color: CARD_COLORS[0], // yellow for outcomes
@@ -322,7 +375,7 @@ export function CanvasClient({
         onToggleEvidencePanel={() => setShowEvidencePanel((prev) => !prev)}
         showEvidencePanel={showEvidencePanel}
         selectedGoal={selectedGoal}
-        onGoalChange={setSelectedGoal}
+        onGoalChange={handleGoalChange}
       />
 
       <div className="flex flex-1 overflow-hidden">

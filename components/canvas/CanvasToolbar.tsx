@@ -27,19 +27,11 @@ const LOGIC_MODEL_SECTIONS = [
 ] as const;
 
 const PROJECT_GOALS = [
-  { value: "reduce-poverty", label: "Reduce Poverty" },
-  { value: "improve-education", label: "Improve Education" },
-  { value: "enhance-healthcare", label: "Enhance Healthcare" },
-  { value: "promote-equality", label: "Promote Gender Equality" },
   {
     value: "environmental-sustainability",
     label: "Environmental Sustainability",
   },
   { value: "economic-growth", label: "Economic Growth" },
-  { value: "social-cohesion", label: "Social Cohesion" },
-  { value: "public-safety", label: "Public Safety" },
-  { value: "digital-inclusion", label: "Digital Inclusion" },
-  { value: "mental-health", label: "Mental Health and Wellbeing" },
 ] as const;
 
 export function CanvasToolbar({
