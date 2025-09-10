@@ -41,13 +41,11 @@ export function PostItCard({
 }: PostItCardProps) {
   return (
     <Card
-      className={`absolute p-3 min-w-[150px] min-h-[120px] shadow-lg border-2 select-none ${
-        isConnectionMode 
-          ? "cursor-crosshair hover:ring-2 hover:ring-blue-400" 
+      className={`absolute p-3 w-[150px] min-h-[120px] shadow-lg border-2 select-none ${
+        isConnectionMode
+          ? "cursor-crosshair hover:ring-2 hover:ring-blue-400"
           : "cursor-move"
-      } ${
-        isConnectionStart ? "ring-2 ring-blue-500" : ""
-      } ${
+      } ${isConnectionStart ? "ring-2 ring-blue-500" : ""} ${
         isConnectionMode && isHovered ? "ring-2 ring-blue-300" : ""
       }`}
       style={{
