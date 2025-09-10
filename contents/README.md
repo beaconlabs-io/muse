@@ -39,7 +39,8 @@ author: "BeaconLabs"
 - Markdown 記法で本文を記述します。
 - セクションごとに `##` などの見出しを使って整理します。
 
-template: 
+template:
+
 ```
 ## Key Points
 ## Background
@@ -58,21 +59,21 @@ template:
 
 The results of each analysis are presented in five intuitive categories (by id):
 
-- **0: Unclear**: Classified as unclear when the sample size is insufficient or analytical methods are inadequate. Interventions judged as unclear require additional testing.
-- **1: Effect Present**: Indicates that the expected effect was found. In many cases, this is statistically significant and shows that a practically meaningful effect of considerable magnitude was observed.
-- **2: No Effect**: Indicates that the expected effect was not observed. In many cases, this shows that the sample size was sufficient but the effect was not statistically significant. When the sample size is extremely large, even if statistically significant, it may represent a practically meaningless effect, which would be classified in this category.
-- **3: Mixed**: Intervention effects show heterogeneity in many cases. For example, effects were found for men but not for women, or effects were found for young people but not for elderly people. Results are classified as mixed when outcomes differ depending on various conditions.
-- **4: Side Effects**: Indicates that unintended effects other than the intervention's intended outcomes were observed. In many cases, these are statistically significant and represent practically undesirable effects of considerable magnitude.
+- **N/A: Unclear**: Classified as unclear when the sample size is insufficient or analytical methods are inadequate. Interventions judged as unclear require additional testing.
+- **+: Effect Present**: Indicates that the expected effect was found. In many cases, this is statistically significant and shows that a practically meaningful effect of considerable magnitude was observed.
+- **-: No Effect**: Indicates that the expected effect was not observed. In many cases, this shows that the sample size was sufficient but the effect was not statistically significant. When the sample size is extremely large, even if statistically significant, it may represent a practically meaningless effect, which would be classified in this category.
+- **+-: Mixed**: Intervention effects show heterogeneity in many cases. For example, effects were found for men but not for women, or effects were found for young people but not for elderly people. Results are classified as mixed when outcomes differ depending on various conditions.
+- **!: Side Effects**: Indicates that unintended effects other than the intervention's intended outcomes were observed. In many cases, these are statistically significant and represent practically undesirable effects of considerable magnitude.
 
 ### 日本語
 
-各分析結果は、id 順（0〜4）の 5 つのカテゴリで示されます：
+各分析結果は、5 つのカテゴリで示されます：
 
-- **0: 不明**: サンプルサイズが不十分、または分析手法が適切でない場合に不明と分類されます。不明と判断された介入は追加の検証が必要です。
-- **1: 効果あり**: 期待された効果が観察されたことを示します。多くの場合、統計的に有意であり、実質的に意味のある大きさの効果が観察された場合に該当します。
-- **2: 効果なし**: 期待された効果が観察されなかったことを示します。多くの場合、サンプルサイズが十分であっても効果が統計的に有意でない場合や、サンプルサイズが極めて大きい場合に実質的に意味のない効果が観察された場合もこのカテゴリに分類されます。
-- **3: 混合**: 介入効果に異質性が見られる場合です。例えば、男性には効果があったが女性にはなかった、若年層には効果があったが高齢者にはなかった、など条件によって結果が異なる場合に混合と分類されます。
-- **4: 副作用**: 介入の本来の目的以外の意図しない効果が観察された場合を示します。多くの場合、統計的に有意であり、実質的に望ましくない大きさの効果が観察された場合に該当します。
+- **N/A: 不明**: サンプルサイズが不十分、または分析手法が適切でない場合に不明と分類されます。不明と判断された介入は追加の検証が必要です。
+- **+: 効果あり**: 期待された効果が観察されたことを示します。多くの場合、統計的に有意であり、実質的に意味のある大きさの効果が観察された場合に該当します。
+- **-: 効果なし**: 期待された効果が観察されなかったことを示します。多くの場合、サンプルサイズが十分であっても効果が統計的に有意でない場合や、サンプルサイズが極めて大きい場合に実質的に意味のない効果が観察された場合もこのカテゴリに分類されます。
+- **+-: 混合**: 介入効果に異質性が見られる場合です。例えば、男性には効果があったが女性にはなかった、若年層には効果があったが高齢者にはなかった、など条件によって結果が異なる場合に混合と分類されます。
+- **!: 副作用**: 介入の本来の目的以外の意図しない効果が観察された場合を示します。多くの場合、統計的に有意であり、実質的に望ましくない大きさの効果が観察された場合に該当します。
 
 ---
 

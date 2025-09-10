@@ -1,0 +1,65 @@
+---
+evidence_id: "06"
+results:
+  - intervention: "The platform owner enters the market by introducing its proprietary product, which is based on the complementary firm’s OSS."
+    outcome_variable: "OSS contributions by existing contributors(the number of commits, lines of code changed/added, and files of code changed/added)"
+    outcome: "-"
+strength: "3"
+methodologies:
+  - "DID, PSE"
+version: "1.0.0"
+datasets:
+  - ""
+title: "How Platform Owner Entry Affects OSS Contributions by Existing Contributors: An Experiment with AWS Elasticsearch"
+date: "2024-06-20"
+tags:
+  - ""
+citation:
+  - name: "How Platform Owner Entry Affects Open Source Contribution? Evidence from GitHub Developers"
+    URL: "https://questromworld.bu.edu/platformstrategy/wp-content/uploads/sites/49/2024/06/PlatStrat2024_paper_100.pdf"
+author: "BeaconLabs"
+---
+
+## Key Points
+
+This study explores how a platform owner’s market entry—by leveraging a complementary firm’s open-source technology—affects the external knowledge sourcing of the complementary firm, focusing on the willingness of GitHub developers to contribute. Using the staggered rollout of Amazon AWS’s Elasticsearch as a natural experiment, the analysis shows that the platform owner’s entry reduces contributions from existing contributors but substantially increases contributions from new contributors, leading to an overall increase in contributions to the open-source technology. This finding provides a new perspective: contrary to common concerns that platform owners’ entry harms open-source startups, from a technology development standpoint, such entry may not necessarily be detrimental.
+
+## Background
+
+Existing contributors are individuals who had begun contributing to the complementary firm’s open-source project before the platform owner’s entry. Based on prospect theory, they are likely to perceive strong potential losses to their existing “endowments,” such as their commitment to open-source philosophy, community interactions, and established reputation, as a result of the platform owner’s entry. Thus, it was hypothesized that they might reduce their involvement due to concerns about their contributions being exploited by the platform owner and about threats to community sustainability.
+
+## Analysis Method
+
+### Dataset
+
+Data was collected from AWS and GitHub. Specifically, AWS official announcements provided information about the date and location of the Amazon Elasticsearch Service launch, while GitHub data provided developers’ contributions to Elasticsearch (contribution volume, personal GitHub experience, popularity, etc.). Commits by Elastic employees were excluded to focus on external developers’ contributions.
+
+### Intervation / Explanatory Variable
+
+- AWS’s market entry with Amazon Elasticsearch Service.
+  - Entry is a dummy variable equal to 1 if AWS entered the country where the contributor resides, and 0 otherwise.
+  - After is a dummy variable equal to 1 if AWS had already entered the contributor’s country during or before a given period, and 0 otherwise.
+  - The interaction term Entry × After was used to measure the treatment effect.
+
+### Dependent Variable
+
+- OSS contributions by existing contributors(the number of commits, lines of code changed/added, and files of code changed/added)
+  - Contributions by existing contributors were measured as the natural logarithm of the number of commits to Elasticsearch.
+  - As robustness checks, the natural logarithm of lines of code changed/added and files changed/added were also used.
+
+### Identification Strategy
+
+- AWS’s staggered introduction of managed Elasticsearch services across countries/regions was treated as a natural experiment, and stacked difference-in-differences analysis was applied.
+- This method addresses the “forbidden comparison problem” in staggered interventions and strengthens analytical robustness.
+- The treatment group consisted of contributors in countries where AWS launched Elasticsearch services; the control group consisted of contributors in countries where AWS had not yet launched or never launched the service.
+- Propensity score matching (PSM) was used to align contributors across groups. The analysis was conducted at the contributor-week level, with 110,249 observations across 459 contributors.
+
+### Results
+
+- The analysis provides empirical evidence that the platform owner’s entry reduces contributions by existing contributors.
+- On average, the number of commits decreased by about 4.33%. Notably, contributors with stronger intrinsic motivations reduced their contributions more sharply after the platform owner’s entry, while contributors with stronger extrinsic motivations showed a significantly smaller decline.
+- These results support the prospect theory–based hypothesis that existing contributors decrease participation due to concerns over losses to their “endowments,” such as community attachment and identity.
+
+### Citation
+
+[https://questromworld.bu.edu/platformstrategy/wp-content/uploads/sites/49/2024/06/PlatStrat2024_paper_100.pdf](https://questromworld.bu.edu/platformstrategy/wp-content/uploads/sites/49/2024/06/PlatStrat2024_paper_100.pdf)

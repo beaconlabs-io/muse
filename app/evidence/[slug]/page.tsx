@@ -57,14 +57,14 @@ export default async function EvidencePage({
             </div>
             <ul className="list-disc list-inside text-gray-700">
               {response.meta.results.map((result, idx) => (
-                <li key={idx} className="flex items-center gap-2">
+                <li key={idx} className="flex items-center gap-4">
                   {typeof result.outcome !== "undefined" && (
-                    <EffectIcons effectId={Number(result.outcome)} size={24} />
+                    <EffectIcons effectId={result.outcome} />
                   )}
-                  <span className="font-medium">{result.intervention}</span>
-                  {result.outcome_variable && (
-                    <span> → {result.outcome_variable}</span>
-                  )}
+
+                  <div className="font-medium">{result.intervention}</div>
+                  <div className="font-medium">→</div>
+                  <div className="font-medium">{result.outcome_variable}</div>
                 </li>
               ))}
             </ul>
