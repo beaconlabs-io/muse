@@ -393,8 +393,9 @@ jobs:
                   const results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
                   const attestationResults = [];
                   
-                  for (const result of results) {
-                    console.log(\`Processing attestation for \${result.relativePath}\`);
+                  for (let i = 0; i < results.length; i++) {
+                    const result = results[i];
+                    console.log(\`Processing attestation \${i + 1}/\${results.length} for \${result.relativePath}\`);
                     
                     // Read the original MDX file to get frontmatter
                     const mdxPath = \`contents/evidence/\${result.relativePath}\`;	
@@ -428,15 +429,23 @@ jobs:
                       refUID: refUID
                     };
                     
-                    // Create attestation
+                    // Create attestation (sequential processing to avoid nonce conflicts)
+                    console.log(\`⏳ Creating attestation \${i + 1}/\${results.length}...\`);
                     const attestationUID = await eas({ data });
-                    console.log(\`✅ Attestation created with UID: \${attestationUID}\`);                    
+                    console.log(\`✅ Attestation \${i + 1}/\${results.length} created with UID: \${attestationUID}\`);                    
+                    
                     // Store result for deployment file creation
                     attestationResults.push({
                       ...result,
                       attestationUID,
                       timestamp: new Date().toISOString()
                     });
+                    
+                    // Add a small delay between transactions to ensure proper nonce ordering
+                    if (i < results.length - 1) {
+                      console.log(\`⏱️ Waiting 2 seconds before next attestation...\`);
+                      await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
                   }
                   
                   // Save attestation results for the next step
