@@ -14,7 +14,10 @@ interface CanvasClientProps {
   initialArrows?: Arrow[];
 }
 
-export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasClientProps) {
+export function CanvasClient({
+  initialCards = [],
+  initialArrows = [],
+}: CanvasClientProps) {
   const [cards, setCards] = useState<PostItCard[]>(initialCards);
   const [arrows, setArrows] = useState<Arrow[]>(initialArrows);
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
@@ -35,15 +38,35 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
     const getSectionPosition = (sectionType?: string) => {
       switch (sectionType) {
         case "activities":
-          return { x: 100 + Math.random() * 200, y: 150 + Math.random() * 300, color: CARD_COLORS[3] }; // blue
+          return {
+            x: 100 + Math.random() * 200,
+            y: 150 + Math.random() * 300,
+            color: CARD_COLORS[3],
+          }; // blue
         case "outputs":
-          return { x: 450 + Math.random() * 200, y: 150 + Math.random() * 300, color: CARD_COLORS[4] }; // green
+          return {
+            x: 450 + Math.random() * 200,
+            y: 150 + Math.random() * 300,
+            color: CARD_COLORS[4],
+          }; // green
         case "outcomes":
-          return { x: 800 + Math.random() * 200, y: 150 + Math.random() * 300, color: CARD_COLORS[0] }; // yellow
+          return {
+            x: 800 + Math.random() * 200,
+            y: 150 + Math.random() * 300,
+            color: CARD_COLORS[0],
+          }; // yellow
         case "impact":
-          return { x: 1150 + Math.random() * 200, y: 150 + Math.random() * 300, color: CARD_COLORS[5] }; // purple
+          return {
+            x: 1150 + Math.random() * 200,
+            y: 150 + Math.random() * 300,
+            color: CARD_COLORS[5],
+          }; // purple
         default:
-          return { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100, color: CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)] };
+          return {
+            x: Math.random() * 400 + 100,
+            y: Math.random() * 300 + 100,
+            color: CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)],
+          };
       }
     };
 
@@ -55,67 +78,78 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
       content: section ? `New ${section} note` : "New note",
       color: position.color,
     };
-    setCards(prev => [...prev, newCard]);
+    setCards((prev) => [...prev, newCard]);
   }, []);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent, cardId?: string) => {
-    if (cardId) {
-      if (connectionMode) {
-        // Connection mode
-        if (!connectionStart) {
-          setConnectionStart(cardId);
-        } else if (connectionStart !== cardId) {
-          // Create arrow
-          const newArrow: Arrow = {
-            id: Date.now().toString(),
-            fromCardId: connectionStart,
-            toCardId: cardId,
-          };
-          setArrows(prev => [...prev, newArrow]);
-          setConnectionStart(null);
-          setConnectionMode(false);
-        }
-      } else {
-        // Card dragging
-        const card = cards.find(c => c.id === cardId);
-        if (card) {
-          const rect = canvasRef.current?.getBoundingClientRect();
-          if (rect) {
-            setDraggedCard(cardId);
-            setDragOffset({
-              x: (e.clientX - rect.left) / zoom - canvasOffset.x - card.x,
-              y: (e.clientY - rect.top) / zoom - canvasOffset.y - card.y,
-            });
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent, cardId?: string) => {
+      if (cardId) {
+        if (connectionMode) {
+          // Connection mode
+          if (!connectionStart) {
+            setConnectionStart(cardId);
+          } else if (connectionStart !== cardId) {
+            // Create arrow
+            const newArrow: Arrow = {
+              id: Date.now().toString(),
+              fromCardId: connectionStart,
+              toCardId: cardId,
+            };
+            setArrows((prev) => [...prev, newArrow]);
+            setConnectionStart(null);
+            setConnectionMode(false);
+          }
+        } else {
+          // Card dragging
+          const card = cards.find((c) => c.id === cardId);
+          if (card) {
+            const rect = canvasRef.current?.getBoundingClientRect();
+            if (rect) {
+              setDraggedCard(cardId);
+              setDragOffset({
+                x: (e.clientX - rect.left) / zoom - canvasOffset.x - card.x,
+                y: (e.clientY - rect.top) / zoom - canvasOffset.y - card.y,
+              });
+            }
           }
         }
+      } else if (!connectionMode) {
+        // Canvas panning
+        setIsPanning(true);
+        setPanStart({
+          x: e.clientX - canvasOffset.x,
+          y: e.clientY - canvasOffset.y,
+        });
       }
-    } else if (!connectionMode) {
-      // Canvas panning
-      setIsPanning(true);
-      setPanStart({ x: e.clientX - canvasOffset.x, y: e.clientY - canvasOffset.y });
-    }
-  }, [cards, zoom, canvasOffset, connectionMode, connectionStart]);
+    },
+    [cards, zoom, canvasOffset, connectionMode, connectionStart]
+  );
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (draggedCard) {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      if (rect) {
-        const newX = (e.clientX - rect.left) / zoom - canvasOffset.x - dragOffset.x;
-        const newY = (e.clientY - rect.top) / zoom - canvasOffset.y - dragOffset.y;
-        
-        setCards(prev => prev.map(card => 
-          card.id === draggedCard 
-            ? { ...card, x: newX, y: newY }
-            : card
-        ));
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (draggedCard) {
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (rect) {
+          const newX =
+            (e.clientX - rect.left) / zoom - canvasOffset.x - dragOffset.x;
+          const newY =
+            (e.clientY - rect.top) / zoom - canvasOffset.y - dragOffset.y;
+
+          setCards((prev) =>
+            prev.map((card) =>
+              card.id === draggedCard ? { ...card, x: newX, y: newY } : card
+            )
+          );
+        }
+      } else if (isPanning) {
+        setCanvasOffset({
+          x: e.clientX - panStart.x,
+          y: e.clientY - panStart.y,
+        });
       }
-    } else if (isPanning) {
-      setCanvasOffset({
-        x: e.clientX - panStart.x,
-        y: e.clientY - panStart.y,
-      });
-    }
-  }, [draggedCard, isPanning, panStart, dragOffset, zoom, canvasOffset]);
+    },
+    [draggedCard, isPanning, panStart, dragOffset, zoom, canvasOffset]
+  );
 
   const handleMouseUp = useCallback(() => {
     setDraggedCard(null);
@@ -126,26 +160,30 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
     setEditingCard(cardId);
   }, []);
 
-  const handleCardContentChange = useCallback((cardId: string, newContent: string) => {
-    setCards(prev => prev.map(card => 
-      card.id === cardId 
-        ? { ...card, content: newContent }
-        : card
-    ));
-  }, []);
+  const handleCardContentChange = useCallback(
+    (cardId: string, newContent: string) => {
+      setCards((prev) =>
+        prev.map((card) =>
+          card.id === cardId ? { ...card, content: newContent } : card
+        )
+      );
+    },
+    []
+  );
 
   const handleZoom = useCallback((delta: number) => {
-    setZoom(prev => Math.min(Math.max(prev + delta, 0.5), 3));
+    setZoom((prev) => Math.min(Math.max(prev + delta, 0.5), 3));
   }, []);
 
   const deleteCard = useCallback((cardId: string) => {
-    setCards(prev => prev.filter(card => card.id !== cardId));
+    setCards((prev) => prev.filter((card) => card.id !== cardId));
     // Also delete arrows connected to this card
-    setArrows(prev => prev.filter(arrow => 
-      arrow.fromCardId !== cardId && arrow.toCardId !== cardId
-    ));
+    setArrows((prev) =>
+      prev.filter(
+        (arrow) => arrow.fromCardId !== cardId && arrow.toCardId !== cardId
+      )
+    );
   }, []);
-
 
   const startConnectionFromCard = useCallback((cardId: string) => {
     setConnectionMode(true);
@@ -153,7 +191,7 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
   }, []);
 
   const deleteArrow = useCallback((arrowId: string) => {
-    setArrows(prev => prev.filter(a => a.id !== arrowId));
+    setArrows((prev) => prev.filter((a) => a.id !== arrowId));
   }, []);
 
   const addEvidenceToCanvas = useCallback((evidence: Evidence) => {
@@ -161,7 +199,7 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
     const newCards: PostItCard[] = [];
     const newArrows: Arrow[] = [];
     const baseId = `evidence-${evidence.evidence_id}-${Date.now()}`;
-    
+
     // Add cards for each result (intervention -> outcome)
     evidence.results.forEach((result, index) => {
       const outputCardId = `${baseId}-output-${index}`;
@@ -177,10 +215,10 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
       });
 
       // Outcome card with variable and effect information
-      const effectId = parseInt(result.outcome) || 0;
+      const effectId = result.outcome;
       const effectData = extractEffectData(effectId);
       const effectTitle = effectData?.title || "Unclear";
-      
+
       newCards.push({
         id: outcomeCardId,
         x: 800 + Math.random() * 200,
@@ -197,8 +235,8 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
       });
     });
 
-    setCards(prev => [...prev, ...newCards]);
-    setArrows(prev => [...prev, ...newArrows]);
+    setCards((prev) => [...prev, ...newCards]);
+    setArrows((prev) => [...prev, ...newArrows]);
   }, []);
 
   useEffect(() => {
@@ -220,7 +258,7 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
         onAddCard={addCard}
         zoom={zoom}
         onZoomChange={handleZoom}
-        onToggleEvidencePanel={() => setShowEvidencePanel(prev => !prev)}
+        onToggleEvidencePanel={() => setShowEvidencePanel((prev) => !prev)}
         showEvidencePanel={showEvidencePanel}
         selectedGoal={selectedGoal}
         onGoalChange={setSelectedGoal}
@@ -228,16 +266,17 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
 
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas */}
-        <div 
+        <div
           ref={canvasRef}
           className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing"
           onMouseDown={(e) => handleMouseDown(e)}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          style={{ 
-            backgroundImage: "radial-gradient(circle, #e5e7eb 1px, transparent 1px)",
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, #e5e7eb 1px, transparent 1px)",
             backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
-            backgroundPosition: `${canvasOffset.x}px ${canvasOffset.y}px`
+            backgroundPosition: `${canvasOffset.x}px ${canvasOffset.y}px`,
           }}
         >
           {/* Logic Model Sections */}
@@ -284,7 +323,9 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
                   deleteCard(card.id);
                 }
               }}
-              onContentChange={(newContent) => handleCardContentChange(card.id, newContent)}
+              onContentChange={(newContent) =>
+                handleCardContentChange(card.id, newContent)
+              }
               onEditComplete={() => setEditingCard(null)}
               onStartConnection={() => startConnectionFromCard(card.id)}
             />

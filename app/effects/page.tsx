@@ -1,5 +1,5 @@
 import React from "react";
-import { effectData, EffectIcons } from "@/components/effect-icons";
+import { EffectIcons, effectData } from "@/components/effect-icons";
 import { Separator } from "@/components/ui/separator";
 
 export default function EffectsPage() {
@@ -20,7 +20,7 @@ export default function EffectsPage() {
         <div className="space-y-6 text-left">
           {effectData.map((effect) => (
             <div key={effect.id} className="flex items-start gap-4">
-              <EffectIcons effectId={effect.id} />
+              <EffectIcons effectId={effect.id} isShowTitle={false} />
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-800 mb-2">
                   {effect.title}

@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Check } from 'lucide-react';
-import { extractEffectData, EffectIcons } from '@/components/effect-icons';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { EvidenceSearch } from './EvidenceSearch';
-import { Evidence } from '@/types';
+import React, { useState, useEffect } from "react";
+import { Plus, Check } from "lucide-react";
+import { extractEffectData, EffectIcons } from "@/components/effect-icons";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { EvidenceSearch } from "./EvidenceSearch";
+import { Evidence } from "@/types";
 
 interface EvidencePanelProps {
   onAddEvidenceToCanvas?: (evidence: Evidence) => void;
@@ -24,16 +24,16 @@ export function EvidencePanel({ onAddEvidenceToCanvas }: EvidencePanelProps) {
     const loadEvidence = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/evidence');
+        const response = await fetch("/api/evidence");
         if (!response.ok) {
-          throw new Error('Failed to fetch evidence');
+          throw new Error("Failed to fetch evidence");
         }
         const evidence = await response.json();
         setAllEvidence(evidence);
         setFilteredEvidence(evidence);
       } catch (err) {
-        console.error('Failed to load evidence:', err);
-        setError('Failed to load evidence data');
+        console.error("Failed to load evidence:", err);
+        setError("Failed to load evidence data");
       } finally {
         setIsLoading(false);
       }
@@ -67,7 +67,7 @@ export function EvidencePanel({ onAddEvidenceToCanvas }: EvidencePanelProps) {
           onFilteredResults={setFilteredEvidence}
         />
       </div>
-      
+
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-4">
           {filteredEvidence.length === 0 ? (
@@ -96,7 +96,7 @@ interface EvidenceCardProps {
 
 function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
   const [isAdded, setIsAdded] = React.useState(false);
-  
+
   const handleAddToCanvas = (e: React.MouseEvent) => {
     e.stopPropagation();
     onAddToCanvas?.(evidence);
@@ -109,7 +109,9 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-sm leading-tight">{evidence.title}</CardTitle>
+          <CardTitle className="text-sm leading-tight">
+            {evidence.title}
+          </CardTitle>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs">
               {evidence.strength}
@@ -120,8 +122,8 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
                 size="sm"
                 variant="ghost"
                 className={`h-6 w-6 p-0 transition-colors ${
-                  isAdded 
-                    ? "bg-green-500 text-white hover:bg-green-600" 
+                  isAdded
+                    ? "bg-green-500 text-white hover:bg-green-600"
                     : "hover:bg-primary hover:text-primary-foreground"
                 }`}
                 title={isAdded ? "Added to Canvas!" : "Add to Canvas"}
@@ -146,13 +148,15 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
             <div className="text-xs text-muted-foreground">
               <div className="font-medium">Sample finding:</div>
               <div className="line-clamp-2 mb-2">
-                {evidence.results[0].intervention} → {evidence.results[0].outcome_variable}
+                {evidence.results[0].intervention} →{" "}
+                {evidence.results[0].outcome_variable}
               </div>
               {/* Effect indicator */}
               <div className="flex items-center gap-2">
-                <EffectIcons effectId={parseInt(evidence.results[0].outcome) || 0} size={16} />
+                <EffectIcons effectId={evidence.results[0].outcome} />
                 <span className="text-xs">
-                  {extractEffectData(parseInt(evidence.results[0].outcome) || 0)?.title || "Unclear"}
+                  {extractEffectData(evidence.results[0].outcome)?.title ||
+                    "Unclear"}
                 </span>
               </div>
             </div>
