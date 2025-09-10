@@ -266,6 +266,11 @@ export function CanvasClient({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas */}
+
+        {/* Evidence Panel */}
+        {showEvidencePanel && (
+          <EvidencePanel onAddEvidenceToCanvas={addEvidenceToCanvas} />
+        )}
         <div
           ref={canvasRef}
           className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing"
@@ -331,11 +336,6 @@ export function CanvasClient({
             />
           ))}
         </div>
-
-        {/* Evidence Panel */}
-        {showEvidencePanel && (
-          <EvidencePanel onAddEvidenceToCanvas={addEvidenceToCanvas} />
-        )}
       </div>
     </div>
   );
