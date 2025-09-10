@@ -39,7 +39,8 @@ author: "BeaconLabs"
 - Markdown 記法で本文を記述します。
 - セクションごとに `##` などの見出しを使って整理します。
 
-template: 
+template:
+
 ```
 ## Key Points
 ## Background
