@@ -212,7 +212,7 @@ export function MetricsPanel({
 
                   <div>
                     <Label className="text-xs text-muted-foreground">
-                      Target Value (Optional)
+                      Target Value
                     </Label>
                     <Input
                       value={metric.targetValue}

@@ -331,13 +331,32 @@ export function CanvasClient({
       const effectData = extractEffectData(effectId);
       const effectTitle = effectData?.title || "Unclear";
 
-      newCards.push({
+      const outcomeCard = {
         id: outcomeCardId,
         x: 550 + Math.random() * 150,
         y: 200 + index * 120 + Math.random() * 50,
         content: `${effectTitle} effect on ${result.outcome_variable}`,
         color: CARD_COLORS[0], // yellow for outcomes
-      });
+      };
+
+      newCards.push(outcomeCard);
+
+      // Create metrics for the outcome card based on evidence data
+      const outcomeMetrics: CardMetrics[] = [
+        {
+          id: `${baseId}-metric-${index}`,
+          name: `${result.outcome_variable} Measurement`,
+          description: `Evidence-based metric from: ${evidence.title}`,
+          measurementMethod: evidence.methodologies?.join(", "),
+          frequency: "quarterly",
+        },
+      ];
+
+      // Add metrics for this outcome card
+      setCardMetrics((prev) => ({
+        ...prev,
+        [outcomeCardId]: outcomeMetrics,
+      }));
 
       // Create arrow connecting intervention to outcome
       newArrows.push({
