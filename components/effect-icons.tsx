@@ -11,7 +11,7 @@ export const effectData = [
   },
   {
     id: "+",
-    title: "Effect Present",
+    title: "Positive",
     description:
       "Indicates that the expected effect was found. In many cases, this is statistically significant and shows that a practically meaningful effect of considerable magnitude was observed.",
     bg: "bg-green-500",
@@ -19,7 +19,7 @@ export const effectData = [
   },
   {
     id: "-",
-    title: "No Effect",
+    title: "No",
     description:
       "Indicates that the expected effect was not observed. In many cases, this shows that the sample size was sufficient but the effect was not statistically significant. When the sample size is extremely large, even if statistically significant, it may represent a practically meaningless effect, which would be classified in this category.",
     bg: "bg-red-500",
@@ -35,7 +35,7 @@ export const effectData = [
   },
   {
     id: "!",
-    title: "Side Effects",
+    title: "Side",
     description:
       "Indicates that unintended effects other than the intervention's intended outcomes were observed. In many cases, these are statistically significant and represent practically undesirable effects of considerable magnitude.",
     bg: "bg-orange-500",

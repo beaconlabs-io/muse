@@ -108,7 +108,11 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-2">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-2">
+          <EffectIcons
+            effectId={evidence.results[0].outcome}
+            isShowTitle={false}
+          />
           <CardTitle className="text-sm leading-tight">
             {evidence.title}
           </CardTitle>
@@ -146,18 +150,13 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
           {/* Sample result with effect */}
           {evidence.results && evidence.results.length > 0 && (
             <div className="text-xs text-muted-foreground">
-              <div className="font-medium">Sample finding:</div>
-              <div className="line-clamp-2 mb-2">
-                {evidence.results[0].intervention} →{" "}
+              <div className="mb-2">
+                {evidence.results[0].intervention} had{" "}
+                <span className="font-bold">
+                  {extractEffectData(evidence.results[0].outcome)?.title}
+                </span>{" "}
+                effect on
                 {evidence.results[0].outcome_variable}
-              </div>
-              {/* Effect indicator */}
-              <div className="flex items-center gap-2">
-                <EffectIcons effectId={evidence.results[0].outcome} />
-                <span className="text-xs">
-                  {extractEffectData(evidence.results[0].outcome)?.title ||
-                    "Unclear"}
-                </span>
               </div>
             </div>
           )}
