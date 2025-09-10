@@ -107,7 +107,7 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
 
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-2">
+      <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <EffectIcons
             effectId={evidence.results[0].outcome}
@@ -128,7 +128,7 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
                 className={`h-6 w-6 p-0 transition-colors ${
                   isAdded
                     ? "bg-green-500 text-white hover:bg-green-600"
-                    : "hover:bg-primary hover:text-primary-foreground"
+                    : "hover:bg-primary hover:text-primary-foreground hover:cursor-pointer"
                 }`}
                 title={isAdded ? "Added to Canvas!" : "Add to Canvas"}
               >
@@ -145,22 +145,18 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
           by {evidence.author} {evidence.date && `• ${evidence.date}`}
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="space-y-2">
-          {/* Sample result with effect */}
-          {evidence.results && evidence.results.length > 0 && (
-            <div className="text-xs text-muted-foreground">
-              <div className="mb-2">
-                {evidence.results[0].intervention} had{" "}
-                <span className="font-bold">
-                  {extractEffectData(evidence.results[0].outcome)?.title}
-                </span>{" "}
-                effect on
-                {evidence.results[0].outcome_variable}
-              </div>
-            </div>
-          )}
-        </div>
+      <CardContent>
+        {/* Sample result with effect */}
+        {evidence.results && evidence.results.length > 0 && (
+          <div className="text-xs text-muted-foreground">
+            {evidence.results[0].intervention} had{" "}
+            <span className="font-bold">
+              {extractEffectData(evidence.results[0].outcome)?.title}
+            </span>{" "}
+            effect on
+            {evidence.results[0].outcome_variable}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -6,8 +6,18 @@ import { ArrowsSvg } from "./ArrowsSvg";
 import { CanvasToolbar } from "./CanvasToolbar";
 import { EvidencePanel } from "./EvidencePanel";
 import { LogicModelSections } from "./LogicModelSections";
+import { MetricsPanel } from "./MetricsPanel";
 import { PostItCard as PostItCardComponent } from "./PostItCard";
 import { PostItCard, Arrow, CARD_COLORS, Evidence } from "@/types";
+
+interface CardMetrics {
+  id: string;
+  name: string;
+  description?: string;
+  measurementMethod?: string;
+  targetValue?: string;
+  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
+}
 
 interface CanvasClientProps {
   initialCards?: PostItCard[];
@@ -31,6 +41,13 @@ export function CanvasClient({
   const [connectionStart, setConnectionStart] = useState<string | null>(null);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [showEvidencePanel, setShowEvidencePanel] = useState(false);
+  const [showMetricsPanel, setShowMetricsPanel] = useState(false);
+  const [selectedCardForMetrics, setSelectedCardForMetrics] = useState<
+    string | null
+  >(null);
+  const [cardMetrics, setCardMetrics] = useState<Record<string, CardMetrics[]>>(
+    {}
+  );
   const [selectedGoal, setSelectedGoal] = useState<string>("");
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -80,6 +97,34 @@ export function CanvasClient({
     };
     setCards((prev) => [...prev, newCard]);
   }, []);
+
+  const handleCardClick = useCallback(
+    (cardId: string) => {
+      // Don't open metrics panel if in connection mode or dragging
+      if (connectionMode || draggedCard) return;
+
+      setSelectedCardForMetrics(cardId);
+      setShowMetricsPanel(true);
+    },
+    [connectionMode, draggedCard]
+  );
+
+  const updateCardMetrics = useCallback(
+    (cardId: string, metrics: CardMetrics[]) => {
+      setCardMetrics((prev) => ({
+        ...prev,
+        [cardId]: metrics,
+      }));
+    },
+    []
+  );
+
+  const getCardMetricsCount = useCallback(
+    (cardId: string) => {
+      return cardMetrics[cardId]?.length || 0;
+    },
+    [cardMetrics]
+  );
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent, cardId?: string) => {
@@ -175,15 +220,29 @@ export function CanvasClient({
     setZoom((prev) => Math.min(Math.max(prev + delta, 0.5), 3));
   }, []);
 
-  const deleteCard = useCallback((cardId: string) => {
-    setCards((prev) => prev.filter((card) => card.id !== cardId));
-    // Also delete arrows connected to this card
-    setArrows((prev) =>
-      prev.filter(
-        (arrow) => arrow.fromCardId !== cardId && arrow.toCardId !== cardId
-      )
-    );
-  }, []);
+  const deleteCard = useCallback(
+    (cardId: string) => {
+      setCards((prev) => prev.filter((card) => card.id !== cardId));
+      // Also delete arrows connected to this card
+      setArrows((prev) =>
+        prev.filter(
+          (arrow) => arrow.fromCardId !== cardId && arrow.toCardId !== cardId
+        )
+      );
+      // Remove metrics for this card
+      setCardMetrics((prev) => {
+        const newMetrics = { ...prev };
+        delete newMetrics[cardId];
+        return newMetrics;
+      });
+      // Close metrics panel if this card was selected
+      if (selectedCardForMetrics === cardId) {
+        setShowMetricsPanel(false);
+        setSelectedCardForMetrics(null);
+      }
+    },
+    [selectedCardForMetrics]
+  );
 
   const startConnectionFromCard = useCallback((cardId: string) => {
     setConnectionMode(true);
@@ -245,6 +304,8 @@ export function CanvasClient({
         setEditingCard(null);
         setConnectionMode(false);
         setConnectionStart(null);
+        setShowMetricsPanel(false);
+        setSelectedCardForMetrics(null);
       }
     };
 
@@ -311,12 +372,14 @@ export function CanvasClient({
               isConnectionMode={connectionMode}
               isConnectionStart={connectionStart === card.id}
               isHovered={hoveredCard === card.id}
+              metricsCount={getCardMetricsCount(card.id)}
               onMouseDown={(e) => {
                 e.stopPropagation();
                 handleMouseDown(e, card.id);
               }}
               onMouseEnter={() => setHoveredCard(card.id)}
               onMouseLeave={() => setHoveredCard(null)}
+              onClick={() => handleCardClick(card.id)}
               onDoubleClick={(e) => {
                 e.stopPropagation();
                 if (!connectionMode) {
@@ -336,6 +399,24 @@ export function CanvasClient({
             />
           ))}
         </div>
+
+        {/* Right Sidebar - Metrics Panel */}
+        {showMetricsPanel && selectedCardForMetrics && (
+          <div className="w-80 border-l bg-background">
+            <MetricsPanel
+              cardId={selectedCardForMetrics}
+              card={cards.find((c) => c.id === selectedCardForMetrics)}
+              initialMetrics={cardMetrics[selectedCardForMetrics] || []}
+              onMetricsChange={(metrics) =>
+                updateCardMetrics(selectedCardForMetrics, metrics)
+              }
+              onClose={() => {
+                setShowMetricsPanel(false);
+                setSelectedCardForMetrics(null);
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,13 @@
 import { Plus, Move, ZoomIn, ZoomOut, FileText, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CanvasToolbarProps {
   onAddCard: (section?: string) => void;
@@ -25,7 +31,10 @@ const PROJECT_GOALS = [
   { value: "improve-education", label: "Improve Education" },
   { value: "enhance-healthcare", label: "Enhance Healthcare" },
   { value: "promote-equality", label: "Promote Gender Equality" },
-  { value: "environmental-sustainability", label: "Environmental Sustainability" },
+  {
+    value: "environmental-sustainability",
+    label: "Environmental Sustainability",
+  },
   { value: "economic-growth", label: "Economic Growth" },
   { value: "social-cohesion", label: "Social Cohesion" },
   { value: "public-safety", label: "Public Safety" },
@@ -62,7 +71,7 @@ export function CanvasToolbar({
         </Select>
         {selectedGoal && (
           <Badge variant="secondary">
-            {PROJECT_GOALS.find(g => g.value === selectedGoal)?.label}
+            {PROJECT_GOALS.find((g) => g.value === selectedGoal)?.label}
           </Badge>
         )}
       </div>
@@ -95,7 +104,7 @@ export function CanvasToolbar({
           onClick={onToggleEvidencePanel}
           size="sm"
           variant={showEvidencePanel ? "default" : "outline"}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 cursor-pointer"
         >
           <FileText className="h-4 w-4" />
           <span className="hidden sm:inline">Evidence</span>

@@ -11,9 +11,11 @@ interface PostItCardProps {
   isConnectionMode: boolean;
   isConnectionStart: boolean;
   isHovered: boolean;
+  metricsCount: number;
   onMouseDown: (e: React.MouseEvent) => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  onClick: () => void;
   onDoubleClick: (e: React.MouseEvent) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   onContentChange: (content: string) => void;
@@ -30,9 +32,11 @@ export function PostItCard({
   isConnectionMode,
   isConnectionStart,
   isHovered,
+  metricsCount,
   onMouseDown,
   onMouseEnter,
   onMouseLeave,
+  onClick,
   onDoubleClick,
   onKeyDown,
   onContentChange,
@@ -59,6 +63,10 @@ export function PostItCard({
       onMouseDown={onMouseDown}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       onDoubleClick={onDoubleClick}
       onKeyDown={onKeyDown}
       tabIndex={0}
@@ -95,6 +103,9 @@ export function PostItCard({
         <div className="text-sm whitespace-pre-wrap break-words">
           {card.content || "Click to edit"}
         </div>
+      )}
+      {metricsCount > 0 && (
+        <span className="text-sm text-gray-600">{metricsCount} metrics</span>
       )}
     </Card>
   );
