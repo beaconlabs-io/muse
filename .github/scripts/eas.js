@@ -83,6 +83,10 @@ module.exports = async ({ data }) => {
     },
   ]);
 
+  // Get current nonce to ensure proper transaction ordering
+  const nonce = await signer.getNonce("pending");
+  console.log("Using nonce:", nonce);
+
   const transaction = await eas.attest({
     schema: SCHEMA_UID,
     data: {
@@ -95,9 +99,12 @@ module.exports = async ({ data }) => {
         "0x0000000000000000000000000000000000000000000000000000000000000000",
     },
   });
+  
+  console.log("Transaction submitted, waiting for confirmation...");
   const newAttestationUID = await transaction.wait();
   console.log("Attestation created with UID:", newAttestationUID);
-  console.log("Transaction receipt:", transaction.receipt);
+  console.log("Transaction hash:", transaction.receipt?.hash);
+  console.log("Block number:", transaction.receipt?.blockNumber);
 
   return newAttestationUID;
 };
