@@ -7,6 +7,12 @@ on:
     paths: ["contents/evidence/*.mdx"]
     types: closed
     # types: [opened, synchronize, reopened] # closed
+  workflow_dispatch:
+    inputs:
+      evidence_files:
+        description: 'Comma-separated list of evidence files (e.g., 03.mdx,04.mdx,05.mdx)'
+        required: false
+        type: string
 
 # Add permissions configuration
 permissions:
@@ -90,31 +96,41 @@ jobs:
       - name: Extract evidence paths
         id: evidence-paths
         run: |
-          # Extract relative paths from changed files
-          CHANGED_FILES="${{ steps.changed-files.outputs.files }}"
-          EVIDENCE_PATHS=""
-          COUNT=0
+          # Check if this is a manual workflow dispatch with specific files
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.evidence_files }}" ]; then
+            echo "🔧 Manual workflow dispatch detected with specific files"
+            EVIDENCE_PATHS="${{ github.event.inputs.evidence_files }}"
+            COUNT=$(echo "$EVIDENCE_PATHS" | tr ',' '\n' | wc -l)
+            
+            echo "Evidence paths (manual): $EVIDENCE_PATHS"
+            echo "Total count (manual): $COUNT"
+          else
+            # Extract relative paths from changed files
+            CHANGED_FILES="${{ steps.changed-files.outputs.files }}"
+            EVIDENCE_PATHS=""
+            COUNT=0
 
-          if [ -n "$CHANGED_FILES" ]; then
-            while IFS= read -r file; do
-              if [ -n "$file" ]; then
-                # Remove contents/evidence/ prefix to get relative path
-                RELATIVE_PATH=$(echo "$file" | sed 's|^contents/evidence/||')
-                
-                if [ -n "$EVIDENCE_PATHS" ]; then
-                  EVIDENCE_PATHS="$EVIDENCE_PATHS,$RELATIVE_PATH"
-                else
-                  EVIDENCE_PATHS="$RELATIVE_PATH"
+            if [ -n "$CHANGED_FILES" ]; then
+              while IFS= read -r file; do
+                if [ -n "$file" ]; then
+                  # Remove contents/evidence/ prefix to get relative path
+                  RELATIVE_PATH=$(echo "$file" | sed 's|^contents/evidence/||')
+                  
+                  if [ -n "$EVIDENCE_PATHS" ]; then
+                    EVIDENCE_PATHS="$EVIDENCE_PATHS,$RELATIVE_PATH"
+                  else
+                    EVIDENCE_PATHS="$RELATIVE_PATH"
+                  fi
+                  
+                  COUNT=$((COUNT + 1))
+                  echo "Found evidence path: $RELATIVE_PATH"
                 fi
-                
-                COUNT=$((COUNT + 1))
-                echo "Found evidence path: $RELATIVE_PATH"
-              fi
-            done <<< "$CHANGED_FILES"
-          fi
+              done <<< "$CHANGED_FILES"
+            fi
 
-          echo "Evidence paths: $EVIDENCE_PATHS"
-          echo "Total count: $COUNT"
+            echo "Evidence paths: $EVIDENCE_PATHS"
+            echo "Total count: $COUNT"
+          fi
 
           # Set as GitHub Actions output
           echo "paths=$EVIDENCE_PATHS" >> $GITHUB_OUTPUT
