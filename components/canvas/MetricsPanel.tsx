@@ -69,7 +69,8 @@ export function MetricsPanel({
   onMetricsChange,
   onClose,
 }: MetricsPanelProps) {
-  const [metrics, setMetrics] = useState<Metrics[]>(initialMetrics);
+  // Use initialMetrics directly instead of local state
+  const metrics = initialMetrics;
 
   const form = useForm<MetricsFormData>({
     resolver: zodResolver(metricsSchema),
@@ -89,14 +90,12 @@ export function MetricsPanel({
     };
 
     const updatedMetrics = [...metrics, newMetrics];
-    setMetrics(updatedMetrics);
     onMetricsChange(updatedMetrics);
     form.reset();
   };
 
   const removeMetrics = (id: string) => {
     const updatedMetrics = metrics.filter((metric) => metric.id !== id);
-    setMetrics(updatedMetrics);
     onMetricsChange(updatedMetrics);
   };
 
@@ -108,7 +107,6 @@ export function MetricsPanel({
     const updatedMetrics = metrics.map((metric) =>
       metric.id === id ? { ...metric, [field]: value } : metric
     );
-    setMetrics(updatedMetrics);
     onMetricsChange(updatedMetrics);
   };
 
