@@ -1,7 +1,7 @@
 import "highlight.js/styles/github-dark.css";
 import React from "react";
 import Link from "next/link";
-import { EffectIcons } from "@/components/effect-icons";
+import { EffectIcons, extractEffectData } from "@/components/effect-icons";
 import { TooltipEffects } from "@/components/tooltip/tooltip-effects";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -199,11 +199,13 @@ export async function generateMetadata({
 
   const { meta } = response;
   const title = `${meta.title} - MUSE by BeaconLabs`;
+
   const description = meta.results?.length
-    ? `Evidence on ${meta.results
-        .map((r) => `${r.intervention} → ${r.outcome_variable}`)
-        .join(", ")}. Strength: ${meta.strength}/5`
-    : "Research evidence for policy making on MUSE";
+    ? meta.results.map((r) => {
+        const effectData = extractEffectData(r.outcome);
+        return `${r.intervention} has ${effectData?.title} effect on ${r.outcome_variable}`;
+      })
+    : "Explore evidence on MUSE";
 
   const ogImageUrl = `/api/og/evidence?slug=${encodeURIComponent(slug)}`;
 
