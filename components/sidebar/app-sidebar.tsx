@@ -19,7 +19,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { SidebarFooterComponent } from "./sidebar-footer";
-import { getAllEvidenceMeta } from "@/utils";
+import { getAllEvidenceMeta } from "@/lib/evidence";
 
 const menu = [
   {

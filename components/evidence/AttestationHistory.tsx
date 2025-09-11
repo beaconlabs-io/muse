@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Shield, ArrowUpRight } from "lucide-react";
 import type { EvidenceAttestation } from "@/types";
-import { formatDate } from "@/utils";
+import { formatDate } from "@/lib/format-date";
 
 interface AttestationHistoryProps {
   currentAttestationUID?: string;

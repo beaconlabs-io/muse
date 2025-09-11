@@ -1,18 +1,9 @@
 import "highlight.js/styles/github-dark.css";
 import React from "react";
 import { extractEffectData } from "@/components/effect-icons";
-import {
-  EvidenceHeader,
-  EvidenceResults,
-  EvidenceMethodologies,
-  EvidenceDataSources,
-  EvidenceCitation,
-  EvidenceTags,
-  AttestationHistory,
-} from "@/components/evidence";
-import { Separator } from "@/components/ui/separator";
+import { EvidencePageClient } from "@/components/evidence/EvidencePageClient";
 import type { EvidenceResponse } from "@/types";
-import { getEvidenceBySlug } from "@/utils";
+import { getEvidenceBySlug } from "@/lib/evidence";
 
 export default async function EvidencePage({
   params,
@@ -20,7 +11,7 @@ export default async function EvidencePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const response = await getEvidenceBySlug(slug) as EvidenceResponse | null;
+  const response = await getEvidenceBySlug(slug);
 
   if (!response) {
     return (
@@ -30,43 +21,7 @@ export default async function EvidencePage({
     );
   }
 
-  const { meta } = response;
-
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <EvidenceHeader
-        title={meta.title}
-        date={meta.date}
-        author={meta.author}
-        version={meta.version}
-      />
-
-      <div className="prose max-w-none">
-        <article>{response.content}</article>
-
-        <Separator className="my-2" />
-
-        <EvidenceResults results={meta.results || []} />
-        
-        <EvidenceMethodologies
-          methodologies={meta.methodologies}
-          datasets={meta.datasets || []}
-        />
-        
-        <EvidenceDataSources datasets={meta.datasets || []} />
-        
-        <EvidenceCitation citations={meta.citation} />
-        
-        <EvidenceTags tags={meta.tags || []} />
-
-        <AttestationHistory
-          currentAttestationUID={meta.attestationUID}
-          currentTimestamp={meta.timestamp}
-          history={meta.history}
-        />
-      </div>
-    </div>
-  );
+  return <EvidencePageClient response={response as EvidenceResponse} />;
 }
 
 export async function generateMetadata({

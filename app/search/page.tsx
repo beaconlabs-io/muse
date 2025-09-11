@@ -1,7 +1,7 @@
 import React from "react";
 import { DataTable } from "@/components/table/data-table";
 import { columns } from "@/components/table/table-column";
-import { getAllEvidenceMeta } from "@/utils";
+import { getAllEvidenceMeta } from "@/lib/evidence";
 
 export default async function page() {
   const evidence = await getAllEvidenceMeta();
