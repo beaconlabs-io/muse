@@ -38,11 +38,11 @@ export function EvidenceSearch({
         !searchTerm ||
         item.title.toLowerCase().includes(searchLower) ||
         item.author.toLowerCase().includes(searchLower) ||
-        item.results.some(
+        item.results?.some(
           (result) =>
             result.intervention.toLowerCase().includes(searchLower) ||
             result.outcome_variable.toLowerCase().includes(searchLower) ||
-            result.outcome.toLowerCase().includes(searchLower)
+            result.outcome?.toLowerCase().includes(searchLower)
         );
 
       return matchesSearch;
@@ -67,8 +67,8 @@ export function EvidenceSearch({
           bValue = b.date || "";
           break;
         case "strength":
-          aValue = parseInt(a.strength) || 0;
-          bValue = parseInt(b.strength) || 0;
+          aValue = parseInt(a.strength || "0") || 0;
+          bValue = parseInt(b.strength || "0") || 0;
           break;
         default:
           return 0;

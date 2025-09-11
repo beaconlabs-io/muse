@@ -11,7 +11,7 @@ import {
   AttestationHistory,
 } from "@/components/evidence";
 import { Separator } from "@/components/ui/separator";
-import type { ActualEvidenceResponse } from "@/types/evidence";
+import type { EvidenceResponse } from "@/types";
 import { getEvidenceBySlug } from "@/utils";
 
 export default async function EvidencePage({
@@ -20,7 +20,7 @@ export default async function EvidencePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const response = await getEvidenceBySlug(slug) as ActualEvidenceResponse | null;
+  const response = await getEvidenceBySlug(slug) as EvidenceResponse | null;
 
   if (!response) {
     return (
@@ -89,8 +89,8 @@ export async function generateMetadata({
 
   const description = meta.results?.length
     ? meta.results.map((r) => {
-        const effectData = extractEffectData(r.outcome);
-        return `${r.intervention} has ${effectData?.title} effect on ${r.outcome_variable}`;
+        const effectData = r.outcome ? extractEffectData(r.outcome) : null;
+        return `${r.intervention} has ${effectData?.title || 'unknown'} effect on ${r.outcome_variable}`;
       })
     : "Explore evidence on MUSE";
 

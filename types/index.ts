@@ -1,39 +1,52 @@
-export interface Evidence {
-  evidence_id: string;
-  results: {
-    intervention: string;
-    outcome_variable: string;
-    outcome: string;
-  }[];
-  strength: string;
-  version: string;
-  methodologies: string[];
-  datasets: string[];
-  title: string;
-  tags: string[];
-  citation: {
-    type: string;
-    src: string;
-    name: string;
-  }[];
-  author: string; // TODO: consider making this an array
-  date?: string;
-  attestationUID: `0x${string}`;
-  timestamp: string;
-  history?: {
-    ipfsHash: string;
-    attestationUID: `0x${string}`;
-    timestamp: string;
-    size: number;
-  }[];
+// =============================================================================
+// EVIDENCE TYPES
+// =============================================================================
+
+export interface EvidenceResult {
+  intervention: string;
+  outcome_variable: string;
+  outcome?: string;
 }
 
-export interface AttestationResponse {
-  attestations: ReturnedAttestation[] | undefined;
+export interface EvidenceCitation {
+  type?: string;
+  src?: string;
+  name: string;
 }
-export interface SingleAttestationResponse {
-  attestation: ReturnedAttestation | undefined;
+
+export interface EvidenceAttestation {
+  ipfsHash: string;
+  attestationUID: `0x${string}`;
+  timestamp: string;
+  size: number;
 }
+
+export interface Evidence {
+  evidence_id: string;
+  results?: EvidenceResult[];
+  strength?: string;
+  version?: string;
+  methodologies?: string | string[];
+  datasets?: string[];
+  title: string;
+  tags?: string[];
+  citation: EvidenceCitation[];
+  author: string;
+  date: string; // Required for display
+  attestationUID?: `0x${string}`;
+  timestamp?: string;
+  history?: EvidenceAttestation[];
+}
+
+// Response type for evidence pages (from getEvidenceBySlug)
+export interface EvidenceResponse {
+  meta: Evidence;
+  content: React.ReactNode;
+}
+
+// =============================================================================
+// ATTESTATION TYPES
+// =============================================================================
 
 export interface ReturnedAttestation {
   id: string;
@@ -50,6 +63,14 @@ export interface ReturnedAttestation {
   attester: string;
 }
 
+export interface AttestationResponse {
+  attestations: ReturnedAttestation[] | undefined;
+}
+
+export interface SingleAttestationResponse {
+  attestation: ReturnedAttestation | undefined;
+}
+
 export interface AttestationData {
   evidence_id: string;
   title: string;
@@ -64,9 +85,22 @@ export interface AttestationData {
 }
 
 export interface DecodedEvidence extends ReturnedAttestation, AttestationData {}
-export interface SingleDecodedEvidence
-  extends ReturnedAttestation,
-    AttestationData {}
+
+export interface SingleDecodedEvidence extends ReturnedAttestation, AttestationData {}
+
+// =============================================================================
+// STORAGE TYPES
+// =============================================================================
+
+export interface IPFSStorageResult {
+  hash: string;
+  size: number;
+  timestamp: string;
+}
+
+// =============================================================================
+// GRAPH VISUALIZATION TYPES
+// =============================================================================
 
 export type Node = {
   [key: string]: unknown;
@@ -84,6 +118,10 @@ export type Link = {
   color?: string;
 };
 
+// =============================================================================
+// LOGIC MODEL TYPES
+// =============================================================================
+
 export interface PostItCard {
   id: string;
   x: number;
@@ -96,6 +134,21 @@ export interface Arrow {
   id: string;
   fromCardId: string;
   toCardId: string;
+}
+
+export interface CardMetrics {
+  id: string;
+  name: string;
+  description?: string;
+  measurementMethod?: string;
+  targetValue?: string;
+  frequency?:
+    | "daily"
+    | "weekly"
+    | "monthly"
+    | "quarterly"
+    | "annually"
+    | "other";
 }
 
 export interface LogicModel {
@@ -114,26 +167,9 @@ export interface LogicModel {
   };
 }
 
-export interface CardMetrics {
-  id: string;
-  name: string;
-  description?: string;
-  measurementMethod?: string;
-  targetValue?: string;
-  frequency?:
-    | "daily"
-    | "weekly"
-    | "monthly"
-    | "quarterly"
-    | "annually"
-    | "other";
-}
-
-export interface IPFSStorageResult {
-  hash: string;
-  size: number;
-  timestamp: string;
-}
+// =============================================================================
+// CONSTANTS
+// =============================================================================
 
 export const CARD_COLORS = [
   "#fef08a", // yellow
@@ -144,3 +180,5 @@ export const CARD_COLORS = [
   "#e9d5ff", // purple
   "#fce7f3", // pink
 ] as const;
+
+export type CardColor = typeof CARD_COLORS[number];

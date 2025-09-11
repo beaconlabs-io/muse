@@ -316,7 +316,7 @@ export function CanvasClient({
     const baseId = `evidence-${evidence.evidence_id}-${Date.now()}`;
 
     // Add cards for each result (intervention -> outcome)
-    evidence.results.forEach((result, index) => {
+    evidence.results?.forEach((result, index) => {
       const outputCardId = `${baseId}-output-${index}`;
       const outcomeCardId = `${baseId}-outcome-${index}`;
 
@@ -331,7 +331,7 @@ export function CanvasClient({
 
       // Outcome card with variable and effect information
       const effectId = result.outcome;
-      const effectData = extractEffectData(effectId);
+      const effectData = effectId ? extractEffectData(effectId) : null;
       const effectTitle = effectData?.title || "Unclear";
 
       const outcomeCard = {
@@ -350,7 +350,9 @@ export function CanvasClient({
           id: `${baseId}-metric-${index}`,
           name: `${result.outcome_variable} Measurement`,
           description: `Evidence-based metric from: ${evidence.title}`,
-          measurementMethod: evidence.methodologies?.join(", "),
+          measurementMethod: Array.isArray(evidence.methodologies) 
+            ? evidence.methodologies.join(", ") 
+            : evidence.methodologies,
           frequency: "quarterly",
         },
       ];

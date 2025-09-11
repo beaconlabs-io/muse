@@ -1,17 +1,13 @@
 import React from "react";
 import Link from "next/link";
 import { Shield, ArrowUpRight } from "lucide-react";
+import type { EvidenceAttestation } from "@/types";
 import { formatDate } from "@/utils";
-
-interface Attestation {
-  attestationUID: string;
-  timestamp: string;
-}
 
 interface AttestationHistoryProps {
   currentAttestationUID?: string;
   currentTimestamp?: string;
-  history?: Attestation[];
+  history?: EvidenceAttestation[];
 }
 
 export function AttestationHistory({ 

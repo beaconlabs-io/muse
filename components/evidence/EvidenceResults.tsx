@@ -1,15 +1,10 @@
 import React from "react";
 import { EffectIcons } from "@/components/effect-icons";
 import { TooltipEffects } from "@/components/tooltip/tooltip-effects";
-
-interface Result {
-  intervention: string;
-  outcome_variable: string;
-  outcome?: string;
-}
+import type { EvidenceResult } from "@/types";
 
 interface EvidenceResultsProps {
-  results: Result[];
+  results: EvidenceResult[];
 }
 
 export function EvidenceResults({ results }: EvidenceResultsProps) {
@@ -24,7 +19,7 @@ export function EvidenceResults({ results }: EvidenceResultsProps) {
       <ul className="list-disc list-inside text-gray-700">
         {results.map((result, idx) => (
           <li key={idx} className="flex items-center gap-4">
-            {typeof result.outcome !== "undefined" && (
+            {result.outcome && (
               <EffectIcons effectId={result.outcome} />
             )}
             <div className="font-medium">{result.intervention}</div>

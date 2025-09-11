@@ -1,14 +1,9 @@
 import React from "react";
 import { AttachedLinks } from "@/components/AttachedLinks";
-
-interface Citation {
-  name: string;
-  src?: string;
-  type?: string;
-}
+import type { EvidenceCitation } from "@/types";
 
 interface EvidenceCitationProps {
-  citations: Citation[];
+  citations: EvidenceCitation[];
 }
 
 export function EvidenceCitation({ citations }: EvidenceCitationProps) {
