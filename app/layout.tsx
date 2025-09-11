@@ -14,10 +14,10 @@ import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "MUSE by BeaconLabs",
-  description: "Evidence-based policy making",
+  description: "Create and edit interactive logic models with evidence",
   openGraph: {
     title: "MUSE by BeaconLabs",
-    description: "Evidence-based policy making",
+    description: "Create and edit interactive logic models with evidence",
     type: "website",
     siteName: "MUSE",
     images: [
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "MUSE by BeaconLabs",
-    description: "Evidence-based policy making",
+    description: "Create and edit interactive logic models with evidence",
     images: ["/opengraph-image.svg"],
   },
 };
