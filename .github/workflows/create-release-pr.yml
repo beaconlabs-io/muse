@@ -23,50 +23,6 @@ jobs:
           existing_pr=$(gh pr list --base main --head dev --json number --jq '.[0].number // ""')
           echo "existing_pr=$existing_pr" >> $GITHUB_OUTPUT
 
-      - name: Get commit range
-        id: commits
-        run: |
-          # Get commits between main and dev
-          commits=$(git log origin/main..dev --oneline --no-merges | head -10)
-          if [ -z "$commits" ]; then
-            commits="No new commits found"
-          fi
-          echo "commits<<EOF" >> $GITHUB_OUTPUT
-          echo "$commits" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          
-          # Count total commits
-          total_commits=$(git log origin/main..dev --oneline --no-merges | wc -l | tr -d ' ')
-          echo "total_commits=$total_commits" >> $GITHUB_OUTPUT
-
-      - name: Get recent PRs merged to dev
-        id: recent-prs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Get recently merged PRs to dev that are not yet in main (last 10)
-          # Get commits that are in dev but not in main
-          commits_not_in_main=$(git log origin/main..dev --oneline --no-merges | head -20 | awk '{print $1}')
-          
-          if [ -z "$commits_not_in_main" ]; then
-            recent_prs="No recent PRs found"
-          else
-            # Get PRs merged to dev in the last 30 days and filter by commits
-            recent_prs=$(gh pr list --base dev --state merged --limit 30 --json number,title,author,mergeCommit --jq '
-              map(select(.mergeCommit != null and .mergeCommit.oid != null)) | 
-              sort_by(.number) | 
-              reverse | 
-              limit(10; .[]) | 
-              "- #\(.number) \(.title) (@\(.author.login))"
-            ' 2>/dev/null || echo "No recent PRs found")
-          fi
-          
-          if [ -z "$recent_prs" ]; then
-            recent_prs="No recent PRs found"
-          fi
-          echo "recent_prs<<EOF" >> $GITHUB_OUTPUT
-          echo "$recent_prs" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release PR
         if: steps.check-pr.outputs.existing_pr == ''
@@ -78,22 +34,9 @@ jobs:
 
           This automated PR merges the latest changes from `dev` into `main` for release.
 
-          ### 🔄 Recent Changes
-          ```
-          ${{ steps.commits.outputs.commits }}
-          ```
-
-          ### 📋 Recently Merged PRs
-          ${{ steps.recent-prs.outputs.recent_prs }}
-
           ---
           
           🤖 *Automatically created by GitHub Actions*
-          
-          **Next steps:**
-          1. Review the changes above
-          2. Merge this PR to trigger the release process
-          3. The release will be automatically tagged and deployed
           EOF
 
           gh pr create \
@@ -113,14 +56,6 @@ jobs:
           ## 🔄 Release PR Updated - $(date +'%Y-%m-%d %H:%M:%S UTC')
 
           New changes have been pushed to `dev` branch since this PR was created.
-
-          ### 🔄 Latest Changes
-          ```
-          ${{ steps.commits.outputs.commits }}
-          ```
-
-          ### 📋 Recently Merged PRs
-          ${{ steps.recent-prs.outputs.recent_prs }}
 
           ---
           
