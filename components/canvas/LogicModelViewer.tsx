@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowsSvg } from "@/components/canvas/ArrowsSvg";
 import { LogicModelSections } from "@/components/canvas/LogicModelSections";
 import { PostItCard } from "@/components/canvas/PostItCard";
+import { Button } from "@/components/ui/button";
 import { LogicModel } from "@/types";
 
 interface Props {
@@ -84,12 +85,9 @@ export function LogicModelViewer({ logicModel }: Props) {
               +
             </button>
 
-            <Link
-              href="/canvas"
-              className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm"
-            >
-              Create New Model
-            </Link>
+            <Button asChild className="ml-4">
+              <Link href="/canvas">Create New Model</Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -130,28 +128,6 @@ export function LogicModelViewer({ logicModel }: Props) {
             metricsCount={logicModel.cardMetrics[card.id]?.length || 0}
           />
         ))}
-      </div>
-
-      {/* Footer with metadata */}
-      <div className="bg-gray-50 border-t border-gray-200 px-6 py-3">
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <div>
-            {logicModel.cards.length} cards • {logicModel.arrows.length}{" "}
-            connections
-            {logicModel.selectedGoal && (
-              <span> • Goal: {logicModel.selectedGoal}</span>
-            )}
-          </div>
-          <div>
-            Read-only view •
-            <Link
-              href="/canvas"
-              className="text-blue-600 hover:text-blue-800 ml-1"
-            >
-              Create your own logic model
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   );

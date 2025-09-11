@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { LogicModelViewer } from "@/components/canvas/LogicModelViewer";
+import { Button } from "@/components/ui/button";
 import { fetchFromIPFS } from "@/utils/ipfs";
 
 interface Props {
@@ -28,12 +29,9 @@ export default async function LogicModelPage({ params }: Props) {
             Logic Model Not Found
           </h1>
           <p className="text-gray-600 mb-4">{error}</p>
-          <Link
-            href="/canvas"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Create New Logic Model
-          </Link>
+          <Button asChild>
+            <Link href="/canvas">Create New Logic Model</Link>
+          </Button>
         </div>
       </div>
     );
