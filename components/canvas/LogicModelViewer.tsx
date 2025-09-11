@@ -67,24 +67,7 @@ export function LogicModelViewer({ logicModel }: Props) {
             </div>
           </div>
 
-          {/* Zoom Controls */}
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() => handleZoom(-0.1)}
-              className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
-            >
-              −
-            </button>
-            <span className="text-sm font-medium min-w-12 text-center">
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              onClick={() => handleZoom(0.1)}
-              className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
-            >
-              +
-            </button>
-
             <Button asChild className="ml-4">
               <Link href="/canvas">Create New Model</Link>
             </Button>
