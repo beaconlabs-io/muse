@@ -1,7 +1,7 @@
 name: Create Release PR
 on:
   push:
-    branches: [ dev ]
+    branches: [dev]
 
 permissions:
   contents: write
@@ -23,7 +23,6 @@ jobs:
           existing_pr=$(gh pr list --base main --head dev --json number --jq '.[0].number // ""')
           echo "existing_pr=$existing_pr" >> $GITHUB_OUTPUT
 
-
       - name: Create Release PR
         if: steps.check-pr.outputs.existing_pr == ''
         env:
@@ -34,8 +33,6 @@ jobs:
 
           This automated PR merges the latest changes from `dev` into `main` for release.
 
-          ---
-          
           🤖 *Automatically created by GitHub Actions*
           EOF
 
@@ -53,13 +50,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cat > update_comment.md << 'EOF'
-          ## 🔄 Release PR Updated - $(date +'%Y-%m-%d %H:%M:%S UTC')
+          ## 🔄 Release PR Updated
 
           New changes have been pushed to `dev` branch since this PR was created.
 
-          ---
-          
-          🤖 *Updated by GitHub Actions* - Please review the latest changes above
+          🤖 *Updated by GitHub Actions*
           EOF
 
           gh pr comment ${{ steps.check-pr.outputs.existing_pr }} \
