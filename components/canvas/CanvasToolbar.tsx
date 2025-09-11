@@ -54,10 +54,10 @@ export function CanvasToolbar({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Target className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Project Goal:</span>
+          <span className="text-sm font-medium">Goal:</span>
           <Select value={selectedGoal} onValueChange={onGoalChange}>
             <SelectTrigger className="w-64">
-              <SelectValue placeholder="Select your project goal" />
+              <SelectValue placeholder="Select your goal" />
             </SelectTrigger>
             <SelectContent>
               {PROJECT_GOALS.map((goal) => (
@@ -73,7 +73,7 @@ export function CanvasToolbar({
             </Badge>
           )}
         </div>
-        
+
         {/* Save and Export buttons - fixed right */}
         <div className="flex items-center gap-2">
           {onSaveLogicModel && (
