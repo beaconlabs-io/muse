@@ -44,8 +44,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get recently merged PRs to dev (last 10)
-          recent_prs=$(gh pr list --base dev --state merged --limit 10 --json number,title,author --jq '.[] | "- #\(.number) \(.title) (@\(.author.login))"' || echo "No recent PRs found")
+          # Get recently merged PRs to dev that are not yet in main (last 10)
+          # First get the merge base between main and dev
+          merge_base=$(git merge-base main dev)
+          
+          # Get PRs merged to dev after the merge base
+          recent_prs=$(gh pr list --base dev --state merged --limit 20 --json number,title,author,mergedAt --jq --arg merge_base "$merge_base" '
+            map(select(.mergedAt != null)) | 
+            sort_by(.mergedAt) | 
+            reverse | 
+            limit(10; .[]) | 
+            "- #\(.number) \(.title) (@\(.author.login))"
+          ' || echo "No recent PRs found")
+          
           if [ -z "$recent_prs" ]; then
             recent_prs="No recent PRs found"
           fi
@@ -62,11 +73,6 @@ jobs:
           ## 🚀 Release Ready
 
           This automated PR merges the latest changes from `dev` into `main` for release.
-
-          ### 📊 Summary
-          - **Total commits**: ${{ steps.commits.outputs.total_commits }}
-          - **Branch**: `dev` → `main`
-          - **Created**: $(date +'%Y-%m-%d %H:%M:%S UTC')
 
           ### 🔄 Recent Changes
           ```
@@ -103,10 +109,6 @@ jobs:
           ## 🔄 Release PR Updated - $(date +'%Y-%m-%d %H:%M:%S UTC')
 
           New changes have been pushed to `dev` branch since this PR was created.
-
-          ### 📊 Current Summary
-          - **Total commits**: ${{ steps.commits.outputs.total_commits }}
-          - **Branch**: `dev` → `main`
 
           ### 🔄 Latest Changes
           ```
