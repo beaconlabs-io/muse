@@ -1,7 +1,7 @@
 import "highlight.js/styles/github-dark.css";
 import React from "react";
 import Link from "next/link";
-import { EffectIcons } from "@/components/effect-icons";
+import { EffectIcons, extractEffectData } from "@/components/effect-icons";
 import { TooltipEffects } from "@/components/tooltip/tooltip-effects";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -180,4 +180,60 @@ export default async function EvidencePage({
       </div>
     </div>
   );
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const response = await getEvidenceBySlug(slug);
+
+  if (!response) {
+    return {
+      title: "Evidence not found - MUSE",
+      description: "The requested evidence could not be found.",
+    };
+  }
+
+  const { meta } = response;
+  const title = `${meta.title} - MUSE by BeaconLabs`;
+
+  const description = meta.results?.length
+    ? meta.results.map((r) => {
+        const effectData = extractEffectData(r.outcome);
+        return `${r.intervention} has ${effectData?.title} effect on ${r.outcome_variable}`;
+      })
+    : "Explore evidence on MUSE";
+
+  const ogImageUrl = `/api/og/evidence?slug=${encodeURIComponent(slug)}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      publishedTime: meta.date,
+      authors: [meta.author],
+      tags: meta.tags,
+      siteName: "MUSE",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImageUrl],
+    },
+  };
 }

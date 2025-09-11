@@ -1,0 +1,23 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="white"/>
+  
+  <!-- Gradient overlay -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.05"/>
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:0.05"/>
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="25" stdDeviation="25" flood-color="rgba(0,0,0,0.25)"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  
+  
+  <!-- MUSE text -->
+  <text x="600" y="290" font-family="Inter, system-ui, sans-serif" font-size="96" font-weight="800" fill="#1e293b" text-anchor="middle">MUSE</text>
+  
+  <!-- by BeaconLabs -->
+  <text x="600" y="350" font-family="Inter, system-ui, sans-serif" font-size="36" font-weight="600" fill="#64748b" text-anchor="middle">by BeaconLabs</text>
+</svg>

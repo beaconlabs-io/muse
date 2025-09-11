@@ -52,13 +52,53 @@ export async function generateMetadata({ params }: Props) {
   try {
     const logicModel = await fetchFromIPFS(id);
     return {
-      title: `${logicModel.title} - Muse Logic Model`,
-      description: logicModel.description || "View this logic model on Muse",
+      title: `${logicModel.title} - MUSE Canvas Logic Model`,
+      description: logicModel.description || "Interactive logic model with evidence - MUSE by BeaconLabs",
+      openGraph: {
+        title: `${logicModel.title} - MUSE Canvas Logic Model`,
+        description: logicModel.description || "Interactive logic model with evidence - MUSE by BeaconLabs",
+        type: "website",
+        siteName: "MUSE",
+        images: [
+          {
+            url: "/canvas-og.svg",
+            width: 1200,
+            height: 630,
+            alt: "MUSE Canvas - Interactive Logic Models",
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: `${logicModel.title} - MUSE Canvas Logic Model`,
+        description: logicModel.description || "Interactive logic model with evidence - MUSE by BeaconLabs",
+        images: ["/canvas-og.svg"],
+      },
     };
   } catch {
     return {
-      title: "Logic Model - Muse",
-      description: "View logic model on Muse",
+      title: "MUSE Canvas - Interactive Logic Models",
+      description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+      openGraph: {
+        title: "MUSE Canvas - Interactive Logic Models",
+        description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+        type: "website",
+        siteName: "MUSE",
+        images: [
+          {
+            url: "/canvas-og.svg",
+            width: 1200,
+            height: 630,
+            alt: "MUSE Canvas - Interactive Logic Models",
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: "MUSE Canvas - Interactive Logic Models",
+        description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+        images: ["/canvas-og.svg"],
+      },
     };
   }
 }

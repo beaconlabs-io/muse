@@ -10,15 +10,35 @@ import { getCanvasData } from "@/lib/canvas/server-data";
 import { getAllEvidenceMeta } from "@/utils";
 
 export const metadata: Metadata = {
-  title: "Canvas - MUSE",
-  description: "Interactive canvas for creating post-it notes and connecting ideas with arrows",
+  title: "MUSE Canvas - Create Interactive Logic Models",
+  description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+  openGraph: {
+    title: "MUSE Canvas - Create Interactive Logic Models",
+    description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+    type: "website",
+    siteName: "MUSE",
+    images: [
+      {
+        url: "/canvas-og.svg",
+        width: 1200,
+        height: 630,
+        alt: "MUSE Canvas - Create Interactive Logic Models",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MUSE Canvas - Create Interactive Logic Models",
+    description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+    images: ["/canvas-og.svg"],
+  },
 };
 
 // This is a Server Component that can do SSR
 export default async function CanvasPage() {
   // Fetch initial data on the server
   const { cards, arrows } = await getCanvasData();
-  
+
   // Setup React Query client for server-side prefetching
   const queryClient = new QueryClient();
 
@@ -38,10 +58,7 @@ export default async function CanvasPage() {
 
   return (
     <HydrationBoundary state={dehydratedState}>
-      <CanvasClient 
-        initialCards={cards}
-        initialArrows={arrows}
-      />
+      <CanvasClient initialCards={cards} initialArrows={arrows} />
     </HydrationBoundary>
   );
 }
