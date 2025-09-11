@@ -12,6 +12,10 @@ import {
 } from "@/components/ui/sidebar";
 import Providers from "./providers";
 
+const baseUrl = process.env.NODE_ENV === "production" 
+  ? "https://muse.beaconlabs.io" 
+  : "http://localhost:3000";
+
 export const metadata: Metadata = {
   title: "MUSE by BeaconLabs",
   description: "Create and edit interactive logic models with evidence",
@@ -22,7 +26,7 @@ export const metadata: Metadata = {
     siteName: "MUSE",
     images: [
       {
-        url: "/opengraph-image.svg",
+        url: `${baseUrl}/opengraph-image.png`,
         width: 1200,
         height: 630,
         alt: "MUSE by BeaconLabs",
@@ -33,7 +37,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MUSE by BeaconLabs",
     description: "Create and edit interactive logic models with evidence",
-    images: ["/opengraph-image.svg"],
+    images: [`${baseUrl}/opengraph-image.png`],
   },
 };
 
