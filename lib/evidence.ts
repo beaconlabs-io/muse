@@ -1,3 +1,4 @@
+import { cache } from "react";
 import fs from "fs";
 import path from "path";
 import { compileMDX } from "next-mdx-remote/rsc";
@@ -10,27 +11,12 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { Evidence } from "@/types";
 
-export function formatDate(timestamp: string | undefined): string {
-  if (!timestamp) return "-";
-  const date = new Date(timestamp);
-  if (isNaN(date.getTime())) return "-";
-
-  const year = date.getUTCFullYear();
-  const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
-  const day = date.getUTCDate().toString().padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-export function shortAddr(address: string, num: number) {
-  return address.slice(0, num) + "..." + address.slice(-num);
-}
-
 const blogsContentDirectory = path.join(process.cwd(), "contents", "evidence");
 
-export const getEvidenceBySlug = async (
+export const getEvidenceBySlug = cache(async (
   slug: string
 ): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
+  const startTime = performance.now();
   const realSlug = slug.replace(/\.mdx$/, "");
   const filePath = path.join(blogsContentDirectory, `${realSlug}.mdx`);
   const deploymentPath = path.join(
@@ -42,6 +28,7 @@ export const getEvidenceBySlug = async (
   let fileContent;
   let deploymentData = {};
 
+  const fileReadStart = performance.now();
   try {
     fileContent = fs.readFileSync(filePath, { encoding: "utf8" });
 
@@ -57,7 +44,9 @@ export const getEvidenceBySlug = async (
     console.log(error);
     return undefined;
   }
+  const fileReadTime = performance.now() - fileReadStart;
 
+  const mdxCompileStart = performance.now();
   const { frontmatter, content } = await compileMDX({
     source: fileContent,
     options: {
@@ -76,6 +65,18 @@ export const getEvidenceBySlug = async (
     },
   });
 
+  const mdxCompileTime = performance.now() - mdxCompileStart;
+  const totalTime = performance.now() - startTime;
+
+  // Performance logging (disable in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`📊 Evidence "${realSlug}" Performance:
+      📁 File read: ${fileReadTime.toFixed(2)}ms
+      ⚙️  MDX compile: ${mdxCompileTime.toFixed(2)}ms
+      🔄 Total time: ${totalTime.toFixed(2)}ms
+      🎯 Cache status: ${cache.name ? 'MISS' : 'HIT'}`);
+  }
+
   return {
     meta: {
       evidence_id: realSlug,
@@ -88,7 +89,7 @@ export const getEvidenceBySlug = async (
     } as Evidence,
     content: content,
   };
-};
+});
 
 export const getAllEvidenceMeta = async () => {
   const files = fs

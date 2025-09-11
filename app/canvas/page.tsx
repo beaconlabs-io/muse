@@ -7,7 +7,7 @@ import {
 import { Metadata } from "next";
 import { CanvasClient } from "@/components/canvas/CanvasClient";
 import { getCanvasData } from "@/lib/canvas/server-data";
-import { getAllEvidenceMeta } from "@/utils";
+import { getAllEvidenceMeta } from "@/lib/evidence";
 
 const baseUrl = process.env.NODE_ENV === "production" 
   ? "https://muse.beaconlabs.io" 

@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-const text = `// Example evidence data
-{
+const text = `{
   "id": "0",
   "title": "MUSE",
   "description": "MUSE is a bank of evidence.",
@@ -21,12 +20,14 @@ export function Hero() {
               </h1>
               {/* TODO: to be modified */}
               <p className="mt-6 text-lg leading-8 text-gray-600">
-                Explore and interact with the MUSE. View evidence, verify
-                claims, and participate in the decentralized oracle ecosystem.
+                Bridge communities and decision makers through evidence-based
+                decision making. Curate research evidence, build logic models,
+                and track impact with hypercerts.
               </p>
               <div className="mt-10 flex items-center gap-x-6">
+                {/* TODO: replace to whitepaper */}
                 <Link
-                  href="https://github.com/beaconlabs-io"
+                  href="https://github.com/beaconlabs-io/muse"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm font-semibold leading-6 text-gray-900"
