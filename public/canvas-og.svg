@@ -1,0 +1,118 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Arrow marker -->
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+    </marker>
+    
+    <!-- Grid pattern -->
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="1"/>
+    </pattern>
+    
+    <!-- Gradient background -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea"/>
+      <stop offset="100%" style="stop-color:#764ba2"/>
+    </linearGradient>
+    
+    <!-- Shadow filter -->
+    <filter id="cardShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="rgba(0,0,0,0.08)"/>
+    </filter>
+    
+    <filter id="toolbarShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="rgba(0,0,0,0.1)"/>
+    </filter>
+  </defs>
+  
+  <!-- Background gradient -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  
+  <!-- Canvas background -->
+  <rect width="1200" height="630" fill="#f8fafc"/>
+  
+  <!-- Grid background -->
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  
+  
+  <!-- Logic Model Cards -->
+  <!-- Activities -->
+  <g transform="translate(230, 350)">
+    <text x="70" y="-10" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#64748b" text-anchor="middle">ACTIVITIES</text>
+    <rect width="140" height="120" rx="12" fill="white" stroke="#e2e8f0" filter="url(#cardShadow)"/>
+    <rect x="0" y="0" width="4" height="120" rx="2" fill="#10b981"/>
+    
+    <!-- Connection point -->
+    <circle cx="144" cy="60" r="4" fill="#3b82f6" stroke="white" stroke-width="2"/>
+    
+    <text x="70" y="35" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="500" fill="#475569" text-anchor="middle">Grant Activities</text>
+    <text x="70" y="55" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">OSS Development</text>
+    <text x="70" y="75" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">Community Build</text>
+    <text x="70" y="95" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">Documentation</text>
+  </g>
+  
+  <!-- Outputs -->
+  <g transform="translate(430, 350)">
+    <text x="70" y="-10" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#64748b" text-anchor="middle">OUTPUTS</text>
+    <rect width="140" height="120" rx="12" fill="white" stroke="#e2e8f0" filter="url(#cardShadow)"/>
+    <rect x="0" y="0" width="4" height="120" rx="2" fill="#f59e0b"/>
+    
+    <!-- Connection points -->
+    <circle cx="-4" cy="60" r="4" fill="#3b82f6" stroke="white" stroke-width="2"/>
+    <circle cx="144" cy="60" r="4" fill="#3b82f6" stroke="white" stroke-width="2"/>
+    
+    <text x="70" y="35" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="500" fill="#475569" text-anchor="middle">Deliverables</text>
+    <text x="70" y="55" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">Code Repositories</text>
+    <text x="70" y="75" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">Public Tools</text>
+    <text x="70" y="95" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">Grant Reports</text>
+  </g>
+  
+  <!-- Outcomes -->
+  <g transform="translate(630, 350)">
+    <text x="70" y="-10" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#64748b" text-anchor="middle">OUTCOMES</text>
+    <rect width="140" height="120" rx="12" fill="white" stroke="#e2e8f0" filter="url(#cardShadow)"/>
+    <rect x="0" y="0" width="4" height="120" rx="2" fill="#ef4444"/>
+    
+    <!-- Connection points -->
+    <circle cx="-4" cy="60" r="4" fill="#3b82f6" stroke="white" stroke-width="2"/>
+    <circle cx="144" cy="60" r="4" fill="#3b82f6" stroke="white" stroke-width="2"/>
+    
+    <!-- Edit indicator -->
+    <circle cx="132" cy="8" r="10" fill="#3b82f6"/>
+    <text x="132" y="13" font-family="Inter" font-size="12" fill="white" text-anchor="middle">✎</text>
+    
+    <text x="70" y="35" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="500" fill="#475569" text-anchor="middle">Community Impact</text>
+    <text x="70" y="55" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">Adoption</text>
+    <text x="70" y="75" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">Contributors</text>
+    <text x="70" y="95" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">Usage Growth</text>
+  </g>
+  
+  <!-- Impacts -->
+  <g transform="translate(830, 350)">
+    <text x="70" y="-10" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#64748b" text-anchor="middle">IMPACTS</text>
+    <rect width="140" height="120" rx="12" fill="white" stroke="#e2e8f0" filter="url(#cardShadow)"/>
+    <rect x="0" y="0" width="4" height="120" rx="2" fill="#8b5cf6"/>
+    
+    <!-- Connection point -->
+    <circle cx="-4" cy="60" r="4" fill="#3b82f6" stroke="white" stroke-width="2"/>
+    
+    <text x="70" y="35" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="500" fill="#475569" text-anchor="middle">Ecosystem Impact</text>
+    <text x="70" y="55" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">Public Good</text>
+    <text x="70" y="75" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">Innovation</text>
+    <text x="70" y="95" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">Sustainability</text>
+  </g>
+  
+  <!-- Connecting Arrows -->
+  <g stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#arrowhead)">
+    <path d="M 374 410 L 426 410"/>
+    <path d="M 574 410 L 626 410"/>
+    <path d="M 774 410 L 826 410"/>
+  </g>
+  
+  <!-- Title and Subtitle -->
+  <g transform="translate(600, 180)">
+    <text x="0" y="0" font-family="Inter, system-ui, sans-serif" font-size="48" font-weight="800" fill="#1e293b" text-anchor="middle">MUSE Canvas</text>
+    <text x="0" y="35" font-family="Inter, system-ui, sans-serif" font-size="24" font-weight="500" fill="#64748b" text-anchor="middle">Create and edit interactive logic models</text>
+  </g>
+</svg>
