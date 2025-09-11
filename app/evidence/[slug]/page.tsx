@@ -6,6 +6,7 @@ import { EffectIcons, extractEffectData } from "@/components/effect-icons";
 import { TooltipEffects } from "@/components/tooltip/tooltip-effects";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Shield, ArrowUpRight } from "lucide-react";
 import { formatDate, getEvidenceBySlug } from "@/utils";
 
 export default async function EvidencePage({
@@ -131,72 +132,68 @@ export default async function EvidencePage({
         )}
 
         {/* Attestation History Section */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-4">Attestation History</h3>
-          <div className="space-y-4">
-            {/* Current Attestation */}
-            {response.meta.attestationUID && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h4 className="font-medium text-gray-900">
-                      Current Attestation
-                    </h4>
-                    <p className="text-sm text-gray-500">
-                      {formatDate(response.meta.timestamp)}
-                    </p>
-                  </div>
-                  <Link
-                    href={`https://base-sepolia.easscan.org/attestation/view/${response.meta.attestationUID}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="cursor-pointer"
-                    >
-                      View on EAS scan
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {/* Historical Attestations */}
-            {response.meta.history && response.meta.history.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-medium text-gray-900">
-                  Previous Attestations
-                </h4>
-                {response.meta.history.map((attestation, index) => (
-                  <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-gray-500">
-                          {formatDate(attestation.timestamp)}
-                        </p>
+        {(response.meta.attestationUID || (response.meta.history && response.meta.history.length > 0)) && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-2">Attestation History</h3>
+            <div className="space-y-3">
+              {/* Current Attestation */}
+              {response.meta.attestationUID && (
+                <Link
+                  href={`https://base-sepolia.easscan.org/attestation/view/${response.meta.attestationUID}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded-2xl border p-4 transition-colors hover:bg-accent/40"
+                >
+                  <div className="flex items-center gap-4 overflow-hidden">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl">
+                      <Shield className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-base font-semibold text-gray-900">
+                        Current Attestation
                       </div>
-                      <Link
-                        href={`https://base-sepolia.easscan.org/attestation/view/${attestation.attestationUID}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="cursor-pointer"
-                        >
-                          View on EAS scan
-                        </Button>
-                      </Link>
+                      <div className="truncate text-sm text-gray-500">
+                        {formatDate(response.meta.timestamp)}
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="shrink-0">
+                    <ArrowUpRight className="h-5 w-5 text-gray-600" />
+                  </div>
+                </Link>
+              )}
+
+              {/* Historical Attestations */}
+              {response.meta.history && response.meta.history.map((attestation: any, index: number) => (
+                <Link
+                  key={index}
+                  href={`https://base-sepolia.easscan.org/attestation/view/${attestation.attestationUID}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded-2xl border p-4 transition-colors hover:bg-accent/40"
+                >
+                  <div className="flex items-center gap-4 overflow-hidden">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl">
+                      <Shield className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-base font-semibold text-gray-900">
+                        Previous Attestation
+                      </div>
+                      <div className="truncate text-sm text-gray-500">
+                        {formatDate(attestation.timestamp)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="shrink-0">
+                    <ArrowUpRight className="h-5 w-5 text-gray-600" />
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
       </div>
     </div>
   );
