@@ -13,8 +13,28 @@ import {
 import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: "MUSE",
-  description: "Interface for interacting with the MUSE",
+  title: "MUSE by BeaconLabs",
+  description: "Create and edit interactive logic models with evidence",
+  openGraph: {
+    title: "MUSE by BeaconLabs",
+    description: "Create and edit interactive logic models with evidence",
+    type: "website",
+    siteName: "MUSE",
+    images: [
+      {
+        url: "/opengraph-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "MUSE by BeaconLabs",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MUSE by BeaconLabs",
+    description: "Create and edit interactive logic models with evidence",
+    images: ["/opengraph-image.svg"],
+  },
 };
 
 export default function RootLayout({
