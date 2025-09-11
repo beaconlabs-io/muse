@@ -70,13 +70,16 @@ export function LogicModelViewer({ logicModel }: Props) {
               <p className="text-gray-600 mt-1">{logicModel.description}</p>
             )}
             <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-              <span>Version: {logicModel.metadata.version}</span>
               <span>
                 Created:{" "}
                 {new Date(logicModel.metadata.createdAt).toLocaleDateString()}
               </span>
               {logicModel.metadata.author && (
-                <span>Author: {logicModel.metadata.author}</span>
+                <span>
+                  Author: {logicModel.metadata.author.startsWith('0x') 
+                    ? `${logicModel.metadata.author.slice(0, 6)}...${logicModel.metadata.author.slice(-4)}`
+                    : logicModel.metadata.author}
+                </span>
               )}
             </div>
           </div>

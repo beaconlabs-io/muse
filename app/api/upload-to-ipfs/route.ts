@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-const pinata = require("@/.github/scripts/pinata.js");
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,25 +9,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
-    
-    if (!file) {
+    const body = await request.json();
+    const { data, filename } = body;
+
+    if (!data) {
+      return NextResponse.json({ error: "No data provided" }, { status: 400 });
+    }
+
+    // Create FormData for Pinata API
+    const formData = new FormData();
+
+    // Convert data to JSON string and create a blob
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+
+    formData.append("file", blob, filename || "logic-model.json");
+
+    // Add pinata metadata
+    const pinataMetadata = {
+      name: filename || "logic-model.json",
+      keyvalues: {
+        type: "logic-model",
+        timestamp: new Date().toISOString(),
+      },
+    };
+    formData.append("pinataMetadata", JSON.stringify(pinataMetadata));
+
+    // Upload to Pinata
+    const response = await fetch(
+      "https://api.pinata.cloud/pinning/pinFileToIPFS",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.PINATA_JWT}`,
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Pinata API error:", response.status, errorText);
       return NextResponse.json(
-        { error: "No file provided" },
-        { status: 400 }
+        { error: `Failed to upload to IPFS: ${response.statusText}` },
+        { status: response.status }
       );
     }
 
-    const text = await file.text();
-    const filename = file.name;
-
-    const result = await pinata({ text, filename });
+    const result = await response.json();
 
     return NextResponse.json({
-      hash: result.hash,
-      size: result.size,
-      timestamp: result.timestamp,
+      hash: result.IpfsHash,
+      size: result.PinSize,
+      timestamp: result.Timestamp,
     });
   } catch (error) {
     console.error("Upload to IPFS error:", error);

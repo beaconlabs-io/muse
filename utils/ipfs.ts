@@ -4,39 +4,22 @@ export async function uploadToIPFS(
   logicModel: LogicModel
 ): Promise<IPFSStorageResult> {
   try {
-    const jsonData = JSON.stringify(logicModel, null, 2);
     const filename = `logic-model-${logicModel.id}.json`;
-
-    const blob = new Blob([jsonData], { type: "application/json" });
-    const file = new File([blob], filename, { type: "application/json" });
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const metadata = JSON.stringify({
-      name: filename,
-      keyvalues: {
-        uploadedAt: new Date().toISOString(),
-        contentSize: jsonData.length,
-        logicModelId: logicModel.id,
-        title: logicModel.title,
-        version: logicModel.metadata.version,
-      },
-    });
-    formData.append("pinataMetadata", metadata);
-
-    const options = JSON.stringify({
-      cidVersion: 0,
-    });
-    formData.append("pinataOptions", options);
 
     const response = await fetch("/api/upload-to-ipfs", {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        data: logicModel,
+        filename,
+      }),
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 
     const result = await response.json();

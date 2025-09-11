@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useAccount } from "wagmi";
 import { extractEffectData } from "@/components/effect-icons";
 import { ArrowsSvg } from "./ArrowsSvg";
 import { CanvasToolbar } from "./CanvasToolbar";
@@ -35,6 +36,7 @@ export function CanvasClient({
   initialCards = [],
   initialArrows = [],
 }: CanvasClientProps) {
+  const { address } = useAccount();
   const [cards, setCards] = useState<PostItCard[]>(initialCards);
   const [arrows, setArrows] = useState<Arrow[]>(initialArrows);
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
@@ -378,7 +380,8 @@ export function CanvasClient({
         cardMetrics,
         selectedGoal,
         `Logic Model ${new Date().toLocaleDateString()}`,
-        "Logic model created with Muse"
+        "Logic model created with Muse",
+        address // Pass wallet address as author
       );
 
       const result = await uploadToIPFS(logicModel);
@@ -392,7 +395,7 @@ export function CanvasClient({
       console.error("Failed to save logic model:", error);
       alert("Failed to save logic model. Please try again.");
     }
-  }, [cards, arrows, cardMetrics, selectedGoal]);
+  }, [cards, arrows, cardMetrics, selectedGoal, address]);
 
   const exportAsJSON = useCallback(() => {
     const logicModel = createLogicModelFromCanvas(
@@ -400,7 +403,9 @@ export function CanvasClient({
       arrows,
       cardMetrics,
       selectedGoal,
-      `Logic Model ${new Date().toLocaleDateString()}`
+      `Logic Model ${new Date().toLocaleDateString()}`,
+      "Logic model created with Muse",
+      address // Pass wallet address as author
     );
 
     const jsonData = JSON.stringify(logicModel, null, 2);
@@ -414,7 +419,7 @@ export function CanvasClient({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [cards, arrows, cardMetrics, selectedGoal]);
+  }, [cards, arrows, cardMetrics, selectedGoal, address]);;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
