@@ -1,6 +1,7 @@
 import "highlight.js/styles/github-dark.css";
 import React from "react";
 import Link from "next/link";
+import { AttachedLinks } from "@/components/AttachedLinks";
 import { EffectIcons, extractEffectData } from "@/components/effect-icons";
 import { TooltipEffects } from "@/components/tooltip/tooltip-effects";
 import { Button } from "@/components/ui/button";
@@ -71,44 +72,63 @@ export default async function EvidencePage({
           </div>
         )}
 
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Methodologies</h3>
-          <ul className="list-disc list-inside text-gray-700">
-            {response.meta.datasets.map((index) => (
-              <li key={index}>{response.meta.methodologies}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Data Sources</h3>
-          <ul className="list-disc list-inside text-gray-700">
-            {response.meta.datasets.map((source, index) => (
-              <li key={index}>{source}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="mb-6">
-          {/* TODO: to be fixed */}
-          <h3 className="text-lg font-semibold mb-2">Citation</h3>
-          <ul className="list-disc list-inside text-gray-700">
-            {response.meta.citation.map((data, index) => (
-              <li key={index}>{data.name}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Tags</h3>
-          <div className="flex flex-wrap gap-2">
-            {response.meta.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-              >
-                {tag}
-              </span>
-            ))}
+        {response.meta.methodologies && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-2">Methodologies</h3>
+            <ul className="list-disc list-inside text-gray-700">
+              {response.meta.datasets.map((index) => (
+                <li key={index}>{response.meta.methodologies}</li>
+              ))}
+            </ul>
           </div>
+        )}
+        {response.meta.datasets && response.meta.datasets.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-2">Data Sources</h3>
+            <ul className="list-disc list-inside text-gray-700">
+              {response.meta.datasets.map((source, index) => (
+                <li key={index}>{source}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">Citation</h3>
+          {/* Links */}
+          {response.meta.citation.some((d: any) => d.type === "link") && (
+            <AttachedLinks
+              links={response.meta.citation
+                .filter((d: any) => d.type === "link")
+                .map((d: any) => ({ name: d.name, src: d.src }))}
+            />
+          )}
+
+          {/* Non-link items */}
+          {response.meta.citation.some((d: any) => d.type !== "link") && (
+            <ul className="mt-3 list-disc list-inside text-gray-700">
+              {response.meta.citation
+                .filter((d: any) => d.type !== "link")
+                .map((data: any, index: number) => (
+                  <li key={index}>{data.name}</li>
+                ))}
+            </ul>
+          )}
         </div>
+        {response.meta.tags && response.meta.tags.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-2">Tags</h3>
+            <div className="flex flex-wrap gap-2">
+              {response.meta.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Attestation History Section */}
         <div className="mb-6">
