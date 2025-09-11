@@ -1,4 +1,5 @@
-import { Plus, Move, ZoomIn, ZoomOut, FileText, Target, Save, Download } from "lucide-react";
+import { Plus, Move, FileText, Target, Save, Download } from "lucide-react";
+import { ZoomControls } from "@/components/canvas/ZoomControls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -135,21 +136,7 @@ export function CanvasToolbar({
         </Button>
 
         {/* Zoom controls */}
-        <div className="flex items-center gap-1">
-          <Button
-            onClick={() => onZoomChange(-0.1)}
-            size="sm"
-            variant="outline"
-          >
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <span className="text-sm px-2 min-w-[3rem] text-center">
-            {Math.round(zoom * 100)}%
-          </span>
-          <Button onClick={() => onZoomChange(0.1)} size="sm" variant="outline">
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-        </div>
+        <ZoomControls zoom={zoom} onZoomChange={onZoomChange} />
 
         {/* Help text */}
         <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">

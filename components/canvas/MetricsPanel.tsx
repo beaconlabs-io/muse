@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Edit } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +51,7 @@ interface MetricsPanelProps {
   initialMetrics: Metrics[];
   onMetricsChange: (metrics: Metrics[]) => void;
   onClose: () => void;
+  isReadOnly?: boolean;
 }
 
 const FREQUENCY_OPTIONS = [
@@ -68,9 +69,11 @@ export function MetricsPanel({
   initialMetrics,
   onMetricsChange,
   onClose,
+  isReadOnly = false,
 }: MetricsPanelProps) {
   // Use initialMetrics directly instead of local state
   const metrics = initialMetrics;
+  const [editingMetricId, setEditingMetricId] = useState<string | null>(null);
 
   const form = useForm<MetricsFormData>({
     resolver: zodResolver(metricsSchema),
@@ -84,30 +87,48 @@ export function MetricsPanel({
   });
 
   const onSubmit = (data: MetricsFormData) => {
-    const newMetrics: Metrics = {
-      id: Date.now().toString(),
-      ...data,
-    };
+    if (isReadOnly) return; // Prevent submission in read-only mode
+    
+    if (editingMetricId) {
+      saveEditingMetric(data);
+    } else {
+      const newMetrics: Metrics = {
+        id: Date.now().toString(),
+        ...data,
+      };
 
-    const updatedMetrics = [...metrics, newMetrics];
-    onMetricsChange(updatedMetrics);
-    form.reset();
+      const updatedMetrics = [...metrics, newMetrics];
+      onMetricsChange(updatedMetrics);
+      form.reset();
+    }
   };
 
   const removeMetrics = (id: string) => {
+    if (isReadOnly) return; // Prevent deletion in read-only mode
     const updatedMetrics = metrics.filter((metric) => metric.id !== id);
     onMetricsChange(updatedMetrics);
   };
 
-  const updateMetrics = (
-    id: string,
-    field: keyof Omit<Metrics, "id">,
-    value: string
-  ) => {
+  const startEditingMetric = (metric: Metrics) => {
+    if (isReadOnly) return; // Prevent editing in read-only mode
+    setEditingMetricId(metric.id);
+    form.reset(metric);
+  };
+
+  const cancelEditing = () => {
+    setEditingMetricId(null);
+    form.reset();
+  };
+
+  const saveEditingMetric = (data: MetricsFormData) => {
+    if (!editingMetricId || isReadOnly) return;
+    
     const updatedMetrics = metrics.map((metric) =>
-      metric.id === id ? { ...metric, [field]: value } : metric
+      metric.id === editingMetricId ? { ...metric, ...data } : metric
     );
     onMetricsChange(updatedMetrics);
+    setEditingMetricId(null);
+    form.reset();
   };
 
   return (
@@ -115,7 +136,9 @@ export function MetricsPanel({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div>
-          <h3 className="text-lg font-semibold">Metrics Configuration</h3>
+          <h3 className="text-lg font-semibold">
+            {isReadOnly ? "Metrics Overview" : "Metrics Configuration"}
+          </h3>
           <p className="text-sm text-muted-foreground">
             {card?.content || "Selected Card"}
           </p>
@@ -129,223 +152,213 @@ export function MetricsPanel({
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {/* Existing Metrics */}
         <div>
-          <h4 className="font-medium mb-3">Configured Metrics</h4>
+          <h4 className="font-medium mb-3">
+            {isReadOnly ? "Metrics" : "Configured Metrics"}
+          </h4>
           <div className="space-y-3">
             {metrics.map((metric) => (
               <div key={metric.id} className="p-3 border rounded-lg bg-card">
                 <div className="flex items-start justify-between mb-2">
-                  <Input
-                    value={metric.name}
-                    onChange={(e) =>
-                      updateMetrics(metric.id, "name", e.target.value)
-                    }
-                    placeholder="Metrics name"
-                    className="font-medium"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeMetrics(metric.id)}
-                    className="ml-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <h5 className="font-medium text-sm">{metric.name}</h5>
+                  {!isReadOnly && (
+                    <div className="flex gap-1 ml-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => startEditingMetric(metric)}
+                        className="h-8 w-8"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeMetrics(metric.id)}
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">
-                      Description
-                    </Label>
-                    <Textarea
-                      value={metric.description}
-                      onChange={(e) =>
-                        updateMetrics(metric.id, "description", e.target.value)
-                      }
-                      placeholder="Describe what this metric measures and why it's important"
-                      className="text-sm"
-                      rows={2}
-                    />
-                  </div>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  {metric.description && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        Description
+                      </Label>
+                      <p className="text-sm">{metric.description}</p>
+                    </div>
+                  )}
 
-                  <div>
-                    <Label className="text-xs text-muted-foreground">
-                      Measurement Method
-                    </Label>
-                    <Input
-                      value={metric.measurementMethod}
-                      onChange={(e) =>
-                        updateMetrics(
-                          metric.id,
-                          "measurementMethod",
-                          e.target.value
-                        )
-                      }
-                      placeholder="Survey, observation, etc."
-                      className="text-sm"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">
-                      Frequency
-                    </Label>
-                    <Select
-                      value={metric.frequency}
-                      onValueChange={(value) =>
-                        updateMetrics(metric.id, "frequency", value)
-                      }
-                    >
-                      <SelectTrigger className="text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {FREQUENCY_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {metric.measurementMethod && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        Measurement Method
+                      </Label>
+                      <p className="text-sm">{metric.measurementMethod}</p>
+                    </div>
+                  )}
 
-                  <div>
-                    <Label className="text-xs text-muted-foreground">
-                      Target Value
-                    </Label>
-                    <Input
-                      value={metric.targetValue}
-                      onChange={(e) =>
-                        updateMetrics(metric.id, "targetValue", e.target.value)
-                      }
-                      placeholder="e.g., 100 increase, 50% improvement"
-                      className="text-sm"
-                    />
-                  </div>
+                  {metric.frequency && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        Frequency
+                      </Label>
+                      <p className="text-sm">
+                        {FREQUENCY_OPTIONS.find(opt => opt.value === metric.frequency)?.label || metric.frequency}
+                      </p>
+                    </div>
+                  )}
+
+                  {metric.targetValue && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        Target Value
+                      </Label>
+                      <p className="text-sm">{metric.targetValue}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
 
             {metrics.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
-                <p className="text-sm">No metrics configured yet</p>
-                <p className="text-xs">
-                  Use the form below to add a new metric
-                </p>
+                <p className="text-sm">No metrics configured</p>
+                {!isReadOnly && (
+                  <p className="text-xs">
+                    Use the form below to add a new metric
+                  </p>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* Add New Metrics Form */}
-        <div className="border-t pt-6">
-          <h4 className="font-medium mb-3">Add New Metric</h4>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Metrics Name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Participation Rate, Satisfaction Score"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Describe what this metric measures and why it's important"
-                        rows={2}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="measurementMethod"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Measurement Method</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Survey, observation, data analysis"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="frequency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Measurement Frequency</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+        {/* Add New / Edit Metrics Form - Only show if not read-only */}
+        {!isReadOnly && (
+          <div className="border-t pt-6">
+            <h4 className="font-medium mb-3">
+              {editingMetricId ? "Edit Metric" : "Add New Metric"}
+            </h4>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Metrics Name *</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select frequency" />
-                        </SelectTrigger>
+                        <Input
+                          placeholder="e.g., Participation Rate, Satisfaction Score"
+                          {...field}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {FREQUENCY_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="targetValue"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Value</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., 100 increase, 50% improvement, 3x per week"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Describe what this metric measures and why it's important"
+                          rows={2}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <Button type="submit" className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Metric
-              </Button>
-            </form>
-          </Form>
-        </div>
+                <FormField
+                  control={form.control}
+                  name="measurementMethod"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Measurement Method</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Survey, observation, data analysis"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="frequency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Measurement Frequency</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {FREQUENCY_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="targetValue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Target Value</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., 100 increase, 50% improvement, 3x per week"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex gap-2">
+                  <Button type="submit" className="flex-1">
+                    <Plus className="h-4 w-4 mr-2" />
+                    {editingMetricId ? "Update Metric" : "Add Metric"}
+                  </Button>
+                  {editingMetricId && (
+                    <Button type="button" variant="outline" onClick={cancelEditing}>
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </Form>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
