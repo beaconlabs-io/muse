@@ -16,6 +16,7 @@ const blogsContentDirectory = path.join(process.cwd(), "contents", "evidence");
 export const getEvidenceBySlug = cache(async (
   slug: string
 ): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
+  const startTime = performance.now();
   const realSlug = slug.replace(/\.mdx$/, "");
   const filePath = path.join(blogsContentDirectory, `${realSlug}.mdx`);
   const deploymentPath = path.join(
@@ -27,6 +28,7 @@ export const getEvidenceBySlug = cache(async (
   let fileContent;
   let deploymentData = {};
 
+  const fileReadStart = performance.now();
   try {
     fileContent = fs.readFileSync(filePath, { encoding: "utf8" });
 
@@ -42,7 +44,9 @@ export const getEvidenceBySlug = cache(async (
     console.log(error);
     return undefined;
   }
+  const fileReadTime = performance.now() - fileReadStart;
 
+  const mdxCompileStart = performance.now();
   const { frontmatter, content } = await compileMDX({
     source: fileContent,
     options: {
@@ -60,6 +64,18 @@ export const getEvidenceBySlug = cache(async (
       },
     },
   });
+
+  const mdxCompileTime = performance.now() - mdxCompileStart;
+  const totalTime = performance.now() - startTime;
+
+  // Performance logging (disable in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`📊 Evidence "${realSlug}" Performance:
+      📁 File read: ${fileReadTime.toFixed(2)}ms
+      ⚙️  MDX compile: ${mdxCompileTime.toFixed(2)}ms
+      🔄 Total time: ${totalTime.toFixed(2)}ms
+      🎯 Cache status: ${cache.name ? 'MISS' : 'HIT'}`);
+  }
 
   return {
     meta: {

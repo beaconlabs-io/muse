@@ -1,8 +1,12 @@
 import "highlight.js/styles/github-dark.css";
 import React from "react";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 import { extractEffectData } from "@/components/effect-icons";
 import { EvidencePageClient } from "@/components/evidence/EvidencePageClient";
-import type { EvidenceResponse } from "@/types";
 import { getEvidenceBySlug } from "@/lib/evidence";
 
 export default async function EvidencePage({
@@ -11,9 +15,25 @@ export default async function EvidencePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const response = await getEvidenceBySlug(slug);
+  
+  // Setup React Query client for server-side prefetching
+  const queryClient = new QueryClient();
 
-  if (!response) {
+  try {
+    // Prefetch evidence data on the server
+    await queryClient.prefetchQuery({
+      queryKey: ["evidence", slug],
+      queryFn: async () => {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🚀 Prefetching evidence data on server...');
+        }
+        return await getEvidenceBySlug(slug);
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+    });
+  } catch (error) {
+    console.error("Error prefetching evidence data:", error);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-xl text-gray-600">Evidence not found</div>
@@ -21,7 +41,13 @@ export default async function EvidencePage({
     );
   }
 
-  return <EvidencePageClient response={response as EvidenceResponse} />;
+  const dehydratedState = dehydrate(queryClient);
+
+  return (
+    <HydrationBoundary state={dehydratedState}>
+      <EvidencePageClient slug={slug} />
+    </HydrationBoundary>
+  );
 }
 
 export async function generateMetadata({

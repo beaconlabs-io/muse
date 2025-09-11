@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   EvidenceHeader,
   EvidenceResults,
@@ -14,10 +15,21 @@ import { Separator } from "@/components/ui/separator";
 import type { EvidenceResponse } from "@/types";
 
 interface EvidencePageClientProps {
-  response: EvidenceResponse;
+  slug: string;
 }
 
-export function EvidencePageClient({ response }: EvidencePageClientProps) {
+export function EvidencePageClient({ slug }: EvidencePageClientProps) {
+  const queryClient = useQueryClient();
+  const response = queryClient.getQueryData<EvidenceResponse>(["evidence", slug]);
+
+  if (!response) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl text-gray-600">Evidence not found</div>
+      </div>
+    );
+  }
+
   const { meta } = response;
 
   return (
