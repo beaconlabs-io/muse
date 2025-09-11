@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import { Link as LinkIcon, ArrowUpRight } from "lucide-react";
-import { Button } from "./ui/button";
 
 type AttachedLink = {
   name: string;
