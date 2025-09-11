@@ -113,6 +113,6 @@
   <!-- Title and Subtitle -->
   <g transform="translate(600, 180)">
     <text x="0" y="0" font-family="Inter, system-ui, sans-serif" font-size="48" font-weight="800" fill="#1e293b" text-anchor="middle">MUSE Canvas</text>
-    <text x="0" y="35" font-family="Inter, system-ui, sans-serif" font-size="24" font-weight="500" fill="#64748b" text-anchor="middle">Create and edit interactive logic models</text>
+    <text x="0" y="50" font-family="Inter, system-ui, sans-serif" font-size="24" font-weight="500" fill="#64748b" text-anchor="middle">Create and edit interactive logic models with evidence</text>
   </g>
 </svg>
