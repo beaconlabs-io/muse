@@ -1,0 +1,125 @@
+name: Create Release PR
+on:
+  push:
+    branches: [ dev ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for existing PR
+        id: check-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing_pr=$(gh pr list --base main --head dev --json number --jq '.[0].number // ""')
+          echo "existing_pr=$existing_pr" >> $GITHUB_OUTPUT
+
+      - name: Get commit range
+        id: commits
+        run: |
+          # Get commits between main and dev
+          commits=$(git log main..dev --oneline --no-merges | head -10)
+          if [ -z "$commits" ]; then
+            commits="No new commits found"
+          fi
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$commits" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Count total commits
+          total_commits=$(git log main..dev --oneline --no-merges | wc -l | tr -d ' ')
+          echo "total_commits=$total_commits" >> $GITHUB_OUTPUT
+
+      - name: Get recent PRs merged to dev
+        id: recent-prs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get recently merged PRs to dev (last 10)
+          recent_prs=$(gh pr list --base dev --state merged --limit 10 --json number,title,author --jq '.[] | "- #\(.number) \(.title) (@\(.author.login))"' || echo "No recent PRs found")
+          if [ -z "$recent_prs" ]; then
+            recent_prs="No recent PRs found"
+          fi
+          echo "recent_prs<<EOF" >> $GITHUB_OUTPUT
+          echo "$recent_prs" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release PR
+        if: steps.check-pr.outputs.existing_pr == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat > pr_body.md << 'EOF'
+          ## 🚀 Release Ready
+
+          This automated PR merges the latest changes from `dev` into `main` for release.
+
+          ### 📊 Summary
+          - **Total commits**: ${{ steps.commits.outputs.total_commits }}
+          - **Branch**: `dev` → `main`
+          - **Created**: $(date +'%Y-%m-%d %H:%M:%S UTC')
+
+          ### 🔄 Recent Changes
+          ```
+          ${{ steps.commits.outputs.commits }}
+          ```
+
+          ### 📋 Recently Merged PRs
+          ${{ steps.recent-prs.outputs.recent_prs }}
+
+          ---
+          
+          🤖 *Automatically created by GitHub Actions*
+          
+          **Next steps:**
+          1. Review the changes above
+          2. Merge this PR to trigger the release process
+          3. The release will be automatically tagged and deployed
+          EOF
+
+          gh pr create \
+            --base main \
+            --head dev \
+            --title "🚀 Release $(date +'%Y-%m-%d')" \
+            --body-file pr_body.md \
+            --label "🏷️ release" \
+            --label "🤖 automated"
+
+      - name: Update existing Release PR
+        if: steps.check-pr.outputs.existing_pr != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat > update_comment.md << 'EOF'
+          ## 🔄 Release PR Updated - $(date +'%Y-%m-%d %H:%M:%S UTC')
+
+          New changes have been pushed to `dev` branch since this PR was created.
+
+          ### 📊 Current Summary
+          - **Total commits**: ${{ steps.commits.outputs.total_commits }}
+          - **Branch**: `dev` → `main`
+
+          ### 🔄 Latest Changes
+          ```
+          ${{ steps.commits.outputs.commits }}
+          ```
+
+          ### 📋 Recently Merged PRs
+          ${{ steps.recent-prs.outputs.recent_prs }}
+
+          ---
+          
+          🤖 *Updated by GitHub Actions* - Please review the latest changes above
+          EOF
+
+          gh pr comment ${{ steps.check-pr.outputs.existing_pr }} \
+            --body-file update_comment.md
