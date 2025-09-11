@@ -198,10 +198,14 @@ export async function generateMetadata({
   }
 
   const { meta } = response;
-  const title = `${meta.title} - MUSE Evidence`;
+  const title = `${meta.title} - MUSE by BeaconLabs`;
   const description = meta.results?.length
-    ? `Evidence on ${meta.results.map(r => `${r.intervention} → ${r.outcome_variable}`).join(", ")}. Strength: ${meta.strength}/5`
+    ? `Evidence on ${meta.results
+        .map((r) => `${r.intervention} → ${r.outcome_variable}`)
+        .join(", ")}. Strength: ${meta.strength}/5`
     : "Research evidence for policy making on MUSE";
+
+  const ogImageUrl = `/api/og/evidence?slug=${encodeURIComponent(slug)}`;
 
   return {
     title,
@@ -214,11 +218,20 @@ export async function generateMetadata({
       authors: [meta.author],
       tags: meta.tags,
       siteName: "MUSE",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImageUrl],
     },
   };
 }

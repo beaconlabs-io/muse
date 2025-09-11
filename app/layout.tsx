@@ -14,17 +14,17 @@ import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "MUSE",
-  description: "Evidence-based policy making through blockchain attestations",
+  description: "Evidence-based policy making",
   openGraph: {
     title: "MUSE",
-    description: "Evidence-based policy making through blockchain attestations",
+    description: "Evidence-based policy making",
     type: "website",
     siteName: "MUSE",
   },
   twitter: {
     card: "summary_large_image",
     title: "MUSE",
-    description: "Evidence-based policy making through blockchain attestations",
+    description: "Evidence-based policy making",
   },
 };
 
