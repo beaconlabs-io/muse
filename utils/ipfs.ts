@@ -19,7 +19,9 @@ export async function uploadToIPFS(
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      throw new Error(
+        errorData.error || `HTTP error! status: ${response.status}`
+      );
     }
 
     const result = await response.json();
@@ -42,13 +44,13 @@ export async function uploadToIPFS(
 export async function fetchFromIPFS(hash: string): Promise<LogicModel> {
   try {
     const response = await fetch(`https://gateway.pinata.cloud/ipfs/${hash}`);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const logicModel = await response.json();
-    
+
     // Validate the structure
     if (!logicModel.id || !logicModel.cards || !logicModel.arrows) {
       throw new Error("Invalid logic model structure");
