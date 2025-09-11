@@ -11,10 +11,10 @@ import { getAllEvidenceMeta } from "@/utils";
 
 export const metadata: Metadata = {
   title: "MUSE Canvas - Create Interactive Logic Models",
-  description: "Create and edit interactive logic models for public goods and OSS funding - MUSE by BeaconLabs",
+  description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
   openGraph: {
     title: "MUSE Canvas - Create Interactive Logic Models",
-    description: "Create and edit interactive logic models for public goods and OSS funding - MUSE by BeaconLabs",
+    description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
     type: "website",
     siteName: "MUSE",
     images: [
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "MUSE Canvas - Create Interactive Logic Models",
-    description: "Create and edit interactive logic models for public goods and OSS funding - MUSE by BeaconLabs",
+    description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
     images: ["/canvas-og.svg"],
   },
 };
