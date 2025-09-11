@@ -14,15 +14,10 @@
   </defs>
   <rect width="1200" height="630" fill="url(#bgGradient)"/>
   
-  <!-- Border with shadow -->
-  <rect x="20" y="20" width="1160" height="590" rx="20" fill="none" stroke="#e2e8f0" stroke-width="3" filter="url(#shadow)"/>
   
   <!-- MUSE text -->
-  <text x="600" y="270" font-family="Inter, system-ui, sans-serif" font-size="64" font-weight="800" fill="#1e293b" text-anchor="middle">MUSE</text>
+  <text x="600" y="290" font-family="Inter, system-ui, sans-serif" font-size="96" font-weight="800" fill="#1e293b" text-anchor="middle">MUSE</text>
   
   <!-- by BeaconLabs -->
-  <text x="600" y="305" font-family="Inter, system-ui, sans-serif" font-size="20" fill="#64748b" text-anchor="middle">by BeaconLabs</text>
-  
-  <!-- Description -->
-  <text x="600" y="400" font-family="Inter, system-ui, sans-serif" font-size="32" fill="#475569" text-anchor="middle">Evidence-based policy making</text>
+  <text x="600" y="350" font-family="Inter, system-ui, sans-serif" font-size="36" font-weight="600" fill="#64748b" text-anchor="middle">by BeaconLabs</text>
 </svg>
