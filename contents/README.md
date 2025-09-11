@@ -50,7 +50,6 @@ template:
 ### Dependent Variable
 ### Identification Strategy
 ## Results
-## Citation
 ```
 
 ## 3. Effect（効果のカテゴリ）
