@@ -9,6 +9,10 @@ import { CanvasClient } from "@/components/canvas/CanvasClient";
 import { getCanvasData } from "@/lib/canvas/server-data";
 import { getAllEvidenceMeta } from "@/utils";
 
+const baseUrl = process.env.NODE_ENV === "production" 
+  ? "https://muse.beaconlabs.io" 
+  : "http://localhost:3000";
+
 export const metadata: Metadata = {
   title: "MUSE Canvas - Create Interactive Logic Models",
   description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
@@ -19,7 +23,7 @@ export const metadata: Metadata = {
     siteName: "MUSE",
     images: [
       {
-        url: "/canvas-og.svg",
+        url: `${baseUrl}/canvas-og.png`,
         width: 1200,
         height: 630,
         alt: "MUSE Canvas - Create Interactive Logic Models",
@@ -30,7 +34,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MUSE Canvas - Create Interactive Logic Models",
     description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
-    images: ["/canvas-og.svg"],
+    images: [`${baseUrl}/canvas-og.png`],
   },
 };
 
