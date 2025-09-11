@@ -120,7 +120,13 @@ export interface CardMetrics {
   description?: string;
   measurementMethod?: string;
   targetValue?: string;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
+  frequency?:
+    | "daily"
+    | "weekly"
+    | "monthly"
+    | "quarterly"
+    | "annually"
+    | "other";
 }
 
 export interface IPFSStorageResult {

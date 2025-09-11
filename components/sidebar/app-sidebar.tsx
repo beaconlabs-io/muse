@@ -33,7 +33,7 @@ const menu = [
   //   href: "/graph",
   // },
   {
-    title: "Canvas (Beta)",
+    title: "Canvas",
     icon: Palette,
     href: "/canvas",
   },
