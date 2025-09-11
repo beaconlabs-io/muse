@@ -181,3 +181,44 @@ export default async function EvidencePage({
     </div>
   );
 }
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const response = await getEvidenceBySlug(slug);
+
+  if (!response) {
+    return {
+      title: "Evidence not found - MUSE",
+      description: "The requested evidence could not be found.",
+    };
+  }
+
+  const { meta } = response;
+  const title = `${meta.title} - MUSE Evidence`;
+  const description = meta.results?.length
+    ? `Evidence on ${meta.results.map(r => `${r.intervention} → ${r.outcome_variable}`).join(", ")}. Strength: ${meta.strength}/5`
+    : "Research evidence for policy making on MUSE";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      publishedTime: meta.date,
+      authors: [meta.author],
+      tags: meta.tags,
+      siteName: "MUSE",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}

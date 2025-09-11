@@ -14,7 +14,18 @@ import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "MUSE",
-  description: "Interface for interacting with the MUSE",
+  description: "Evidence-based policy making through blockchain attestations",
+  openGraph: {
+    title: "MUSE",
+    description: "Evidence-based policy making through blockchain attestations",
+    type: "website",
+    siteName: "MUSE",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MUSE",
+    description: "Evidence-based policy making through blockchain attestations",
+  },
 };
 
 export default function RootLayout({
