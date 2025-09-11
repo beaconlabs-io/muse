@@ -98,6 +98,37 @@ export interface Arrow {
   toCardId: string;
 }
 
+export interface LogicModel {
+  id: string;
+  title: string;
+  description?: string;
+  cards: PostItCard[];
+  arrows: Arrow[];
+  cardMetrics: Record<string, CardMetrics[]>;
+  selectedGoal?: string;
+  metadata: {
+    createdAt: string;
+    updatedAt: string;
+    version: string;
+    author?: string;
+  };
+}
+
+export interface CardMetrics {
+  id: string;
+  name: string;
+  description?: string;
+  measurementMethod?: string;
+  targetValue?: string;
+  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
+}
+
+export interface IPFSStorageResult {
+  hash: string;
+  size: number;
+  timestamp: string;
+}
+
 export const CARD_COLORS = [
   "#fef08a", // yellow
   "#fed7aa", // orange

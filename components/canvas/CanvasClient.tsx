@@ -9,6 +9,7 @@ import { LogicModelSections } from "./LogicModelSections";
 import { MetricsPanel } from "./MetricsPanel";
 import { PostItCard as PostItCardComponent } from "./PostItCard";
 import { PostItCard, Arrow, CARD_COLORS, Evidence } from "@/types";
+import { uploadToIPFS, createLogicModelFromCanvas } from "@/utils/ipfs";
 
 interface CardMetrics {
   id: string;
@@ -369,6 +370,51 @@ export function CanvasClient({
     setCards((prev) => [...prev, ...newCards]);
     setArrows((prev) => [...prev, ...newArrows]);
   }, []);
+  const saveLogicModel = useCallback(async () => {
+    try {
+      const logicModel = createLogicModelFromCanvas(
+        cards,
+        arrows,
+        cardMetrics,
+        selectedGoal,
+        `Logic Model ${new Date().toLocaleDateString()}`,
+        "Logic model created with Muse"
+      );
+
+      const result = await uploadToIPFS(logicModel);
+      
+      // Copy the URL to clipboard
+      const url = `${window.location.origin}/canvas/${result.hash}`;
+      await navigator.clipboard.writeText(url);
+      
+      alert(`Logic model saved! URL copied to clipboard:\n${url}`);
+    } catch (error) {
+      console.error("Failed to save logic model:", error);
+      alert("Failed to save logic model. Please try again.");
+    }
+  }, [cards, arrows, cardMetrics, selectedGoal]);
+
+  const exportAsJSON = useCallback(() => {
+    const logicModel = createLogicModelFromCanvas(
+      cards,
+      arrows,
+      cardMetrics,
+      selectedGoal,
+      `Logic Model ${new Date().toLocaleDateString()}`
+    );
+
+    const jsonData = JSON.stringify(logicModel, null, 2);
+    const blob = new Blob([jsonData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `logic-model-${logicModel.id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [cards, arrows, cardMetrics, selectedGoal]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -395,6 +441,8 @@ export function CanvasClient({
         showEvidencePanel={showEvidencePanel}
         selectedGoal={selectedGoal}
         onGoalChange={handleGoalChange}
+        onSaveLogicModel={saveLogicModel}
+        onExportAsJSON={exportAsJSON}
       />
 
       <div className="flex flex-1 overflow-hidden">

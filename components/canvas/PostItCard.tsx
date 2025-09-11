@@ -6,47 +6,51 @@ interface PostItCardProps {
   card: PostItCardType;
   zoom: number;
   canvasOffset: { x: number; y: number };
-  isDragged: boolean;
-  isEditing: boolean;
-  isConnectionMode: boolean;
-  isConnectionStart: boolean;
-  isHovered: boolean;
+  isDragged?: boolean;
+  isEditing?: boolean;
+  isConnectionMode?: boolean;
+  isConnectionStart?: boolean;
+  isHovered?: boolean;
+  isReadOnly?: boolean;
   metricsCount: number;
-  onMouseDown: (e: React.MouseEvent) => void;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-  onClick: () => void;
-  onDoubleClick: (e: React.MouseEvent) => void;
-  onKeyDown: (e: React.KeyboardEvent) => void;
-  onContentChange: (content: string) => void;
-  onEditComplete: () => void;
-  onStartConnection: () => void;
+  onMouseDown?: (e: React.MouseEvent) => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  onClick?: () => void;
+  onDoubleClick?: (e: React.MouseEvent) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  onContentChange?: (content: string) => void;
+  onEditComplete?: () => void;
+  onStartConnection?: () => void;
 }
 
 export function PostItCard({
   card,
   zoom,
   canvasOffset,
-  isDragged,
-  isEditing,
-  isConnectionMode,
-  isConnectionStart,
-  isHovered,
+  isDragged = false,
+  isEditing = false,
+  isConnectionMode = false,
+  isConnectionStart = false,
+  isHovered = false,
+  isReadOnly = false,
   metricsCount,
-  onMouseDown,
-  onMouseEnter,
-  onMouseLeave,
-  onClick,
-  onDoubleClick,
-  onKeyDown,
-  onContentChange,
-  onEditComplete,
-  onStartConnection,
+  onMouseDown = () => {},
+  onMouseEnter = () => {},
+  onMouseLeave = () => {},
+  onClick = () => {},
+  onDoubleClick = () => {},
+  onKeyDown = () => {},
+  onContentChange = () => {},
+  onEditComplete = () => {},
+  onStartConnection = () => {},
 }: PostItCardProps) {
   return (
     <Card
       className={`absolute p-3 w-[150px] min-h-[120px] shadow-lg border-2 select-none ${
-        isConnectionMode
+        isReadOnly
+          ? "cursor-default"
+          : isConnectionMode
           ? "cursor-crosshair hover:ring-2 hover:ring-blue-400"
           : "cursor-move"
       } ${isConnectionStart ? "ring-2 ring-blue-500" : ""} ${
@@ -72,7 +76,7 @@ export function PostItCard({
       tabIndex={0}
     >
       {/* Connect Button - appears on hover */}
-      {isHovered && !isConnectionMode && !isEditing && (
+      {isHovered && !isConnectionMode && !isEditing && !isReadOnly && (
         <button
           className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200 z-10"
           onClick={(e) => {
@@ -85,7 +89,7 @@ export function PostItCard({
         </button>
       )}
 
-      {isEditing ? (
+      {isEditing && !isReadOnly ? (
         <textarea
           className="w-full h-full bg-transparent border-none outline-none resize-none text-sm"
           value={card.content}

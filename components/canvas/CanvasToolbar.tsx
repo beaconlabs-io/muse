@@ -1,4 +1,4 @@
-import { Plus, Move, ZoomIn, ZoomOut, FileText, Target } from "lucide-react";
+import { Plus, Move, ZoomIn, ZoomOut, FileText, Target, Save, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,8 @@ interface CanvasToolbarProps {
   showEvidencePanel: boolean;
   selectedGoal?: string;
   onGoalChange: (goal: string) => void;
+  onSaveLogicModel?: () => Promise<void>;
+  onExportAsJSON?: () => void;
 }
 
 const LOGIC_MODEL_SECTIONS = [
@@ -42,30 +44,60 @@ export function CanvasToolbar({
   showEvidencePanel,
   selectedGoal,
   onGoalChange,
+  onSaveLogicModel,
+  onExportAsJSON,
 }: CanvasToolbarProps) {
   return (
     <div className="flex flex-col gap-3 p-3 sm:p-4 border-b bg-background">
-      {/* Goal Selection */}
-      <div className="flex items-center gap-2">
-        <Target className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Project Goal:</span>
-        <Select value={selectedGoal} onValueChange={onGoalChange}>
-          <SelectTrigger className="w-64">
-            <SelectValue placeholder="Select your project goal" />
-          </SelectTrigger>
-          <SelectContent>
-            {PROJECT_GOALS.map((goal) => (
-              <SelectItem key={goal.value} value={goal.value}>
-                {goal.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {selectedGoal && (
-          <Badge variant="secondary">
-            {PROJECT_GOALS.find((g) => g.value === selectedGoal)?.label}
-          </Badge>
-        )}
+      {/* Goal Selection and Save/Export */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Target className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Project Goal:</span>
+          <Select value={selectedGoal} onValueChange={onGoalChange}>
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Select your project goal" />
+            </SelectTrigger>
+            <SelectContent>
+              {PROJECT_GOALS.map((goal) => (
+                <SelectItem key={goal.value} value={goal.value}>
+                  {goal.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedGoal && (
+            <Badge variant="secondary">
+              {PROJECT_GOALS.find((g) => g.value === selectedGoal)?.label}
+            </Badge>
+          )}
+        </div>
+        
+        {/* Save and Export buttons - fixed right */}
+        <div className="flex items-center gap-2">
+          {onSaveLogicModel && (
+            <Button
+              onClick={onSaveLogicModel}
+              size="sm"
+              variant="default"
+              className="flex items-center gap-2"
+            >
+              <Save className="h-4 w-4" />
+              <span className="hidden sm:inline">Save to IPFS</span>
+            </Button>
+          )}
+          {onExportAsJSON && (
+            <Button
+              onClick={onExportAsJSON}
+              size="sm"
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export JSON</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Section buttons */}
