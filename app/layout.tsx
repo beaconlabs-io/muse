@@ -13,18 +13,27 @@ import {
 import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: "MUSE",
+  title: "MUSE by BeaconLabs",
   description: "Evidence-based policy making",
   openGraph: {
-    title: "MUSE",
+    title: "MUSE by BeaconLabs",
     description: "Evidence-based policy making",
     type: "website",
     siteName: "MUSE",
+    images: [
+      {
+        url: "/opengraph-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "MUSE by BeaconLabs",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MUSE",
+    title: "MUSE by BeaconLabs",
     description: "Evidence-based policy making",
+    images: ["/opengraph-image.svg"],
   },
 };
 
