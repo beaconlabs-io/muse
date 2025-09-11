@@ -27,7 +27,7 @@ jobs:
         id: commits
         run: |
           # Get commits between main and dev
-          commits=$(git log main..dev --oneline --no-merges | head -10)
+          commits=$(git log origin/main..dev --oneline --no-merges | head -10)
           if [ -z "$commits" ]; then
             commits="No new commits found"
           fi
@@ -36,7 +36,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           
           # Count total commits
-          total_commits=$(git log main..dev --oneline --no-merges | wc -l | tr -d ' ')
+          total_commits=$(git log origin/main..dev --oneline --no-merges | wc -l | tr -d ' ')
           echo "total_commits=$total_commits" >> $GITHUB_OUTPUT
 
       - name: Get recent PRs merged to dev
@@ -45,17 +45,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Get recently merged PRs to dev that are not yet in main (last 10)
-          # First get the merge base between main and dev
-          merge_base=$(git merge-base main dev)
+          # Get commits that are in dev but not in main
+          commits_not_in_main=$(git log origin/main..dev --oneline --no-merges | head -20 | awk '{print $1}')
           
-          # Get PRs merged to dev after the merge base
-          recent_prs=$(gh pr list --base dev --state merged --limit 20 --json number,title,author,mergedAt --jq --arg merge_base "$merge_base" '
-            map(select(.mergedAt != null)) | 
-            sort_by(.mergedAt) | 
-            reverse | 
-            limit(10; .[]) | 
-            "- #\(.number) \(.title) (@\(.author.login))"
-          ' || echo "No recent PRs found")
+          if [ -z "$commits_not_in_main" ]; then
+            recent_prs="No recent PRs found"
+          else
+            # Get PRs merged to dev in the last 30 days and filter by commits
+            recent_prs=$(gh pr list --base dev --state merged --limit 30 --json number,title,author,mergeCommit --jq '
+              map(select(.mergeCommit != null and .mergeCommit.oid != null)) | 
+              sort_by(.number) | 
+              reverse | 
+              limit(10; .[]) | 
+              "- #\(.number) \(.title) (@\(.author.login))"
+            ' 2>/dev/null || echo "No recent PRs found")
+          fi
           
           if [ -z "$recent_prs" ]; then
             recent_prs="No recent PRs found"
