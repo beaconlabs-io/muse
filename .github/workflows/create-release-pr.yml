@@ -1,0 +1,61 @@
+name: Create Release PR
+on:
+  push:
+    branches: [dev]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for existing PR
+        id: check-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing_pr=$(gh pr list --base main --head dev --json number --jq '.[0].number // ""')
+          echo "existing_pr=$existing_pr" >> $GITHUB_OUTPUT
+
+      - name: Create Release PR
+        if: steps.check-pr.outputs.existing_pr == ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat > pr_body.md << 'EOF'
+          ## 🚀 Release Ready
+
+          This automated PR merges the latest changes from `dev` into `main` for release.
+
+          🤖 *Automatically created by GitHub Actions*
+          EOF
+
+          gh pr create \
+            --base main \
+            --head dev \
+            --title "🚀 Release $(date +'%Y-%m-%d')" \
+            --body-file pr_body.md \
+            --label "🏷️ release" \
+            --label "🤖 automated"
+
+      - name: Update existing Release PR
+        if: steps.check-pr.outputs.existing_pr != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat > update_comment.md << 'EOF'
+          ## 🔄 Release PR Updated
+
+          New changes have been pushed to `dev` branch since this PR was created.
+
+          🤖 *Updated by GitHub Actions*
+          EOF
+
+          gh pr comment ${{ steps.check-pr.outputs.existing_pr }} \
+            --body-file update_comment.md

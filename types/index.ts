@@ -83,3 +83,58 @@ export type Link = {
   width?: number;
   color?: string;
 };
+
+export interface PostItCard {
+  id: string;
+  x: number;
+  y: number;
+  content: string;
+  color: string;
+}
+
+export interface Arrow {
+  id: string;
+  fromCardId: string;
+  toCardId: string;
+}
+
+export interface LogicModel {
+  id: string;
+  title: string;
+  description?: string;
+  cards: PostItCard[];
+  arrows: Arrow[];
+  cardMetrics: Record<string, CardMetrics[]>;
+  selectedGoal?: string;
+  metadata: {
+    createdAt: string;
+    updatedAt: string;
+    version: string;
+    author?: string;
+  };
+}
+
+export interface CardMetrics {
+  id: string;
+  name: string;
+  description?: string;
+  measurementMethod?: string;
+  targetValue?: string;
+  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
+}
+
+export interface IPFSStorageResult {
+  hash: string;
+  size: number;
+  timestamp: string;
+}
+
+export const CARD_COLORS = [
+  "#fef08a", // yellow
+  "#fed7aa", // orange
+  "#fecaca", // red
+  "#c7d2fe", // blue
+  "#d1fae5", // green
+  "#e9d5ff", // purple
+  "#fce7f3", // pink
+] as const;
