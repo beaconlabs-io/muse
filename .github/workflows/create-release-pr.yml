@@ -18,7 +18,7 @@ jobs:
       - name: Check for existing PR
         id: check-pr
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           existing_pr=$(gh pr list --base main --head dev --json number --jq '.[0].number // ""')
           echo "existing_pr=$existing_pr" >> $GITHUB_OUTPUT
@@ -42,7 +42,7 @@ jobs:
       - name: Get recent PRs merged to dev
         id: recent-prs
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Get recently merged PRs to dev (last 10)
           recent_prs=$(gh pr list --base dev --state merged --limit 10 --json number,title,author --jq '.[] | "- #\(.number) \(.title) (@\(.author.login))"' || echo "No recent PRs found")
@@ -56,7 +56,7 @@ jobs:
       - name: Create Release PR
         if: steps.check-pr.outputs.existing_pr == ''
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cat > pr_body.md << 'EOF'
           ## 🚀 Release Ready
@@ -97,7 +97,7 @@ jobs:
       - name: Update existing Release PR
         if: steps.check-pr.outputs.existing_pr != ''
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cat > update_comment.md << 'EOF'
           ## 🔄 Release PR Updated - $(date +'%Y-%m-%d %H:%M:%S UTC')
