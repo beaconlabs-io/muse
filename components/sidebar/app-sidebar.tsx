@@ -27,11 +27,6 @@ const menu = [
     icon: Search,
     href: "/search",
   },
-  // {
-  //   title: "Graph View",
-  //   icon: ChartNetwork,
-  //   href: "/graph",
-  // },
   {
     title: "Canvas",
     icon: Palette,
@@ -98,7 +93,7 @@ export async function AppSidebar() {
                         <SidebarMenuSubButton asChild>
                           <Link href={`/evidence/${item.evidence_id}`}>
                             <span className="text-sm truncate">
-                              {`[${item.evidence_id}] ${item.title}`}
+                              {item.title}
                             </span>
                           </Link>
                         </SidebarMenuSubButton>
