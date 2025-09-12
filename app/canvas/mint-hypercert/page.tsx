@@ -19,9 +19,8 @@ import {
   CalendarIcon,
   Trash2,
 } from "lucide-react";
-import { createWalletClient, custom } from "viem";
 import { baseSepolia } from "viem/chains";
-import { useAccount, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt, useWalletClient } from "wagmi";
 import { z } from "zod";
 import HypercertCard from "@/components/canvas/HypercertCard";
 import { Button } from "@/components/ui/button";
@@ -137,6 +136,7 @@ export default function MintHypercertPage() {
   const hypercertCardRef = useRef<HTMLDivElement>(null);
 
   const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
 
   // Wait for transaction receipt and construct hypercert URL
   const {
@@ -288,11 +288,10 @@ export default function MintHypercertPage() {
 
       setMintingState("minting");
 
-      const walletClient = createWalletClient({
-        chain: baseSepolia,
-        transport: custom(window.ethereum!),
-        account: address,
-      });
+      if (!walletClient) {
+        setError("Wallet client not available");
+        return;
+      }
 
       const client = new HypercertClient({
         environment: "test",
