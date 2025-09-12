@@ -19,7 +19,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { SidebarFooterComponent } from "./sidebar-footer";
-import { getAllEvidenceMeta } from "@/utils";
+import { getAllEvidenceMeta } from "@/lib/evidence";
 
 const menu = [
   {
@@ -33,7 +33,7 @@ const menu = [
   //   href: "/graph",
   // },
   {
-    title: "Canvas (Beta)",
+    title: "Canvas",
     icon: Palette,
     href: "/canvas",
   },

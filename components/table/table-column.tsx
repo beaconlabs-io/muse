@@ -73,7 +73,7 @@ export const columns = [
     cell: ({ row }) => {
       return (
         <div className="flex flex-wrap gap-1">
-          {row.original.tags.map((tag, index) => (
+          {row.original.tags?.map((tag, index) => (
             <span
               key={index}
               className="px-2 py-1 bg-gray-100 rounded-full text-sm"

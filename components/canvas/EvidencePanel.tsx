@@ -81,10 +81,12 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <EffectIcons
-            effectId={evidence.results[0].outcome}
-            isShowTitle={false}
-          />
+          {evidence.results?.[0]?.outcome && (
+            <EffectIcons
+              effectId={evidence.results[0].outcome}
+              isShowTitle={false}
+            />
+          )}
           <CardTitle className="text-sm leading-tight">
             {evidence.title}
           </CardTitle>
@@ -123,7 +125,7 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
           <div className="text-xs text-muted-foreground">
             {evidence.results[0].intervention} had{" "}
             <span className="font-bold">
-              {extractEffectData(evidence.results[0].outcome)?.title}
+              {evidence.results[0].outcome && extractEffectData(evidence.results[0].outcome)?.title}
             </span>{" "}
             effect on
             {evidence.results[0].outcome_variable}

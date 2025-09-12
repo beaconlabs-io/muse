@@ -13,7 +13,7 @@ evidence_id: "0"
 results:
   - intervention: "OSSに対しQFを実施"
     outcome_variable: "project_health"
-    outcome: "0"
+    outcome: "!"
 strength: "3"
 methodologies:
   - "RCT"
@@ -27,7 +27,7 @@ tags:
   - "oss"
   - "public goods funding"
 citation:
-  - type: "external"
+  - type: "link"
     name: "paper_title_1"
     src: "https://xxx"
 author: "BeaconLabs"
@@ -50,7 +50,6 @@ template:
 ### Dependent Variable
 ### Identification Strategy
 ## Results
-## Citation
 ```
 
 ## 3. Effect（効果のカテゴリ）

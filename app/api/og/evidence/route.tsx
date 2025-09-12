@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { getEvidenceBySlug } from "@/utils";
+import { getEvidenceBySlug } from "@/lib/evidence";
 
 export async function GET(request: Request) {
   try {
