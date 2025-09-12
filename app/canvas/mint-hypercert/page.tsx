@@ -98,7 +98,7 @@ interface HypercertResult {
 }
 
 const steps = [
-  { id: 1, title: "Store Logic Model", description: "Storing on IPFS" },
+  { id: 1, title: "Store Logic Model", description: "Stored on IPFS" },
   { id: 2, title: "Mint Hypercert", description: "Creating hypercert" },
   { id: 3, title: "Completed!", description: "Successfully minted" },
 ];
@@ -650,12 +650,6 @@ export default function MintHypercertPage() {
                   )}
                 />
 
-                {error && (
-                  <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                    {error}
-                  </div>
-                )}
-
                 {!isConnected && (
                   <div className="text-sm text-yellow-600 bg-yellow-50 p-3 rounded-md">
                     Please connect your wallet to mint a hypercert
@@ -762,7 +756,7 @@ export default function MintHypercertPage() {
 
           {mintingState === "error" && (
             <div className="flex flex-col items-center py-4">
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md mb-4">
+              <div className="text-sm w-full text-red-600 bg-red-50 p-3 rounded-md mb-4 break-all whitespace-pre-wrap overflow-hidden overflow-y-auto max-h-32">
                 {error}
               </div>
             </div>
