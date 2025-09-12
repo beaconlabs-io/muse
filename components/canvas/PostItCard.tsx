@@ -47,7 +47,7 @@ export function PostItCard({
 }: PostItCardProps) {
   return (
     <Card
-      className={`absolute p-3 w-[150px] min-h-[120px] shadow-lg border-2 select-none ${
+      className={`absolute p-3 ${isEditing ? "w-[180px] min-h-[160px]" : "w-[150px] min-h-[120px]"} shadow-lg border-2 select-none ${
         isReadOnly
           ? "cursor-default"
           : isConnectionMode
@@ -91,7 +91,7 @@ export function PostItCard({
 
       {isEditing && !isReadOnly ? (
         <textarea
-          className="w-full h-full bg-transparent border-none outline-none resize-none text-sm"
+          className="w-full h-32 bg-transparent border-none outline-none resize-none text-sm leading-relaxed"
           value={card.content}
           onChange={(e) => onContentChange(e.target.value)}
           onBlur={onEditComplete}
