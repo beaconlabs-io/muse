@@ -1,3 +1,4 @@
+import { Montserrat } from "next/font/google";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Metadata } from "next";
 import "./globals.css";
@@ -12,9 +13,17 @@ import {
 } from "@/components/ui/sidebar";
 import Providers from "./providers";
 
-const baseUrl = process.env.NODE_ENV === "production" 
-  ? "https://muse.beaconlabs.io" 
-  : "http://localhost:3000";
+export const MontserratFont = Montserrat({
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+  fallback: ["system-ui", "arial"],
+});
+
+const baseUrl =
+  process.env.NODE_ENV === "production"
+    ? "https://muse.beaconlabs.io"
+    : "http://localhost:3000";
 
 export const metadata: Metadata = {
   title: "MUSE by BeaconLabs",
@@ -48,7 +57,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className={MontserratFont.className}>
         <Providers>
           <SidebarProvider>
             <AppSidebar />
