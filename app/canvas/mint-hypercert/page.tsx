@@ -327,8 +327,7 @@ export default function MintHypercertPage() {
               .split(",")
               .map((c) => c.trim())
               .filter(Boolean)
-              .concat(address)
-          : [address],
+          : [],
         rights: ["Public Display", "Impact Attribution"],
         excludedWorkScope: [],
         excludedImpactScope: [],
