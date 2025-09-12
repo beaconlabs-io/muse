@@ -10,7 +10,7 @@ import { LogicModelSections } from "./LogicModelSections";
 import { MetricsPanel } from "./MetricsPanel";
 import { PostItCard as PostItCardComponent } from "./PostItCard";
 import { PostItCard, Arrow, CARD_COLORS, Evidence } from "@/types";
-import { uploadToIPFS, createLogicModelFromCanvas } from "@/utils/ipfs";
+import { createLogicModelFromCanvas } from "@/utils/ipfs";
 
 interface CardMetrics {
   id: string;
@@ -32,19 +32,81 @@ interface CanvasClientProps {
   initialArrows?: Arrow[];
 }
 
+// Canvas state interface for localStorage
+interface CanvasState {
+  cards: PostItCard[];
+  arrows: Arrow[];
+  cardMetrics: Record<string, CardMetrics[]>;
+  selectedGoal: string;
+  canvasOffset: { x: number; y: number };
+  zoom: number;
+}
+
+// Save canvas state to localStorage
+const saveCanvasState = (state: CanvasState) => {
+  try {
+    // Only access localStorage on the client side
+    if (typeof window === "undefined") return;
+    localStorage.setItem("canvasState", JSON.stringify(state));
+  } catch (error) {
+    console.error("Failed to save canvas state:", error);
+  }
+};
+
+// Load canvas state from localStorage
+const loadCanvasState = (): CanvasState | null => {
+  try {
+    // Only access localStorage on the client side
+    if (typeof window === "undefined") return null;
+    const saved = localStorage.getItem("canvasState");
+    return saved ? JSON.parse(saved) : null;
+  } catch (error) {
+    console.error("Failed to load canvas state:", error);
+    return null;
+  }
+};
+
 export function CanvasClient({
   initialCards = [],
   initialArrows = [],
 }: CanvasClientProps) {
   const { address } = useAccount();
-  const [cards, setCards] = useState<PostItCard[]>(initialCards);
-  const [arrows, setArrows] = useState<Arrow[]>(initialArrows);
+  
+  // Initialize state from localStorage if available, otherwise use initial props
+  const [cards, setCards] = useState<PostItCard[]>(() => {
+    const savedState = loadCanvasState();
+    return savedState?.cards || initialCards;
+  });
+  
+  const [arrows, setArrows] = useState<Arrow[]>(() => {
+    const savedState = loadCanvasState();
+    return savedState?.arrows || initialArrows;
+  });
+  
+  const [cardMetrics, setCardMetrics] = useState<Record<string, CardMetrics[]>>(() => {
+    const savedState = loadCanvasState();
+    return savedState?.cardMetrics || {};
+  });
+  
+  const [selectedGoal, setSelectedGoal] = useState<string>(() => {
+    const savedState = loadCanvasState();
+    return savedState?.selectedGoal || "";
+  });
+  
+  const [canvasOffset, setCanvasOffset] = useState(() => {
+    const savedState = loadCanvasState();
+    return savedState?.canvasOffset || { x: 0, y: 0 };
+  });
+  
+  const [zoom, setZoom] = useState(() => {
+    const savedState = loadCanvasState();
+    return savedState?.zoom || 1;
+  });
+  
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [connectionMode, setConnectionMode] = useState(false);
   const [connectionStart, setConnectionStart] = useState<string | null>(null);
@@ -54,12 +116,27 @@ export function CanvasClient({
   const [selectedCardForMetrics, setSelectedCardForMetrics] = useState<
     string | null
   >(null);
-  const [cardMetrics, setCardMetrics] = useState<Record<string, CardMetrics[]>>(
-    {}
-  );
-  const [selectedGoal, setSelectedGoal] = useState<string>("");
   const [addedGoalCard, setAddedGoalCard] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Auto-save canvas state whenever key data changes
+  useEffect(() => {
+    const currentState: CanvasState = {
+      cards,
+      arrows,
+      cardMetrics,
+      selectedGoal,
+      canvasOffset,
+      zoom,
+    };
+    
+    // Save to localStorage with debounce to avoid excessive saves
+    const timeoutId = setTimeout(() => {
+      saveCanvasState(currentState);
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [cards, arrows, cardMetrics, selectedGoal, canvasOffset, zoom]);
 
   const addCard = useCallback((section?: string) => {
     const getSectionPosition = (sectionType?: string) => {
@@ -350,8 +427,8 @@ export function CanvasClient({
           id: `${baseId}-metric-${index}`,
           name: `${result.outcome_variable} Measurement`,
           description: `Evidence-based metric from: ${evidence.title}`,
-          measurementMethod: Array.isArray(evidence.methodologies) 
-            ? evidence.methodologies.join(", ") 
+          measurementMethod: Array.isArray(evidence.methodologies)
+            ? evidence.methodologies.join(", ")
             : evidence.methodologies,
           frequency: "quarterly",
         },
@@ -374,7 +451,7 @@ export function CanvasClient({
     setCards((prev) => [...prev, ...newCards]);
     setArrows((prev) => [...prev, ...newArrows]);
   }, []);
-  const saveLogicModel = useCallback(async () => {
+  const openHypercertDialog = useCallback(() => {
     try {
       const logicModel = createLogicModelFromCanvas(
         cards,
@@ -386,18 +463,27 @@ export function CanvasClient({
         address // Pass wallet address as author
       );
 
-      const result = await uploadToIPFS(logicModel);
-      
-      // Copy the URL to clipboard
-      const url = `${window.location.origin}/canvas/${result.hash}`;
-      await navigator.clipboard.writeText(url);
-      
-      alert(`Logic model saved! URL copied to clipboard:\n${url}`);
+      // Ensure canvas state is saved to localStorage before navigating
+      const currentState: CanvasState = {
+        cards,
+        arrows,
+        cardMetrics,
+        selectedGoal,
+        canvasOffset,
+        zoom,
+      };
+      saveCanvasState(currentState);
+
+      // Store logic model in sessionStorage for the mint page
+      sessionStorage.setItem("currentLogicModel", JSON.stringify(logicModel));
+
+      // Navigate to mint page
+      window.location.href = "/canvas/mint-hypercert";
     } catch (error) {
-      console.error("Failed to save logic model:", error);
-      alert("Failed to save logic model. Please try again.");
+      console.error("Failed to prepare logic model:", error);
+      alert("Failed to prepare logic model. Please try again.");
     }
-  }, [cards, arrows, cardMetrics, selectedGoal, address]);
+  }, [cards, arrows, cardMetrics, selectedGoal, canvasOffset, zoom, address]);
 
   const exportAsJSON = useCallback(() => {
     const logicModel = createLogicModelFromCanvas(
@@ -413,7 +499,7 @@ export function CanvasClient({
     const jsonData = JSON.stringify(logicModel, null, 2);
     const blob = new Blob([jsonData], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    
+
     const a = document.createElement("a");
     a.href = url;
     a.download = `logic-model-${logicModel.id}.json`;
@@ -421,7 +507,34 @@ export function CanvasClient({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [cards, arrows, cardMetrics, selectedGoal, address]);;
+  }, [cards, arrows, cardMetrics, selectedGoal, address]);
+
+  const clearAllData = useCallback(() => {
+    if (window.confirm("Are you sure you want to clear all canvas data? This action cannot be undone.")) {
+      // Clear all canvas state
+      setCards([]);
+      setArrows([]);
+      setCardMetrics({});
+      setSelectedGoal("");
+      setCanvasOffset({ x: 0, y: 0 });
+      setZoom(1);
+      
+      // Clear localStorage and sessionStorage
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("canvasState");
+        sessionStorage.removeItem("currentLogicModel");
+      }
+      
+      // Reset connection and editing states
+      setConnectionMode(false);
+      setConnectionStart(null);
+      setEditingCard(null);
+      setHoveredCard(null);
+      setDraggedCard(null);
+      setShowEvidencePanel(false);
+      setShowMetricsPanel(false);
+    }
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -448,8 +561,9 @@ export function CanvasClient({
         showEvidencePanel={showEvidencePanel}
         selectedGoal={selectedGoal}
         onGoalChange={handleGoalChange}
-        onSaveLogicModel={saveLogicModel}
+        onSaveLogicModel={openHypercertDialog}
         onExportAsJSON={exportAsJSON}
+        onClearAllData={clearAllData}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -461,6 +575,7 @@ export function CanvasClient({
         )}
         <div
           ref={canvasRef}
+          data-testid="canvas-container"
           className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing"
           onMouseDown={(e) => handleMouseDown(e)}
           onMouseMove={handleMouseMove}
