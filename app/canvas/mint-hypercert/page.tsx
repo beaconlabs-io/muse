@@ -10,6 +10,7 @@ import {
   TransferRestrictions,
 } from "@hypercerts-org/sdk";
 import { format } from "date-fns";
+import { toPng } from "html-to-image";
 import {
   ArrowLeft,
   Check,
@@ -121,12 +122,7 @@ export default function MintHypercertPage() {
   const storedLogicModel = getStoredLogicModel();
 
   const [logicModel] = useState<LogicModel | null>(storedLogicModel);
-  const [hypercertImage, setHypercertImage] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      return `https://muse.beaconlabs.io/canvas-og.svg`;
-    }
-    return "/canvas-og.svg"; // Fallback for SSR
-  });
+  const [hypercertImage, setHypercertImage] = useState<string>("");
   const [, setIpfsHash] = useState<string>("");
   const [showMintingDialog, setShowMintingDialog] = useState(false);
   const [currentStep, setCurrentStep] = useState<MintingStep>(1);
@@ -137,6 +133,7 @@ export default function MintHypercertPage() {
   // Refs for file inputs
   const logoFileInputRef = useRef<HTMLInputElement>(null);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
+  const hypercertCardRef = useRef<HTMLDivElement>(null);
 
   const { address, isConnected } = useAccount();
 
@@ -179,6 +176,24 @@ export default function MintHypercertPage() {
         ? "https://app.hypercerts.org/hypercerts/"
         : "https://testnet.hypercerts.org/hypercerts/";
     return `${baseUrl}${hypercertId}`;
+  };
+
+  // Function to generate hypercert image from the HypercertCard component
+  const generateHypercertImage = async (): Promise<string> => {
+    try {
+      if (hypercertCardRef.current) {
+        const dataUrl = await toPng(hypercertCardRef.current, {
+          quality: 0.95,
+          width: 336,
+          height: 420,
+          backgroundColor: "#ffffff",
+        });
+        return dataUrl;
+      }
+    } catch (error) {
+      console.warn("Failed to generate hypercert image:", error);
+    }
+    return "";
   };
 
   const form = useForm<FormData>({
@@ -279,10 +294,13 @@ export default function MintHypercertPage() {
       setCurrentStep(2);
       setMintingState("generating-image");
 
-      // Use the existing hypercert image with full URL
-      const imageToUse = hypercertImage.startsWith("http")
-        ? hypercertImage
-        : `${window.location.origin}${hypercertImage}`;
+      // Generate hypercert image from the card
+      const generatedImage = await generateHypercertImage();
+      if (generatedImage) {
+        setHypercertImage(generatedImage);
+      }
+
+      const imageToUse = generatedImage || hypercertImage;
 
       setMintingState("minting");
 
@@ -372,6 +390,7 @@ export default function MintHypercertPage() {
     setError("");
     setHypercertImage("");
     setIpfsHash("");
+    setMintTxHash(undefined);
     setShowMintingDialog(false);
   };
 
@@ -680,8 +699,9 @@ export default function MintHypercertPage() {
               <h3 className="text-lg font-semibold mb-4">Live Preview</h3>
               <div className="flex justify-center">
                 <HypercertCard
+                  ref={hypercertCardRef}
                   title={watchedTitle || "Your title here"}
-                  banner={bannerPreviewUrl || hypercertImage || undefined}
+                  banner={bannerPreviewUrl || "/canvas-og.svg"}
                   logo={logoPreviewUrl || "/beaconlabs01.jpg"}
                   workStartDate={watchedWorkDates?.[0] || new Date()}
                   workEndDate={watchedWorkDates?.[1] || new Date()}
