@@ -1,4 +1,4 @@
-import { Plus, Move, FileText, Target, Save, Download } from "lucide-react";
+import { Plus, Move, FileText, Target, Save, Download, Trash2 } from "lucide-react";
 import { ZoomControls } from "@/components/canvas/ZoomControls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,8 +18,9 @@ interface CanvasToolbarProps {
   showEvidencePanel: boolean;
   selectedGoal?: string;
   onGoalChange: (goal: string) => void;
-  onSaveLogicModel?: () => Promise<void>;
+  onSaveLogicModel?: () => void;
   onExportAsJSON?: () => void;
+  onClearAllData?: () => void;
 }
 
 const LOGIC_MODEL_SECTIONS = [
@@ -47,6 +48,7 @@ export function CanvasToolbar({
   onGoalChange,
   onSaveLogicModel,
   onExportAsJSON,
+  onClearAllData,
 }: CanvasToolbarProps) {
   return (
     <div className="flex flex-col gap-3 p-3 sm:p-4 border-b bg-background">
@@ -76,6 +78,17 @@ export function CanvasToolbar({
 
         {/* Save and Export buttons - fixed right */}
         <div className="flex items-center gap-2">
+          {onClearAllData && (
+            <Button
+              onClick={onClearAllData}
+              size="sm"
+              variant="destructive"
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Clear All</span>
+            </Button>
+          )}
           {onSaveLogicModel && (
             <Button
               onClick={onSaveLogicModel}
@@ -84,7 +97,7 @@ export function CanvasToolbar({
               className="flex items-center gap-2"
             >
               <Save className="h-4 w-4" />
-              <span className="hidden sm:inline">Save to IPFS</span>
+              <span className="hidden sm:inline">Mint Hypercert</span>
             </Button>
           )}
           {onExportAsJSON && (
