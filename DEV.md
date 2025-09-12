@@ -29,10 +29,7 @@ sequenceDiagram
     Note over Community, Attestation: Logic Model Creation
 
     PolicyMaker->>Muse: Build logic model using evidence
-    Muse->>Attestation: Create attestation for logic model
-
-    Note over Community, Attestation: Impact Claim Creation
-    PolicyMaker->>Muse: Extract outcomes/impacts from logic model
+    Muse->>Muse: Extract outcomes/impacts from logic model
     Muse->>Hypercerts: Create impact claim based on outcome/impact
 		Note over Community, Attestation: measure/evaluate
 
