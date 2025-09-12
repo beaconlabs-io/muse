@@ -52,6 +52,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { LogicModel } from "@/types";
+import { generateHypercertIdFromReceipt } from "@/utils/generateHypercertIdFromReceipt";
 import { uploadToIPFS } from "@/utils/ipfs";
 
 // Zod schema for form validation
@@ -149,26 +150,6 @@ export default function MintHypercertPage() {
     },
   });
 
-  // Function to construct hypercert ID from transaction receipt
-  const constructHypercertId = (receipt: any, chainId: number): string => {
-    // Extract contract address and token ID from logs
-    const transferLog = receipt.logs.find(
-      (log: any) =>
-        log.topics[0] ===
-        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" // Transfer event signature
-    );
-
-    if (transferLog) {
-      const contractAddress = transferLog.address;
-      const tokenId = BigInt(
-        transferLog.topics[3] || transferLog.data
-      ).toString();
-      return `${chainId}-${contractAddress}-${tokenId}`;
-    }
-
-    return "";
-  };
-
   // Function to construct hypercert URL
   const constructHypercertUrl = (hypercertId: string): string => {
     const baseUrl =
@@ -206,7 +187,7 @@ export default function MintHypercertPage() {
         storedLogicModel?.description || "Logic model created with Muse",
       impactScope: "",
       workDates: [new Date(), new Date()],
-      contributors: address || "",
+      contributors: "",
     },
   });
 
@@ -235,7 +216,10 @@ export default function MintHypercertPage() {
   // Handle receipt data and construct hypercert URL
   useEffect(() => {
     if (isReceiptSuccess && receiptData) {
-      const hypercertId = constructHypercertId(receiptData, baseSepolia.id);
+      const hypercertId = generateHypercertIdFromReceipt(
+        receiptData,
+        baseSepolia.id
+      );
       const hypercertUrl = constructHypercertUrl(hypercertId);
 
       setResult((prev) =>
@@ -587,9 +571,6 @@ export default function MintHypercertPage() {
                               </Button>
                             )}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            Logic model image will be used as banner by default
-                          </div>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -715,7 +696,7 @@ export default function MintHypercertPage() {
                 />
               </div>
               <p className="text-xs text-muted-foreground text-center mt-4">
-                Preview of your hypercert card
+                Preview of your hypercert
               </p>
             </div>
           </div>
@@ -776,28 +757,6 @@ export default function MintHypercertPage() {
               <h3 className="font-semibold mb-2">
                 Hypercert Minted Successfully!
               </h3>
-              <p className="text-sm text-muted-foreground text-center mb-4">
-                Your logic model has been converted into a hypercert on Base
-                Sepolia testnet.
-              </p>
-
-              {result && (
-                <div className="text-sm text-muted-foreground space-y-1 text-center">
-                  <p>
-                    <strong>Units:</strong> 100,000,000
-                  </p>
-                  {result.hypercertId && (
-                    <p>
-                      <strong>Hypercert ID:</strong>{" "}
-                      {result.hypercertId.slice(0, 20)}...
-                    </p>
-                  )}
-                  <p>
-                    <strong>Transaction:</strong> {result.txHash.slice(0, 10)}
-                    ...
-                  </p>
-                </div>
-              )}
             </div>
           )}
 

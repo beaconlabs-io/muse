@@ -14,6 +14,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.1.1
         version: 5.1.1(react-hook-form@7.60.0(react@19.1.0))
+      '@hypercerts-org/contracts':
+        specifier: 2.0.0-alpha.0
+        version: 2.0.0-alpha.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
       '@hypercerts-org/sdk':
         specifier: 2.9.0-alpha.1
         version: 2.9.0-alpha.1(@safe-global/api-kit@2.5.11(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@safe-global/protocol-kit@5.2.15(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@safe-global/types-kit@1.0.5(typescript@5.8.3)(zod@3.25.76))(bufferutil@4.0.9)(ethers@6.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(graphql@16.11.0)(rollup@2.79.2)(typescript@5.8.3)(utf-8-validate@5.0.10)
@@ -480,6 +483,9 @@ packages:
   '@humanwhocodes/retry@0.4.3':
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
+
+  '@hypercerts-org/contracts@2.0.0-alpha.0':
+    resolution: {integrity: sha512-xkvl2goo1Uz39TdALs4ypjxarmxk4Lu0X8JZc5+TdmVw/hsaywjE5WpPgil/AFE5Ccm3qyNGVsY6fz6co5GvVg==}
 
   '@hypercerts-org/contracts@2.0.0-alpha.12':
     resolution: {integrity: sha512-Nr0aTJIt6/H1mI3N0uve3yF922kCVpAeN3aUqhWZfizukTVSD5aRE64fmKYpwzCWe0JNR9mBBR+Ogxq5lcGSvA==}
@@ -6350,6 +6356,16 @@ snapshots:
   '@humanwhocodes/retry@0.3.1': {}
 
   '@humanwhocodes/retry@0.4.3': {}
+
+  '@hypercerts-org/contracts@2.0.0-alpha.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)':
+    dependencies:
+      hardhat: 2.26.3(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - ts-node
+      - typescript
+      - utf-8-validate
 
   '@hypercerts-org/contracts@2.0.0-alpha.12(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)':
     dependencies:
