@@ -1,4 +1,5 @@
 onlyBuiltDependencies:
+  - '@interacta/css-labels'
   - '@swc/core'
   - '@tailwindcss/oxide'
   - bufferutil
