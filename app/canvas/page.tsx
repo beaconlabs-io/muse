@@ -1,17 +1,12 @@
 import React from "react";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { Metadata } from "next";
 import { CanvasClient } from "@/components/canvas/CanvasClient";
 import { getCanvasData } from "@/lib/canvas/server-data";
 import { getAllEvidenceMeta } from "@/lib/evidence";
 
-const baseUrl = process.env.NODE_ENV === "production" 
-  ? "https://muse.beaconlabs.io" 
-  : "http://localhost:3000";
+const baseUrl =
+  process.env.NODE_ENV === "production" ? "https://muse.beaconlabs.io" : "http://localhost:3000";
 
 export const metadata: Metadata = {
   title: "MUSE Canvas - Create Interactive Logic Models",

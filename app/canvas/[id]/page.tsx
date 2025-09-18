@@ -23,12 +23,10 @@ export default async function LogicModelPage({ params }: Props) {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Logic Model Not Found
-          </h1>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h1 className="mb-4 text-2xl font-bold text-gray-900">Logic Model Not Found</h1>
+          <p className="mb-4 text-gray-600">{error}</p>
           <Button asChild>
             <Link href="/canvas">Create New Logic Model</Link>
           </Button>
@@ -54,13 +52,11 @@ export async function generateMetadata({ params }: Props) {
     return {
       title: `${logicModel.title} - MUSE Canvas Logic Model`,
       description:
-        logicModel.description ||
-        "Interactive logic model with evidence - MUSE by BeaconLabs",
+        logicModel.description || "Interactive logic model with evidence - MUSE by BeaconLabs",
       openGraph: {
         title: `${logicModel.title} - MUSE Canvas Logic Model`,
         description:
-          logicModel.description ||
-          "Interactive logic model with evidence - MUSE by BeaconLabs",
+          logicModel.description || "Interactive logic model with evidence - MUSE by BeaconLabs",
         type: "website",
         siteName: "MUSE",
         images: [
@@ -76,20 +72,17 @@ export async function generateMetadata({ params }: Props) {
         card: "summary_large_image",
         title: `${logicModel.title} - MUSE Canvas Logic Model`,
         description:
-          logicModel.description ||
-          "Interactive logic model with evidence - MUSE by BeaconLabs",
+          logicModel.description || "Interactive logic model with evidence - MUSE by BeaconLabs",
         images: ["/canvas-og.svg"],
       },
     };
   } catch {
     return {
       title: "MUSE Canvas - Interactive Logic Models",
-      description:
-        "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+      description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
       openGraph: {
         title: "MUSE Canvas - Interactive Logic Models",
-        description:
-          "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+        description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
         type: "website",
         siteName: "MUSE",
         images: [
@@ -104,8 +97,7 @@ export async function generateMetadata({ params }: Props) {
       twitter: {
         card: "summary_large_image",
         title: "MUSE Canvas - Interactive Logic Models",
-        description:
-          "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+        description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
         images: ["/canvas-og.png"],
       },
     };

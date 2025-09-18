@@ -12,17 +12,19 @@ export const generateHypercertIdFromReceipt = (
   }
 
   try {
-    const events = receipt.logs.map((log) => {
-      try {
-        return decodeEventLog({
-          abi: HypercertMinterAbi,
-          data: log.data,
-          topics: log.topics,
-        });
-      } catch {
-        return null;
-      }
-    }).filter((event): event is NonNullable<typeof event> => event !== null);
+    const events = receipt.logs
+      .map((log) => {
+        try {
+          return decodeEventLog({
+            abi: HypercertMinterAbi,
+            data: log.data,
+            topics: log.topics,
+          });
+        } catch {
+          return null;
+        }
+      })
+      .filter((event): event is NonNullable<typeof event> => event !== null);
 
     if (!events.length) {
       throw new Error("No events in receipt");

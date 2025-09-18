@@ -1,11 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, ChevronRight, Search, Palette } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -92,9 +88,7 @@ export async function AppSidebar() {
                       <SidebarMenuSubItem key={item.evidence_id}>
                         <SidebarMenuSubButton asChild>
                           <Link href={`/evidence/${item.evidence_id}`}>
-                            <span className="text-sm truncate">
-                              {item.title}
-                            </span>
+                            <span className="truncate text-sm">{item.title}</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>

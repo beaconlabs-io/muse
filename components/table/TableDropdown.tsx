@@ -21,14 +21,14 @@ export function TableDropdown<TData>({ row }: DataTableRowActionsProps<TData>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex h-8 w-8 p-0 cursor-pointer">
+        <Button variant="ghost" className="flex h-8 w-8 cursor-pointer p-0">
           <MoreHorizontal />
           <span className="sr-only">Open menu</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem>
-          <div className="flex flex-col gap-2 items-center w-max">
+          <div className="flex w-max flex-col items-center gap-2">
             <Link
               href={`https://base-sepolia.easscan.org/attestation/view/${row.original.attestationUID}`}
               target="_blank"

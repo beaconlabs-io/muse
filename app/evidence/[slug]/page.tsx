@@ -1,21 +1,13 @@
 import "highlight.js/styles/github-dark.css";
 import React from "react";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { extractEffectData } from "@/components/effect-icons";
 import { EvidencePageClient } from "@/components/evidence/EvidencePageClient";
 import { getEvidenceBySlug } from "@/lib/evidence";
 
-export default async function EvidencePage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function EvidencePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  
+
   // Setup React Query client for server-side prefetching
   const queryClient = new QueryClient();
 
@@ -24,8 +16,8 @@ export default async function EvidencePage({
     await queryClient.prefetchQuery({
       queryKey: ["evidence", slug],
       queryFn: async () => {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🚀 Prefetching evidence data on server...');
+        if (process.env.NODE_ENV === "development") {
+          console.log("🚀 Prefetching evidence data on server...");
         }
         return await getEvidenceBySlug(slug);
       },
@@ -35,7 +27,7 @@ export default async function EvidencePage({
   } catch (error) {
     console.error("Error prefetching evidence data:", error);
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-xl text-gray-600">Evidence not found</div>
       </div>
     );
@@ -50,11 +42,7 @@ export default async function EvidencePage({
   );
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const response = await getEvidenceBySlug(slug);
 
@@ -71,7 +59,7 @@ export async function generateMetadata({
   const description = meta.results?.length
     ? meta.results.map((r) => {
         const effectData = r.outcome ? extractEffectData(r.outcome) : null;
-        return `${r.intervention} has ${effectData?.title || 'unknown'} effect on ${r.outcome_variable}`;
+        return `${r.intervention} has ${effectData?.title || "unknown"} effect on ${r.outcome_variable}`;
       })
     : "Explore evidence on MUSE";
 

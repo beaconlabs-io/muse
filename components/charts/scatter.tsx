@@ -44,13 +44,7 @@ export function Scatter() {
         <CartesianGrid />
         <XAxis type="number" dataKey="x" name="stature" unit="cm" />
         <YAxis type="number" dataKey="y" name="weight" unit="kg" />
-        <ZAxis
-          type="number"
-          dataKey="z"
-          range={[60, 400]}
-          name="score"
-          unit="km"
-        />
+        <ZAxis type="number" dataKey="z" range={[60, 400]} name="score" unit="km" />
         <Tooltip cursor={{ strokeDasharray: "3 3" }} />
         <Legend />
         <RechartsScatter name="A school" data={data0} fill="#8884d8" />

@@ -16,12 +16,10 @@ export function EvidenceResults({ results }: EvidenceResultsProps) {
         <h3>Results</h3>
         <TooltipEffects />
       </div>
-      <ul className="list-disc list-inside text-gray-700">
+      <ul className="list-inside list-disc text-gray-700">
         {results.map((result, idx) => (
           <li key={idx} className="flex items-center gap-4">
-            {result.outcome && (
-              <EffectIcons effectId={result.outcome} />
-            )}
+            {result.outcome && <EffectIcons effectId={result.outcome} />}
             <div className="font-medium">{result.intervention}</div>
             <div className="font-medium">→</div>
             <div className="font-medium">{result.outcome_variable}</div>

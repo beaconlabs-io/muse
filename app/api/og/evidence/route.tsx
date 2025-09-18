@@ -166,7 +166,7 @@ export async function GET(request: Request) {
       {
         width: 1200,
         height: 630,
-      }
+      },
     );
   } catch (error) {
     console.error("Failed to generate OG image:", error);

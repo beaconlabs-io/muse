@@ -27,10 +27,7 @@ import { PostItCard } from "@/types";
 const metricsSchema = z.object({
   name: z.string().min(1, "Metrics name is required"),
   description: z.string().optional(),
-  measurementMethod: z
-    .string()
-    .min(1, "Measurement method is required")
-    .optional(),
+  measurementMethod: z.string().min(1, "Measurement method is required").optional(),
   targetValue: z.string().optional(),
   frequency: z
     .enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"], {
@@ -88,7 +85,7 @@ export function MetricsPanel({
 
   const onSubmit = (data: MetricsFormData) => {
     if (isReadOnly) return; // Prevent submission in read-only mode
-    
+
     if (editingMetricId) {
       saveEditingMetric(data);
     } else {
@@ -122,9 +119,9 @@ export function MetricsPanel({
 
   const saveEditingMetric = (data: MetricsFormData) => {
     if (!editingMetricId || isReadOnly) return;
-    
+
     const updatedMetrics = metrics.map((metric) =>
-      metric.id === editingMetricId ? { ...metric, ...data } : metric
+      metric.id === editingMetricId ? { ...metric, ...data } : metric,
     );
     onMetricsChange(updatedMetrics);
     setEditingMetricId(null);
@@ -132,16 +129,14 @@ export function MetricsPanel({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between border-b p-4">
         <div>
           <h3 className="text-lg font-semibold">
             {isReadOnly ? "Metrics Overview" : "Metrics Configuration"}
           </h3>
-          <p className="text-sm text-muted-foreground">
-            {card?.content || "Selected Card"}
-          </p>
+          <p className="text-muted-foreground text-sm">{card?.content || "Selected Card"}</p>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-4 w-4" />
@@ -149,19 +144,17 @@ export function MetricsPanel({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="flex-1 space-y-6 overflow-y-auto p-4">
         {/* Existing Metrics */}
         <div>
-          <h4 className="font-medium mb-3">
-            {isReadOnly ? "Metrics" : "Configured Metrics"}
-          </h4>
+          <h4 className="mb-3 font-medium">{isReadOnly ? "Metrics" : "Configured Metrics"}</h4>
           <div className="space-y-3">
             {metrics.map((metric) => (
-              <div key={metric.id} className="p-3 border rounded-lg bg-card">
-                <div className="flex items-start justify-between mb-2">
-                  <h5 className="font-medium text-sm">{metric.name}</h5>
+              <div key={metric.id} className="bg-card rounded-lg border p-3">
+                <div className="mb-2 flex items-start justify-between">
+                  <h5 className="text-sm font-medium">{metric.name}</h5>
                   {!isReadOnly && (
-                    <div className="flex gap-1 ml-2">
+                    <div className="ml-2 flex gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -174,7 +167,7 @@ export function MetricsPanel({
                         variant="ghost"
                         size="icon"
                         onClick={() => removeMetrics(metric.id)}
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive h-8 w-8"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -182,41 +175,34 @@ export function MetricsPanel({
                   )}
                 </div>
 
-                <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="text-muted-foreground space-y-2 text-sm">
                   {metric.description && (
                     <div>
-                      <Label className="text-xs text-muted-foreground">
-                        Description
-                      </Label>
+                      <Label className="text-muted-foreground text-xs">Description</Label>
                       <p className="text-sm">{metric.description}</p>
                     </div>
                   )}
 
                   {metric.measurementMethod && (
                     <div>
-                      <Label className="text-xs text-muted-foreground">
-                        Measurement Method
-                      </Label>
+                      <Label className="text-muted-foreground text-xs">Measurement Method</Label>
                       <p className="text-sm">{metric.measurementMethod}</p>
                     </div>
                   )}
 
                   {metric.frequency && (
                     <div>
-                      <Label className="text-xs text-muted-foreground">
-                        Frequency
-                      </Label>
+                      <Label className="text-muted-foreground text-xs">Frequency</Label>
                       <p className="text-sm">
-                        {FREQUENCY_OPTIONS.find(opt => opt.value === metric.frequency)?.label || metric.frequency}
+                        {FREQUENCY_OPTIONS.find((opt) => opt.value === metric.frequency)?.label ||
+                          metric.frequency}
                       </p>
                     </div>
                   )}
 
                   {metric.targetValue && (
                     <div>
-                      <Label className="text-xs text-muted-foreground">
-                        Target Value
-                      </Label>
+                      <Label className="text-muted-foreground text-xs">Target Value</Label>
                       <p className="text-sm">{metric.targetValue}</p>
                     </div>
                   )}
@@ -225,13 +211,9 @@ export function MetricsPanel({
             ))}
 
             {metrics.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-muted-foreground py-8 text-center">
                 <p className="text-sm">No metrics configured</p>
-                {!isReadOnly && (
-                  <p className="text-xs">
-                    Use the form below to add a new metric
-                  </p>
-                )}
+                {!isReadOnly && <p className="text-xs">Use the form below to add a new metric</p>}
               </div>
             )}
           </div>
@@ -240,7 +222,7 @@ export function MetricsPanel({
         {/* Add New / Edit Metrics Form - Only show if not read-only */}
         {!isReadOnly && (
           <div className="border-t pt-6">
-            <h4 className="font-medium mb-3">
+            <h4 className="mb-3 font-medium">
               {editingMetricId ? "Edit Metric" : "Add New Metric"}
             </h4>
             <Form {...form}>
@@ -287,10 +269,7 @@ export function MetricsPanel({
                     <FormItem>
                       <FormLabel>Measurement Method</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Survey, observation, data analysis"
-                          {...field}
-                        />
+                        <Input placeholder="Survey, observation, data analysis" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -303,10 +282,7 @@ export function MetricsPanel({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Measurement Frequency</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select frequency" />
@@ -344,7 +320,7 @@ export function MetricsPanel({
 
                 <div className="flex gap-2">
                   <Button type="submit" className="flex-1">
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="mr-2 h-4 w-4" />
                     {editingMetricId ? "Update Metric" : "Add Metric"}
                   </Button>
                   {editingMetricId && (
@@ -361,4 +337,3 @@ export function MetricsPanel({
     </div>
   );
 }
-

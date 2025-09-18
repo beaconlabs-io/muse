@@ -1,8 +1,6 @@
 import { LogicModel, IPFSStorageResult } from "@/types";
 
-export async function uploadToIPFS(
-  logicModel: LogicModel
-): Promise<IPFSStorageResult> {
+export async function uploadToIPFS(logicModel: LogicModel): Promise<IPFSStorageResult> {
   try {
     const filename = `logic-model-${logicModel.id}.json`;
 
@@ -19,9 +17,7 @@ export async function uploadToIPFS(
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
-        errorData.error || `HTTP error! status: ${response.status}`
-      );
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 
     const result = await response.json();
@@ -74,7 +70,7 @@ export function createLogicModelFromCanvas(
   selectedGoal?: string,
   title?: string,
   description?: string,
-  author?: string
+  author?: string,
 ): LogicModel {
   const id = generateLogicModelId();
   const now = new Date().toISOString();

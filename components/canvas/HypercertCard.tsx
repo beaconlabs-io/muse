@@ -27,7 +27,7 @@ const HypercertCard = forwardRef<HTMLDivElement, HypercertCardProps>(
       badges = [],
       displayOnly = false,
     }: HypercertCardProps,
-    ref
+    ref,
   ) => {
     const formattedDateRange =
       workStartDate && workEndDate ? (
@@ -58,9 +58,7 @@ const HypercertCard = forwardRef<HTMLDivElement, HypercertCardProps>(
     const maxBadgeLength = 18;
 
     const clipBadge = (badge: string) =>
-      badge.length > maxBadgeLength
-        ? `${badge.slice(0, maxBadgeLength - 3)}...`
-        : badge;
+      badge.length > maxBadgeLength ? `${badge.slice(0, maxBadgeLength - 3)}...` : badge;
 
     const visibleBadges = badges.slice(0, maxVisibleTags).map(clipBadge);
     const hiddenBadgesCount = badges.length - visibleBadges.length;
@@ -88,13 +86,7 @@ const HypercertCard = forwardRef<HTMLDivElement, HypercertCardProps>(
         <section className="absolute top-4 left-3 overflow-hidden rounded-full border-2 border-white bg-slate-200">
           <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-300">
             {logo ? (
-              <Image
-                src={logo}
-                alt={`${title} logo`}
-                fill
-                unoptimized
-                className="object-cover"
-              />
+              <Image src={logo} alt={`${title} logo`} fill unoptimized className="object-cover" />
             ) : (
               <div className="flex h-10 w-10 items-center justify-center bg-slate-300">
                 <Sparkles size={24} />
@@ -102,19 +94,17 @@ const HypercertCard = forwardRef<HTMLDivElement, HypercertCardProps>(
             )}
           </div>
         </section>
-        <section className="flex h-[246px] flex-col justify-between rounded-t-xl border-black border-t-[1px] bg-white p-3 pt-4">
+        <section className="flex h-[246px] flex-col justify-between rounded-t-xl border-t-[1px] border-black bg-white p-3 pt-4">
           <h5
-            className="line-clamp-3 text-ellipsis py-1 font-semibold text-[25px] text-slate-800 leading-[27px] tracking-[-0.03em]"
+            className="line-clamp-3 py-1 text-[25px] leading-[27px] font-semibold tracking-[-0.03em] text-ellipsis text-slate-800"
             title={title}
           >
             {title}
           </h5>
-          <section className="border-black border-t-[1.5px]">
+          <section className="border-t-[1.5px] border-black">
             <div className="flex items-center justify-between pt-1 pb-2">
-              <span className="font-medium text-xs uppercase">hypercert</span>
-              <span className="font-medium text-xs uppercase">
-                {formattedDateRange}
-              </span>
+              <span className="text-xs font-medium uppercase">hypercert</span>
+              <span className="text-xs font-medium uppercase">{formattedDateRange}</span>
             </div>
             <div className="mt-auto h-[62px] w-full overflow-hidden">
               <div className="flex h-full flex-wrap content-end justify-start gap-1 pb-1">
@@ -132,7 +122,7 @@ const HypercertCard = forwardRef<HTMLDivElement, HypercertCardProps>(
                   </span>
                 ))}
                 {hiddenBadgesCount > 0 && (
-                  <div className="flex items-center justify-center rounded-full border border-black bg-neutral-100 px-2 py-1 font-medium text-slate-900 text-sm leading-none">
+                  <div className="flex items-center justify-center rounded-full border border-black bg-neutral-100 px-2 py-1 text-sm leading-none font-medium text-slate-900">
                     +{hiddenBadgesCount}
                   </div>
                 )}
@@ -142,7 +132,7 @@ const HypercertCard = forwardRef<HTMLDivElement, HypercertCardProps>(
         </section>
       </article>
     );
-  }
+  },
 );
 
 HypercertCard.displayName = "HypercertCard";

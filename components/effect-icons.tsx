@@ -59,15 +59,13 @@ export function EffectIcons({
   }
 
   return (
-    <div className="flex items-center flex-col gap-2">
+    <div className="flex flex-col items-center gap-2">
       <div
-        className={`flex-shrink-0 w-8 h-8 ${effect.bg} rounded-full flex items-center justify-center`}
+        className={`h-8 w-8 flex-shrink-0 ${effect.bg} flex items-center justify-center rounded-full`}
       >
         {effect.icon}
       </div>
-      {isShowTitle && (
-        <div className="text-sm text-gray-500">{effect.title}</div>
-      )}
+      {isShowTitle && <div className="text-sm text-gray-500">{effect.title}</div>}
     </div>
   );
 }

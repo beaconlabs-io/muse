@@ -26,9 +26,7 @@ export default function Breadcrumbs() {
                 {isLast ? (
                   <BreadcrumbPage>{decodeURIComponent(segment)}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink href={href}>
-                    {decodeURIComponent(segment)}
-                  </BreadcrumbLink>
+                  <BreadcrumbLink href={href}>{decodeURIComponent(segment)}</BreadcrumbLink>
                 )}
               </BreadcrumbItem>
               {!isLast && <BreadcrumbSeparator />}

@@ -24,7 +24,7 @@ export function EvidencePageClient({ slug }: EvidencePageClientProps) {
 
   if (!response) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-xl text-gray-600">Evidence not found</div>
       </div>
     );
@@ -33,7 +33,7 @@ export function EvidencePageClient({ slug }: EvidencePageClientProps) {
   const { meta } = response;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto max-w-4xl px-4 py-8">
       <EvidenceHeader
         title={meta.title}
         date={meta.date}
@@ -47,16 +47,13 @@ export function EvidencePageClient({ slug }: EvidencePageClientProps) {
         <Separator className="my-2" />
 
         <EvidenceResults results={meta.results || []} />
-        
-        <EvidenceMethodologies
-          methodologies={meta.methodologies}
-          datasets={meta.datasets || []}
-        />
-        
+
+        <EvidenceMethodologies methodologies={meta.methodologies} datasets={meta.datasets || []} />
+
         <EvidenceDataSources datasets={meta.datasets || []} />
-        
+
         <EvidenceCitation citations={meta.citation} />
-        
+
         <EvidenceTags tags={meta.tags || []} />
 
         <AttestationHistory

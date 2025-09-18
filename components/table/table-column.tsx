@@ -18,8 +18,7 @@ export const columns = [
     header: ({ table }) => (
       <Checkbox
         checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
+          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
@@ -50,9 +49,9 @@ export const columns = [
         <Link
           href={`/evidence/${row.original.evidence_id}`}
           key={row.id}
-          className="hover:bg-muted transition-colors cursor-pointer"
+          className="hover:bg-muted cursor-pointer transition-colors"
         >
-          <p className="truncate max-w-[200px]">{row.original.title}</p>
+          <p className="max-w-[200px] truncate">{row.original.title}</p>
         </Link>
       );
     },
@@ -62,9 +61,7 @@ export const columns = [
     id: "methodology",
     header: "Methodology",
     cell: ({ row }) => {
-      return (
-        <p className="truncate max-w-[200px]">{row.original.methodologies}</p>
-      );
+      return <p className="max-w-[200px] truncate">{row.original.methodologies}</p>;
     },
   }),
   columnHelper.accessor("tags", {
@@ -74,10 +71,7 @@ export const columns = [
       return (
         <div className="flex flex-wrap gap-1">
           {row.original.tags?.map((tag, index) => (
-            <span
-              key={index}
-              className="px-2 py-1 bg-gray-100 rounded-full text-sm"
-            >
+            <span key={index} className="rounded-full bg-gray-100 px-2 py-1 text-sm">
               {tag}
             </span>
           ))}
@@ -88,7 +82,7 @@ export const columns = [
   columnHelper.accessor("strength", {
     id: "strength",
     header: ({ column }) => (
-      <div className="flex flex-row gap-1 items-center">
+      <div className="flex flex-row items-center gap-1">
         Evidence Level
         <TooltipStrength />
         <Button
