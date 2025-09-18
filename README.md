@@ -29,6 +29,15 @@ pnpm dev
 
 ## Development
 
+### Formatting
+
+Run Prettier before committing to keep the codebase consistent.
+
+```bash
+pnpm format
+pnpm format:write
+```
+
 ### Adding New Evidence
 
 1. Create a new page in `contents/evidence/`
