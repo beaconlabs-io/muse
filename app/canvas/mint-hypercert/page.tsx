@@ -1,28 +1,20 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { HypercertClient, formatHypercertData, TransferRestrictions } from "@hypercerts-org/sdk";
 import { format } from "date-fns";
 import { toPng } from "html-to-image";
-import { ArrowLeft, Check, ExternalLink, Loader2, CalendarIcon, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, CalendarIcon, Trash2 } from "lucide-react";
 import { baseSepolia } from "viem/chains";
 import { useAccount, useWaitForTransactionReceipt, useWalletClient } from "wagmi";
 import { z } from "zod";
 import HypercertCard from "@/components/hypercerts/HypercertCard";
+import { useStepProcessDialogContext } from "@/components/step-process-dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -64,21 +56,6 @@ const hypercertFormSchema = z.object({
 
 type FormData = z.infer<typeof hypercertFormSchema>;
 
-type MintingStep = 1 | 2 | 3;
-type MintingState = "idle" | "storing-ipfs" | "generating-image" | "minting" | "success" | "error";
-
-interface HypercertResult {
-  txHash: string;
-  hypercertId?: string;
-  hypercertUrl?: string;
-}
-
-const steps = [
-  { id: 1, title: "Store Logic Model", description: "Stored on IPFS" },
-  { id: 2, title: "Mint Hypercert", description: "Creating hypercert" },
-  { id: 3, title: "Completed!", description: "Successfully minted" },
-];
-
 // Helper function to get stored logic model
 const getStoredLogicModel = (): StandardizedLogicModel | null => {
   if (typeof window === "undefined") return null;
@@ -101,11 +78,6 @@ export default function MintHypercertPage() {
   const [logicModel] = useState<StandardizedLogicModel | null>(storedLogicModel);
   const [hypercertImage, setHypercertImage] = useState<string>("");
   const [, setIpfsHash] = useState<string>("");
-  const [showMintingDialog, setShowMintingDialog] = useState(false);
-  const [currentStep, setCurrentStep] = useState<MintingStep>(1);
-  const [mintingState, setMintingState] = useState<MintingState>("idle");
-  const [result, setResult] = useState<HypercertResult | null>(null);
-  const [error, setError] = useState<string>("");
   const [mintTxHash, setMintTxHash] = useState<string | undefined>();
   // Refs for file inputs
   const logoFileInputRef = useRef<HTMLInputElement>(null);
@@ -115,12 +87,18 @@ export default function MintHypercertPage() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
 
+  // Step Process Dialog Context
+  const { setSteps, setDialogStep, setOpen, setTitle } = useStepProcessDialogContext();
+
+  // Define steps for the minting process
+  const mintingSteps = [
+    { id: "upload-ipfs", description: "Uploading logic model to IPFS" },
+    { id: "generate-image", description: "Generating hypercert image" },
+    { id: "mint-hypercert", description: "Minting hypercert on blockchain" },
+  ];
+
   // Wait for transaction receipt and construct hypercert URL
-  const {
-    data: receiptData,
-    isLoading: isReceiptLoading,
-    isSuccess: isReceiptSuccess,
-  } = useWaitForTransactionReceipt({
+  const { data: receiptData, isSuccess: isReceiptSuccess } = useWaitForTransactionReceipt({
     hash: mintTxHash as `0x${string}`,
     query: {
       enabled: !!mintTxHash,
@@ -188,19 +166,7 @@ export default function MintHypercertPage() {
     if (isReceiptSuccess && receiptData) {
       const hypercertId = generateHypercertIdFromReceipt(receiptData, baseSepolia.id);
       const hypercertUrl = constructHypercertUrl(hypercertId);
-
-      setResult((prev) =>
-        prev
-          ? {
-              ...prev,
-              hypercertId,
-              hypercertUrl,
-            }
-          : null,
-      );
-
-      setCurrentStep(3);
-      setMintingState("success");
+      console.log("Hypercert minted successfully:", { hypercertId, hypercertUrl });
     }
   }, [isReceiptSuccess, receiptData]);
 
@@ -221,43 +187,52 @@ export default function MintHypercertPage() {
 
   const onSubmit = async (data: FormData) => {
     if (!isConnected || !address) {
-      setError("Please connect your wallet");
+      console.error("Please connect your wallet");
       return;
     }
 
     if (!logicModel) {
-      setError("No logic model found");
+      console.error("No logic model found");
       return;
     }
 
-    setShowMintingDialog(true);
+    // Initialize step process dialog
+    setSteps(mintingSteps);
+    setTitle("Creating Hypercert");
+    setOpen(true);
+
+    let ipfsResult: any = null;
+    let generatedImage: string = "";
+    let currentStep = "upload-ipfs";
 
     try {
       // Step 1: Store on IPFS
-      setCurrentStep(1);
-      setMintingState("storing-ipfs");
-      setError("");
+      currentStep = "upload-ipfs";
+      await setDialogStep("upload-ipfs", "active");
 
-      const ipfsResult = await uploadToIPFS(logicModel);
+      ipfsResult = await uploadToIPFS(logicModel);
       setIpfsHash(ipfsResult.hash);
+      await setDialogStep("upload-ipfs", "completed");
 
-      // Step 2: Generate image and mint
-      setCurrentStep(2);
-      setMintingState("generating-image");
+      // Step 2: Generate image
+      currentStep = "generate-image";
+      await setDialogStep("generate-image", "active");
 
       // Generate hypercert image from the card
-      const generatedImage = await generateHypercertImage();
+      generatedImage = await generateHypercertImage();
       if (generatedImage) {
         setHypercertImage(generatedImage);
       }
 
       const imageToUse = generatedImage || hypercertImage;
+      await setDialogStep("generate-image", "completed");
 
-      setMintingState("minting");
+      // Step 3: Mint hypercert
+      currentStep = "mint-hypercert";
+      await setDialogStep("mint-hypercert", "active");
 
       if (!walletClient) {
-        setError("Wallet client not available");
-        return;
+        throw new Error("Wallet client not available");
       }
 
       const client = new HypercertClient({
@@ -314,59 +289,17 @@ export default function MintHypercertPage() {
 
       // Set the transaction hash to wait for receipt
       setMintTxHash(txHash);
-      setResult({ txHash });
+      await setDialogStep("mint-hypercert", "completed");
 
       // The success state will be set in the useEffect when receipt is received
     } catch (err) {
       console.error("Minting failed:", err);
-      setError(err instanceof Error ? err.message : "Minting failed");
-      setMintingState("error");
+      const errorMessage = err instanceof Error ? err.message : "Minting failed";
+
+      // Mark the current step as error
+      await setDialogStep(currentStep, "error", errorMessage);
     }
   };
-
-  const resetDialog = () => {
-    setCurrentStep(1);
-    setMintingState("idle");
-    setResult(null);
-    setError("");
-    setHypercertImage("");
-    setIpfsHash("");
-    setMintTxHash(undefined);
-    setShowMintingDialog(false);
-  };
-
-  const StepIndicator = () => (
-    <div className="mb-6 flex items-center justify-between">
-      {steps.map((step, index) => (
-        <div key={step.id} className="flex items-center">
-          <div className="flex flex-col items-center">
-            <div
-              className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium ${
-                currentStep > step.id
-                  ? "bg-green-500 text-white"
-                  : currentStep === step.id
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-600"
-              }`}
-            >
-              {currentStep > step.id ? <Check className="h-5 w-5" /> : step.id}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-sm font-medium">{step.title}</div>
-              <div className="text-muted-foreground text-xs">{step.description}</div>
-            </div>
-          </div>
-          {index < steps.length - 1 && (
-            <div
-              className={`mx-4 h-0.5 flex-1 ${
-                currentStep > step.id ? "bg-green-500" : "bg-gray-200"
-              }`}
-            />
-          )}
-        </div>
-      ))}
-    </div>
-  );
 
   if (!logicModel) {
     return (
@@ -643,81 +576,6 @@ export default function MintHypercertPage() {
           </div>
         </div>
       </div>
-
-      {/* Minting Progress Dialog */}
-      <Dialog open={showMintingDialog} onOpenChange={() => {}}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Creating Hypercert</DialogTitle>
-            <DialogDescription>Please wait while we create your hypercert...</DialogDescription>
-          </DialogHeader>
-
-          <StepIndicator />
-
-          {mintingState === "storing-ipfs" && (
-            <div className="flex flex-col items-center py-4">
-              <Loader2 className="mb-2 h-6 w-6 animate-spin" />
-              <p className="text-muted-foreground text-sm">Storing on IPFS...</p>
-            </div>
-          )}
-
-          {mintingState === "generating-image" && (
-            <div className="flex flex-col items-center py-4">
-              <Loader2 className="mb-2 h-6 w-6 animate-spin" />
-              <p className="text-muted-foreground text-sm">Generating hypercert image...</p>
-            </div>
-          )}
-
-          {mintingState === "minting" && (
-            <div className="flex flex-col items-center py-4">
-              <Loader2 className="mb-2 h-6 w-6 animate-spin" />
-              <p className="text-muted-foreground text-sm">
-                {isReceiptLoading ? "Waiting for confirmation..." : "Minting hypercert..."}
-              </p>
-              <p className="text-muted-foreground mt-1 text-xs">
-                {isReceiptLoading
-                  ? "Transaction submitted, waiting for confirmation"
-                  : "Please confirm the transaction in your wallet"}
-              </p>
-            </div>
-          )}
-
-          {mintingState === "success" && (
-            <div className="flex flex-col items-center py-4">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                <Check className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="mb-2 font-semibold">Hypercert Minted Successfully!</h3>
-            </div>
-          )}
-
-          {mintingState === "error" && (
-            <div className="flex flex-col items-center py-4">
-              <div className="mb-4 max-h-32 w-full overflow-hidden overflow-y-auto rounded-md bg-red-50 p-3 text-sm break-all whitespace-pre-wrap text-red-600">
-                {error}
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            {mintingState === "success" ? (
-              <>
-                <Button variant="outline" onClick={resetDialog}>
-                  Close
-                </Button>
-                <Button asChild disabled={!result?.hypercertUrl}>
-                  <Link href={result?.hypercertUrl || ""} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    View Hypercert
-                  </Link>
-                </Button>
-              </>
-            ) : mintingState === "error" ? (
-              <Button onClick={resetDialog}>Try Again</Button>
-            ) : null}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
