@@ -265,6 +265,7 @@ export default function MintHypercertPage() {
 
       await setDialogStep("mint-hypercert", "completed");
       let receipt;
+      await setDialogStep("confirming", "active");
 
       try {
         receipt = await waitForTransactionReceipt(walletClient!, {
@@ -288,7 +289,6 @@ export default function MintHypercertPage() {
         throw new Error("Transaction reverted: Minting failed");
       }
       let hypercertId;
-      await setDialogStep("confirming", "active");
       try {
         hypercertId = generateHypercertIdFromReceipt(receipt, chain.id);
         console.log("Mint completed", {
@@ -306,6 +306,8 @@ export default function MintHypercertPage() {
           error instanceof Error ? error.message : "Unknown error",
         );
       }
+
+      await setDialogStep("confirming", "completed");
 
       const extraContent = createExtraContent({
         receipt,
