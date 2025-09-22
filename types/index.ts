@@ -244,20 +244,24 @@ export interface LogicModel {
 // =============================================================================
 
 export function toStandard(legacy: LogicModel): StandardizedLogicModel {
-  const nodes: LogicModelNode[] = legacy.cards.map(card => {
+  const nodes: LogicModelNode[] = legacy.cards.map((card) => {
     // Determine type based on color
-    let type: LogicModelNode['type'] = 'activities';
-    if (card.color === '#d1fae5') type = 'output';
-    else if (card.color === '#fef08a') type = 'outcome';
-    else if (card.color === '#e9d5ff') type = 'impact';
-    else if (card.color === '#c7d2fe') type = 'activities';
+    let type: LogicModelNode["type"] = "activities";
+    if (card.color === "#d1fae5") type = "output";
+    else if (card.color === "#fef08a") type = "outcome";
+    else if (card.color === "#e9d5ff") type = "impact";
+    else if (card.color === "#c7d2fe") type = "activities";
 
     // Find connections
-    const from = legacy.arrows.filter(arrow => arrow.toCardId === card.id).map(arrow => arrow.fromCardId);
-    const to = legacy.arrows.filter(arrow => arrow.fromCardId === card.id).map(arrow => arrow.toCardId);
+    const from = legacy.arrows
+      .filter((arrow) => arrow.toCardId === card.id)
+      .map((arrow) => arrow.fromCardId);
+    const to = legacy.arrows
+      .filter((arrow) => arrow.fromCardId === card.id)
+      .map((arrow) => arrow.toCardId);
 
     // Convert metrics
-    const metrics = legacy.cardMetrics[card.id]?.map(metric => ({
+    const metrics = legacy.cardMetrics[card.id]?.map((metric) => ({
       id: metric.id,
       name: metric.name,
       description: metric.description,
@@ -284,7 +288,7 @@ export function toStandard(legacy: LogicModel): StandardizedLogicModel {
     metadata: {
       id: legacy.id,
       title: legacy.title,
-      description: legacy.description || '',
+      description: legacy.description || "",
       createdAt: legacy.metadata.createdAt,
       updatedAt: legacy.metadata.updatedAt,
       version: legacy.metadata.version,
@@ -294,7 +298,7 @@ export function toStandard(legacy: LogicModel): StandardizedLogicModel {
 }
 
 export function toLegacy(standardized: StandardizedLogicModel): LogicModel {
-  const cards: PostItCard[] = standardized.nodes.map(node => ({
+  const cards: PostItCard[] = standardized.nodes.map((node) => ({
     id: node.id,
     x: node.x,
     y: node.y,
@@ -305,9 +309,9 @@ export function toLegacy(standardized: StandardizedLogicModel): LogicModel {
   const arrows: Arrow[] = [];
   const cardMetrics: Record<string, CardMetrics[]> = {};
 
-  standardized.nodes.forEach(node => {
+  standardized.nodes.forEach((node) => {
     // Create arrows from connections
-    node.to.forEach(toId => {
+    node.to.forEach((toId) => {
       arrows.push({
         id: `${node.id}-to-${toId}`,
         fromCardId: node.id,
@@ -317,7 +321,7 @@ export function toLegacy(standardized: StandardizedLogicModel): LogicModel {
 
     // Convert metrics
     if (node.metrics?.length) {
-      cardMetrics[node.id] = node.metrics.map(metric => ({
+      cardMetrics[node.id] = node.metrics.map((metric) => ({
         id: metric.id,
         name: metric.name,
         description: metric.description,

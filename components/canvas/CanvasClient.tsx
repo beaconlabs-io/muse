@@ -16,7 +16,7 @@ import {
   CARD_COLORS,
   Evidence,
   LogicModelNode,
-  StandardizedLogicModelSchema
+  StandardizedLogicModelSchema,
 } from "@/types";
 
 interface CardMetrics {
@@ -434,65 +434,72 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
     setArrows((prev) => [...prev, ...newArrows]);
   }, []);
 
-  const createStandardizedLogicModelFromCanvas = useCallback((
-    cards: PostItCard[],
-    arrows: Arrow[],
-    cardMetrics: Record<string, CardMetrics[]>,
-    title?: string,
-    description?: string,
-    author?: string,
-  ) => {
-    const id = `lm-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-    const now = new Date().toISOString();
+  const createStandardizedLogicModelFromCanvas = useCallback(
+    (
+      cards: PostItCard[],
+      arrows: Arrow[],
+      cardMetrics: Record<string, CardMetrics[]>,
+      title?: string,
+      description?: string,
+      author?: string,
+    ) => {
+      const id = `lm-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      const now = new Date().toISOString();
 
-    const nodes: LogicModelNode[] = cards.map(card => {
-      // Determine type based on color
-      let type: LogicModelNode['type'] = 'activities';
-      if (card.color === '#d1fae5') type = 'output';
-      else if (card.color === '#fef08a') type = 'outcome';
-      else if (card.color === '#e9d5ff') type = 'impact';
-      else if (card.color === '#c7d2fe') type = 'activities';
+      const nodes: LogicModelNode[] = cards.map((card) => {
+        // Determine type based on color
+        let type: LogicModelNode["type"] = "activities";
+        if (card.color === "#d1fae5") type = "output";
+        else if (card.color === "#fef08a") type = "outcome";
+        else if (card.color === "#e9d5ff") type = "impact";
+        else if (card.color === "#c7d2fe") type = "activities";
 
-      // Find connections
-      const from = arrows.filter(arrow => arrow.toCardId === card.id).map(arrow => arrow.fromCardId);
-      const to = arrows.filter(arrow => arrow.fromCardId === card.id).map(arrow => arrow.toCardId);
+        // Find connections
+        const from = arrows
+          .filter((arrow) => arrow.toCardId === card.id)
+          .map((arrow) => arrow.fromCardId);
+        const to = arrows
+          .filter((arrow) => arrow.fromCardId === card.id)
+          .map((arrow) => arrow.toCardId);
 
-      // Convert metrics
-      const metrics = cardMetrics[card.id]?.map(metric => ({
-        id: metric.id,
-        name: metric.name,
-        description: metric.description,
-        measurementMethod: metric.measurementMethod,
-        targetValue: metric.targetValue,
-        frequency: metric.frequency,
-      }));
+        // Convert metrics
+        const metrics = cardMetrics[card.id]?.map((metric) => ({
+          id: metric.id,
+          name: metric.name,
+          description: metric.description,
+          measurementMethod: metric.measurementMethod,
+          targetValue: metric.targetValue,
+          frequency: metric.frequency,
+        }));
+
+        return {
+          id: card.id,
+          type,
+          content: card.content,
+          x: card.x,
+          y: card.y,
+          color: card.color,
+          from,
+          to,
+          metrics: metrics?.length ? metrics : undefined,
+        };
+      });
 
       return {
-        id: card.id,
-        type,
-        content: card.content,
-        x: card.x,
-        y: card.y,
-        color: card.color,
-        from,
-        to,
-        metrics: metrics?.length ? metrics : undefined,
+        nodes,
+        metadata: {
+          id,
+          title: title || `Logic Model ${new Date().toLocaleDateString()}`,
+          description: description || "",
+          createdAt: now,
+          updatedAt: now,
+          version: "1.0.0",
+          author,
+        },
       };
-    });
-
-    return {
-      nodes,
-      metadata: {
-        id,
-        title: title || `Logic Model ${new Date().toLocaleDateString()}`,
-        description: description || '',
-        createdAt: now,
-        updatedAt: now,
-        version: '1.0.0',
-        author,
-      },
-    };
-  }, []);
+    },
+    [],
+  );
 
   const openHypercertDialog = useCallback(() => {
     try {
@@ -526,7 +533,16 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
       console.error("Failed to prepare logic model:", error);
       alert("Failed to prepare logic model. Please try again.");
     }
-  }, [cards, arrows, cardMetrics, selectedGoal, canvasOffset, zoom, address, createStandardizedLogicModelFromCanvas]);
+  }, [
+    cards,
+    arrows,
+    cardMetrics,
+    selectedGoal,
+    canvasOffset,
+    zoom,
+    address,
+    createStandardizedLogicModelFromCanvas,
+  ]);
 
   const exportAsStandardizedJSON = useCallback(() => {
     // Create standardized format directly
@@ -538,7 +554,7 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
       "Logic model created with Muse",
       address,
     );
-    
+
     // Validate with Zod
     try {
       StandardizedLogicModelSchema.parse(standardizedModel);
