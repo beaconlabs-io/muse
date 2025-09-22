@@ -122,6 +122,85 @@ export type Link = {
 // LOGIC MODEL TYPES
 // =============================================================================
 
+export interface LogicModelNode {
+  id: string;
+  type: "impact" | "outcome" | "output" | "activities";
+  content: string;
+  x: number;
+  y: number;
+  color: string;
+  from: string[];
+  to: string[];
+  metrics?: LogicModelMetric[];
+}
+
+export interface LogicModelMetric {
+  id: string;
+  name: string;
+  description?: string;
+  measurementMethod?: string;
+  targetValue?: string;
+  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
+}
+
+export interface LogicModelMetadata {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  version: string;
+  author?: string;
+}
+
+export interface StandardizedLogicModel {
+  nodes: LogicModelNode[];
+  metadata: LogicModelMetadata;
+}
+
+// =============================================================================
+// ZOD SCHEMAS FOR VALIDATION
+// =============================================================================
+
+import { z } from "zod";
+
+export const LogicModelMetricSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  measurementMethod: z.string().optional(),
+  targetValue: z.string().optional(),
+  frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]).optional(),
+});
+
+export const LogicModelNodeSchema = z.object({
+  id: z.string(),
+  type: z.enum(["impact", "outcome", "output", "activities"]),
+  content: z.string(),
+  x: z.number(),
+  y: z.number(),
+  color: z.string(),
+  from: z.array(z.string()),
+  to: z.array(z.string()),
+  metrics: z.array(LogicModelMetricSchema).optional(),
+});
+
+export const LogicModelMetadataSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  version: z.string(),
+  author: z.string().optional(),
+});
+
+export const StandardizedLogicModelSchema = z.object({
+  nodes: z.array(LogicModelNodeSchema),
+  metadata: LogicModelMetadataSchema,
+});
+
+// Legacy types for backward compatibility
 export interface PostItCard {
   id: string;
   x: number;
@@ -152,12 +231,116 @@ export interface LogicModel {
   cards: PostItCard[];
   arrows: Arrow[];
   cardMetrics: Record<string, CardMetrics[]>;
-  selectedGoal?: string;
   metadata: {
     createdAt: string;
     updatedAt: string;
     version: string;
     author?: string;
+  };
+}
+
+// =============================================================================
+// CONVERSION UTILITIES
+// =============================================================================
+
+export function toStandard(legacy: LogicModel): StandardizedLogicModel {
+  const nodes: LogicModelNode[] = legacy.cards.map(card => {
+    // Determine type based on color
+    let type: LogicModelNode['type'] = 'activities';
+    if (card.color === '#d1fae5') type = 'output';
+    else if (card.color === '#fef08a') type = 'outcome';
+    else if (card.color === '#e9d5ff') type = 'impact';
+    else if (card.color === '#c7d2fe') type = 'activities';
+
+    // Find connections
+    const from = legacy.arrows.filter(arrow => arrow.toCardId === card.id).map(arrow => arrow.fromCardId);
+    const to = legacy.arrows.filter(arrow => arrow.fromCardId === card.id).map(arrow => arrow.toCardId);
+
+    // Convert metrics
+    const metrics = legacy.cardMetrics[card.id]?.map(metric => ({
+      id: metric.id,
+      name: metric.name,
+      description: metric.description,
+      measurementMethod: metric.measurementMethod,
+      targetValue: metric.targetValue,
+      frequency: metric.frequency,
+    }));
+
+    return {
+      id: card.id,
+      type,
+      content: card.content,
+      x: card.x,
+      y: card.y,
+      color: card.color,
+      from,
+      to,
+      metrics: metrics?.length ? metrics : undefined,
+    };
+  });
+
+  return {
+    nodes,
+    metadata: {
+      id: legacy.id,
+      title: legacy.title,
+      description: legacy.description || '',
+      createdAt: legacy.metadata.createdAt,
+      updatedAt: legacy.metadata.updatedAt,
+      version: legacy.metadata.version,
+      author: legacy.metadata.author,
+    },
+  };
+}
+
+export function toLegacy(standardized: StandardizedLogicModel): LogicModel {
+  const cards: PostItCard[] = standardized.nodes.map(node => ({
+    id: node.id,
+    x: node.x,
+    y: node.y,
+    content: node.content,
+    color: node.color,
+  }));
+
+  const arrows: Arrow[] = [];
+  const cardMetrics: Record<string, CardMetrics[]> = {};
+
+  standardized.nodes.forEach(node => {
+    // Create arrows from connections
+    node.to.forEach(toId => {
+      arrows.push({
+        id: `${node.id}-to-${toId}`,
+        fromCardId: node.id,
+        toCardId: toId,
+      });
+    });
+
+    // Convert metrics
+    if (node.metrics?.length) {
+      cardMetrics[node.id] = node.metrics.map(metric => ({
+        id: metric.id,
+        name: metric.name,
+        description: metric.description,
+        measurementMethod: metric.measurementMethod,
+        targetValue: metric.targetValue,
+        frequency: metric.frequency,
+      }));
+    }
+  });
+
+  return {
+    id: standardized.metadata.id,
+    title: standardized.metadata.title,
+    description: standardized.metadata.description,
+    cards,
+    arrows,
+    cardMetrics,
+    metadata: {
+      createdAt: standardized.metadata.createdAt,
+      updatedAt: standardized.metadata.updatedAt,
+      version: standardized.metadata.version,
+      author: standardized.metadata.author,
+    },
   };
 }
 

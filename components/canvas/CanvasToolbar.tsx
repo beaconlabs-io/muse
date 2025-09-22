@@ -19,7 +19,7 @@ interface CanvasToolbarProps {
   selectedGoal?: string;
   onGoalChange: (goal: string) => void;
   onSaveLogicModel?: () => void;
-  onExportAsJSON?: () => void;
+  onExportStandardizedJSON?: () => void;
   onClearAllData?: () => void;
 }
 
@@ -47,7 +47,7 @@ export function CanvasToolbar({
   selectedGoal,
   onGoalChange,
   onSaveLogicModel,
-  onExportAsJSON,
+  onExportStandardizedJSON,
   onClearAllData,
 }: CanvasToolbarProps) {
   return (
@@ -100,9 +100,9 @@ export function CanvasToolbar({
               <span className="hidden sm:inline">Mint Hypercert</span>
             </Button>
           )}
-          {onExportAsJSON && (
+          {onExportStandardizedJSON && (
             <Button
-              onClick={onExportAsJSON}
+              onClick={onExportStandardizedJSON}
               size="sm"
               variant="outline"
               className="flex items-center gap-2"

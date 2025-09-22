@@ -50,13 +50,15 @@ export async function generateMetadata({ params }: Props) {
   try {
     const logicModel = await fetchFromIPFS(id);
     return {
-      title: `${logicModel.title} - MUSE Canvas Logic Model`,
+      title: `${logicModel.metadata.title} - MUSE Canvas Logic Model`,
       description:
-        logicModel.description || "Interactive logic model with evidence - MUSE by BeaconLabs",
+        logicModel.metadata.description ||
+        "Interactive logic model with evidence - MUSE by BeaconLabs",
       openGraph: {
-        title: `${logicModel.title} - MUSE Canvas Logic Model`,
+        title: `${logicModel.metadata.title} - MUSE Canvas Logic Model`,
         description:
-          logicModel.description || "Interactive logic model with evidence - MUSE by BeaconLabs",
+          logicModel.metadata.description ||
+          "Interactive logic model with evidence - MUSE by BeaconLabs",
         type: "website",
         siteName: "MUSE",
         images: [
@@ -70,9 +72,10 @@ export async function generateMetadata({ params }: Props) {
       },
       twitter: {
         card: "summary_large_image",
-        title: `${logicModel.title} - MUSE Canvas Logic Model`,
+        title: `${logicModel.metadata.title} - MUSE Canvas Logic Model`,
         description:
-          logicModel.description || "Interactive logic model with evidence - MUSE by BeaconLabs",
+          logicModel.metadata.description ||
+          "Interactive logic model with evidence - MUSE by BeaconLabs",
         images: ["/canvas-og.svg"],
       },
     };

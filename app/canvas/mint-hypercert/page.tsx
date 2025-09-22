@@ -35,7 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { LogicModel } from "@/types";
+import { StandardizedLogicModel } from "@/types";
 import { generateHypercertIdFromReceipt } from "@/utils/generateHypercertIdFromReceipt";
 import { uploadToIPFS } from "@/utils/ipfs";
 
@@ -79,12 +79,12 @@ const steps = [
 ];
 
 // Helper function to get stored logic model
-const getStoredLogicModel = (): LogicModel | null => {
+const getStoredLogicModel = (): StandardizedLogicModel | null => {
   if (typeof window === "undefined") return null;
   const storedLogicModel = sessionStorage.getItem("currentLogicModel");
   if (storedLogicModel) {
     try {
-      return JSON.parse(storedLogicModel);
+      return JSON.parse(storedLogicModel) as StandardizedLogicModel;
     } catch (error) {
       console.error("Failed to parse stored logic model:", error);
       return null;
@@ -97,7 +97,7 @@ export default function MintHypercertPage() {
   const router = useRouter();
   const storedLogicModel = getStoredLogicModel();
 
-  const [logicModel] = useState<LogicModel | null>(storedLogicModel);
+  const [logicModel] = useState<StandardizedLogicModel | null>(storedLogicModel);
   const [hypercertImage, setHypercertImage] = useState<string>("");
   const [, setIpfsHash] = useState<string>("");
   const [showMintingDialog, setShowMintingDialog] = useState(false);
@@ -156,8 +156,8 @@ export default function MintHypercertPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(hypercertFormSchema),
     defaultValues: {
-      title: storedLogicModel?.title || "Logic Model " + new Date().toLocaleDateString(),
-      description: storedLogicModel?.description || "Logic model created with Muse",
+      title: storedLogicModel?.metadata?.title || "Logic Model " + new Date().toLocaleDateString(),
+      description: storedLogicModel?.metadata?.description || "Logic model created with Muse",
       impactScope: "",
       workDates: [new Date(), new Date()],
       contributors: "",

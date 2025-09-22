@@ -1,8 +1,8 @@
-import { LogicModel, IPFSStorageResult } from "@/types";
+import { StandardizedLogicModel, IPFSStorageResult } from "@/types";
 
-export async function uploadToIPFS(logicModel: LogicModel): Promise<IPFSStorageResult> {
+export async function uploadToIPFS(logicModel: StandardizedLogicModel): Promise<IPFSStorageResult> {
   try {
-    const filename = `logic-model-${logicModel.id}.json`;
+    const filename = `logic-model-${logicModel.metadata.id}.json`;
 
     const response = await fetch("/api/upload-to-ipfs", {
       method: "POST",
@@ -37,7 +37,7 @@ export async function uploadToIPFS(logicModel: LogicModel): Promise<IPFSStorageR
   }
 }
 
-export async function fetchFromIPFS(hash: string): Promise<LogicModel> {
+export async function fetchFromIPFS(hash: string): Promise<StandardizedLogicModel> {
   try {
     const response = await fetch(`https://gateway.pinata.cloud/ipfs/${hash}`);
 
@@ -47,12 +47,12 @@ export async function fetchFromIPFS(hash: string): Promise<LogicModel> {
 
     const logicModel = await response.json();
 
-    // Validate the structure
-    if (!logicModel.id || !logicModel.cards || !logicModel.arrows) {
-      throw new Error("Invalid logic model structure");
+    // Validate the standardized structure
+    if (!logicModel.metadata?.id || !logicModel.nodes) {
+      throw new Error("Invalid standardized logic model structure");
     }
 
-    return logicModel as LogicModel;
+    return logicModel as StandardizedLogicModel;
   } catch (error) {
     console.error("IPFS fetch error:", error);
     throw error;
@@ -63,31 +63,3 @@ export function generateLogicModelId(): string {
   return `lm-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
-export function createLogicModelFromCanvas(
-  cards: any[],
-  arrows: any[],
-  cardMetrics: Record<string, any[]>,
-  selectedGoal?: string,
-  title?: string,
-  description?: string,
-  author?: string,
-): LogicModel {
-  const id = generateLogicModelId();
-  const now = new Date().toISOString();
-
-  return {
-    id,
-    title: title || `Logic Model ${new Date().toLocaleDateString()}`,
-    description,
-    cards,
-    arrows,
-    cardMetrics,
-    selectedGoal,
-    metadata: {
-      createdAt: now,
-      updatedAt: now,
-      version: "1.0.0",
-      author,
-    },
-  };
-}
