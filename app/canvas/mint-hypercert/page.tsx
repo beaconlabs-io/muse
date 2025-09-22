@@ -325,7 +325,7 @@ export default function MintHypercertPage() {
 
   const handleViewOnTestnet = () => {
     if (result?.hypercertUrl) {
-      window.open(result.hypercertUrl, "_blank");
+      router.push(result.hypercertUrl);
     }
   };
 
