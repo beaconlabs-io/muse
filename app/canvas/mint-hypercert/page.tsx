@@ -11,7 +11,7 @@ import { ArrowLeft, Check, ExternalLink, Loader2, CalendarIcon, Trash2 } from "l
 import { baseSepolia } from "viem/chains";
 import { useAccount, useWaitForTransactionReceipt, useWalletClient } from "wagmi";
 import { z } from "zod";
-import HypercertCard from "@/components/canvas/HypercertCard";
+import HypercertCard from "@/components/hypercerts/HypercertCard";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
