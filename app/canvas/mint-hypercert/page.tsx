@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -320,12 +321,6 @@ export default function MintHypercertPage() {
       console.error("Minting failed:", err);
       setError(err instanceof Error ? err.message : "Minting failed");
       setMintingState("error");
-    }
-  };
-
-  const handleViewOnTestnet = () => {
-    if (result?.hypercertUrl) {
-      router.push(result.hypercertUrl);
     }
   };
 
@@ -710,9 +705,11 @@ export default function MintHypercertPage() {
                 <Button variant="outline" onClick={resetDialog}>
                   Close
                 </Button>
-                <Button onClick={handleViewOnTestnet} disabled={!result?.hypercertUrl}>
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  View Hypercert
+                <Button asChild disabled={!result?.hypercertUrl}>
+                  <Link href={result?.hypercertUrl || ""} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    View Hypercert
+                  </Link>
                 </Button>
               </>
             ) : mintingState === "error" ? (
