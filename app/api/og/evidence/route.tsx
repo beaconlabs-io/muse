@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getEvidenceBySlug } from "@/lib/evidence";
+import { baseUrl } from "@/utils/config";
 
 export async function GET(request: Request) {
   try {
@@ -18,11 +19,6 @@ export async function GET(request: Request) {
 
     const { meta } = evidence;
 
-    // Get the base URL for the logo
-    const baseUrl =
-      process.env.NODE_ENV === "production"
-        ? "https://muse.beaconlabs.io" // Replace with your actual domain
-        : "http://localhost:3000";
     const logoUrl = `${baseUrl}/beaconlabs01.jpg`;
 
     return new ImageResponse(
