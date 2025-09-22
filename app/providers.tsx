@@ -35,9 +35,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-          <StepProcessDialogProvider>
-            {children}
-          </StepProcessDialogProvider>
+          <StepProcessDialogProvider>{children}</StepProcessDialogProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
