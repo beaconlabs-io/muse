@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { extractEffectData } from "@/components/effect-icons";
 import { ArrowsSvg } from "./ArrowsSvg";
@@ -61,6 +62,7 @@ const loadCanvasState = (): CanvasState | null => {
 };
 
 export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasClientProps) {
+  const router = useRouter();
   const { address } = useAccount();
 
   // Initialize state from localStorage if available, otherwise use initial props
@@ -452,7 +454,7 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
       sessionStorage.setItem("currentLogicModel", JSON.stringify(logicModel));
 
       // Navigate to mint page
-      window.location.href = "/canvas/mint-hypercert";
+      router.push("/canvas/mint-hypercert");
     } catch (error) {
       console.error("Failed to prepare logic model:", error);
       alert("Failed to prepare logic model. Please try again.");
