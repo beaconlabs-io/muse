@@ -5,16 +5,11 @@ import { Toaster } from "sonner";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import Providers from "./providers";
 
-const baseUrl = process.env.NODE_ENV === "production" 
-  ? "https://muse.beaconlabs.io" 
-  : "http://localhost:3000";
+const baseUrl =
+  process.env.NODE_ENV === "production" ? "https://muse.beaconlabs.io" : "http://localhost:3000";
 
 export const metadata: Metadata = {
   title: "MUSE by BeaconLabs",
@@ -41,11 +36,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
@@ -53,7 +44,7 @@ export default function RootLayout({
           <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
-              <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 justify-between">
+              <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
                 <div className="flex items-center gap-2">
                   <SidebarTrigger className="-ml-1" />
                   <Separator

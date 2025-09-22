@@ -3,21 +3,8 @@
 import React, { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import * as dfd from "danfojs";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-} from "recharts";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -70,7 +57,7 @@ export function MultipleLine() {
 
     // Filter for Arbitrum and Optimism only
     const filteredByChains = filteredByMetric.query(
-      df["origin_key"].eq("arbitrum").or(df["origin_key"].eq("optimism"))
+      df["origin_key"].eq("arbitrum").or(df["origin_key"].eq("optimism")),
     );
 
     // Sort by date
@@ -116,7 +103,7 @@ export function MultipleLine() {
 
     // Convert to array and sort by date
     return Array.from(dateMap.values()).sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
   }, [data, timeRange]);
 
@@ -155,39 +142,17 @@ export function MultipleLine() {
         </div>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[350px] w-full"
-        >
+        <ChartContainer config={chartConfig} className="aspect-auto h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={processedData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-            >
+            <AreaChart data={processedData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
               <defs>
                 <linearGradient id="arbitrum" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-arbitrum)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-arbitrum)"
-                    stopOpacity={0.1}
-                  />
+                  <stop offset="5%" stopColor="var(--color-arbitrum)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-arbitrum)" stopOpacity={0.1} />
                 </linearGradient>
                 <linearGradient id="optimism" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-optimism)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-optimism)"
-                    stopOpacity={0.1}
-                  />
+                  <stop offset="5%" stopColor="var(--color-optimism)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-optimism)" stopOpacity={0.1} />
                 </linearGradient>
               </defs>
               <CartesianGrid vertical={false} strokeDasharray="3 3" />

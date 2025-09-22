@@ -20,9 +20,7 @@ export function LogicModelViewer({ logicModel }: Props) {
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [showMetricsPanel, setShowMetricsPanel] = useState(false);
-  const [selectedCardForMetrics, setSelectedCardForMetrics] = useState<
-    string | null
-  >(null);
+  const [selectedCardForMetrics, setSelectedCardForMetrics] = useState<string | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsPanning(true);
@@ -58,25 +56,21 @@ export function LogicModelViewer({ logicModel }: Props) {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col">
+    <div className="flex h-screen w-full flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="border-b border-gray-200 bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {logicModel.title}
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">{logicModel.title}</h1>
             {logicModel.description && (
-              <p className="text-gray-600 mt-1">{logicModel.description}</p>
+              <p className="mt-1 text-gray-600">{logicModel.description}</p>
             )}
-            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-              <span>
-                Created:{" "}
-                {new Date(logicModel.metadata.createdAt).toLocaleDateString()}
-              </span>
+            <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+              <span>Created: {new Date(logicModel.metadata.createdAt).toLocaleDateString()}</span>
               {logicModel.metadata.author && (
                 <span>
-                  Author: {logicModel.metadata.author.startsWith('0x') 
+                  Author:{" "}
+                  {logicModel.metadata.author.startsWith("0x")
                     ? `${logicModel.metadata.author.slice(0, 6)}...${logicModel.metadata.author.slice(-4)}`
                     : logicModel.metadata.author}
                 </span>
@@ -85,10 +79,7 @@ export function LogicModelViewer({ logicModel }: Props) {
           </div>
 
           <div className="flex items-center space-x-2">
-            <ZoomControls 
-              zoom={zoom} 
-              onZoomChange={handleZoom}
-            />
+            <ZoomControls zoom={zoom} onZoomChange={handleZoom} />
             <Button asChild className="ml-4">
               <Link href="/canvas">Create New Model</Link>
             </Button>
@@ -97,18 +88,17 @@ export function LogicModelViewer({ logicModel }: Props) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex">
+      <div className="flex flex-1">
         {/* Canvas */}
         <div
-          className={`flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing ${
+          className={`relative flex-1 cursor-grab overflow-hidden active:cursor-grabbing ${
             showMetricsPanel ? "pr-0" : ""
           }`}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           style={{
-            backgroundImage:
-              "radial-gradient(circle, #e5e7eb 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(circle, #e5e7eb 1px, transparent 1px)",
             backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
             backgroundPosition: `${canvasOffset.x}px ${canvasOffset.y}px`,
           }}
@@ -141,7 +131,7 @@ export function LogicModelViewer({ logicModel }: Props) {
 
         {/* Right Sidebar - Metrics Panel */}
         {showMetricsPanel && selectedCardForMetrics && (
-          <div className="w-80 border-l bg-background">
+          <div className="bg-background w-80 border-l">
             <MetricsPanel
               cardId={selectedCardForMetrics}
               card={logicModel.cards.find((c) => c.id === selectedCardForMetrics)}

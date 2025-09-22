@@ -7,7 +7,8 @@
     "build": "pnpm lint && next build",
     "start": "next start",
     "lint": "next lint --fix",
-    "clean": "rm -rf .next node_modules && pnpm install"
+    "clean": "rm -rf .next node_modules && pnpm install",
+    "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx}\" \"components/**/*.{js,jsx,ts,tsx}\" \"hooks/**/*.{js,jsx,ts,tsx}\" \"utils/**/*.{js,jsx,ts,tsx}\" \"types/**/*.{js,jsx,ts,tsx}\" \"lib/**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
     "@cosmograph/react": "^1.4.2",
@@ -87,6 +88,8 @@
     "@types/react-dom": "^19.1.6",
     "eslint": "^9.31.0",
     "eslint-config-next": "15.3.1",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.14",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3"
   }

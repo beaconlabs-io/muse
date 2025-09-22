@@ -8,13 +8,7 @@ interface ArrowsSvgProps {
   onDeleteArrow: (arrowId: string) => void;
 }
 
-export function ArrowsSvg({
-  arrows,
-  cards,
-  zoom,
-  canvasOffset,
-  onDeleteArrow,
-}: ArrowsSvgProps) {
+export function ArrowsSvg({ arrows, cards, zoom, canvasOffset, onDeleteArrow }: ArrowsSvgProps) {
   const getCardCenter = (cardId: string) => {
     const card = cards.find((c) => c.id === cardId);
     if (!card) return { x: 0, y: 0 };
@@ -25,7 +19,7 @@ export function ArrowsSvg({
   };
 
   return (
-    <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 0 }}>
+    <svg className="absolute inset-0 h-full w-full" style={{ zIndex: 0 }}>
       {arrows.map((arrow) => {
         const from = getCardCenter(arrow.fromCardId);
         const to = getCardCenter(arrow.toCardId);
@@ -77,14 +71,7 @@ export function ArrowsSvg({
 
       {/* SVG definitions */}
       <defs>
-        <marker
-          id="arrowhead"
-          markerWidth="10"
-          markerHeight="7"
-          refX="9"
-          refY="3.5"
-          orient="auto"
-        >
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
           <polygon points="0 0, 10 3.5, 0 7" fill="#374151" />
         </marker>
       </defs>

@@ -20,7 +20,7 @@ export function AttachedLinks({ links }: { links: AttachedLink[] }) {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between rounded-2xl border p-4 transition-colors hover:bg-accent/40"
+            className="hover:bg-accent/40 flex items-center justify-between rounded-2xl border p-4 transition-colors"
           >
             <div className="flex items-center gap-4 overflow-hidden">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl">

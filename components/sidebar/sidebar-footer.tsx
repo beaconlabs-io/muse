@@ -28,11 +28,7 @@ export function SidebarFooterComponent() {
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" className="w-48">
               <DropdownMenuItem>
-                <Link
-                  href="https://beaconlabs.io"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <Link href="https://beaconlabs.io" target="_blank" rel="noopener noreferrer">
                   <div className="flex items-center gap-2">
                     <span>Website</span>
                     <SquareArrowOutUpRight />

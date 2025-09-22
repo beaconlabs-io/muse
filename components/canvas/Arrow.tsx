@@ -71,7 +71,7 @@ export function Arrow({
             fill="white"
             stroke="#ef4444"
             strokeWidth={2}
-            className="cursor-pointer opacity-0 hover:opacity-100 transition-opacity"
+            className="cursor-pointer opacity-0 transition-opacity hover:opacity-100"
             onClick={() => onDelete(arrow.id)}
           />
           <Trash2
@@ -79,7 +79,7 @@ export function Arrow({
             y={midY - 6 * zoom}
             width={12 * zoom}
             height={12 * zoom}
-            className="text-red-500 cursor-pointer opacity-0 hover:opacity-100 transition-opacity pointer-events-none"
+            className="pointer-events-none cursor-pointer text-red-500 opacity-0 transition-opacity hover:opacity-100"
           />
         </g>
       )}

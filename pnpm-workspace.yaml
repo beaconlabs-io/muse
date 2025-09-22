@@ -1,5 +1,10 @@
 onlyBuiltDependencies:
+  - '@interacta/css-labels'
+  - '@swc/core'
   - '@tailwindcss/oxide'
+  - bufferutil
   - core-js
+  - keccak
   - sharp
   - unrs-resolver
+  - utf-8-validate
