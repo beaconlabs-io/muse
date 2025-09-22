@@ -4,9 +4,7 @@ import { Metadata } from "next";
 import { CanvasClient } from "@/components/canvas/CanvasClient";
 import { getCanvasData } from "@/lib/canvas/server-data";
 import { getAllEvidenceMeta } from "@/lib/evidence";
-
-const baseUrl =
-  process.env.NODE_ENV === "production" ? "https://muse.beaconlabs.io" : "http://localhost:3000";
+import { baseUrl } from "@/utils/config";
 
 export const metadata: Metadata = {
   title: "MUSE Canvas - Create Interactive Logic Models",
