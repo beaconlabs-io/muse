@@ -11,6 +11,7 @@ import { ArrowLeft, Loader2, CalendarIcon, Trash2 } from "lucide-react";
 import { baseSepolia } from "viem/chains";
 import { useAccount, useWaitForTransactionReceipt, useWalletClient } from "wagmi";
 import { z } from "zod";
+import { ExtraContent } from "@/components/extra-content";
 import HypercertCard from "@/components/hypercerts/HypercertCard";
 import { useStepProcessDialogContext } from "@/components/step-process-dialog";
 import { Button } from "@/components/ui/button";
@@ -84,17 +85,18 @@ export default function MintHypercertPage() {
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
   const hypercertCardRef = useRef<HTMLDivElement>(null);
 
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain } = useAccount();
   const { data: walletClient } = useWalletClient();
 
   // Step Process Dialog Context
-  const { setSteps, setDialogStep, setOpen, setTitle } = useStepProcessDialogContext();
+  const { setSteps, setDialogStep, setOpen, setTitle, setExtraContent } =
+    useStepProcessDialogContext();
 
   // Define steps for the minting process
   const mintingSteps = [
     { id: "upload-ipfs", description: "Uploading logic model to IPFS" },
     { id: "generate-image", description: "Generating hypercert image" },
-    { id: "mint-hypercert", description: "Minting hypercert on blockchain" },
+    { id: "mint-hypercert", description: `Minting hypercert on ${chain?.name}` },
   ];
 
   // Wait for transaction receipt and construct hypercert URL
@@ -104,15 +106,6 @@ export default function MintHypercertPage() {
       enabled: !!mintTxHash,
     },
   });
-
-  // Function to construct hypercert URL
-  const constructHypercertUrl = (hypercertId: string): string => {
-    const baseUrl =
-      process.env.NODE_ENV === "production"
-        ? "https://app.hypercerts.org/hypercerts/"
-        : "https://testnet.hypercerts.org/hypercerts/";
-    return `${baseUrl}${hypercertId}`;
-  };
 
   // Function to generate hypercert image from the HypercertCard component
   const generateHypercertImage = async (): Promise<string> => {
@@ -165,10 +158,19 @@ export default function MintHypercertPage() {
   useEffect(() => {
     if (isReceiptSuccess && receiptData) {
       const hypercertId = generateHypercertIdFromReceipt(receiptData, baseSepolia.id);
-      const hypercertUrl = constructHypercertUrl(hypercertId);
-      console.log("Hypercert minted successfully:", { hypercertId, hypercertUrl });
+
+      // Set the success state with ExtraContent
+      setExtraContent(
+        <ExtraContent
+          hypercertId={hypercertId}
+          chain={baseSepolia}
+          receipt={receiptData}
+          onClose={() => setOpen(false)}
+        />,
+      );
+      setDialogStep("success", "completed");
     }
-  }, [isReceiptSuccess, receiptData]);
+  }, [isReceiptSuccess, receiptData, setDialogStep, setOpen, setExtraContent]);
 
   // File handling functions
   const clearLogoFile = () => {
@@ -198,7 +200,7 @@ export default function MintHypercertPage() {
 
     // Initialize step process dialog
     setSteps(mintingSteps);
-    setTitle("Creating Hypercert");
+    setTitle("Minting Hypercert");
     setOpen(true);
 
     let ipfsResult: any = null;

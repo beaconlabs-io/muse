@@ -1,6 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Chain, TransactionReceipt } from "viem";
+import { HYPERCERTS_URL } from "@/utils/config";
 import { generateBlockExplorerLink } from "@/utils/generateExploreLink";
 
 interface ExtraContentProps {
@@ -14,30 +15,22 @@ interface ExtraContentProps {
 export function ExtraContent({
   message = "Your hypercert has been minted successfully!",
   hypercertId,
-  onClose,
   chain,
   receipt,
 }: ExtraContentProps) {
-  const handleHypercertClick = () => {
-    if (onClose) {
-      window.location.href = `/hypercerts/${hypercertId}`;
-      onClose();
-    }
-  };
-
   return (
     <div className="flex flex-col space-y-2">
       <p className="text-lg font-medium">Success</p>
       <p className="text-sm font-medium">{message}</p>
       <div className="flex justify-center space-x-4 py-4">
-        <Button onClick={onClose ? handleHypercertClick : undefined} asChild={!onClose}>
-          {onClose ? (
-            "View hypercert"
-          ) : (
-            <a href={`/hypercerts/${hypercertId}`} target="_blank" rel="noopener noreferrer">
-              View hypercert
-            </a>
-          )}
+        <Button asChild>
+          <a
+            href={`${HYPERCERTS_URL}/hypercerts/${hypercertId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View hypercert <ExternalLink size={14} className="ml-2" />
+          </a>
         </Button>
 
         {chain && receipt?.transactionHash && (
