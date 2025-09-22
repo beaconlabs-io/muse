@@ -1,17 +1,17 @@
 "use client";
-
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { HypercertClient, formatHypercertData, TransferRestrictions } from "@hypercerts-org/sdk";
+import { track } from "@vercel/analytics";
 import { format } from "date-fns";
 import { toPng } from "html-to-image";
 import { ArrowLeft, Loader2, CalendarIcon, Trash2 } from "lucide-react";
-import { baseSepolia } from "viem/chains";
-import { useAccount, useWaitForTransactionReceipt, useWalletClient } from "wagmi";
+import { waitForTransactionReceipt } from "viem/actions";
+import { useAccount, useWalletClient } from "wagmi";
 import { z } from "zod";
-import { ExtraContent } from "@/components/extra-content";
+import { createExtraContent } from "@/components/extra-content";
 import HypercertCard from "@/components/hypercerts/HypercertCard";
 import { useStepProcessDialogContext } from "@/components/step-process-dialog";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,10 @@ import { cn } from "@/lib/utils";
 import { StandardizedLogicModel } from "@/types";
 import { generateHypercertIdFromReceipt } from "@/utils/generateHypercertIdFromReceipt";
 import { uploadToIPFS } from "@/utils/ipfs";
+
+// TODO: fix validation
+// TODO: support markdown editor
+// TODO: add hypercerts fields
 
 // Zod schema for form validation
 const hypercertFormSchema = z.object({
@@ -77,9 +81,7 @@ export default function MintHypercertPage() {
   const storedLogicModel = getStoredLogicModel();
 
   const [logicModel] = useState<StandardizedLogicModel | null>(storedLogicModel);
-  const [hypercertImage, setHypercertImage] = useState<string>("");
-  const [mintTxHash, setMintTxHash] = useState<string | undefined>();
-  // Refs for file inputs
+  const [hypercertImage, setHypercertImage] = useState<string>(""); // Refs for file inputs
   const logoFileInputRef = useRef<HTMLInputElement>(null);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
   const hypercertCardRef = useRef<HTMLDivElement>(null);
@@ -96,15 +98,9 @@ export default function MintHypercertPage() {
     { id: "upload-ipfs", description: "Uploading logic model to IPFS" },
     { id: "generate-image", description: "Generating hypercert image" },
     { id: "mint-hypercert", description: `Minting hypercert on ${chain?.name}` },
+    { id: "confirming", description: "Waiting for on-chain confirmation" },
+    { id: "done", description: "Minting complete!" },
   ];
-
-  // Wait for transaction receipt and construct hypercert URL
-  const { data: receiptData, isSuccess: isReceiptSuccess } = useWaitForTransactionReceipt({
-    hash: mintTxHash as `0x${string}`,
-    query: {
-      enabled: !!mintTxHash,
-    },
-  });
 
   // Function to generate hypercert image from the HypercertCard component
   const generateHypercertImage = async (): Promise<string> => {
@@ -146,31 +142,6 @@ export default function MintHypercertPage() {
   const logoPreviewUrl = watchedLogoFile ? URL.createObjectURL(watchedLogoFile) : null;
   const bannerPreviewUrl = watchedBannerFile ? URL.createObjectURL(watchedBannerFile) : null;
 
-  // Redirect to canvas if no logic model is found
-  useEffect(() => {
-    if (!logicModel) {
-      router.push("/canvas");
-    }
-  }, [logicModel, router]);
-
-  // Handle receipt data and construct hypercert URL
-  useEffect(() => {
-    if (isReceiptSuccess && receiptData) {
-      const hypercertId = generateHypercertIdFromReceipt(receiptData, baseSepolia.id);
-
-      // Set the success state with ExtraContent
-      setExtraContent(
-        <ExtraContent
-          hypercertId={hypercertId}
-          chain={baseSepolia}
-          receipt={receiptData}
-          onClose={() => setOpen(false)}
-        />,
-      );
-      setDialogStep("success", "completed");
-    }
-  }, [isReceiptSuccess, receiptData, setDialogStep, setOpen, setExtraContent]);
-
   // File handling functions
   const clearLogoFile = () => {
     form.setValue("logoFile", undefined);
@@ -194,6 +165,11 @@ export default function MintHypercertPage() {
 
     if (!logicModel) {
       console.error("No logic model found");
+      return;
+    }
+
+    if (!chain) {
+      console.error("No chain found");
       return;
     }
 
@@ -287,11 +263,58 @@ export default function MintHypercertPage() {
         transferRestriction: TransferRestrictions.AllowAll,
       });
 
-      // Set the transaction hash to wait for receipt
-      setMintTxHash(txHash);
       await setDialogStep("mint-hypercert", "completed");
+      let receipt;
 
-      // The success state will be set in the useEffect when receipt is received
+      try {
+        receipt = await waitForTransactionReceipt(walletClient!, {
+          confirmations: 3,
+          hash: txHash,
+        });
+        console.log({ receipt });
+      } catch (error: unknown) {
+        console.error("Error waiting for transaction receipt:", error);
+        await setDialogStep(
+          "confirming",
+          "error",
+          error instanceof Error ? error.message : "Unknown error",
+        );
+        throw new Error(
+          `Failed to confirm transaction: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }
+
+      if (receipt?.status === "reverted") {
+        throw new Error("Transaction reverted: Minting failed");
+      }
+      let hypercertId;
+      await setDialogStep("confirming", "active");
+      try {
+        hypercertId = generateHypercertIdFromReceipt(receipt, chain.id);
+        console.log("Mint completed", {
+          hypercertId: hypercertId || "not found",
+        });
+        track("Mint completed", {
+          hypercertId: hypercertId || "not found",
+        });
+        console.log({ hypercertId });
+      } catch (error) {
+        console.error("Error generating hypercert ID:", error);
+        await setDialogStep(
+          "route",
+          "error",
+          error instanceof Error ? error.message : "Unknown error",
+        );
+      }
+
+      const extraContent = createExtraContent({
+        receipt,
+        hypercertId,
+        chain: chain,
+      });
+      setExtraContent(extraContent);
+
+      await setDialogStep("done", "completed");
     } catch (err) {
       console.error("Minting failed:", err);
       const errorMessage = err instanceof Error ? err.message : "Minting failed";
@@ -542,7 +565,7 @@ export default function MintHypercertPage() {
                   disabled={!isConnected || !form.formState.isValid}
                   size="lg"
                 >
-                  Create Hypercert
+                  Mint Hypercert
                 </Button>
               </form>
             </Form>
