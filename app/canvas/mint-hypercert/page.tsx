@@ -78,7 +78,6 @@ export default function MintHypercertPage() {
 
   const [logicModel] = useState<StandardizedLogicModel | null>(storedLogicModel);
   const [hypercertImage, setHypercertImage] = useState<string>("");
-  const [, setIpfsHash] = useState<string>("");
   const [mintTxHash, setMintTxHash] = useState<string | undefined>();
   // Refs for file inputs
   const logoFileInputRef = useRef<HTMLInputElement>(null);
@@ -213,7 +212,6 @@ export default function MintHypercertPage() {
       await setDialogStep("upload-ipfs", "active");
 
       ipfsResult = await uploadToIPFS(logicModel);
-      setIpfsHash(ipfsResult.hash);
       await setDialogStep("upload-ipfs", "completed");
 
       // Step 2: Generate image
