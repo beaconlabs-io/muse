@@ -18,13 +18,7 @@ interface CardMetrics {
   description?: string;
   measurementMethod?: string;
   targetValue?: string;
-  frequency?:
-    | "daily"
-    | "weekly"
-    | "monthly"
-    | "quarterly"
-    | "annually"
-    | "other";
+  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
 }
 
 interface CanvasClientProps {
@@ -66,43 +60,40 @@ const loadCanvasState = (): CanvasState | null => {
   }
 };
 
-export function CanvasClient({
-  initialCards = [],
-  initialArrows = [],
-}: CanvasClientProps) {
+export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasClientProps) {
   const { address } = useAccount();
-  
+
   // Initialize state from localStorage if available, otherwise use initial props
   const [cards, setCards] = useState<PostItCard[]>(() => {
     const savedState = loadCanvasState();
     return savedState?.cards || initialCards;
   });
-  
+
   const [arrows, setArrows] = useState<Arrow[]>(() => {
     const savedState = loadCanvasState();
     return savedState?.arrows || initialArrows;
   });
-  
+
   const [cardMetrics, setCardMetrics] = useState<Record<string, CardMetrics[]>>(() => {
     const savedState = loadCanvasState();
     return savedState?.cardMetrics || {};
   });
-  
+
   const [selectedGoal, setSelectedGoal] = useState<string>(() => {
     const savedState = loadCanvasState();
     return savedState?.selectedGoal || "";
   });
-  
+
   const [canvasOffset, setCanvasOffset] = useState(() => {
     const savedState = loadCanvasState();
     return savedState?.canvasOffset || { x: 0, y: 0 };
   });
-  
+
   const [zoom, setZoom] = useState(() => {
     const savedState = loadCanvasState();
     return savedState?.zoom || 1;
   });
-  
+
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -113,9 +104,7 @@ export function CanvasClient({
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [showEvidencePanel, setShowEvidencePanel] = useState(false);
   const [showMetricsPanel, setShowMetricsPanel] = useState(false);
-  const [selectedCardForMetrics, setSelectedCardForMetrics] = useState<
-    string | null
-  >(null);
+  const [selectedCardForMetrics, setSelectedCardForMetrics] = useState<string | null>(null);
   const [addedGoalCard, setAddedGoalCard] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -129,12 +118,12 @@ export function CanvasClient({
       canvasOffset,
       zoom,
     };
-    
+
     // Save to localStorage with debounce to avoid excessive saves
     const timeoutId = setTimeout(() => {
       saveCanvasState(currentState);
     }, 500);
-    
+
     return () => clearTimeout(timeoutId);
   }, [cards, arrows, cardMetrics, selectedGoal, canvasOffset, zoom]);
 
@@ -193,24 +182,21 @@ export function CanvasClient({
       setSelectedCardForMetrics(cardId);
       setShowMetricsPanel(true);
     },
-    [connectionMode, draggedCard]
+    [connectionMode, draggedCard],
   );
 
-  const updateCardMetrics = useCallback(
-    (cardId: string, metrics: CardMetrics[]) => {
-      setCardMetrics((prev) => ({
-        ...prev,
-        [cardId]: metrics,
-      }));
-    },
-    []
-  );
+  const updateCardMetrics = useCallback((cardId: string, metrics: CardMetrics[]) => {
+    setCardMetrics((prev) => ({
+      ...prev,
+      [cardId]: metrics,
+    }));
+  }, []);
 
   const getCardMetricsCount = useCallback(
     (cardId: string) => {
       return cardMetrics[cardId]?.length || 0;
     },
-    [cardMetrics]
+    [cardMetrics],
   );
 
   const handleMouseDown = useCallback(
@@ -254,7 +240,7 @@ export function CanvasClient({
         });
       }
     },
-    [cards, zoom, canvasOffset, connectionMode, connectionStart]
+    [cards, zoom, canvasOffset, connectionMode, connectionStart],
   );
 
   const handleMouseMove = useCallback(
@@ -262,15 +248,11 @@ export function CanvasClient({
       if (draggedCard) {
         const rect = canvasRef.current?.getBoundingClientRect();
         if (rect) {
-          const newX =
-            (e.clientX - rect.left) / zoom - canvasOffset.x - dragOffset.x;
-          const newY =
-            (e.clientY - rect.top) / zoom - canvasOffset.y - dragOffset.y;
+          const newX = (e.clientX - rect.left) / zoom - canvasOffset.x - dragOffset.x;
+          const newY = (e.clientY - rect.top) / zoom - canvasOffset.y - dragOffset.y;
 
           setCards((prev) =>
-            prev.map((card) =>
-              card.id === draggedCard ? { ...card, x: newX, y: newY } : card
-            )
+            prev.map((card) => (card.id === draggedCard ? { ...card, x: newX, y: newY } : card)),
           );
         }
       } else if (isPanning) {
@@ -280,7 +262,7 @@ export function CanvasClient({
         });
       }
     },
-    [draggedCard, isPanning, panStart, dragOffset, zoom, canvasOffset]
+    [draggedCard, isPanning, panStart, dragOffset, zoom, canvasOffset],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -292,16 +274,11 @@ export function CanvasClient({
     setEditingCard(cardId);
   }, []);
 
-  const handleCardContentChange = useCallback(
-    (cardId: string, newContent: string) => {
-      setCards((prev) =>
-        prev.map((card) =>
-          card.id === cardId ? { ...card, content: newContent } : card
-        )
-      );
-    },
-    []
-  );
+  const handleCardContentChange = useCallback((cardId: string, newContent: string) => {
+    setCards((prev) =>
+      prev.map((card) => (card.id === cardId ? { ...card, content: newContent } : card)),
+    );
+  }, []);
 
   const handleZoom = useCallback((delta: number) => {
     setZoom((prev) => Math.min(Math.max(prev + delta, 0.5), 3));
@@ -312,9 +289,7 @@ export function CanvasClient({
       setCards((prev) => prev.filter((card) => card.id !== cardId));
       // Also delete arrows connected to this card
       setArrows((prev) =>
-        prev.filter(
-          (arrow) => arrow.fromCardId !== cardId && arrow.toCardId !== cardId
-        )
+        prev.filter((arrow) => arrow.fromCardId !== cardId && arrow.toCardId !== cardId),
       );
       // Remove metrics for this card
       setCardMetrics((prev) => {
@@ -332,7 +307,7 @@ export function CanvasClient({
         setAddedGoalCard(null);
       }
     },
-    [selectedCardForMetrics, addedGoalCard]
+    [selectedCardForMetrics, addedGoalCard],
   );
 
   const handleGoalChange = useCallback(
@@ -359,8 +334,7 @@ export function CanvasClient({
         "economic-growth": "Economic Growth",
       } as const;
 
-      const goalLabel =
-        goalLabels[goalValue as keyof typeof goalLabels] || goalValue;
+      const goalLabel = goalLabels[goalValue as keyof typeof goalLabels] || goalValue;
 
       // Create impact card for the selected goal
       const impactCard: PostItCard = {
@@ -374,7 +348,7 @@ export function CanvasClient({
       setCards((prev) => [...prev, impactCard]);
       setAddedGoalCard(impactCard.id);
     },
-    [addedGoalCard, deleteCard]
+    [addedGoalCard, deleteCard],
   );
 
   const startConnectionFromCard = useCallback((cardId: string) => {
@@ -460,7 +434,7 @@ export function CanvasClient({
         selectedGoal,
         `Logic Model ${new Date().toLocaleDateString()}`,
         "Logic model created with Muse",
-        address // Pass wallet address as author
+        address, // Pass wallet address as author
       );
 
       // Ensure canvas state is saved to localStorage before navigating
@@ -493,7 +467,7 @@ export function CanvasClient({
       selectedGoal,
       `Logic Model ${new Date().toLocaleDateString()}`,
       "Logic model created with Muse",
-      address // Pass wallet address as author
+      address, // Pass wallet address as author
     );
 
     const jsonData = JSON.stringify(logicModel, null, 2);
@@ -510,7 +484,11 @@ export function CanvasClient({
   }, [cards, arrows, cardMetrics, selectedGoal, address]);
 
   const clearAllData = useCallback(() => {
-    if (window.confirm("Are you sure you want to clear all canvas data? This action cannot be undone.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to clear all canvas data? This action cannot be undone.",
+      )
+    ) {
       // Clear all canvas state
       setCards([]);
       setArrows([]);
@@ -518,13 +496,13 @@ export function CanvasClient({
       setSelectedGoal("");
       setCanvasOffset({ x: 0, y: 0 });
       setZoom(1);
-      
+
       // Clear localStorage and sessionStorage
       if (typeof window !== "undefined") {
         localStorage.removeItem("canvasState");
         sessionStorage.removeItem("currentLogicModel");
       }
-      
+
       // Reset connection and editing states
       setConnectionMode(false);
       setConnectionStart(null);
@@ -552,7 +530,7 @@ export function CanvasClient({
   }, []);
 
   return (
-    <div className="h-screen w-full flex flex-col">
+    <div className="flex h-screen w-full flex-col">
       <CanvasToolbar
         onAddCard={addCard}
         zoom={zoom}
@@ -570,19 +548,16 @@ export function CanvasClient({
         {/* Canvas */}
 
         {/* Evidence Panel */}
-        {showEvidencePanel && (
-          <EvidencePanel onAddEvidenceToCanvas={addEvidenceToCanvas} />
-        )}
+        {showEvidencePanel && <EvidencePanel onAddEvidenceToCanvas={addEvidenceToCanvas} />}
         <div
           ref={canvasRef}
           data-testid="canvas-container"
-          className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing"
+          className="relative flex-1 cursor-grab overflow-hidden active:cursor-grabbing"
           onMouseDown={(e) => handleMouseDown(e)}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           style={{
-            backgroundImage:
-              "radial-gradient(circle, #e5e7eb 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(circle, #e5e7eb 1px, transparent 1px)",
             backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
             backgroundPosition: `${canvasOffset.x}px ${canvasOffset.y}px`,
           }}
@@ -633,9 +608,7 @@ export function CanvasClient({
                   deleteCard(card.id);
                 }
               }}
-              onContentChange={(newContent) =>
-                handleCardContentChange(card.id, newContent)
-              }
+              onContentChange={(newContent) => handleCardContentChange(card.id, newContent)}
               onEditComplete={() => setEditingCard(null)}
               onStartConnection={() => startConnectionFromCard(card.id)}
             />
@@ -644,14 +617,12 @@ export function CanvasClient({
 
         {/* Right Sidebar - Metrics Panel */}
         {showMetricsPanel && selectedCardForMetrics && (
-          <div className="w-80 border-l bg-background">
+          <div className="bg-background w-80 border-l">
             <MetricsPanel
               cardId={selectedCardForMetrics}
               card={cards.find((c) => c.id === selectedCardForMetrics)}
               initialMetrics={cardMetrics[selectedCardForMetrics] || []}
-              onMetricsChange={(metrics) =>
-                updateCardMetrics(selectedCardForMetrics, metrics)
-              }
+              onMetricsChange={(metrics) => updateCardMetrics(selectedCardForMetrics, metrics)}
               onClose={() => {
                 setShowMetricsPanel(false);
                 setSelectedCardForMetrics(null);

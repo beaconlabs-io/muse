@@ -142,13 +142,7 @@ export interface CardMetrics {
   description?: string;
   measurementMethod?: string;
   targetValue?: string;
-  frequency?:
-    | "daily"
-    | "weekly"
-    | "monthly"
-    | "quarterly"
-    | "annually"
-    | "other";
+  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
 }
 
 export interface LogicModel {
@@ -181,4 +175,4 @@ export const CARD_COLORS = [
   "#fce7f3", // pink
 ] as const;
 
-export type CardColor = typeof CARD_COLORS[number];
+export type CardColor = (typeof CARD_COLORS)[number];

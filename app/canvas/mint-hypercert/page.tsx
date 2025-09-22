@@ -4,21 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  HypercertClient,
-  formatHypercertData,
-  TransferRestrictions,
-} from "@hypercerts-org/sdk";
+import { HypercertClient, formatHypercertData, TransferRestrictions } from "@hypercerts-org/sdk";
 import { format } from "date-fns";
 import { toPng } from "html-to-image";
-import {
-  ArrowLeft,
-  Check,
-  ExternalLink,
-  Loader2,
-  CalendarIcon,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, Loader2, CalendarIcon, Trash2 } from "lucide-react";
 import { baseSepolia } from "viem/chains";
 import { useAccount, useWaitForTransactionReceipt, useWalletClient } from "wagmi";
 import { z } from "zod";
@@ -43,11 +32,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { LogicModel } from "@/types";
@@ -72,23 +57,14 @@ const hypercertFormSchema = z.object({
   bannerFile: z.any().optional(),
   workDates: z
     .tuple([z.date(), z.date()])
-    .refine(
-      (dates) => dates[0] && dates[1],
-      "Both start and end dates are required"
-    ),
+    .refine((dates) => dates[0] && dates[1], "Both start and end dates are required"),
   contributors: z.string().min(1, "Contributors field is required"),
 });
 
 type FormData = z.infer<typeof hypercertFormSchema>;
 
 type MintingStep = 1 | 2 | 3;
-type MintingState =
-  | "idle"
-  | "storing-ipfs"
-  | "generating-image"
-  | "minting"
-  | "success"
-  | "error";
+type MintingState = "idle" | "storing-ipfs" | "generating-image" | "minting" | "success" | "error";
 
 interface HypercertResult {
   txHash: string;
@@ -180,11 +156,8 @@ export default function MintHypercertPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(hypercertFormSchema),
     defaultValues: {
-      title:
-        storedLogicModel?.title ||
-        "Logic Model " + new Date().toLocaleDateString(),
-      description:
-        storedLogicModel?.description || "Logic model created with Muse",
+      title: storedLogicModel?.title || "Logic Model " + new Date().toLocaleDateString(),
+      description: storedLogicModel?.description || "Logic model created with Muse",
       impactScope: "",
       workDates: [new Date(), new Date()],
       contributors: "",
@@ -199,12 +172,8 @@ export default function MintHypercertPage() {
   const watchedBannerFile = form.watch("bannerFile");
 
   // Generate preview URLs for files
-  const logoPreviewUrl = watchedLogoFile
-    ? URL.createObjectURL(watchedLogoFile)
-    : null;
-  const bannerPreviewUrl = watchedBannerFile
-    ? URL.createObjectURL(watchedBannerFile)
-    : null;
+  const logoPreviewUrl = watchedLogoFile ? URL.createObjectURL(watchedLogoFile) : null;
+  const bannerPreviewUrl = watchedBannerFile ? URL.createObjectURL(watchedBannerFile) : null;
 
   // Redirect to canvas if no logic model is found
   useEffect(() => {
@@ -216,10 +185,7 @@ export default function MintHypercertPage() {
   // Handle receipt data and construct hypercert URL
   useEffect(() => {
     if (isReceiptSuccess && receiptData) {
-      const hypercertId = generateHypercertIdFromReceipt(
-        receiptData,
-        baseSepolia.id
-      );
+      const hypercertId = generateHypercertIdFromReceipt(receiptData, baseSepolia.id);
       const hypercertUrl = constructHypercertUrl(hypercertId);
 
       setResult((prev) =>
@@ -229,7 +195,7 @@ export default function MintHypercertPage() {
               hypercertId,
               hypercertUrl,
             }
-          : null
+          : null,
       );
 
       setCurrentStep(3);
@@ -335,9 +301,7 @@ export default function MintHypercertPage() {
 
       if (!valid || !metadata) {
         const errorMessage =
-          errors && Array.isArray(errors)
-            ? errors.join(", ")
-            : "Unknown validation error";
+          errors && Array.isArray(errors) ? errors.join(", ") : "Unknown validation error";
         throw new Error(`Invalid metadata: ${errorMessage}`);
       }
 
@@ -377,31 +341,29 @@ export default function MintHypercertPage() {
   };
 
   const StepIndicator = () => (
-    <div className="flex items-center justify-between mb-6">
+    <div className="mb-6 flex items-center justify-between">
       {steps.map((step, index) => (
         <div key={step.id} className="flex items-center">
           <div className="flex flex-col items-center">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
+              className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium ${
                 currentStep > step.id
                   ? "bg-green-500 text-white"
                   : currentStep === step.id
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-600"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-600"
               }`}
             >
-              {currentStep > step.id ? <Check className="w-5 h-5" /> : step.id}
+              {currentStep > step.id ? <Check className="h-5 w-5" /> : step.id}
             </div>
             <div className="mt-2 text-center">
               <div className="text-sm font-medium">{step.title}</div>
-              <div className="text-xs text-muted-foreground">
-                {step.description}
-              </div>
+              <div className="text-muted-foreground text-xs">{step.description}</div>
             </div>
           </div>
           {index < steps.length - 1 && (
             <div
-              className={`flex-1 h-0.5 mx-4 ${
+              className={`mx-4 h-0.5 flex-1 ${
                 currentStep > step.id ? "bg-green-500" : "bg-gray-200"
               }`}
             />
@@ -413,24 +375,19 @@ export default function MintHypercertPage() {
 
   if (!logicModel) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-b backdrop-blur">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="gap-2"
-            >
+            <Button variant="ghost" size="sm" onClick={() => router.back()} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back to Canvas
             </Button>
@@ -440,14 +397,11 @@ export default function MintHypercertPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Left side - Form */}
           <div className="space-y-6">
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="title"
@@ -527,7 +481,7 @@ export default function MintHypercertPage() {
                               className="absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2"
                               onClick={clearLogoFile}
                             >
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <Trash2 className="text-destructive h-4 w-4" />
                             </Button>
                           )}
                         </div>
@@ -565,7 +519,7 @@ export default function MintHypercertPage() {
                                 className="absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2"
                                 onClick={clearBannerFile}
                               >
-                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <Trash2 className="text-destructive h-4 w-4" />
                               </Button>
                             )}
                           </div>
@@ -590,7 +544,7 @@ export default function MintHypercertPage() {
                               variant="outline"
                               className={cn(
                                 "w-full justify-start text-left font-normal",
-                                !field.value && "text-muted-foreground"
+                                !field.value && "text-muted-foreground",
                               )}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
@@ -640,8 +594,8 @@ export default function MintHypercertPage() {
                         />
                       </FormControl>
                       <FormDescription>
-                        Add contributor addresses, names or pseudonyms whose
-                        work is represented by the hypercert
+                        Add contributor addresses, names or pseudonyms whose work is represented by
+                        the hypercert
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -649,7 +603,7 @@ export default function MintHypercertPage() {
                 />
 
                 {!isConnected && (
-                  <div className="text-sm text-yellow-600 bg-yellow-50 p-3 rounded-md">
+                  <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-600">
                     Please connect your wallet to mint a hypercert
                   </div>
                 )}
@@ -669,7 +623,7 @@ export default function MintHypercertPage() {
           {/* Right side - Preview */}
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Live Preview</h3>
+              <h3 className="mb-4 text-lg font-semibold">Live Preview</h3>
               <div className="flex justify-center">
                 <HypercertCard
                   ref={hypercertCardRef}
@@ -687,7 +641,7 @@ export default function MintHypercertPage() {
                   }
                 />
               </div>
-              <p className="text-xs text-muted-foreground text-center mt-4">
+              <p className="text-muted-foreground mt-4 text-center text-xs">
                 Preview of your hypercert
               </p>
             </div>
@@ -700,40 +654,32 @@ export default function MintHypercertPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Creating Hypercert</DialogTitle>
-            <DialogDescription>
-              Please wait while we create your hypercert...
-            </DialogDescription>
+            <DialogDescription>Please wait while we create your hypercert...</DialogDescription>
           </DialogHeader>
 
           <StepIndicator />
 
           {mintingState === "storing-ipfs" && (
             <div className="flex flex-col items-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin mb-2" />
-              <p className="text-sm text-muted-foreground">
-                Storing on IPFS...
-              </p>
+              <Loader2 className="mb-2 h-6 w-6 animate-spin" />
+              <p className="text-muted-foreground text-sm">Storing on IPFS...</p>
             </div>
           )}
 
           {mintingState === "generating-image" && (
             <div className="flex flex-col items-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin mb-2" />
-              <p className="text-sm text-muted-foreground">
-                Generating hypercert image...
-              </p>
+              <Loader2 className="mb-2 h-6 w-6 animate-spin" />
+              <p className="text-muted-foreground text-sm">Generating hypercert image...</p>
             </div>
           )}
 
           {mintingState === "minting" && (
             <div className="flex flex-col items-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin mb-2" />
-              <p className="text-sm text-muted-foreground">
-                {isReceiptLoading
-                  ? "Waiting for confirmation..."
-                  : "Minting hypercert..."}
+              <Loader2 className="mb-2 h-6 w-6 animate-spin" />
+              <p className="text-muted-foreground text-sm">
+                {isReceiptLoading ? "Waiting for confirmation..." : "Minting hypercert..."}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1 text-xs">
                 {isReceiptLoading
                   ? "Transaction submitted, waiting for confirmation"
                   : "Please confirm the transaction in your wallet"}
@@ -743,18 +689,16 @@ export default function MintHypercertPage() {
 
           {mintingState === "success" && (
             <div className="flex flex-col items-center py-4">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <Check className="w-6 h-6 text-green-600" />
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                <Check className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="font-semibold mb-2">
-                Hypercert Minted Successfully!
-              </h3>
+              <h3 className="mb-2 font-semibold">Hypercert Minted Successfully!</h3>
             </div>
           )}
 
           {mintingState === "error" && (
             <div className="flex flex-col items-center py-4">
-              <div className="text-sm w-full text-red-600 bg-red-50 p-3 rounded-md mb-4 break-all whitespace-pre-wrap overflow-hidden overflow-y-auto max-h-32">
+              <div className="mb-4 max-h-32 w-full overflow-hidden overflow-y-auto rounded-md bg-red-50 p-3 text-sm break-all whitespace-pre-wrap text-red-600">
                 {error}
               </div>
             </div>
@@ -766,11 +710,8 @@ export default function MintHypercertPage() {
                 <Button variant="outline" onClick={resetDialog}>
                   Close
                 </Button>
-                <Button
-                  onClick={handleViewOnTestnet}
-                  disabled={!result?.hypercertUrl}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
+                <Button onClick={handleViewOnTestnet} disabled={!result?.hypercertUrl}>
+                  <ExternalLink className="mr-2 h-4 w-4" />
                   View Hypercert
                 </Button>
               </>

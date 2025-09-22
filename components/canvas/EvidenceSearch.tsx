@@ -20,11 +20,7 @@ interface EvidenceSearchProps {
 type SortField = "title" | "author" | "date" | "strength";
 type SortOrder = "asc" | "desc";
 
-export function EvidenceSearch({
-  evidence,
-  onFilteredResults,
-  className,
-}: EvidenceSearchProps) {
+export function EvidenceSearch({ evidence, onFilteredResults, className }: EvidenceSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>("title");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -42,7 +38,7 @@ export function EvidenceSearch({
           (result) =>
             result.intervention.toLowerCase().includes(searchLower) ||
             result.outcome_variable.toLowerCase().includes(searchLower) ||
-            result.outcome?.toLowerCase().includes(searchLower)
+            result.outcome?.toLowerCase().includes(searchLower),
         );
 
       return matchesSearch;
@@ -105,7 +101,7 @@ export function EvidenceSearch({
       <div className="flex items-center gap-2">
         {/* Search Input */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder="Search evidence"
             value={searchTerm}
@@ -115,10 +111,7 @@ export function EvidenceSearch({
         </div>
 
         {/* Sort Controls */}
-        <Select
-          value={sortField}
-          onValueChange={(value) => setSortField(value as SortField)}
-        >
+        <Select value={sortField} onValueChange={(value) => setSortField(value as SortField)}>
           <SelectTrigger className="w-32">
             <SelectValue />
           </SelectTrigger>
@@ -133,16 +126,10 @@ export function EvidenceSearch({
         <Button
           variant="outline"
           size="icon"
-          onClick={() =>
-            setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-          }
+          onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
           title={`Sort ${sortOrder === "asc" ? "ascending" : "descending"}`}
         >
-          {sortOrder === "asc" ? (
-            <SortAsc className="h-4 w-4" />
-          ) : (
-            <SortDesc className="h-4 w-4" />
-          )}
+          {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
         </Button>
 
         {/* Clear Filters */}
@@ -154,9 +141,8 @@ export function EvidenceSearch({
       </div>
 
       {/* Results Summary */}
-      <div className="text-sm text-muted-foreground">
-        Showing {filteredAndSortedEvidence.length} of {evidence.length} evidence
-        items
+      <div className="text-muted-foreground text-sm">
+        Showing {filteredAndSortedEvidence.length} of {evidence.length} evidence items
         {hasActiveFilters && " (filtered)"}
       </div>
     </div>

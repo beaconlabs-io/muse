@@ -50,40 +50,27 @@ const EVIDENCE_QUERY = gql`
 `;
 
 export const getAllEvidence = async () => {
-  const response = await request<AttestationResponse>(
-    EAS_GRAPHQL_URL,
-    ALL_EVIDENCE_QUERY,
-    {
-      schemaId:
-        "0x5541dbf2591e283a0ba21f358754257985a87f6985a9429830b68328a3a6f82a",
-    }
-  );
+  const response = await request<AttestationResponse>(EAS_GRAPHQL_URL, ALL_EVIDENCE_QUERY, {
+    schemaId: "0x5541dbf2591e283a0ba21f358754257985a87f6985a9429830b68328a3a6f82a",
+  });
   if (!response) {
     throw new Error("Network response was not ok");
   }
-  const decodedData = response.attestations?.map(
-    (attestation: ReturnedAttestation) => {
-      const decodedDataJson = formatDecodedAttestation(
-        attestation.decodedDataJson
-      );
+  const decodedData = response.attestations?.map((attestation: ReturnedAttestation) => {
+    const decodedDataJson = formatDecodedAttestation(attestation.decodedDataJson);
 
-      return {
-        ...attestation,
-        ...decodedDataJson,
-      };
-    }
-  );
+    return {
+      ...attestation,
+      ...decodedDataJson,
+    };
+  });
   return decodedData;
 };
 
 export const getEvidence = async (id: string) => {
-  const response = await request<SingleAttestationResponse>(
-    EAS_GRAPHQL_URL,
-    EVIDENCE_QUERY,
-    {
-      id: id,
-    }
-  );
+  const response = await request<SingleAttestationResponse>(EAS_GRAPHQL_URL, EVIDENCE_QUERY, {
+    id: id,
+  });
   if (!response || !response.attestation) {
     throw new Error("Network response was not ok or attestation not found");
   }

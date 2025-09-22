@@ -20,8 +20,7 @@ export function EvidencePanel({ onAddEvidenceToCanvas }: EvidencePanelProps) {
 
   // Use React Query to get prefetched evidence data
   const queryClient = useQueryClient();
-  const allEvidence =
-    (queryClient.getQueryData(["evidence"]) as Evidence[]) || [];
+  const allEvidence = (queryClient.getQueryData(["evidence"]) as Evidence[]) || [];
 
   // Initialize filtered evidence when allEvidence changes
   React.useEffect(() => {
@@ -31,19 +30,16 @@ export function EvidencePanel({ onAddEvidenceToCanvas }: EvidencePanelProps) {
   }, [allEvidence, filteredEvidence.length]);
 
   return (
-    <div className="w-96 border-l bg-background flex flex-col">
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold mb-4">Evidence Library</h2>
-        <EvidenceSearch
-          evidence={allEvidence}
-          onFilteredResults={setFilteredEvidence}
-        />
+    <div className="bg-background flex w-96 flex-col border-l">
+      <div className="border-b p-4">
+        <h2 className="mb-4 text-lg font-semibold">Evidence Library</h2>
+        <EvidenceSearch evidence={allEvidence} onFilteredResults={setFilteredEvidence} />
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-4">
+        <div className="space-y-4 p-4">
           {filteredEvidence.length === 0 ? (
-            <div className="text-center text-muted-foreground">
+            <div className="text-muted-foreground text-center">
               No evidence found matching your criteria
             </div>
           ) : (
@@ -78,18 +74,13 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="transition-shadow hover:shadow-md">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           {evidence.results?.[0]?.outcome && (
-            <EffectIcons
-              effectId={evidence.results[0].outcome}
-              isShowTitle={false}
-            />
+            <EffectIcons effectId={evidence.results[0].outcome} isShowTitle={false} />
           )}
-          <CardTitle className="text-sm leading-tight">
-            {evidence.title}
-          </CardTitle>
+          <CardTitle className="text-sm leading-tight">{evidence.title}</CardTitle>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs">
               {evidence.strength}
@@ -106,23 +97,19 @@ function EvidenceCard({ evidence, onAddToCanvas }: EvidenceCardProps) {
                 }`}
                 title={isAdded ? "Added to Canvas!" : "Add to Canvas"}
               >
-                {isAdded ? (
-                  <Check className="h-3 w-3" />
-                ) : (
-                  <Plus className="h-3 w-3" />
-                )}
+                {isAdded ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
               </Button>
             )}
           </div>
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-muted-foreground text-xs">
           by {evidence.author} {evidence.date && `• ${evidence.date}`}
         </div>
       </CardHeader>
       <CardContent>
         {/* Sample result with effect */}
         {evidence.results && evidence.results.length > 0 && (
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             {evidence.results[0].intervention} had{" "}
             <span className="font-bold">
               {evidence.results[0].outcome && extractEffectData(evidence.results[0].outcome)?.title}

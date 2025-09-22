@@ -47,12 +47,12 @@ export function PostItCard({
 }: PostItCardProps) {
   return (
     <Card
-      className={`absolute p-3 ${isEditing ? "w-[180px] min-h-[160px]" : "w-[150px] min-h-[120px]"} shadow-lg border-2 select-none ${
+      className={`absolute p-3 ${isEditing ? "min-h-[160px] w-[180px]" : "min-h-[120px] w-[150px]"} border-2 shadow-lg select-none ${
         isReadOnly
           ? "cursor-default"
           : isConnectionMode
-          ? "cursor-crosshair hover:ring-2 hover:ring-blue-400"
-          : "cursor-move"
+            ? "cursor-crosshair hover:ring-2 hover:ring-blue-400"
+            : "cursor-move"
       } ${isConnectionStart ? "ring-2 ring-blue-500" : ""} ${
         isConnectionMode && isHovered ? "ring-2 ring-blue-300" : ""
       }`}
@@ -78,7 +78,7 @@ export function PostItCard({
       {/* Connect Button - appears on hover */}
       {isHovered && !isConnectionMode && !isEditing && !isReadOnly && (
         <button
-          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200 z-10"
+          className="absolute top-1/2 -right-3 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg transition-all duration-200 hover:bg-blue-600"
           onClick={(e) => {
             e.stopPropagation();
             onStartConnection();
@@ -91,7 +91,7 @@ export function PostItCard({
 
       {isEditing && !isReadOnly ? (
         <textarea
-          className="w-full h-32 bg-transparent border-none outline-none resize-none text-sm leading-relaxed"
+          className="h-32 w-full resize-none border-none bg-transparent text-sm leading-relaxed outline-none"
           value={card.content}
           onChange={(e) => onContentChange(e.target.value)}
           onBlur={onEditComplete}
@@ -104,13 +104,11 @@ export function PostItCard({
           autoFocus
         />
       ) : (
-        <div className="text-sm whitespace-pre-wrap break-words">
+        <div className="text-sm break-words whitespace-pre-wrap">
           {card.content || "Click to edit"}
         </div>
       )}
-      {metricsCount > 0 && (
-        <span className="text-sm text-gray-600">{metricsCount} metrics</span>
-      )}
+      {metricsCount > 0 && <span className="text-sm text-gray-600">{metricsCount} metrics</span>}
     </Card>
   );
 }

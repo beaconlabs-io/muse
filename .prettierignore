@@ -1,0 +1,7 @@
+.next
+node_modules
+pnpm-lock.yaml
+pnpm-workspace.yaml
+public
+contents/deployments
+**/*.log
