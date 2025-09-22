@@ -1,5 +1,8 @@
-import { Suspense } from "react";
+"use client";
+
+import React from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { LogicModelViewer } from "@/components/canvas/LogicModelViewer";
 import { Button } from "@/components/ui/button";
 import { fetchFromIPFS } from "@/utils/ipfs";
@@ -8,25 +11,39 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-export default async function LogicModelPage({ params }: Props) {
-  const { id } = await params;
+export default function LogicModelPage({ params }: Props) {
+  const { id } = React.use(params);
 
-  let logicModel;
-  let error = null;
+  const {
+    data: logicModel,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["logicModel", id],
+    queryFn: () => fetchFromIPFS(id),
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    retry: 2,
+  });
 
-  try {
-    // Try to fetch from IPFS using the id as hash
-    logicModel = await fetchFromIPFS(id);
-  } catch (err) {
-    error = err instanceof Error ? err.message : "Failed to load logic model";
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600"></div>
+          <p className="text-gray-600">Loading logic model...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
+    const errorMessage = error instanceof Error ? error.message : "Failed to load logic model";
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <h1 className="mb-4 text-2xl font-bold text-gray-900">Logic Model Not Found</h1>
-          <p className="mb-4 text-gray-600">{error}</p>
+          <p className="mb-4 text-gray-600">{errorMessage}</p>
           <Button asChild>
             <Link href="/canvas">Create New Logic Model</Link>
           </Button>
@@ -37,72 +54,7 @@ export default async function LogicModelPage({ params }: Props) {
 
   return (
     <div className="min-h-screen">
-      <Suspense fallback={<div>Loading logic model...</div>}>
-        <LogicModelViewer logicModel={logicModel!} />
-      </Suspense>
+      <LogicModelViewer logicModel={logicModel!} />
     </div>
   );
-}
-
-export async function generateMetadata({ params }: Props) {
-  const { id } = await params;
-
-  try {
-    const logicModel = await fetchFromIPFS(id);
-    return {
-      title: `${logicModel.metadata.title} - MUSE Canvas Logic Model`,
-      description:
-        logicModel.metadata.description ||
-        "Interactive logic model with evidence - MUSE by BeaconLabs",
-      openGraph: {
-        title: `${logicModel.metadata.title} - MUSE Canvas Logic Model`,
-        description:
-          logicModel.metadata.description ||
-          "Interactive logic model with evidence - MUSE by BeaconLabs",
-        type: "website",
-        siteName: "MUSE",
-        images: [
-          {
-            url: "/canvas-og.svg",
-            width: 1200,
-            height: 630,
-            alt: "MUSE Canvas - Interactive Logic Models",
-          },
-        ],
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: `${logicModel.metadata.title} - MUSE Canvas Logic Model`,
-        description:
-          logicModel.metadata.description ||
-          "Interactive logic model with evidence - MUSE by BeaconLabs",
-        images: ["/canvas-og.svg"],
-      },
-    };
-  } catch {
-    return {
-      title: "MUSE Canvas - Interactive Logic Models",
-      description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
-      openGraph: {
-        title: "MUSE Canvas - Interactive Logic Models",
-        description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
-        type: "website",
-        siteName: "MUSE",
-        images: [
-          {
-            url: "/canvas-og.png",
-            width: 1200,
-            height: 630,
-            alt: "MUSE Canvas - Interactive Logic Models",
-          },
-        ],
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: "MUSE Canvas - Interactive Logic Models",
-        description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
-        images: ["/canvas-og.png"],
-      },
-    };
-  }
 }
