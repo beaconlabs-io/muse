@@ -1,0 +1,55 @@
+---
+evidence_id: "14"
+results:
+  - intervention: "The alphabetical order of the first letter of the project name"
+    outcome_variable: "(a) The total number of votes received by each project, and (b) the average project score"
+    outcome: "!"
+strength: "1"
+methodologies:
+  - "Regression analysis, MCMC"
+version: "1.0.0"
+datasets:
+  - ""
+title: "Analysis of the impact of project display order in the user interface (UI) on voting results"
+date: "2024-05-22"
+tags:
+  - ""
+citation:
+  - name: "A deepdive into FIL-RetroPGF-1 results"
+    src: "https://medium.com/cryptoeconlab/a-deepdive-into-fil-retropgf-1-results-7e5a0bcdba08"
+    type: "link"
+author: "BeaconLabs"
+---
+
+## Key Points
+
+A regression analysis of the bias introduced by the UI project display order on voting results. In the voting interface, projects were displayed in alphabetical order. We conducted a regression analysis of the correlation between this display order (the first letter of the project name) and both the number of votes received and the average score for each project, in order to evaluate the presence and impact of UI bias.
+
+## Background
+
+In the FIL-RetroPGF-1 vote, the software “easy-retropgf” displayed projects in alphabetical order. We tested the hypothesis that this ordering biased badge holders’ voting behavior and, as a result, influenced the allocation of funds.
+
+## Analysis Method
+
+### Dataset
+
+Project-level voting counts and average scores from the FIL-RetroPGF-1 round.
+
+### Intervation / Explanatory Variable
+
+The alphabetical order of the first letter of the project name.
+
+### Dependent Variable
+
+(a) The total number of votes received by each project, and (b) the average project score.
+
+### Identification Strategy
+
+We performed regression analysis to calculate the correlation between the first letter of the project name and both total votes and average scores. Furthermore, we applied MCMC (Markov Chain Monte Carlo) methods to test statistical significance.
+
+### Results
+
+- A negative correlation of -0.27 was found between the first letter of the project name and total votes, and a negative correlation of -0.20 with average scores. This suggests that projects whose names start with later letters of the alphabet tend to receive fewer votes and lower average scores.
+- This effect was confirmed to be statistically significant.
+- Specifically, it is estimated that for each subsequent letter in the alphabet, the average fund allocation decreases by approximately 40 FIL.
+- Based on these findings, organizers are considering improving the UI in future rounds to reduce such effects.
