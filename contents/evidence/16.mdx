@@ -1,0 +1,54 @@
+---
+evidence_id: "16"
+results:
+  - intervention: "The first letter of the project name (alphabetical order)"
+    outcome_variable: "Number of votes each project received, and total funding allocated to each project"
+    outcome: "+"
+strength: "1"
+methodologies:
+  - "Markov Chain Monte Carlo (MCMC)"
+version: "1.0.0"
+datasets:
+  - "Voting data from badgeholders (voters) in FIL-RetroPGF-2"
+title: "Elimination of Alphabetical Order Bias through UI Randomization"
+date: "2024-12-19"
+tags:
+  - ""
+citation:
+  - name: "A deepdive into FIL-RetroPGF-2 results"
+    src: "https://medium.com/cryptoeconlab/a-deepdive-into-fil-retropgf-2-results-880234699fe4"
+    type: "link"
+author: "BeaconLabs"
+---
+
+## Key Points
+
+In FIL-RetroPGF-2, the voting software (Gitcoin easy-retropgf) was updated so that the display order of projects was randomized for each badgeholder. As a result, it was confirmed that the bias caused by alphabetical ordering of project names on vote counts and funding allocations was effectively eliminated.
+
+## Background
+
+There had been concerns that the order in which projects were displayed in the voting interface (UI) could influence voters’ decisions. In particular, to remove the “order effect,” where projects displayed earlier in the list had an advantage, UI improvements were implemented in Round 2.
+
+## Analysis Method
+
+### Dataset
+
+Project data from FIL-RetroPGF-2 (project names), along with the number of votes and amount of funding allocated to each project.
+
+### Intervation / Explanatory Variable
+
+The first letter of the project name (alphabetical order)
+
+### Dependent Variable
+
+- Number of votes each project received.
+- Total funding allocated to each project.
+
+### Identification Strategy
+
+Using the Markov Chain Monte Carlo (MCMC) method, the distribution of correlations between the first letter of project names and both “number of votes” and “funding allocations” was inferred. This was used to evaluate whether the correlation was statistically significant.
+
+### Results
+
+- The analysis revealed a very small negative correlation between the first letter of project names and the number of votes received, but no significant correlation with the amount of funding allocated.
+- From these results, it was concluded that the potential alphabetical ordering effect observed in Round 1 was effectively removed by the UI improvements introduced this time.
