@@ -42,7 +42,7 @@ export async function AppSidebar() {
               <Link href="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Image
-                    src="/beaconlabs01.jpg"
+                    src="/beaconlabs.jpg"
                     alt="BeaconLabsLogo"
                     width={100}
                     height={100}
