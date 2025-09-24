@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       process.env.NODE_ENV === "production"
         ? "https://muse.beaconlabs.io" // Replace with your actual domain
         : "http://localhost:3000";
-    const logoUrl = `${baseUrl}/beaconlabs01.jpg`;
+    const logoUrl = `${baseUrl}/beaconlabs.jpg`;
 
     return new ImageResponse(
       (
@@ -34,7 +34,6 @@ export async function GET(request: Request) {
             display: "flex",
             position: "relative",
             backgroundColor: "white",
-            fontFamily: '"Inter", "Noto Sans JP", system-ui, sans-serif',
           }}
         >
           {/* Background gradient */}
