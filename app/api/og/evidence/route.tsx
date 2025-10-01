@@ -30,7 +30,6 @@ export async function GET(request: Request) {
             display: "flex",
             position: "relative",
             backgroundColor: "white",
-            fontFamily: '"Inter", "Noto Sans JP", system-ui, sans-serif',
           }}
         >
           {/* Background gradient */}
