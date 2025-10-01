@@ -1,0 +1,54 @@
+---
+evidence_id: "15"
+results:
+  - intervention: "Scoring rules (sum, median, mean, etc.)"
+    outcome_variable: "Distribution of funding amounts allocated to each project"
+    outcome: "+"
+strength: "3"
+methodologies:
+  - "Comparison of simulated counterfactual results"
+version: "1.0.0"
+datasets:
+  - "Voting data from badgeholders (voters) in FIL-RetroPGF-2"
+title: "Impact of Changes to Scoring Rules on Fund Allocation"
+date: "2024-12-19"
+tags:
+  - ""
+citation:
+  - name: "A deepdive into FIL-RetroPGF-2 results"
+    src: "https://medium.com/cryptoeconlab/a-deepdive-into-fil-retropgf-2-results-880234699fe4"
+    type: "link"
+author: "BeaconLabs"
+---
+
+## Key Points
+
+In FIL-RetroPGF-2, the scoring rule was changed from the median in Round 1 to the sum. This change made the fund distribution closer to a power-law distribution, increasing the amount of funding received by top projects.
+
+## Background
+
+Within the Filecoin ecosystem, a Retroactive Public Goods Funding (RetroPGF) program has been implemented to provide funding for public goods. FIL-RetroPGF-2 was the second iteration of this program. Based on the results of Round 1, the scoring rules were revised with two objectives: to make the voting mechanism easier to understand, and to ensure that while top projects received substantial funding, a wide range of projects—including those in the long tail—would also benefit.
+
+## Analysis Method
+
+### Dataset
+
+Voting data from badgeholders (voters) in FIL-RetroPGF-2
+
+### Intervation / Explanatory Variable
+
+Scoring rules (sum, median, mean, etc.)
+
+### Dependent Variable
+
+Distribution of funding amounts allocated to each project
+
+### Identification Strategy
+
+The actual fund allocation results using the sum scoring rule in FIL-RetroPGF-2 were compared with simulated counterfactual results under median or mean scoring. In addition, statistical comparisons were made between Round 1 (median) and Round 2 (sum).
+
+### Results
+
+- The sum scoring rule was observed to generate a funding distribution more closely resembling a power-law distribution than the median or mean rules.
+- As a result, compared to Round 1, a larger share of funding went to top projects in Round 2.
+- This change, together with the shift toward assigning absolute funding amounts rather than percentages by badgeholders, may have contributed to a more exponential distribution of funding.
