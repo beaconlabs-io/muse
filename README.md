@@ -1,4 +1,4 @@
-# MUSE by BeaconLabs
+# MUSE by Beacon Labs
 
 <img src="/public/canvas-og.svg">
 
