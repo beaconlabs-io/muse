@@ -235,7 +235,7 @@ export interface LogicModel {
 // CONVERSION UTILITIES
 // =============================================================================
 
-export function toStandard(legacy: LogicModel): StandardizedLogicModel {
+export function toStandardizedFormat(legacy: LogicModel): StandardizedLogicModel {
   const nodes: LogicModelNode[] = legacy.cards.map((card) => {
     // Determine type based on color
     let type: LogicModelNode["type"] = "activities";
@@ -285,7 +285,7 @@ export function toStandard(legacy: LogicModel): StandardizedLogicModel {
   };
 }
 
-export function toLegacy(standardized: StandardizedLogicModel): LogicModel {
+export function toDisplayFormat(standardized: StandardizedLogicModel): LogicModel {
   // Group nodes by type for proper positioning
   const activitiesNodes = standardized.nodes.filter((n) => n.type === "activities");
   const outputNodes = standardized.nodes.filter((n) => n.type === "output");
