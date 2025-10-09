@@ -1,114 +1,81 @@
 {
   "nodes": [
     {
-      "id": "goal-1758546788828",
+      "id": "1760047328209",
+      "type": "activities",
+      "content": "New activities note",
+      "from": [],
+      "to": ["1760047333234"]
+    },
+    {
+      "id": "1760047329479",
+      "type": "output",
+      "content": "New outputs note",
+      "from": ["1760047335705"],
+      "to": ["1760047332693"]
+    },
+    {
+      "id": "1760047330754",
+      "type": "outcome",
+      "content": "New outcomes note",
+      "from": ["1760047333234", "1760047334211"],
+      "to": ["1760047331684"]
+    },
+    {
+      "id": "1760047331684",
       "type": "impact",
-      "content": "Economic Growth",
-      "x": 844.2886000247423,
-      "y": 400.3509943314046,
-      "color": "#e9d5ff",
-      "from": [
-        "evidence-01-1758546792172-outcome-0",
-        "evidence-02-1758546793377-outcome-0",
-        "evidence-00-1758546791337-outcome-0"
-      ],
+      "content": "New impact note",
+      "from": ["1760047332693", "1760047330754"],
       "to": []
     },
     {
-      "id": "evidence-00-1758546791337-output-0",
-      "type": "output",
-      "content": "Listing individual OSS contributors on GitHub Sponsors",
-      "x": 363.16348503171014,
-      "y": 195.12163303024178,
-      "color": "#d1fae5",
-      "from": [],
-      "to": ["evidence-00-1758546791337-outcome-0"]
-    },
-    {
-      "id": "evidence-00-1758546791337-outcome-0",
+      "id": "1760047332693",
       "type": "outcome",
-      "content": "Mixed effect on Submitting Pull Requests (PRs)",
-      "x": 666.4945832985786,
-      "y": 222.43358686179394,
-      "color": "#fef08a",
-      "from": ["evidence-00-1758546791337-output-0"],
-      "to": ["goal-1758546788828"],
-      "metrics": [
-        {
-          "id": "evidence-00-1758546791337-metric-0",
-          "name": "Submitting Pull Requests (PRs) Measurement",
-          "description": "Evidence-based metric from: Effect of Pull Request Submission by listing individual OSS contributors on GitHub Sponsors",
-          "measurementMethod": "DID、Coarsened Exact Matching(CEM) technique、Robustness Tests",
-          "frequency": "quarterly"
-        }
-      ]
+      "content": "New outcomes note",
+      "from": ["1760047329479"],
+      "to": ["1760047331684"]
     },
     {
-      "id": "evidence-01-1758546792172-output-0",
+      "id": "1760047333234",
       "type": "output",
-      "content": "Construction and Deployment of 'Code for America Brigade'",
-      "x": 265.52472019039897,
-      "y": 325.61426389977316,
-      "color": "#d1fae5",
-      "from": [],
-      "to": ["evidence-01-1758546792172-outcome-0"]
+      "content": "New outputs note",
+      "from": ["1760047328209"],
+      "to": ["1760047330754"]
     },
     {
-      "id": "evidence-01-1758546792172-outcome-0",
-      "type": "outcome",
-      "content": "Mixed effect on Generation of 'momentum' in existing civic tech projects (e.g., number of page edits, map additions, and photo uploads on LocalWiki).",
-      "x": 564.9186065886561,
-      "y": 404.9288746530911,
-      "color": "#fef08a",
-      "from": ["evidence-01-1758546792172-output-0"],
-      "to": ["goal-1758546788828"],
-      "metrics": [
-        {
-          "id": "evidence-01-1758546792172-metric-0",
-          "name": "Generation of 'momentum' in existing civic tech projects (e.g., number of page edits, map additions, and photo uploads on LocalWiki). Measurement",
-          "description": "Evidence-based metric from: Effect of Code for America Brigade for momentum of OSS activity",
-          "measurementMethod": "Interview, Survey, Google Analitics",
-          "frequency": "quarterly"
-        }
-      ]
-    },
-    {
-      "id": "evidence-02-1758546793377-output-0",
+      "id": "1760047334211",
       "type": "output",
-      "content": "Whether grants were received or token incentives were provided",
-      "x": 162.3027881735356,
-      "y": 571.3605866484922,
-      "color": "#d1fae5",
-      "from": [],
-      "to": ["evidence-02-1758546793377-outcome-0"]
+      "content": "New outputs note",
+      "from": ["1760047335500", "1760047335342"],
+      "to": ["1760047330754"]
     },
     {
-      "id": "evidence-02-1758546793377-outcome-0",
-      "type": "outcome",
-      "content": "Mixed effect on Developer retention, user activity, and Total Value Locked (TVL) of the network",
-      "x": 505.810141310184,
-      "y": 548.4362658610681,
-      "color": "#fef08a",
-      "from": ["evidence-02-1758546793377-output-0"],
-      "to": ["goal-1758546788828"],
-      "metrics": [
-        {
-          "id": "evidence-02-1758546793377-metric-0",
-          "name": "Developer retention, user activity, and Total Value Locked (TVL) of the network Measurement",
-          "description": "Evidence-based metric from: Effect of a Grant Program on Developer Activity ",
-          "measurementMethod": "Synthetic Control Method",
-          "frequency": "quarterly"
-        }
-      ]
+      "id": "1760047335342",
+      "type": "activities",
+      "content": "New activities note",
+      "from": [],
+      "to": ["1760047334211"]
+    },
+    {
+      "id": "1760047335500",
+      "type": "activities",
+      "content": "New activities note",
+      "from": [],
+      "to": ["1760047334211"]
+    },
+    {
+      "id": "1760047335705",
+      "type": "activities",
+      "content": "New activities note",
+      "from": [],
+      "to": ["1760047329479"]
     }
   ],
   "metadata": {
-    "id": "lm-1758546807379-xpqj1bbo7",
-    "title": "Logic Model 9/22/2025",
+    "id": "lm-1760047515456-x1czb982a",
+    "title": "Logic Model 10/10/2025",
     "description": "Logic model created with Muse",
-    "createdAt": "2025-09-22T13:13:27.379Z",
-    "updatedAt": "2025-09-22T13:13:27.379Z",
-    "version": "1.0.0",
-    "author": "0x06aa005386F53Ba7b980c61e0D067CaBc7602a62"
+    "createdAt": "2025-10-09T22:05:15.456Z",
+    "version": "1.0.0"
   }
 }

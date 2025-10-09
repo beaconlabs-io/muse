@@ -39,7 +39,7 @@ export async function uploadToIPFS(logicModel: StandardizedLogicModel): Promise<
 
 export async function fetchFromIPFS(hash: string): Promise<StandardizedLogicModel> {
   try {
-    const response = await fetch(`https://gateway.pinata.cloud/ipfs/${hash}`);
+    const response = await fetch(`https://ipfs.io/ipfs/${hash}`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

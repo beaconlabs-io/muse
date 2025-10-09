@@ -126,9 +126,6 @@ export interface LogicModelNode {
   id: string;
   type: "impact" | "outcome" | "output" | "activities";
   content: string;
-  x: number;
-  y: number;
-  color: string;
   from: string[];
   to: string[];
   metrics?: LogicModelMetric[];
@@ -148,7 +145,6 @@ export interface LogicModelMetadata {
   title: string;
   description: string;
   createdAt: string;
-  updatedAt: string;
   version: string;
   author?: string;
 }
@@ -177,9 +173,6 @@ export const LogicModelNodeSchema = z.object({
   id: z.string(),
   type: z.enum(["impact", "outcome", "output", "activities"]),
   content: z.string(),
-  x: z.number(),
-  y: z.number(),
-  color: z.string(),
   from: z.array(z.string()),
   to: z.array(z.string()),
   metrics: z.array(LogicModelMetricSchema).optional(),
@@ -190,7 +183,6 @@ export const LogicModelMetadataSchema = z.object({
   title: z.string(),
   description: z.string(),
   createdAt: z.string(),
-  updatedAt: z.string(),
   version: z.string(),
   author: z.string().optional(),
 });
@@ -274,9 +266,6 @@ export function toStandard(legacy: LogicModel): StandardizedLogicModel {
       id: card.id,
       type,
       content: card.content,
-      x: card.x,
-      y: card.y,
-      color: card.color,
       from,
       to,
       metrics: metrics?.length ? metrics : undefined,
@@ -290,7 +279,6 @@ export function toStandard(legacy: LogicModel): StandardizedLogicModel {
       title: legacy.title,
       description: legacy.description || "",
       createdAt: legacy.metadata.createdAt,
-      updatedAt: legacy.metadata.updatedAt,
       version: legacy.metadata.version,
       author: legacy.metadata.author,
     },
@@ -298,13 +286,57 @@ export function toStandard(legacy: LogicModel): StandardizedLogicModel {
 }
 
 export function toLegacy(standardized: StandardizedLogicModel): LogicModel {
-  const cards: PostItCard[] = standardized.nodes.map((node) => ({
-    id: node.id,
-    x: node.x,
-    y: node.y,
-    content: node.content,
-    color: node.color,
-  }));
+  // Group nodes by type for proper positioning
+  const activitiesNodes = standardized.nodes.filter((n) => n.type === "activities");
+  const outputNodes = standardized.nodes.filter((n) => n.type === "output");
+  const outcomeNodes = standardized.nodes.filter((n) => n.type === "outcome");
+  const impactNodes = standardized.nodes.filter((n) => n.type === "impact");
+
+  const cards: PostItCard[] = [];
+
+  // Activities column (left)
+  activitiesNodes.forEach((node, index) => {
+    cards.push({
+      id: node.id,
+      x: 100,
+      y: 150 + index * 150,
+      content: node.content,
+      color: "#c7d2fe",
+    });
+  });
+
+  // Output column (center-left)
+  outputNodes.forEach((node, index) => {
+    cards.push({
+      id: node.id,
+      x: 350,
+      y: 150 + index * 150,
+      content: node.content,
+      color: "#d1fae5",
+    });
+  });
+
+  // Outcome column (center-right)
+  outcomeNodes.forEach((node, index) => {
+    cards.push({
+      id: node.id,
+      x: 600,
+      y: 150 + index * 150,
+      content: node.content,
+      color: "#fef08a",
+    });
+  });
+
+  // Impact column (right)
+  impactNodes.forEach((node, index) => {
+    cards.push({
+      id: node.id,
+      x: 850,
+      y: 150 + index * 150,
+      content: node.content,
+      color: "#e9d5ff",
+    });
+  });
 
   const arrows: Arrow[] = [];
   const cardMetrics: Record<string, CardMetrics[]> = {};
@@ -341,7 +373,7 @@ export function toLegacy(standardized: StandardizedLogicModel): LogicModel {
     cardMetrics,
     metadata: {
       createdAt: standardized.metadata.createdAt,
-      updatedAt: standardized.metadata.updatedAt,
+      updatedAt: standardized.metadata.createdAt, // Use createdAt since updatedAt is removed
       version: standardized.metadata.version,
       author: standardized.metadata.author,
     },
