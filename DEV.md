@@ -8,7 +8,7 @@
 
 ## Sample logic model
 
-https://ipfs.io/ipfs/QmUWoDTnyM25dE4dXK63EdesWtxdcZc1LNkUj878vZJVT7
+https://ipfs.io/ipfs/bafkreidl3cz73d4gfk6uqvoicmuc4kc5n7dknn7f32v6wova3jcmb3xuxa
 
 ## Sequence Diagram
 
