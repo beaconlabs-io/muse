@@ -22,7 +22,7 @@ module.exports = async ({ text, filename }) => {
 
     // Set Pinata options
     const options = JSON.stringify({
-      cidVersion: 0,
+      cidVersion: 1,
     });
     formData.append("pinataOptions", options);
 

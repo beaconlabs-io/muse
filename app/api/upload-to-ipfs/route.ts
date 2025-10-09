@@ -35,6 +35,12 @@ export async function POST(request: NextRequest) {
     };
     formData.append("pinataMetadata", JSON.stringify(pinataMetadata));
 
+    // Add pinata options to use CIDv1
+    const pinataOptions = {
+      cidVersion: 1,
+    };
+    formData.append("pinataOptions", JSON.stringify(pinataOptions));
+
     // Upload to Pinata
     const response = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
       method: "POST",
