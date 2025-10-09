@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
+import { EffectIcons } from "@/components/effect-icons";
 import { StarsComponent } from "@/components/stars";
 import { TableDropdown } from "@/components/table/TableDropdown";
 import { TooltipStrength } from "@/components/tooltip/tooltip-strength";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Evidence } from "@/types";
@@ -57,6 +59,25 @@ export const columns = [
     },
   }),
 
+  columnHelper.accessor("results", {
+    id: "results",
+    header: "Result",
+    cell: ({ row }) => {
+      const results = row.original.results;
+      if (!results || results.length === 0) return null;
+
+      return (
+        <div className="flex flex-wrap gap-2">
+          {results.map(
+            (result, index) =>
+              result.outcome && (
+                <EffectIcons key={index} effectId={result.outcome} isShowTitle={false} />
+              ),
+          )}
+        </div>
+      );
+    },
+  }),
   columnHelper.accessor("methodologies", {
     id: "methodology",
     header: "Methodology",
@@ -71,9 +92,9 @@ export const columns = [
       return (
         <div className="flex flex-wrap gap-1">
           {row.original.tags?.map((tag, index) => (
-            <span key={index} className="rounded-full bg-gray-100 px-2 py-1 text-sm">
+            <Badge variant="secondary" key={index}>
               {tag}
-            </span>
+            </Badge>
           ))}
         </div>
       );
