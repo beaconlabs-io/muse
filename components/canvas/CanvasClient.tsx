@@ -446,7 +446,19 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
       const id = `lm-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
       const now = new Date().toISOString();
 
-      const nodes: LogicModelNode[] = cards.map((card) => {
+      const nodes: {
+        impact: LogicModelNode[];
+        outcome: LogicModelNode[];
+        output: LogicModelNode[];
+        activities: LogicModelNode[];
+      } = {
+        impact: [],
+        outcome: [],
+        output: [],
+        activities: [],
+      };
+
+      cards.forEach((card) => {
         // Determine type based on color
         let type: LogicModelNode["type"] = "activities";
         if (card.color === "#d1fae5") type = "output";
@@ -472,7 +484,7 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
           frequency: metric.frequency,
         }));
 
-        return {
+        const node: LogicModelNode = {
           id: card.id,
           type,
           content: card.content,
@@ -480,6 +492,9 @@ export function CanvasClient({ initialCards = [], initialArrows = [] }: CanvasCl
           to,
           metrics: metrics?.length ? metrics : undefined,
         };
+
+        // Add node to appropriate type array
+        nodes[type].push(node);
       });
 
       return {

@@ -150,7 +150,12 @@ export interface LogicModelMetadata {
 }
 
 export interface StandardizedLogicModel {
-  nodes: LogicModelNode[];
+  nodes: {
+    impact: LogicModelNode[];
+    outcome: LogicModelNode[];
+    output: LogicModelNode[];
+    activities: LogicModelNode[];
+  };
   metadata: LogicModelMetadata;
 }
 
@@ -188,7 +193,12 @@ export const LogicModelMetadataSchema = z.object({
 });
 
 export const StandardizedLogicModelSchema = z.object({
-  nodes: z.array(LogicModelNodeSchema),
+  nodes: z.object({
+    impact: z.array(LogicModelNodeSchema),
+    outcome: z.array(LogicModelNodeSchema),
+    output: z.array(LogicModelNodeSchema),
+    activities: z.array(LogicModelNodeSchema),
+  }),
   metadata: LogicModelMetadataSchema,
 });
 
@@ -236,7 +246,19 @@ export interface LogicModel {
 // =============================================================================
 
 export function toStandardizedFormat(legacy: LogicModel): StandardizedLogicModel {
-  const nodes: LogicModelNode[] = legacy.cards.map((card) => {
+  const nodes: {
+    impact: LogicModelNode[];
+    outcome: LogicModelNode[];
+    output: LogicModelNode[];
+    activities: LogicModelNode[];
+  } = {
+    impact: [],
+    outcome: [],
+    output: [],
+    activities: [],
+  };
+
+  legacy.cards.forEach((card) => {
     // Determine type based on color
     let type: LogicModelNode["type"] = "activities";
     if (card.color === "#d1fae5") type = "output";
@@ -262,7 +284,7 @@ export function toStandardizedFormat(legacy: LogicModel): StandardizedLogicModel
       frequency: metric.frequency,
     }));
 
-    return {
+    const node: LogicModelNode = {
       id: card.id,
       type,
       content: card.content,
@@ -270,6 +292,9 @@ export function toStandardizedFormat(legacy: LogicModel): StandardizedLogicModel
       to,
       metrics: metrics?.length ? metrics : undefined,
     };
+
+    // Add node to appropriate type array
+    nodes[type].push(node);
   });
 
   return {
@@ -286,16 +311,10 @@ export function toStandardizedFormat(legacy: LogicModel): StandardizedLogicModel
 }
 
 export function toDisplayFormat(standardized: StandardizedLogicModel): LogicModel {
-  // Group nodes by type for proper positioning
-  const activitiesNodes = standardized.nodes.filter((n) => n.type === "activities");
-  const outputNodes = standardized.nodes.filter((n) => n.type === "output");
-  const outcomeNodes = standardized.nodes.filter((n) => n.type === "outcome");
-  const impactNodes = standardized.nodes.filter((n) => n.type === "impact");
-
   const cards: PostItCard[] = [];
 
   // Activities column (left)
-  activitiesNodes.forEach((node, index) => {
+  standardized.nodes.activities.forEach((node, index) => {
     cards.push({
       id: node.id,
       x: 100,
@@ -306,7 +325,7 @@ export function toDisplayFormat(standardized: StandardizedLogicModel): LogicMode
   });
 
   // Output column (center-left)
-  outputNodes.forEach((node, index) => {
+  standardized.nodes.output.forEach((node, index) => {
     cards.push({
       id: node.id,
       x: 350,
@@ -317,7 +336,7 @@ export function toDisplayFormat(standardized: StandardizedLogicModel): LogicMode
   });
 
   // Outcome column (center-right)
-  outcomeNodes.forEach((node, index) => {
+  standardized.nodes.outcome.forEach((node, index) => {
     cards.push({
       id: node.id,
       x: 600,
@@ -328,7 +347,7 @@ export function toDisplayFormat(standardized: StandardizedLogicModel): LogicMode
   });
 
   // Impact column (right)
-  impactNodes.forEach((node, index) => {
+  standardized.nodes.impact.forEach((node, index) => {
     cards.push({
       id: node.id,
       x: 850,
@@ -341,7 +360,15 @@ export function toDisplayFormat(standardized: StandardizedLogicModel): LogicMode
   const arrows: Arrow[] = [];
   const cardMetrics: Record<string, CardMetrics[]> = {};
 
-  standardized.nodes.forEach((node) => {
+  // Process all node types
+  const allNodes = [
+    ...standardized.nodes.impact,
+    ...standardized.nodes.outcome,
+    ...standardized.nodes.output,
+    ...standardized.nodes.activities,
+  ];
+
+  allNodes.forEach((node) => {
     // Create arrows from connections
     node.to.forEach((toId) => {
       arrows.push({
