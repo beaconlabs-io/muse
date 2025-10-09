@@ -100,7 +100,7 @@ export function CanvasToolbar({
               <span className="hidden sm:inline">Mint Hypercert</span>
             </Button>
           )}
-          {onExportStandardizedJSON && (
+          {process.env.NODE_ENV === "development" && onExportStandardizedJSON && (
             <Button
               onClick={onExportStandardizedJSON}
               size="sm"
