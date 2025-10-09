@@ -37,13 +37,13 @@ export const columns = [
     enableSorting: false,
     enableHiding: false,
   },
-  columnHelper.accessor("evidence_id", {
-    id: "id",
-    header: "ID",
-    cell: ({ row }) => {
-      return row.original.evidence_id;
-    },
-  }),
+  // columnHelper.accessor("evidence_id", {
+  //   id: "id",
+  //   header: "ID",
+  //   cell: ({ row }) => {
+  //     return row.original.evidence_id;
+  //   },
+  // }),
   columnHelper.accessor("title", {
     id: "title",
     header: "Title",
