@@ -8,13 +8,16 @@ import { MetricsPanel } from "@/components/canvas/MetricsPanel";
 import { PostItCard } from "@/components/canvas/PostItCard";
 import { ZoomControls } from "@/components/canvas/ZoomControls";
 import { Button } from "@/components/ui/button";
-import { LogicModel } from "@/types";
+import { StandardizedLogicModel, toDisplayFormat } from "@/types";
 
 interface Props {
-  logicModel: LogicModel;
+  logicModel: StandardizedLogicModel;
 }
 
-export function LogicModelViewer({ logicModel }: Props) {
+export function LogicModelViewer({ logicModel: standardizedModel }: Props) {
+  // Convert standardized format to display format with positions and colors
+  const logicModel = toDisplayFormat(standardizedModel);
+
   const [zoom, setZoom] = useState(1);
   const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);

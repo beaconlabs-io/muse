@@ -6,6 +6,10 @@
 4. ロジックモデルの attestation が作成される(or store on IPFS)
 5. policy maker はロジックモデル上の outcome/impact を元に hypercerts で impact claim を作成する
 
+## Sample logic model
+
+https://ipfs.io/ipfs/bafkreidl3cz73d4gfk6uqvoicmuc4kc5n7dknn7f32v6wova3jcmb3xuxa
+
 ## Sequence Diagram
 
 ```mermaid

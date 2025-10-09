@@ -1,0 +1,100 @@
+{
+  "nodes": {
+    "impact": [
+      {
+        "id": "goal-1760049775571",
+        "type": "impact",
+        "content": "Economic Growth",
+        "from": ["evidence-04-1760049760056-outcome-0", "evidence-00-1760049758263-outcome-0"],
+        "to": []
+      }
+    ],
+    "outcome": [
+      {
+        "id": "evidence-00-1760049758263-outcome-0",
+        "type": "outcome",
+        "content": "Mixed effect on Submitting Pull Requests (PRs)",
+        "from": ["evidence-00-1760049758263-output-0"],
+        "to": ["goal-1760049775571"],
+        "metrics": [
+          {
+            "id": "evidence-00-1760049758263-metric-0",
+            "name": "Submitting Pull Requests (PRs) Measurement",
+            "description": "Evidence-based metric from: Effect of Pull Request Submission by listing individual OSS contributors on GitHub Sponsors",
+            "measurementMethod": "DID、Coarsened Exact Matching(CEM) technique、Robustness Tests",
+            "frequency": "quarterly"
+          }
+        ]
+      },
+      {
+        "id": "evidence-04-1760049760056-outcome-0",
+        "type": "outcome",
+        "content": "Positive effect on Growth and retention of TVL",
+        "from": ["evidence-04-1760049760056-output-0", "evidence-00-1760049758263-output-0"],
+        "to": ["goal-1760049775571"],
+        "metrics": [
+          {
+            "id": "evidence-04-1760049760056-metric-0",
+            "name": "Growth and retention of TVL Measurement",
+            "description": "Evidence-based metric from: SuperStacks increase TVL",
+            "measurementMethod": "Pro-rata model, One-sided t-tests",
+            "frequency": "quarterly"
+          }
+        ]
+      }
+    ],
+    "output": [
+      {
+        "id": "evidence-00-1760049758263-output-0",
+        "type": "output",
+        "content": "Listing individual OSS contributors on GitHub Sponsors",
+        "from": ["1760049746104", "1760049746427"],
+        "to": ["evidence-00-1760049758263-outcome-0", "evidence-04-1760049760056-outcome-0"]
+      },
+      {
+        "id": "evidence-04-1760049760056-output-0",
+        "type": "output",
+        "content": "SuperStacks: A New Approach to Rewards on the Superchain",
+        "from": ["1760049746658", "1760049746268"],
+        "to": ["evidence-04-1760049760056-outcome-0"]
+      }
+    ],
+    "activities": [
+      {
+        "id": "1760049746104",
+        "type": "activities",
+        "content": "New activities note",
+        "from": [],
+        "to": ["evidence-00-1760049758263-output-0"]
+      },
+      {
+        "id": "1760049746268",
+        "type": "activities",
+        "content": "New activities note",
+        "from": [],
+        "to": ["evidence-04-1760049760056-output-0"]
+      },
+      {
+        "id": "1760049746427",
+        "type": "activities",
+        "content": "New activities note",
+        "from": [],
+        "to": ["evidence-00-1760049758263-output-0"]
+      },
+      {
+        "id": "1760049746658",
+        "type": "activities",
+        "content": "New activities note",
+        "from": [],
+        "to": ["evidence-04-1760049760056-output-0"]
+      }
+    ]
+  },
+  "metadata": {
+    "id": "lm-1760049838852-h9ewhd9gj",
+    "title": "Logic Model 10/10/2025",
+    "description": "Logic model created with Muse",
+    "createdAt": "2025-10-09T22:43:58.852Z",
+    "version": "1.0.0"
+  }
+}

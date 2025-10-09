@@ -7,9 +7,7 @@ import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import Providers from "./providers";
-
-const baseUrl =
-  process.env.NODE_ENV === "production" ? "https://muse.beaconlabs.io" : "http://localhost:3000";
+import { baseUrl } from "@/utils/config";
 
 export const metadata: Metadata = {
   title: "MUSE by BeaconLabs",
