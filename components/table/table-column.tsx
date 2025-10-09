@@ -10,6 +10,7 @@ import { TooltipStrength } from "@/components/tooltip/tooltip-strength";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TooltipEffects } from "../tooltip/tooltip-effects";
 import { Evidence } from "@/types";
 
 const columnHelper = createColumnHelper<Evidence>();
@@ -61,7 +62,14 @@ export const columns = [
 
   columnHelper.accessor("results", {
     id: "results",
-    header: "Result",
+    header: () => {
+      return (
+        <div className="flex flex-row items-center gap-1">
+          Result
+          <TooltipEffects />
+        </div>
+      );
+    },
     cell: ({ row }) => {
       const results = row.original.results;
       if (!results || results.length === 0) return null;
