@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { HypercertClient, formatHypercertData, TransferRestrictions } from "@hypercerts-org/sdk";
+import { formatHypercertData, TransferRestrictions } from "@hypercerts-org/sdk";
 import { track } from "@vercel/analytics";
 import { format } from "date-fns";
 import { toPng } from "html-to-image";
@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { StandardizedLogicModel } from "@/types";
 import { generateHypercertIdFromReceipt } from "@/utils/generateHypercertIdFromReceipt";
+import { getHypercertsClient } from "@/utils/hypercertsConfig";
 import { uploadToIPFS } from "@/utils/ipfs";
 
 // TODO: fix validation
@@ -211,10 +212,7 @@ export default function MintHypercertPage() {
         throw new Error("Wallet client not available");
       }
 
-      const client = new HypercertClient({
-        environment: "test",
-        walletClient,
-      });
+      const client = getHypercertsClient();
 
       const now = Math.floor(Date.now() / 1000);
       const oneYearFromNow = now + 365 * 24 * 60 * 60;
