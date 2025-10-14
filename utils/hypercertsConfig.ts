@@ -1,10 +1,10 @@
 import { HypercertClient, Environment } from "@hypercerts-org/sdk";
 import { useWalletClient } from "wagmi";
 
-const environment: Environment = process.env.NODE_ENV === "production" ? "production" : "test";
+const environment: Environment = process.env.NODE_ENV === "development" ? "test" : "production";
 
 export const HYPERCERTS_URL =
-  process.env.NEXT_PUBLIC_ENV === "development"
+  process.env.NODE_ENV === "development"
     ? "https://testnet.hypercerts.org"
     : "https://app.hypercerts.org";
 
