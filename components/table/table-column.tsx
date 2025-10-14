@@ -16,27 +16,27 @@ import { Evidence } from "@/types";
 const columnHelper = createColumnHelper<Evidence>();
 
 export const columns = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
+  // {
+  //   id: "select",
+  //   header: ({ table }) => (
+  //     <Checkbox
+  //       checked={
+  //         table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")
+  //       }
+  //       onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+  //       aria-label="Select all"
+  //     />
+  //   ),
+  //   cell: ({ row }) => (
+  //     <Checkbox
+  //       checked={row.getIsSelected()}
+  //       onCheckedChange={(value) => row.toggleSelected(!!value)}
+  //       aria-label="Select row"
+  //     />
+  //   ),
+  //   enableSorting: false,
+  //   enableHiding: false,
+  // },
   // columnHelper.accessor("evidence_id", {
   //   id: "id",
   //   header: "ID",
@@ -44,21 +44,21 @@ export const columns = [
   //     return row.original.evidence_id;
   //   },
   // }),
-  columnHelper.accessor("title", {
-    id: "title",
-    header: "Title",
-    cell: ({ row }) => {
-      return (
-        <Link
-          href={`/evidence/${row.original.evidence_id}`}
-          key={row.id}
-          className="hover:bg-muted cursor-pointer transition-colors"
-        >
-          <p className="max-w-[200px] truncate">{row.original.title}</p>
-        </Link>
-      );
-    },
-  }),
+  // columnHelper.accessor("title", {
+  //   id: "title",
+  //   header: "Title",
+  //   cell: ({ row }) => {
+  //     return (
+  //       <Link
+  //         href={`/evidence/${row.original.evidence_id}`}
+  //         key={row.id}
+  //         className="hover:bg-muted cursor-pointer transition-colors"
+  //       >
+  //         <p className="max-w-[200px] truncate">{row.original.title}</p>
+  //       </Link>
+  //     );
+  //   },
+  // }),
 
   columnHelper.accessor("results", {
     id: "results",
@@ -75,14 +75,19 @@ export const columns = [
       if (!results || results.length === 0) return null;
 
       return (
-        <div className="flex flex-wrap gap-2">
-          {results.map(
-            (result, index) =>
-              result.outcome && (
-                <EffectIcons key={index} effectId={result.outcome} isShowTitle={false} />
-              ),
-          )}
-        </div>
+        <Link
+          href={`/evidence/${row.original.evidence_id}`}
+          className="flex cursor-pointer flex-col gap-2"
+        >
+          {results.map((result, index) => (
+            <div key={index} className="flex items-center gap-2">
+              {result.outcome && <EffectIcons effectId={result.outcome} isShowTitle={false} />}
+              <div className="text-sm">{result.intervention}</div>
+              <div className="text-sm">→</div>
+              <div className="text-sm">{result.outcome_variable}</div>
+            </div>
+          ))}
+        </Link>
       );
     },
   }),
