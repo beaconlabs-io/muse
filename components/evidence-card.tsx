@@ -21,7 +21,7 @@ export function EvidenceCard({ evidence }: EvidenceCardProps) {
             <span className="text-muted-foreground">{evidence.date}</span>
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardContent className="pt-0">
           {evidence.tags?.length ? (
             <div className="mb-3 flex flex-wrap gap-1.5">
               {evidence.tags.slice(0, 4).map((tag) => (
@@ -36,7 +36,7 @@ export function EvidenceCard({ evidence }: EvidenceCardProps) {
               )}
             </div>
           ) : null}
-          <div className="space-y-3">
+          <div>
             {results.map((result, index) => (
               <div key={index} className="flex items-start gap-3">
                 <div className="text-muted-foreground mt-0.5 shrink-0">
