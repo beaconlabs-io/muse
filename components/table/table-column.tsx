@@ -3,60 +3,94 @@
 import Link from "next/link";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
+import { EffectIcons } from "@/components/effect-icons";
 import { StarsComponent } from "@/components/stars";
 import { TableDropdown } from "@/components/table/TableDropdown";
 import { TooltipStrength } from "@/components/tooltip/tooltip-strength";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TooltipEffects } from "../tooltip/tooltip-effects";
 import { Evidence } from "@/types";
 
 const columnHelper = createColumnHelper<Evidence>();
 
 export const columns = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  columnHelper.accessor("evidence_id", {
-    id: "id",
-    header: "ID",
-    cell: ({ row }) => {
-      return row.original.evidence_id;
+  // {
+  //   id: "select",
+  //   header: ({ table }) => (
+  //     <Checkbox
+  //       checked={
+  //         table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")
+  //       }
+  //       onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+  //       aria-label="Select all"
+  //     />
+  //   ),
+  //   cell: ({ row }) => (
+  //     <Checkbox
+  //       checked={row.getIsSelected()}
+  //       onCheckedChange={(value) => row.toggleSelected(!!value)}
+  //       aria-label="Select row"
+  //     />
+  //   ),
+  //   enableSorting: false,
+  //   enableHiding: false,
+  // },
+  // columnHelper.accessor("evidence_id", {
+  //   id: "id",
+  //   header: "ID",
+  //   cell: ({ row }) => {
+  //     return row.original.evidence_id;
+  //   },
+  // }),
+  // columnHelper.accessor("title", {
+  //   id: "title",
+  //   header: "Title",
+  //   cell: ({ row }) => {
+  //     return (
+  //       <Link
+  //         href={`/evidence/${row.original.evidence_id}`}
+  //         key={row.id}
+  //         className="hover:bg-muted cursor-pointer transition-colors"
+  //       >
+  //         <p className="max-w-[200px] truncate">{row.original.title}</p>
+  //       </Link>
+  //     );
+  //   },
+  // }),
+
+  columnHelper.accessor("results", {
+    id: "results",
+    header: () => {
+      return (
+        <div className="flex flex-row items-center gap-1">
+          Result
+          <TooltipEffects />
+        </div>
+      );
     },
-  }),
-  columnHelper.accessor("title", {
-    id: "title",
-    header: "Title",
     cell: ({ row }) => {
+      const results = row.original.results;
+      if (!results || results.length === 0) return null;
+
       return (
         <Link
           href={`/evidence/${row.original.evidence_id}`}
-          key={row.id}
-          className="hover:bg-muted cursor-pointer transition-colors"
+          className="flex cursor-pointer flex-col gap-2"
         >
-          <p className="max-w-[200px] truncate">{row.original.title}</p>
+          {results.map((result, index) => (
+            <div key={index} className="flex items-center gap-2">
+              {result.outcome && <EffectIcons effectId={result.outcome} isShowTitle={false} />}
+              <div className="text-sm">{result.intervention}</div>
+              <div className="text-sm">→</div>
+              <div className="text-sm">{result.outcome_variable}</div>
+            </div>
+          ))}
         </Link>
       );
     },
   }),
-
   columnHelper.accessor("methodologies", {
     id: "methodology",
     header: "Methodology",
@@ -71,9 +105,9 @@ export const columns = [
       return (
         <div className="flex flex-wrap gap-1">
           {row.original.tags?.map((tag, index) => (
-            <span key={index} className="rounded-full bg-gray-100 px-2 py-1 text-sm">
+            <Badge variant="secondary" key={index}>
               {tag}
-            </span>
+            </Badge>
           ))}
         </div>
       );

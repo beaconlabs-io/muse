@@ -1,8 +1,8 @@
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Chain, TransactionReceipt } from "viem";
-import { HYPERCERTS_URL } from "@/utils/config";
 import { generateBlockExplorerLink } from "@/utils/generateExploreLink";
+import { HYPERCERTS_URL } from "@/utils/hypercertsConfig";
 
 interface ExtraContentProps {
   message?: React.ReactNode;

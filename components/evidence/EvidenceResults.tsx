@@ -12,7 +12,7 @@ export function EvidenceResults({ results }: EvidenceResultsProps) {
 
   return (
     <div className="mb-6">
-      <div className="flex flex-row">
+      <div className="flex flex-row items-center gap-1">
         <h3>Results</h3>
         <TooltipEffects />
       </div>
