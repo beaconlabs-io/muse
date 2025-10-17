@@ -16,9 +16,6 @@ export default async function EvidencePage({ params }: { params: Promise<{ slug:
     await queryClient.prefetchQuery({
       queryKey: ["evidence", slug],
       queryFn: async () => {
-        if (process.env.NODE_ENV === "development") {
-          console.log("🚀 Prefetching evidence data on server...");
-        }
         return await getEvidenceBySlug(slug);
       },
       staleTime: 5 * 60 * 1000, // 5 minutes
