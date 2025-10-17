@@ -580,7 +580,7 @@ export default function MintHypercertPage() {
                   ref={hypercertCardRef}
                   title={watchedTitle || "Your title here"}
                   banner={bannerPreviewUrl || "/canvas-og.svg"}
-                  logo={logoPreviewUrl || "/beaconlabs.jpg"}
+                  logo={logoPreviewUrl || "/beaconlabs.png"}
                   workStartDate={watchedWorkDates?.[0] || new Date()}
                   workEndDate={watchedWorkDates?.[1] || new Date()}
                   badges={["Logic Model", watchedImpactScope].filter(Boolean)}
