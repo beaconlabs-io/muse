@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
     const { meta } = evidence;
 
-    const logoUrl = `${baseUrl}/beaconlabs01.jpg`;
+    const logoUrl = `${baseUrl}/beaconlabs.png`;
 
     return new ImageResponse(
       (
