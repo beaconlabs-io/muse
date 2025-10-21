@@ -17,3 +17,16 @@ export function getHypercertsClient(): HypercertClient {
 
   return client;
 }
+
+const prodGraphql = "https://api.hypercerts.org/v2/graphql";
+const devGraphql = "https://staging-api.hypercerts.org/v2/graphql";
+
+const productionREST = "https://api.hypercerts.org/v2";
+const developmentREST = "https://staging-api.hypercerts.org/v2";
+
+const HYPERCERTS_API_URL_REST =
+  process.env.NODE_ENV === "production" ? productionREST : developmentREST;
+const HYPERCERTS_API_URL = process.env.NODE_ENV === "production" ? prodGraphql : devGraphql;
+
+export const graphqlEndpoint = HYPERCERTS_API_URL;
+export const restEndpoint = HYPERCERTS_API_URL_REST;
