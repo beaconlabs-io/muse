@@ -7,7 +7,7 @@ import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import Providers from "./providers";
-import { baseUrl } from "@/utils/config";
+import { baseUrl } from "@/configs";
 
 export const metadata: Metadata = {
   title: "MUSE by BeaconLabs",

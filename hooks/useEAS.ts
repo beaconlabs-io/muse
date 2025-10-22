@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { request, gql } from "graphql-request";
 import { hexToBigInt } from "viem";
+import { EAS_GRAPHQL_URL } from "@/configs/eas";
 import {
   AttestationData,
   AttestationResponse,
@@ -8,7 +9,6 @@ import {
   SingleAttestationResponse,
   SingleDecodedEvidence,
 } from "@/types";
-import { EAS_GRAPHQL_URL } from "@/utils/config";
 
 const ALL_EVIDENCE_QUERY = gql`
   query Attestations($schemaId: String!) {
