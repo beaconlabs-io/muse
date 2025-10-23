@@ -10,7 +10,6 @@ import {
 const CHAIN_ID = process.env.NODE_ENV === "development" ? baseSepolia.id : undefined;
 export default async function Page() {
   const queryClient = new QueryClient();
-  const dehydratedState = dehydrate(queryClient);
 
   const params: GetAllHypercertsParams = {
     first: 12,
@@ -23,13 +22,15 @@ export default async function Page() {
     await queryClient.prefetchQuery({
       queryKey: ["allHypercerts"],
       queryFn: async () => {
-        console.log(await getAllHypercerts(params));
         return await getAllHypercerts(params);
       },
     });
   } catch (error) {
-    console.error("Error prefetching evidence data:", error);
+    console.error("Error prefetching hypercerts: ", error);
   }
+
+  const dehydratedState = dehydrate(queryClient);
+
   return (
     <HydrationBoundary state={dehydratedState}>
       <AllHypercerts />
