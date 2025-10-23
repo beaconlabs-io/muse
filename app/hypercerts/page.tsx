@@ -1,7 +1,7 @@
 import React from "react";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { baseSepolia } from "viem/chains";
-import { AllHypercerts } from "./hypercerts-list";
+import { HypercertsList } from "./hypercerts-list";
 import {
   getAllHypercerts,
   GetAllHypercertsParams,
@@ -33,7 +33,7 @@ export default async function Page() {
 
   return (
     <HydrationBoundary state={dehydratedState}>
-      <AllHypercerts />
+      <HypercertsList />
     </HydrationBoundary>
   );
 }
