@@ -30,7 +30,6 @@ const query = graphql(
     ) {
       hypercerts(where: $where, first: $first, offset: $offset, sortBy: $sortBy) {
         count
-
         data {
           ...HypercertListFragment
         }

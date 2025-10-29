@@ -4,6 +4,7 @@ export const HypercertListFragment = graphql(`
   fragment HypercertListFragment on Hypercert {
     metadata {
       name
+      description
     }
     attestations {
       count
