@@ -212,7 +212,7 @@ export default function MintHypercertPage() {
         throw new Error("Wallet client not available");
       }
 
-      const client = getHypercertsClient();
+      const client = getHypercertsClient(walletClient);
 
       const now = Math.floor(Date.now() / 1000);
       const oneYearFromNow = now + 365 * 24 * 60 * 60;
