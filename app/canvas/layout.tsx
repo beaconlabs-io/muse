@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { baseUrl } from "@/utils/config";
+import { baseUrl } from "@/configs";
 
 export const metadata: Metadata = {
   title: "MUSE Canvas - Interactive Logic Models",

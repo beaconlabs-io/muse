@@ -34,10 +34,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
+// import { getHypercertsClient } from "@/configs/hypercerts";
 import { cn } from "@/lib/utils";
 import { StandardizedLogicModel } from "@/types";
 import { generateHypercertIdFromReceipt } from "@/utils/generateHypercertIdFromReceipt";
-// import { getHypercertsClient } from "@/utils/hypercertsConfig";
 import { uploadToIPFS } from "@/utils/ipfs";
 
 // TODO: fix validation
@@ -586,7 +586,6 @@ export default function MintHypercertPage() {
           {/* Right side - Preview */}
           <div className="space-y-6">
             <div>
-              <h3 className="mb-4 text-lg font-semibold">Live Preview</h3>
               <div className="flex justify-center">
                 <HypercertCard
                   ref={hypercertCardRef}
