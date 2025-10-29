@@ -38,7 +38,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { StandardizedLogicModel } from "@/types";
 import { generateHypercertIdFromReceipt } from "@/utils/generateHypercertIdFromReceipt";
-// import { getHypercertsClient } from "@/utils/hypercertsConfig";
 import { uploadToIPFS } from "@/utils/ipfs";
 
 // TODO: fix validation

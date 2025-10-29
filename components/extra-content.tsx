@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import type { Chain, TransactionReceipt } from "viem";
 // import { HYPERCERTS_URL } from "@/configs/hypercerts";
 import { generateBlockExplorerLink } from "@/utils/generateExploreLink";
-// import { HYPERCERTS_URL } from "@/utils/hypercertsConfig";
 interface ExtraContentProps {
   message?: React.ReactNode;
   hypercertId: string;
