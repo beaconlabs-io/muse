@@ -587,7 +587,6 @@ export default function MintHypercertPage() {
           {/* Right side - Preview */}
           <div className="space-y-6">
             <div>
-              <h3 className="mb-4 text-lg font-semibold">Live Preview</h3>
               <div className="flex justify-center">
                 <HypercertCard
                   ref={hypercertCardRef}
