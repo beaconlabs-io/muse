@@ -10,9 +10,10 @@ const getHypercertsData = cache(async (params: GetAllHypercertsParams) => {
 });
 
 export default function Page() {
+  // TODO: implement pagenation
   const params: GetAllHypercertsParams = {
-    first: 12,
-    offset: 12,
+    first: 100,
+    offset: 0,
     burned: false,
   };
 
