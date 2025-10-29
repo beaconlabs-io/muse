@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, ChevronRight, Search, Palette } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, Palette, ScrollText } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Sidebar,
@@ -27,6 +27,11 @@ const menu = [
     title: "Canvas",
     icon: Palette,
     href: "/canvas",
+  },
+  {
+    title: "Hypercerts",
+    icon: ScrollText,
+    href: "/hypercerts",
   },
 ];
 
