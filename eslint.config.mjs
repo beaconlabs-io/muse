@@ -4,6 +4,16 @@ import * as importX from "eslint-plugin-import-x";
 
 export default [
   {
+    ignores: [
+      "*.config.js",
+      "node_modules/**",
+      "dist/**",
+      ".next/**",
+      "public/**",
+      "**/components/ui/**",
+    ],
+  },
+  {
     name: "ESLint Config - nextjs",
     plugins: {
       "@next/next": pluginNext,
@@ -13,14 +23,6 @@ export default [
       parser: parser,
     },
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
-    ignores: [
-      "*.config.js",
-      "node_modules/",
-      "dist/",
-      ".next/",
-      "public/",
-      "**/components/ui/**",
-    ],
     rules: {
       ...pluginNext.configs.recommended.rules,
       ...pluginNext.configs["core-web-vitals"].rules,
