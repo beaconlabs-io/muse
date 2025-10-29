@@ -3,12 +3,18 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { formatHypercertData, TransferRestrictions } from "@hypercerts-org/sdk";
+import {
+  Environment,
+  formatHypercertData,
+  HypercertClient,
+  TransferRestrictions,
+} from "@hypercerts-org/sdk";
 import { track } from "@vercel/analytics";
 import { format } from "date-fns";
 import { toPng } from "html-to-image";
 import { ArrowLeft, Loader2, CalendarIcon, Trash2 } from "lucide-react";
 import { waitForTransactionReceipt } from "viem/actions";
+import { baseSepolia, sepolia } from "viem/chains";
 import { useAccount, useWalletClient } from "wagmi";
 import { z } from "zod";
 import { createExtraContent } from "@/components/extra-content";
@@ -31,7 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { StandardizedLogicModel } from "@/types";
 import { generateHypercertIdFromReceipt } from "@/utils/generateHypercertIdFromReceipt";
-import { getHypercertsClient } from "@/utils/hypercertsConfig";
+// import { getHypercertsClient } from "@/utils/hypercertsConfig";
 import { uploadToIPFS } from "@/utils/ipfs";
 
 // TODO: fix validation
@@ -142,6 +148,14 @@ export default function MintHypercertPage() {
   // Generate preview URLs for files
   const logoPreviewUrl = watchedLogoFile ? URL.createObjectURL(watchedLogoFile) : null;
   const bannerPreviewUrl = watchedBannerFile ? URL.createObjectURL(watchedBannerFile) : null;
+  // TODO: separate testnet
+  const chainId = useAccount().chainId;
+  const environment: Environment = chainId == baseSepolia.id || sepolia.id ? "test" : "production";
+  const client = new HypercertClient({
+    environment,
+    walletClient,
+  });
+  // const client = getHypercertsClient(walletClient);
 
   // File handling functions
   const clearLogoFile = () => {
@@ -211,8 +225,6 @@ export default function MintHypercertPage() {
       if (!walletClient) {
         throw new Error("Wallet client not available");
       }
-
-      const client = getHypercertsClient(walletClient);
 
       const now = Math.floor(Date.now() / 1000);
       const oneYearFromNow = now + 365 * 24 * 60 * 60;
