@@ -1,4 +1,4 @@
-import { Hypercert } from "./hypercerts";
+import { Hypercert } from "./hypercert";
 import { HypercertListFragment } from "@/types/hypercerts/fragments/hypercert-list.fragment";
 
 interface HypercertsListProps {
