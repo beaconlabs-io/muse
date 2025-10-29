@@ -239,7 +239,7 @@ export default function MintHypercertPage() {
         external_url: `https://muse.beaconlabs.io/canvas/${ipfsResult.hash}`,
         image: imageToUse,
         version: "1.0.0",
-        workScope: ["Logic Model Implementation"],
+        workScope: ["Logic Model"],
         impactScope: [data.impactScope],
         workTimeframeStart: data.workDates?.[0]
           ? Math.floor(data.workDates[0].getTime() / 1000)
