@@ -49,7 +49,7 @@ function createFilter({
   burned?: boolean;
 }): VariableTypes["where"] {
   const where: VariableTypes["where"] = {};
-  where.metadata = { work_scope: { arrayContains: ["Logic Model Implementation"] } };
+  where.metadata = { work_scope: { arrayOverlaps: ["Logic Model", "Logic Model Implementation"] } };
 
   if (chainId) {
     where.contract = {
@@ -90,7 +90,7 @@ export async function getAllHypercerts({
   offset,
   orderBy,
   chainId,
-  burned = false,
+  burned,
 }: GetAllHypercertsParams) {
   const res = await request(graphqlEndpoint, query, {
     first,
