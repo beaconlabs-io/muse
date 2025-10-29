@@ -3,7 +3,7 @@ import Link from "next/link";
 const text = `{
   "id": "0",
   "title": "MUSE",
-  "description": "MUSE is a bank of evidence.",
+  "description": "MUSE is a evidence layer for funding public goods.",
   "author": "Beacon Labs",
   "timestamp": "2025-05-01T10:00:00Z"
 }`;
