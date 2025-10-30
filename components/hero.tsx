@@ -26,7 +26,7 @@ export function Hero() {
               <div className="mt-10 flex items-center gap-x-6">
                 {/* TODO: replace to whitepaper */}
                 <Link
-                  href="https://github.com/beaconlabs-io/muse"
+                  href="https://beaconlabs.io/reports/evidence-layer-for-digital-public-goods"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm leading-6 font-semibold text-gray-900"
