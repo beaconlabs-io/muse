@@ -3,7 +3,7 @@ import Link from "next/link";
 const text = `{
   "id": "0",
   "title": "MUSE",
-  "description": "MUSE is a bank of evidence.",
+  "description": "MUSE is a evidence layer for funding public goods.",
   "author": "Beacon Labs",
   "timestamp": "2025-05-01T10:00:00Z"
 }`;
@@ -26,7 +26,7 @@ export function Hero() {
               <div className="mt-10 flex items-center gap-x-6">
                 {/* TODO: replace to whitepaper */}
                 <Link
-                  href="https://github.com/beaconlabs-io/muse"
+                  href="https://beaconlabs.io/reports/evidence-layer-for-digital-public-goods"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm leading-6 font-semibold text-gray-900"
