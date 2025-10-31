@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import { toPng } from "html-to-image";
 import { ArrowLeft, Loader2, CalendarIcon, Trash2 } from "lucide-react";
 import { waitForTransactionReceipt } from "viem/actions";
-import { baseSepolia, sepolia } from "viem/chains";
+import { baseSepolia, filecoinCalibration, sepolia } from "viem/chains";
 import { useAccount, useWalletClient } from "wagmi";
 import { z } from "zod";
 import { createExtraContent } from "@/components/extra-content";
@@ -150,7 +150,8 @@ export default function MintHypercertPage() {
   const bannerPreviewUrl = watchedBannerFile ? URL.createObjectURL(watchedBannerFile) : null;
   // TODO: separate testnet
   const chainId = useAccount().chainId;
-  const environment: Environment = chainId == baseSepolia.id || sepolia.id ? "test" : "production";
+  const environment: Environment =
+    chainId == baseSepolia.id || sepolia.id || filecoinCalibration.id ? "test" : "production";
   const client = new HypercertClient({
     environment,
     walletClient,
