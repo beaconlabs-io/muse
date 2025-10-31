@@ -11,6 +11,8 @@ const CHAIN_NAMES: Record<number, string> = {
   42220: "Celo",
   11155111: "Sepolia",
   84532: "Base Sepolia",
+  314: "Filecoin",
+  314159: "Filecoin Calibration",
 };
 
 export function Hypercert({ hypercert }: { hypercert: HypercertListFragment }) {

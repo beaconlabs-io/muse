@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { baseSepolia, sepolia } from "viem/chains";
+import { baseSepolia, filecoinCalibration, sepolia } from "viem/chains";
 import { Button } from "@/components/ui/button";
 import type { Chain, TransactionReceipt } from "viem";
 // import { HYPERCERTS_URL } from "@/configs/hypercerts";
@@ -20,7 +20,7 @@ export function ExtraContent({
 }: ExtraContentProps) {
   // TODO: separate testnet
   const HYPERCERTS_URL =
-    chain.id == baseSepolia.id || sepolia.id
+    chain.id == baseSepolia.id || sepolia.id || filecoinCalibration.id
       ? "https://testnet.hypercerts.org"
       : "https://app.hypercerts.org";
 
