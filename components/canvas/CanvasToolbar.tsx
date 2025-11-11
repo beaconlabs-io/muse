@@ -23,20 +23,16 @@ export function CanvasToolbar({
   onClearAllData,
 }: CanvasToolbarProps) {
   return (
-    <div className="bg-background flex items-center justify-between border-b p-3 sm:p-4">
-      <div className="flex items-center gap-4">
+    <div className="bg-background flex items-center justify-end border-b p-3 sm:p-4">
+      <div className="flex items-center gap-2">
         {/* Add Logic Button */}
         <AddLogicSheet onSubmit={onAddCard} />
-      </div>
-
-      {/* Action buttons - fixed right */}
-      <div className="flex items-center gap-2">
         {onClearAllData && (
           <Button
             onClick={onClearAllData}
             size="sm"
             variant="destructive"
-            className="flex items-center gap-2"
+            className="flex cursor-pointer items-center gap-2"
           >
             <Trash2 className="h-4 w-4" />
             <span className="hidden sm:inline">Clear All</span>
@@ -47,7 +43,7 @@ export function CanvasToolbar({
             onClick={onSaveLogicModel}
             size="sm"
             variant="default"
-            className="flex items-center gap-2"
+            className="flex cursor-pointer items-center gap-2"
           >
             <Save className="h-4 w-4" />
             <span className="hidden sm:inline">Mint Hypercert</span>
@@ -58,10 +54,10 @@ export function CanvasToolbar({
             onClick={onExportStandardizedJSON}
             size="sm"
             variant="outline"
-            className="flex items-center gap-2"
+            className="lex cursor-pointer items-center gap-2"
           >
             <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Export JSON</span>
+            <span className="hidden cursor-pointer sm:inline">Export JSON</span>
           </Button>
         )}
       </div>
