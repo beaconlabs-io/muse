@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { LogicModelViewer } from "@/components/canvas/LogicModelViewer";
 import { Button } from "@/components/ui/button";
 import { fetchFromIPFS } from "@/utils/ipfs";
 
@@ -52,9 +51,5 @@ export default function LogicModelPage({ params }: Props) {
     );
   }
 
-  return (
-    <div className="min-h-screen">
-      <LogicModelViewer logicModel={logicModel!} />
-    </div>
-  );
+  return <div className="min-h-screen">{/* <LogicModelViewer logicModel={logicModel!} /> */}</div>;
 }

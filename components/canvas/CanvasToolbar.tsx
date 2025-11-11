@@ -1,5 +1,4 @@
-import { Plus, Move, FileText, Target, Save, Download, Trash2 } from "lucide-react";
-import { ZoomControls } from "@/components/canvas/ZoomControls";
+import { Plus, Target, Save, Download, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,8 +13,6 @@ interface CanvasToolbarProps {
   onAddCard: (section?: string) => void;
   zoom: number;
   onZoomChange: (delta: number) => void;
-  onToggleEvidencePanel: () => void;
-  showEvidencePanel: boolean;
   selectedGoal?: string;
   onGoalChange: (goal: string) => void;
   onSaveLogicModel?: () => void;
@@ -42,8 +39,6 @@ export function CanvasToolbar({
   onAddCard,
   zoom,
   onZoomChange,
-  onToggleEvidencePanel,
-  showEvidencePanel,
   selectedGoal,
   onGoalChange,
   onSaveLogicModel,
@@ -133,36 +128,6 @@ export function CanvasToolbar({
             <span className="sm:hidden">{section.label.slice(0, 3)}</span>
           </Button>
         ))}
-      </div>
-
-      {/* Controls and help text */}
-      <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
-        {/* Evidence panel toggle */}
-        <Button
-          onClick={onToggleEvidencePanel}
-          size="sm"
-          variant={showEvidencePanel ? "default" : "outline"}
-          className="flex cursor-pointer items-center gap-2"
-        >
-          <FileText className="h-4 w-4" />
-          <span className="hidden sm:inline">Evidence</span>
-        </Button>
-
-        {/* Zoom controls */}
-        <ZoomControls zoom={zoom} onZoomChange={onZoomChange} />
-
-        {/* Help text */}
-        <div className="text-muted-foreground flex items-center gap-2 text-xs sm:text-sm">
-          <Move className="h-4 w-4 flex-shrink-0" />
-          <span className="hidden lg:inline">
-            Drag cards or canvas to move • Double-click to edit • Delete key to remove • Click + on
-            cards to connect
-          </span>
-          <span className="hidden sm:inline lg:hidden">
-            Drag to move • Double-click to edit • Delete to remove • Click + to connect
-          </span>
-          <span className="sm:hidden">Drag to move • Double-click to edit</span>
-        </div>
       </div>
     </div>
   );
