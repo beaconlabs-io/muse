@@ -1,23 +1,51 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 const navigation = [
   {
     title: "Evidence",
     href: "/search",
+    description: "Search evidence curated by community and Beacon Labs.",
   },
   {
     title: "Canvas",
     href: "/canvas",
+    description: "Create and edit interactive logic models with evidence.",
   },
   {
     title: "Hypercerts",
     href: "/hypercerts",
+    description: "Explore Hypercerts created via MUSE.",
   },
 ];
 
-export function AppHeader() {
+function ListItem({
+  title,
+  children,
+  href,
+  ...props
+}: React.ComponentPropsWithoutRef<"li"> & { href: string }) {
+  return (
+    <li {...props}>
+      <NavigationMenuLink asChild>
+        <Link href={href}>
+          <div className="text-sm leading-none font-medium">{title}</div>
+          <p className="text-muted-foreground text-sm leading-snug">{children}</p>
+        </Link>
+      </NavigationMenuLink>
+    </li>
+  );
+}
+
+export function Header() {
   return (
     <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
       <div className="flex h-16 items-center justify-between px-4">
@@ -34,7 +62,23 @@ export function AppHeader() {
             </div>
             <span className="font-medium">MUSE</span>
           </Link>
-          <nav className="flex items-center gap-6">
+          <NavigationMenu className="md:hidden">
+            <NavigationMenuList className="flex-wrap">
+              <NavigationMenuItem>
+                <NavigationMenuTrigger>Menu</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[150px] gap-2">
+                    {navigation.map((item) => (
+                      <ListItem href={item.href} title={item.title}>
+                        {item.description}
+                      </ListItem>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+          <nav className="hidden items-center gap-6 md:flex">
             {navigation.map((item) => (
               <Link
                 key={item.title}
@@ -48,7 +92,7 @@ export function AppHeader() {
         </div>
         <ConnectButton
           chainStatus={{
-            smallScreen: "icon",
+            smallScreen: "none",
             largeScreen: "full",
           }}
           showBalance={{

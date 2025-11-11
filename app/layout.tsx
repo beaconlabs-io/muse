@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import { Toaster } from "sonner";
-import { AppHeader } from "@/components/app-header";
+import { Header } from "@/components/header";
 import Providers from "./providers";
 import { baseUrl } from "@/configs";
 
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <Providers>
-          <AppHeader />
+          <Header />
           {children}
           <Toaster />
         </Providers>
