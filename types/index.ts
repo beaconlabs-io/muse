@@ -445,3 +445,15 @@ export const CARD_COLORS = [
 ] as const;
 
 export type CardColor = (typeof CARD_COLORS)[number];
+
+// Type-to-color mapping for logic model components
+export const TYPE_COLOR_MAP = {
+  activities: "#c7d2fe", // blue
+  outputs: "#d1fae5", // green
+  "outcomes-short": "#fef08a", // yellow
+  "outcomes-medium": "#fef08a", // yellow
+  "outcomes-long": "#fef08a", // yellow
+  impact: "#e9d5ff", // purple
+} as const;
+
+export type NodeType = keyof typeof TYPE_COLOR_MAP;
