@@ -283,9 +283,10 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
 
       // Update cardMetrics if metrics are provided
       if (formData.metrics && formData.metrics.length > 0) {
+        const metrics = formData.metrics;
         setCardMetrics((prev) => ({
           ...prev,
-          [nodeId]: formData.metrics.map((m: any, idx: number) => ({
+          [nodeId]: metrics.map((m: any, idx: number) => ({
             id: `${nodeId}-metric-${idx}`,
             name: m.name,
             description: m.description,
@@ -369,9 +370,10 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
 
       // Update cardMetrics
       if (formData.metrics && formData.metrics.length > 0) {
+        const metrics = formData.metrics;
         setCardMetrics((prev) => ({
           ...prev,
-          [editingNodeId]: formData.metrics.map((m: any, idx: number) => ({
+          [editingNodeId]: metrics.map((m: any, idx: number) => ({
             id: `${editingNodeId}-metric-${idx}`,
             name: m.name,
             description: m.description,
