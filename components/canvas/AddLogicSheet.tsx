@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
@@ -42,6 +42,10 @@ type AddLogicFormData = z.infer<typeof addLogicFormSchema>;
 
 interface AddLogicSheetProps {
   onSubmit: (data: AddLogicFormData) => void;
+  editMode?: boolean;
+  initialData?: Partial<AddLogicFormData>;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const LOGIC_TYPES = [
@@ -53,21 +57,44 @@ const LOGIC_TYPES = [
   { value: "impact", label: "Impact" },
 ] as const;
 
-export function AddLogicSheet({ onSubmit }: AddLogicSheetProps) {
-  const [open, setOpen] = useState(false);
+export function AddLogicSheet({
+  onSubmit,
+  editMode = false,
+  initialData,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: AddLogicSheetProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
 
   const form = useForm<AddLogicFormData>({
     resolver: zodResolver(addLogicFormSchema),
     defaultValues: {
-      type: "",
-      title: "",
-      description: "",
+      type: initialData?.type || "",
+      title: initialData?.title || "",
+      description: initialData?.description || "",
     },
   });
 
+  // Update form when initialData changes (for edit mode)
+  useEffect(() => {
+    if (editMode && initialData) {
+      form.reset({
+        type: initialData.type || "",
+        title: initialData.title || "",
+        description: initialData.description || "",
+      });
+    }
+  }, [editMode, initialData, form]);
+
   const handleSubmit = (data: AddLogicFormData) => {
     onSubmit(data);
-    form.reset();
+    if (!editMode) {
+      form.reset();
+    }
     setOpen(false);
   };
 
@@ -81,9 +108,11 @@ export function AddLogicSheet({ onSubmit }: AddLogicSheetProps) {
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Add Logic Node</SheetTitle>
+          <SheetTitle>{editMode ? "Edit Logic Node" : "Add Logic Node"}</SheetTitle>
           <SheetDescription>
-            Add a new logic node with type, title, and description.
+            {editMode
+              ? "Update the logic node with new information."
+              : "Add a new logic node with type, title, and description."}
           </SheetDescription>
         </SheetHeader>
 
@@ -157,7 +186,7 @@ export function AddLogicSheet({ onSubmit }: AddLogicSheetProps) {
               >
                 Cancel
               </Button>
-              <Button type="submit">Add Card</Button>
+              <Button type="submit">{editMode ? "Update" : "Add Card"}</Button>
             </div>
           </form>
         </Form>
