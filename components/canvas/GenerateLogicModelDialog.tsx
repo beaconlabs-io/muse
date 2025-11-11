@@ -14,7 +14,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import type { Card, Arrow, CardMetrics } from "@/types";
-import { generateLogicModelFromIntent } from "@/app/canvas/actions";
+import { generateLogicModelFromIntent } from "@/app/actions/canvas/generateLogicModel";
 
 interface GenerateLogicModelDialogProps {
   onGenerate: (data: {
