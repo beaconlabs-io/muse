@@ -26,7 +26,7 @@ import {
   arrowsToEdges,
   edgesToArrows,
 } from "@/lib/canvas/react-flow-utils";
-import { Card, Arrow, CARD_COLORS, CanvasData } from "@/types";
+import { Card, Arrow, CARD_COLORS, CanvasData, TYPE_COLOR_MAP } from "@/types";
 
 interface CardMetrics {
   id: string;
@@ -100,11 +100,12 @@ export function ReactFlowCanvas({
 
   // Helper function to get type from color
   const getTypeFromColor = useCallback((color: string): string => {
+    // All outcome types share the same color, so default to outcomes-short
     const colorMap: Record<string, string> = {
-      [CARD_COLORS[3]]: "activities",
-      [CARD_COLORS[4]]: "outputs",
-      [CARD_COLORS[0]]: "outcomes-short",
-      [CARD_COLORS[5]]: "impact",
+      [TYPE_COLOR_MAP.activities]: "activities",
+      [TYPE_COLOR_MAP.outputs]: "outputs",
+      [TYPE_COLOR_MAP["outcomes-short"]]: "outcomes-short", // All outcomes share same color
+      [TYPE_COLOR_MAP.impact]: "impact",
     };
     return colorMap[color] || "activities";
   }, []);
@@ -208,13 +209,13 @@ export function ReactFlowCanvas({
             return {
               x: 50 + Math.random() * 150,
               y: 150 + Math.random() * 300,
-              color: CARD_COLORS[3],
+              color: TYPE_COLOR_MAP.activities,
             };
           case "outputs":
             return {
               x: 300 + Math.random() * 150,
               y: 150 + Math.random() * 300,
-              color: CARD_COLORS[4],
+              color: TYPE_COLOR_MAP.outputs,
             };
           case "outcomes-short":
           case "outcomes-medium":
@@ -222,13 +223,13 @@ export function ReactFlowCanvas({
             return {
               x: 550 + Math.random() * 150,
               y: 150 + Math.random() * 300,
-              color: CARD_COLORS[0],
+              color: TYPE_COLOR_MAP["outcomes-short"],
             };
           case "impact":
             return {
               x: 800 + Math.random() * 150,
               y: 150 + Math.random() * 300,
-              color: CARD_COLORS[5],
+              color: TYPE_COLOR_MAP.impact,
             };
           default:
             return {
@@ -310,17 +311,17 @@ export function ReactFlowCanvas({
       const getSectionPosition = (sectionType: string) => {
         switch (sectionType) {
           case "activities":
-            return { color: CARD_COLORS[3] };
+            return { color: TYPE_COLOR_MAP.activities };
           case "outputs":
-            return { color: CARD_COLORS[4] };
+            return { color: TYPE_COLOR_MAP.outputs };
           case "outcomes-short":
           case "outcomes-medium":
           case "outcomes-long":
-            return { color: CARD_COLORS[0] };
+            return { color: TYPE_COLOR_MAP["outcomes-short"] };
           case "impact":
-            return { color: CARD_COLORS[5] };
+            return { color: TYPE_COLOR_MAP.impact };
           default:
-            return { color: CARD_COLORS[0] };
+            return { color: TYPE_COLOR_MAP["outcomes-short"] };
         }
       };
 
@@ -499,6 +500,49 @@ export function ReactFlowCanvas({
     }
   }, [setNodes, setEdges]);
 
+  // Load generated canvas data from agent
+  const loadGeneratedCanvas = useCallback(
+    (data: { cards: Card[]; arrows: Arrow[]; cardMetrics: Record<string, CardMetrics[]> }) => {
+      const newNodes = cardsToNodes(data.cards);
+      const newEdges = arrowsToEdges(data.arrows);
+
+      // Add callbacks to nodes
+      const nodesWithCallbacks = newNodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          type: node.data.type || getTypeFromColor(node.data.color),
+          metrics: data.cardMetrics[node.id],
+          onContentChange: (content: string) => {
+            setNodes((nds) =>
+              nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, content } } : n)),
+            );
+          },
+          onDeleteCard: () => {
+            setNodes((nds) => nds.filter((n) => n.id !== node.id));
+            setEdges((eds) =>
+              eds.filter((edge) => edge.source !== node.id && edge.target !== node.id),
+            );
+            setCardMetrics((prev) => {
+              const newMetrics = { ...prev };
+              delete newMetrics[node.id];
+              return newMetrics;
+            });
+          },
+          onEdit: () => {
+            setEditingNodeId(node.id);
+            setEditSheetOpen(true);
+          },
+        },
+      }));
+
+      setNodes(nodesWithCallbacks);
+      setEdges(newEdges);
+      setCardMetrics(data.cardMetrics);
+    },
+    [setNodes, setEdges, getTypeFromColor, setEditingNodeId, setEditSheetOpen],
+  );
+
   // Get editing node data for the form
   const editingNodeData = useMemo(() => {
     if (!editingNodeId) return null;
@@ -527,6 +571,7 @@ export function ReactFlowCanvas({
         onSaveLogicModel={openHypercertDialog}
         onExportStandardizedJSON={exportAsJSON}
         onClearAllData={clearAllData}
+        onLoadGeneratedCanvas={loadGeneratedCanvas}
       />
 
       <div className="flex flex-1 overflow-hidden">

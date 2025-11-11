@@ -1,6 +1,8 @@
 import { Save, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddLogicSheet } from "./AddLogicSheet";
+import { GenerateLogicModelDialog } from "./GenerateLogicModelDialog";
+import type { Card, Arrow, CardMetrics } from "@/types";
 
 interface AddLogicFormData {
   type: string;
@@ -14,6 +16,11 @@ interface CanvasToolbarProps {
   onSaveLogicModel?: () => void;
   onExportStandardizedJSON?: () => void;
   onClearAllData?: () => void;
+  onLoadGeneratedCanvas?: (data: {
+    cards: Card[];
+    arrows: Arrow[];
+    cardMetrics: Record<string, CardMetrics[]>;
+  }) => void;
 }
 
 export function CanvasToolbar({
@@ -21,10 +28,13 @@ export function CanvasToolbar({
   onSaveLogicModel,
   onExportStandardizedJSON,
   onClearAllData,
+  onLoadGeneratedCanvas,
 }: CanvasToolbarProps) {
   return (
     <div className="bg-background flex items-center justify-end border-b p-3 sm:p-4">
       <div className="flex items-center gap-2">
+        {/* Generate from Intent Button */}
+        {onLoadGeneratedCanvas && <GenerateLogicModelDialog onGenerate={onLoadGeneratedCanvas} />}
         {/* Add Logic Button */}
         <AddLogicSheet onSubmit={onAddCard} />
         {onClearAllData && (
