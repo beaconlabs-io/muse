@@ -69,7 +69,7 @@ export function Header() {
                 <NavigationMenuContent>
                   <ul className="grid w-[150px] gap-2">
                     {navigation.map((item) => (
-                      <ListItem href={item.href} title={item.title}>
+                      <ListItem key={item.title} href={item.href} title={item.title}>
                         {item.description}
                       </ListItem>
                     ))}
