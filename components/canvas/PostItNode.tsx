@@ -149,7 +149,7 @@ export const PostItNode = memo(({ data, selected }: NodeProps & { data: PostItNo
           className="absolute right-2 bottom-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-700 text-xs font-semibold text-white"
           title={`${data.metrics.length} metric${data.metrics.length !== 1 ? "s" : ""} configured`}
         >
-          {data.metrics.length}metric(s) added
+          {data.metrics.length}metric(s)
         </div>
       )}
     </div>
