@@ -127,8 +127,10 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
     [],
   );
 
-  // Ensure all nodes have callbacks and type (for nodes loaded from localStorage)
+  // Ensure all nodes have callbacks, type, and metrics (for nodes loaded from localStorage)
   useEffect(() => {
+    const initialCardMetrics = savedState?.cardMetrics || {};
+
     setNodes((nds) =>
       nds.map((node) => {
         const needsUpdate =
@@ -137,6 +139,9 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
           !node.data.onDeleteCard ||
           !node.data.type;
 
+        // Load metrics from initial cardMetrics if not already in node data
+        const nodeMetrics = node.data.metrics || initialCardMetrics[node.id];
+
         if (needsUpdate) {
           return {
             ...node,
@@ -144,6 +149,8 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
               ...node.data,
               // If type is missing, infer it from color for backward compatibility
               type: node.data.type || getTypeFromColor(node.data.color),
+              // Load metrics from cardMetrics state
+              metrics: nodeMetrics,
               onContentChange: (content: string) => {
                 setNodes((nds) =>
                   nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, content } } : n)),
@@ -191,7 +198,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
   }, [nodes, edges, cardMetrics]);
 
   const addCard = useCallback(
-    (formData: { type: string; title: string; description?: string }) => {
+    (formData: { type: string; title: string; description?: string; metrics?: unknown[] }) => {
       const getSectionPosition = (sectionType: string) => {
         switch (sectionType) {
           case "activities":
@@ -246,6 +253,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
           content,
           color: position.color,
           type: formData.type,
+          metrics: formData.metrics as any[] | undefined,
           onContentChange: (content: string) => {
             setNodes((nds) =>
               nds.map((node) =>
@@ -272,12 +280,27 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
       };
 
       setNodes((nds) => [...nds, newNode]);
+
+      // Update cardMetrics if metrics are provided
+      if (formData.metrics && formData.metrics.length > 0) {
+        setCardMetrics((prev) => ({
+          ...prev,
+          [nodeId]: formData.metrics.map((m: any, idx: number) => ({
+            id: `${nodeId}-metric-${idx}`,
+            name: m.name,
+            description: m.description,
+            measurementMethod: m.measurementMethod,
+            targetValue: m.targetValue,
+            frequency: m.frequency,
+          })),
+        }));
+      }
     },
-    [setNodes, setEdges],
+    [setNodes, setEdges, setCardMetrics],
   );
 
   const updateCard = useCallback(
-    (formData: { type: string; title: string; description?: string }) => {
+    (formData: { type: string; title: string; description?: string; metrics?: unknown[] }) => {
       if (!editingNodeId) return;
 
       const getSectionPosition = (sectionType: string) => {
@@ -312,6 +335,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
                 content,
                 color: position.color,
                 type: formData.type,
+                metrics: formData.metrics as any[] | undefined,
                 onContentChange: (content: string) => {
                   setNodes((nds) =>
                     nds.map((n) =>
@@ -343,9 +367,31 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
         }),
       );
 
+      // Update cardMetrics
+      if (formData.metrics && formData.metrics.length > 0) {
+        setCardMetrics((prev) => ({
+          ...prev,
+          [editingNodeId]: formData.metrics.map((m: any, idx: number) => ({
+            id: `${editingNodeId}-metric-${idx}`,
+            name: m.name,
+            description: m.description,
+            measurementMethod: m.measurementMethod,
+            targetValue: m.targetValue,
+            frequency: m.frequency,
+          })),
+        }));
+      } else {
+        // Remove metrics if none provided
+        setCardMetrics((prev) => {
+          const newMetrics = { ...prev };
+          delete newMetrics[editingNodeId];
+          return newMetrics;
+        });
+      }
+
       setEditingNodeId(null);
     },
-    [editingNodeId, setNodes, setEdges],
+    [editingNodeId, setNodes, setEdges, setCardMetrics],
   );
 
   const handleConnect = useCallback(
@@ -518,6 +564,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
       type,
       title,
       description: description || undefined,
+      metrics: node.data.metrics,
     };
   }, [editingNodeId, nodes, getTypeFromColor]);
 

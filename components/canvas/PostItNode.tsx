@@ -5,11 +5,20 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Pencil, Zap, Package, Target, Sparkles } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+interface MetricData {
+  name: string;
+  description?: string;
+  measurementMethod?: string;
+  targetValue?: string;
+  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
+}
+
 export interface PostItNodeData extends Record<string, unknown> {
   id: string;
   content: string;
   color: string;
   type?: string;
+  metrics?: MetricData[];
   onContentChange?: (content: string) => void;
   onDeleteCard?: () => void;
   onEdit?: () => void;
@@ -128,11 +137,21 @@ export const PostItNode = memo(({ data, selected }: NodeProps & { data: PostItNo
           e.stopPropagation();
           data.onEdit?.();
         }}
-        className="absolute -top-2 -right-2 hidden h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-blue-500 text-white group-hover:flex hover:bg-blue-600"
+        className="absolute -top-2 -right-2 hidden h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-gray-500 text-white group-hover:flex hover:bg-gray-600"
         title="Edit card"
       >
         <Pencil className="h-3 w-3" aria-hidden="true" />
       </button>
+
+      {/* Metrics count badge (bottom right) */}
+      {data.metrics && data.metrics.length > 0 && (
+        <div
+          className="absolute right-2 bottom-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-700 text-xs font-semibold text-white"
+          title={`${data.metrics.length} metric${data.metrics.length !== 1 ? "s" : ""} configured`}
+        >
+          {data.metrics.length}
+        </div>
+      )}
     </div>
   );
 });

@@ -6,6 +6,7 @@ interface AddLogicFormData {
   type: string;
   title: string;
   description?: string;
+  metrics?: unknown[];
 }
 
 interface CanvasToolbarProps {
