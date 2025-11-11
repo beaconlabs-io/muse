@@ -17,6 +17,7 @@ import {
 } from "@xyflow/react";
 import { useAccount } from "wagmi";
 import "@xyflow/react/dist/style.css";
+import { AddLogicSheet } from "./AddLogicSheet";
 import { CanvasToolbar } from "./CanvasToolbar";
 import { PostItNode, type PostItNodeData } from "./PostItNode";
 import {
@@ -92,6 +93,21 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
     savedState?.cardMetrics || {},
   );
 
+  // Edit node state
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+
+  // Helper function to get type from color
+  const getTypeFromColor = useCallback((color: string): string => {
+    const colorMap: Record<string, string> = {
+      [CARD_COLORS[3]]: "activities",
+      [CARD_COLORS[4]]: "outputs",
+      [CARD_COLORS[0]]: "outcomes-short",
+      [CARD_COLORS[5]]: "impact",
+    };
+    return colorMap[color] || "activities";
+  }, []);
+
   // Define custom node types
   const nodeTypes: NodeTypes = useMemo(
     () => ({
@@ -110,6 +126,51 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
     }),
     [],
   );
+
+  // Ensure all nodes have callbacks and type (for nodes loaded from localStorage)
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        const needsUpdate =
+          !node.data.onEdit ||
+          !node.data.onContentChange ||
+          !node.data.onDeleteCard ||
+          !node.data.type;
+
+        if (needsUpdate) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              // If type is missing, infer it from color for backward compatibility
+              type: node.data.type || getTypeFromColor(node.data.color),
+              onContentChange: (content: string) => {
+                setNodes((nds) =>
+                  nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, content } } : n)),
+                );
+              },
+              onDeleteCard: () => {
+                setNodes((nds) => nds.filter((n) => n.id !== node.id));
+                setEdges((eds) =>
+                  eds.filter((edge) => edge.source !== node.id && edge.target !== node.id),
+                );
+                setCardMetrics((prev) => {
+                  const newMetrics = { ...prev };
+                  delete newMetrics[node.id];
+                  return newMetrics;
+                });
+              },
+              onEdit: () => {
+                setEditingNodeId(node.id);
+                setEditSheetOpen(true);
+              },
+            },
+          };
+        }
+        return node;
+      }),
+    );
+  }, []); // Only run once on mount
 
   // Auto-save canvas state
   useEffect(() => {
@@ -184,6 +245,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
           id: nodeId,
           content,
           color: position.color,
+          type: formData.type,
           onContentChange: (content: string) => {
             setNodes((nds) =>
               nds.map((node) =>
@@ -202,12 +264,88 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
               return newMetrics;
             });
           },
+          onEdit: () => {
+            setEditingNodeId(nodeId);
+            setEditSheetOpen(true);
+          },
         },
       };
 
       setNodes((nds) => [...nds, newNode]);
     },
     [setNodes, setEdges],
+  );
+
+  const updateCard = useCallback(
+    (formData: { type: string; title: string; description?: string }) => {
+      if (!editingNodeId) return;
+
+      const getSectionPosition = (sectionType: string) => {
+        switch (sectionType) {
+          case "activities":
+            return { color: CARD_COLORS[3] };
+          case "outputs":
+            return { color: CARD_COLORS[4] };
+          case "outcomes-short":
+          case "outcomes-medium":
+          case "outcomes-long":
+            return { color: CARD_COLORS[0] };
+          case "impact":
+            return { color: CARD_COLORS[5] };
+          default:
+            return { color: CARD_COLORS[0] };
+        }
+      };
+
+      const position = getSectionPosition(formData.type);
+      const content = formData.description
+        ? `${formData.title}\n\n${formData.description}`
+        : formData.title;
+
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === editingNodeId) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                content,
+                color: position.color,
+                type: formData.type,
+                onContentChange: (content: string) => {
+                  setNodes((nds) =>
+                    nds.map((n) =>
+                      n.id === editingNodeId ? { ...n, data: { ...n.data, content } } : n,
+                    ),
+                  );
+                },
+                onDeleteCard: () => {
+                  setNodes((nds) => nds.filter((n) => n.id !== editingNodeId));
+                  setEdges((eds) =>
+                    eds.filter(
+                      (edge) => edge.source !== editingNodeId && edge.target !== editingNodeId,
+                    ),
+                  );
+                  setCardMetrics((prev) => {
+                    const newMetrics = { ...prev };
+                    delete newMetrics[editingNodeId];
+                    return newMetrics;
+                  });
+                },
+                onEdit: () => {
+                  setEditingNodeId(editingNodeId);
+                  setEditSheetOpen(true);
+                },
+              },
+            };
+          }
+          return node;
+        }),
+      );
+
+      setEditingNodeId(null);
+    },
+    [editingNodeId, setNodes, setEdges],
   );
 
   const handleConnect = useCallback(
@@ -363,6 +501,26 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
     }
   }, [setNodes, setEdges]);
 
+  // Get editing node data for the form
+  const editingNodeData = useMemo(() => {
+    if (!editingNodeId) return null;
+
+    const node = nodes.find((n) => n.id === editingNodeId);
+    if (!node) return null;
+
+    const parts = node.data.content.split("\n\n");
+    const title = parts[0] || "";
+    const description = parts.slice(1).join("\n\n");
+    // Use the node's type if available, otherwise infer from color
+    const type = node.data.type || getTypeFromColor(node.data.color);
+
+    return {
+      type,
+      title,
+      description: description || undefined,
+    };
+  }, [editingNodeId, nodes, getTypeFromColor]);
+
   return (
     <div className="flex h-screen w-full flex-col">
       <CanvasToolbar
@@ -391,6 +549,17 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
           </ReactFlow>
         </div>
       </div>
+
+      {/* Edit node sheet */}
+      {editingNodeData && (
+        <AddLogicSheet
+          editMode
+          initialData={editingNodeData}
+          open={editSheetOpen}
+          onOpenChange={setEditSheetOpen}
+          onSubmit={updateCard}
+        />
+      )}
     </div>
   );
 }
