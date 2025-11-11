@@ -2,6 +2,7 @@
 
 import { memo, useState, useRef, useEffect } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { X } from "lucide-react";
 
 export interface PostItNodeData extends Record<string, unknown> {
   id: string;
@@ -105,7 +106,7 @@ export const PostItNode = memo(({ data, selected }: NodeProps & { data: PostItNo
         className="absolute -top-2 -right-2 hidden h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white group-hover:flex hover:bg-red-600"
         title="Delete card"
       >
-        ×
+        <X className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   );

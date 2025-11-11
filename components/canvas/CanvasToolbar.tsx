@@ -1,133 +1,68 @@
-import { Plus, Target, Save, Download, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Save, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AddLogicSheet } from "./AddLogicSheet";
+
+interface AddLogicFormData {
+  type: string;
+  title: string;
+  description?: string;
+}
 
 interface CanvasToolbarProps {
-  onAddCard: (section?: string) => void;
-  zoom: number;
-  onZoomChange: (delta: number) => void;
-  selectedGoal?: string;
-  onGoalChange: (goal: string) => void;
+  onAddCard: (data: AddLogicFormData) => void;
   onSaveLogicModel?: () => void;
   onExportStandardizedJSON?: () => void;
   onClearAllData?: () => void;
 }
 
-const LOGIC_MODEL_SECTIONS = [
-  { value: "activities", label: "Activities", color: "#c7d2fe" },
-  { value: "outputs", label: "Outputs", color: "#d1fae5" },
-  { value: "outcomes", label: "Outcomes", color: "#fef08a" },
-  { value: "impact", label: "Impact", color: "#e9d5ff" },
-] as const;
-
-const PROJECT_GOALS = [
-  {
-    value: "environmental-sustainability",
-    label: "Environmental Sustainability",
-  },
-  { value: "economic-growth", label: "Economic Growth" },
-] as const;
-
 export function CanvasToolbar({
   onAddCard,
-  zoom,
-  onZoomChange,
-  selectedGoal,
-  onGoalChange,
   onSaveLogicModel,
   onExportStandardizedJSON,
   onClearAllData,
 }: CanvasToolbarProps) {
   return (
-    <div className="bg-background flex flex-col gap-3 border-b p-3 sm:p-4">
-      {/* Goal Selection and Save/Export */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Target className="text-muted-foreground h-4 w-4" />
-          <span className="text-sm font-medium">Goal:</span>
-          <Select value={selectedGoal} onValueChange={onGoalChange}>
-            <SelectTrigger className="w-64">
-              <SelectValue placeholder="Select your goal" />
-            </SelectTrigger>
-            <SelectContent>
-              {PROJECT_GOALS.map((goal) => (
-                <SelectItem key={goal.value} value={goal.value}>
-                  {goal.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedGoal && (
-            <Badge variant="secondary">
-              {PROJECT_GOALS.find((g) => g.value === selectedGoal)?.label}
-            </Badge>
-          )}
-        </div>
-
-        {/* Save and Export buttons - fixed right */}
-        <div className="flex items-center gap-2">
-          {onClearAllData && (
-            <Button
-              onClick={onClearAllData}
-              size="sm"
-              variant="destructive"
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Clear All</span>
-            </Button>
-          )}
-          {onSaveLogicModel && (
-            <Button
-              onClick={onSaveLogicModel}
-              size="sm"
-              variant="default"
-              className="flex items-center gap-2"
-            >
-              <Save className="h-4 w-4" />
-              <span className="hidden sm:inline">Mint Hypercert</span>
-            </Button>
-          )}
-          {process.env.NODE_ENV === "development" && onExportStandardizedJSON && (
-            <Button
-              onClick={onExportStandardizedJSON}
-              size="sm"
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Export JSON</span>
-            </Button>
-          )}
-        </div>
+    <div className="bg-background flex items-center justify-between border-b p-3 sm:p-4">
+      <div className="flex items-center gap-4">
+        {/* Add Logic Button */}
+        <AddLogicSheet onSubmit={onAddCard} />
       </div>
 
-      {/* Section buttons */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {LOGIC_MODEL_SECTIONS.map((section) => (
+      {/* Action buttons - fixed right */}
+      <div className="flex items-center gap-2">
+        {onClearAllData && (
           <Button
-            key={section.value}
-            onClick={() => onAddCard(section.value)}
+            onClick={onClearAllData}
+            size="sm"
+            variant="destructive"
+            className="flex items-center gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Clear All</span>
+          </Button>
+        )}
+        {onSaveLogicModel && (
+          <Button
+            onClick={onSaveLogicModel}
+            size="sm"
+            variant="default"
+            className="flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            <span className="hidden sm:inline">Mint Hypercert</span>
+          </Button>
+        )}
+        {process.env.NODE_ENV === "development" && onExportStandardizedJSON && (
+          <Button
+            onClick={onExportStandardizedJSON}
             size="sm"
             variant="outline"
-            className="border-2 px-2 text-xs transition-all hover:scale-105 sm:px-3 sm:text-sm"
-            style={{
-              borderColor: section.color,
-              backgroundColor: `${section.color}20`,
-            }}
+            className="flex items-center gap-2"
           >
-            <Plus className="mr-1 h-3 w-3" />
-            <span className="hidden sm:inline">{section.label}</span>
-            <span className="sm:hidden">{section.label.slice(0, 3)}</span>
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Export JSON</span>
           </Button>
-        ))}
+        )}
       </div>
     </div>
   );

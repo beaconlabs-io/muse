@@ -52,7 +52,6 @@ interface CanvasState {
   cards: PostItCard[];
   arrows: Arrow[];
   cardMetrics: Record<string, CardMetrics[]>;
-  selectedGoal: string;
 }
 
 // Save canvas state to localStorage
@@ -92,8 +91,6 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
   const [cardMetrics, setCardMetrics] = useState<Record<string, CardMetrics[]>>(
     savedState?.cardMetrics || {},
   );
-  const [selectedGoal, setSelectedGoal] = useState<string>(savedState?.selectedGoal || "");
-  const [addedGoalCard, setAddedGoalCard] = useState<string | null>(null);
 
   // Define custom node types
   const nodeTypes: NodeTypes = useMemo(
@@ -123,7 +120,6 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
       cards,
       arrows,
       cardMetrics,
-      selectedGoal,
     };
 
     const timeoutId = setTimeout(() => {
@@ -131,11 +127,11 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [nodes, edges, cardMetrics, selectedGoal]);
+  }, [nodes, edges, cardMetrics]);
 
   const addCard = useCallback(
-    (section?: string) => {
-      const getSectionPosition = (sectionType?: string) => {
+    (formData: { type: string; title: string; description?: string }) => {
+      const getSectionPosition = (sectionType: string) => {
         switch (sectionType) {
           case "activities":
             return {
@@ -149,7 +145,9 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
               y: 150 + Math.random() * 300,
               color: CARD_COLORS[4],
             };
-          case "outcomes":
+          case "outcomes-short":
+          case "outcomes-medium":
+          case "outcomes-long":
             return {
               x: 550 + Math.random() * 150,
               y: 150 + Math.random() * 300,
@@ -170,15 +168,21 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
         }
       };
 
-      const position = getSectionPosition(section);
+      const position = getSectionPosition(formData.type);
       const nodeId = Date.now().toString();
+
+      // Combine title and description into content
+      const content = formData.description
+        ? `${formData.title}\n\n${formData.description}`
+        : formData.title;
+
       const newNode: Node<PostItNodeData> = {
         id: nodeId,
         type: "postItNode",
         position: { x: position.x, y: position.y },
         data: {
           id: nodeId,
-          content: section ? `New ${section} note` : "New note",
+          content,
           color: position.color,
           onContentChange: (content: string) => {
             setNodes((nds) =>
@@ -197,16 +201,13 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
               delete newMetrics[nodeId];
               return newMetrics;
             });
-            if (addedGoalCard === nodeId) {
-              setAddedGoalCard(null);
-            }
           },
         },
       };
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [setNodes, setEdges, addedGoalCard],
+    [setNodes, setEdges],
   );
 
   const handleConnect = useCallback(
@@ -224,58 +225,6 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
       }
     },
     [setEdges],
-  );
-
-  const handleGoalChange = useCallback(
-    (goalValue: string) => {
-      setSelectedGoal(goalValue);
-
-      if (!goalValue) {
-        if (addedGoalCard) {
-          setNodes((nds) => nds.filter((node) => node.id !== addedGoalCard));
-          setAddedGoalCard(null);
-        }
-        return;
-      }
-
-      if (addedGoalCard) {
-        setNodes((nds) => nds.filter((node) => node.id !== addedGoalCard));
-      }
-
-      const goalLabels = {
-        "environmental-sustainability": "Environmental Sustainability",
-        "economic-growth": "Economic Growth",
-      } as const;
-
-      const goalLabel = goalLabels[goalValue as keyof typeof goalLabels] || goalValue;
-      const impactNodeId = `goal-${Date.now().toString()}`;
-
-      const impactNode: Node<PostItNodeData> = {
-        id: impactNodeId,
-        type: "postItNode",
-        position: { x: 800 + Math.random() * 150, y: 150 + Math.random() * 300 },
-        data: {
-          id: impactNodeId,
-          content: goalLabel,
-          color: CARD_COLORS[5],
-          onContentChange: (content: string) => {
-            setNodes((nds) =>
-              nds.map((node) =>
-                node.id === impactNodeId ? { ...node, data: { ...node.data, content } } : node,
-              ),
-            );
-          },
-          onDeleteCard: () => {
-            setNodes((nds) => nds.filter((node) => node.id !== impactNodeId));
-            setAddedGoalCard(null);
-          },
-        },
-      };
-
-      setNodes((nds) => [...nds, impactNode]);
-      setAddedGoalCard(impactNodeId);
-    },
-    [addedGoalCard, setNodes],
   );
 
   const createStandardizedLogicModelFromCanvas = useCallback(
@@ -359,7 +308,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
       const cards = nodesToCards(nodes);
       const arrows = edgesToArrows(edges);
 
-      saveCanvasState({ cards, arrows, cardMetrics, selectedGoal });
+      saveCanvasState({ cards, arrows, cardMetrics });
       sessionStorage.setItem("currentLogicModel", JSON.stringify(standardizedModel));
 
       router.push("/canvas/mint-hypercert");
@@ -367,15 +316,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
       console.error("Failed to prepare logic model:", error);
       alert("Failed to prepare logic model. Please try again.");
     }
-  }, [
-    nodes,
-    edges,
-    cardMetrics,
-    selectedGoal,
-    address,
-    createStandardizedLogicModelFromCanvas,
-    router,
-  ]);
+  }, [nodes, edges, cardMetrics, address, createStandardizedLogicModelFromCanvas, router]);
 
   const exportAsStandardizedJSON = useCallback(() => {
     const standardizedModel = createStandardizedLogicModelFromCanvas(
@@ -414,7 +355,6 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
       setNodes([]);
       setEdges([]);
       setCardMetrics({});
-      setSelectedGoal("");
 
       if (typeof window !== "undefined") {
         localStorage.removeItem("canvasState");
@@ -427,10 +367,6 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
     <div className="flex h-screen w-full flex-col">
       <CanvasToolbar
         onAddCard={addCard}
-        zoom={1}
-        onZoomChange={() => {}}
-        selectedGoal={selectedGoal}
-        onGoalChange={handleGoalChange}
         onSaveLogicModel={openHypercertDialog}
         onExportStandardizedJSON={exportAsStandardizedJSON}
         onClearAllData={clearAllData}
