@@ -39,8 +39,6 @@ export async function generateLogicModelFromIntent(
       },
     );
 
-    console.log({ result });
-
     // Extract the tool response from the agent's result
     // Mastra wraps tool results in: { type, runId, from, payload: { result: <actual tool return> } }
     // Our tool returns: { canvasData, explanation }
