@@ -1,8 +1,8 @@
-import { StandardizedLogicModel, IPFSStorageResult } from "@/types";
+import { CanvasData, IPFSStorageResult } from "@/types";
 
-export async function uploadToIPFS(logicModel: StandardizedLogicModel): Promise<IPFSStorageResult> {
+export async function uploadToIPFS(canvasData: CanvasData): Promise<IPFSStorageResult> {
   try {
-    const filename = `logic-model-${logicModel.metadata.id}.json`;
+    const filename = `canvas-${canvasData.id}.json`;
 
     const response = await fetch("/api/upload-to-ipfs", {
       method: "POST",
@@ -10,10 +10,11 @@ export async function uploadToIPFS(logicModel: StandardizedLogicModel): Promise<
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        data: logicModel,
+        data: canvasData,
         filename,
       }),
     });
+
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -37,7 +38,7 @@ export async function uploadToIPFS(logicModel: StandardizedLogicModel): Promise<
   }
 }
 
-export async function fetchFromIPFS(hash: string): Promise<StandardizedLogicModel> {
+export async function fetchFromIPFS(hash: string): Promise<CanvasData> {
   try {
     const response = await fetch(`https://ipfs.io/ipfs/${hash}`);
 
@@ -45,14 +46,14 @@ export async function fetchFromIPFS(hash: string): Promise<StandardizedLogicMode
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const logicModel = await response.json();
+    const canvasData = await response.json();
 
-    // Validate the standardized structure
-    if (!logicModel.metadata?.id || !logicModel.nodes) {
-      throw new Error("Invalid standardized logic model structure");
+    // Validate the canvas data structure
+    if (!canvasData.id || !canvasData.cards || !canvasData.metadata) {
+      throw new Error("Invalid canvas data structure");
     }
 
-    return logicModel as StandardizedLogicModel;
+    return canvasData as CanvasData;
   } catch (error) {
     console.error("IPFS fetch error:", error);
     throw error;

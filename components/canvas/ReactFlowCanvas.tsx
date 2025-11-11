@@ -26,13 +26,7 @@ import {
   arrowsToEdges,
   edgesToArrows,
 } from "@/lib/canvas/react-flow-utils";
-import {
-  PostItCard,
-  Arrow,
-  CARD_COLORS,
-  LogicModelNode,
-  StandardizedLogicModelSchema,
-} from "@/types";
+import { Card, Arrow, CARD_COLORS, CanvasData } from "@/types";
 
 interface CardMetrics {
   id: string;
@@ -44,13 +38,15 @@ interface CardMetrics {
 }
 
 interface ReactFlowCanvasProps {
-  initialCards?: PostItCard[];
+  initialCards?: Card[];
   initialArrows?: Arrow[];
+  initialCardMetrics?: Record<string, CardMetrics[]>;
+  disableLocalStorage?: boolean; // Don't use localStorage when viewing IPFS canvas
 }
 
 // Canvas state interface for localStorage
 interface CanvasState {
-  cards: PostItCard[];
+  cards: Card[];
   arrows: Arrow[];
   cardMetrics: Record<string, CardMetrics[]>;
 }
@@ -77,12 +73,17 @@ const loadCanvasState = (): CanvasState | null => {
   }
 };
 
-export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: ReactFlowCanvasProps) {
+export function ReactFlowCanvas({
+  initialCards = [],
+  initialArrows = [],
+  initialCardMetrics = {},
+  disableLocalStorage = false,
+}: ReactFlowCanvasProps) {
   const router = useRouter();
   const { address } = useAccount();
 
-  // Initialize state from localStorage if available
-  const savedState = loadCanvasState();
+  // Initialize state from localStorage if available (unless disabled)
+  const savedState = disableLocalStorage ? null : loadCanvasState();
   const initialNodes = cardsToNodes(savedState?.cards || initialCards);
   const initialEdges = arrowsToEdges(savedState?.arrows || initialArrows);
 
@@ -90,7 +91,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const [cardMetrics, setCardMetrics] = useState<Record<string, CardMetrics[]>>(
-    savedState?.cardMetrics || {},
+    savedState?.cardMetrics || initialCardMetrics,
   );
 
   // Edit node state
@@ -129,7 +130,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
 
   // Ensure all nodes have callbacks, type, and metrics (for nodes loaded from localStorage)
   useEffect(() => {
-    const initialCardMetrics = savedState?.cardMetrics || {};
+    const metricsToUse = savedState?.cardMetrics || initialCardMetrics;
 
     setNodes((nds) =>
       nds.map((node) => {
@@ -140,7 +141,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
           !node.data.type;
 
         // Load metrics from initial cardMetrics if not already in node data
-        const nodeMetrics = node.data.metrics || initialCardMetrics[node.id];
+        const nodeMetrics = node.data.metrics || metricsToUse[node.id];
 
         if (needsUpdate) {
           return {
@@ -179,8 +180,10 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
     );
   }, []); // Only run once on mount
 
-  // Auto-save canvas state
+  // Auto-save canvas state (unless disabled)
   useEffect(() => {
+    if (disableLocalStorage) return;
+
     const cards = nodesToCards(nodes);
     const arrows = edgesToArrows(edges);
 
@@ -195,7 +198,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [nodes, edges, cardMetrics]);
+  }, [nodes, edges, cardMetrics, disableLocalStorage]);
 
   const addCard = useCallback(
     (formData: { type: string; title: string; description?: string; metrics?: unknown[] }) => {
@@ -413,67 +416,22 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
     [setEdges],
   );
 
-  const createStandardizedLogicModelFromCanvas = useCallback(
-    (title?: string, description?: string, author?: string) => {
+  const createCanvasDataFromCanvas = useCallback(
+    (title?: string, description?: string, author?: string): CanvasData => {
       const cards = nodesToCards(nodes);
       const arrows = edgesToArrows(edges);
 
-      const id = `lm-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      const id = `canvas-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
       const now = new Date().toISOString();
 
-      const logicNodes: {
-        impact: LogicModelNode[];
-        outcome: LogicModelNode[];
-        output: LogicModelNode[];
-        activities: LogicModelNode[];
-      } = {
-        impact: [],
-        outcome: [],
-        output: [],
-        activities: [],
-      };
-
-      cards.forEach((card) => {
-        let type: LogicModelNode["type"] = "activities";
-        if (card.color === "#d1fae5") type = "output";
-        else if (card.color === "#fef08a") type = "outcome";
-        else if (card.color === "#e9d5ff") type = "impact";
-        else if (card.color === "#c7d2fe") type = "activities";
-
-        const from = arrows
-          .filter((arrow) => arrow.toCardId === card.id)
-          .map((arrow) => arrow.fromCardId);
-        const to = arrows
-          .filter((arrow) => arrow.fromCardId === card.id)
-          .map((arrow) => arrow.toCardId);
-
-        const metrics = cardMetrics[card.id]?.map((metric) => ({
-          id: metric.id,
-          name: metric.name,
-          description: metric.description,
-          measurementMethod: metric.measurementMethod,
-          targetValue: metric.targetValue,
-          frequency: metric.frequency,
-        }));
-
-        const node: LogicModelNode = {
-          id: card.id,
-          type,
-          content: card.content,
-          from,
-          to,
-          metrics: metrics?.length ? metrics : undefined,
-        };
-
-        logicNodes[type].push(node);
-      });
-
       return {
-        nodes: logicNodes,
+        id,
+        title: title || `Logic Model ${new Date().toLocaleDateString()}`,
+        description: description || "",
+        cards,
+        arrows,
+        cardMetrics,
         metadata: {
-          id,
-          title: title || `Logic Model ${new Date().toLocaleDateString()}`,
-          description: description || "",
           createdAt: now,
           version: "1.0.0",
           author,
@@ -485,7 +443,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
 
   const openHypercertDialog = useCallback(() => {
     try {
-      const standardizedModel = createStandardizedLogicModelFromCanvas(
+      const canvasData = createCanvasDataFromCanvas(
         `Logic Model ${new Date().toLocaleDateString()}`,
         "Logic model created with Muse",
         address,
@@ -495,42 +453,34 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
       const arrows = edgesToArrows(edges);
 
       saveCanvasState({ cards, arrows, cardMetrics });
-      sessionStorage.setItem("currentLogicModel", JSON.stringify(standardizedModel));
+      sessionStorage.setItem("currentCanvasData", JSON.stringify(canvasData));
 
       router.push("/canvas/mint-hypercert");
     } catch (error) {
-      console.error("Failed to prepare logic model:", error);
-      alert("Failed to prepare logic model. Please try again.");
+      console.error("Failed to prepare canvas data:", error);
+      alert("Failed to prepare canvas data. Please try again.");
     }
-  }, [nodes, edges, cardMetrics, address, createStandardizedLogicModelFromCanvas, router]);
+  }, [nodes, edges, cardMetrics, address, createCanvasDataFromCanvas, router]);
 
-  const exportAsStandardizedJSON = useCallback(() => {
-    const standardizedModel = createStandardizedLogicModelFromCanvas(
+  const exportAsJSON = useCallback(() => {
+    const canvasData = createCanvasDataFromCanvas(
       `Logic Model ${new Date().toLocaleDateString()}`,
       "Logic model created with Muse",
       address,
     );
 
-    try {
-      StandardizedLogicModelSchema.parse(standardizedModel);
-    } catch (error) {
-      console.error("Validation failed:", error);
-      alert("Failed to validate logic model format. Please check your data.");
-      return;
-    }
-
-    const jsonData = JSON.stringify(standardizedModel, null, 2);
+    const jsonData = JSON.stringify(canvasData, null, 2);
     const blob = new Blob([jsonData], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `standardized-logic-model-${standardizedModel.metadata.id}.json`;
+    a.download = `canvas-${canvasData.id}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [address, createStandardizedLogicModelFromCanvas]);
+  }, [address, createCanvasDataFromCanvas]);
 
   const clearAllData = useCallback(() => {
     if (
@@ -575,7 +525,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
       <CanvasToolbar
         onAddCard={addCard}
         onSaveLogicModel={openHypercertDialog}
-        onExportStandardizedJSON={exportAsStandardizedJSON}
+        onExportStandardizedJSON={exportAsJSON}
         onClearAllData={clearAllData}
       />
 
