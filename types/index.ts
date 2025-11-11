@@ -202,14 +202,18 @@ export const StandardizedLogicModelSchema = z.object({
   metadata: LogicModelMetadataSchema,
 });
 
-// Legacy types for backward compatibility
-export interface PostItCard {
+// Card types
+export interface Card {
   id: string;
   x: number;
   y: number;
   content: string;
   color: string;
+  type?: string;
 }
+
+// Legacy alias for backward compatibility
+export type PostItCard = Card;
 
 export interface Arrow {
   id: string;
@@ -230,12 +234,27 @@ export interface LogicModel {
   id: string;
   title: string;
   description?: string;
-  cards: PostItCard[];
+  cards: Card[];
   arrows: Arrow[];
   cardMetrics: Record<string, CardMetrics[]>;
   metadata: {
     createdAt: string;
     updatedAt: string;
+    version: string;
+    author?: string;
+  };
+}
+
+// Canvas data format for IPFS storage (simplified, no conversions needed)
+export interface CanvasData {
+  id: string;
+  title: string;
+  description?: string;
+  cards: Card[];
+  arrows: Arrow[];
+  cardMetrics: Record<string, CardMetrics[]>;
+  metadata: {
+    createdAt: string;
     version: string;
     author?: string;
   };
@@ -311,7 +330,7 @@ export function toStandardizedFormat(legacy: LogicModel): StandardizedLogicModel
 }
 
 export function toDisplayFormat(standardized: StandardizedLogicModel): LogicModel {
-  const cards: PostItCard[] = [];
+  const cards: Card[] = [];
 
   // Activities column (left)
   standardized.nodes.activities.forEach((node, index) => {
@@ -321,6 +340,7 @@ export function toDisplayFormat(standardized: StandardizedLogicModel): LogicMode
       y: 150 + index * 150,
       content: node.content,
       color: "#c7d2fe",
+      type: "activities",
     });
   });
 
@@ -332,6 +352,7 @@ export function toDisplayFormat(standardized: StandardizedLogicModel): LogicMode
       y: 150 + index * 150,
       content: node.content,
       color: "#d1fae5",
+      type: "outputs",
     });
   });
 
@@ -343,6 +364,7 @@ export function toDisplayFormat(standardized: StandardizedLogicModel): LogicMode
       y: 150 + index * 150,
       content: node.content,
       color: "#fef08a",
+      type: "outcomes-short",
     });
   });
 
@@ -354,6 +376,7 @@ export function toDisplayFormat(standardized: StandardizedLogicModel): LogicMode
       y: 150 + index * 150,
       content: node.content,
       color: "#e9d5ff",
+      type: "impact",
     });
   });
 
