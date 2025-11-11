@@ -13,7 +13,7 @@ interface MetricData {
   frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
 }
 
-export interface PostItNodeData extends Record<string, unknown> {
+export interface CardNodeData extends Record<string, unknown> {
   id: string;
   content: string;
   color: string;
@@ -34,7 +34,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: LucideIcon }> = {
   impact: { label: "Impact", icon: Sparkles },
 };
 
-export const PostItNode = memo(({ data, selected }: NodeProps & { data: PostItNodeData }) => {
+export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeData }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(data.content);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -156,4 +156,4 @@ export const PostItNode = memo(({ data, selected }: NodeProps & { data: PostItNo
   );
 });
 
-PostItNode.displayName = "PostItNode";
+CardNode.displayName = "CardNode";

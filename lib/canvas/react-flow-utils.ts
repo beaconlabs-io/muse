@@ -1,14 +1,14 @@
-import { PostItNodeData } from "@/components/canvas/PostItNode";
+import { CardNodeData } from "@/components/canvas/CardNode";
 import type { Node, Edge } from "@xyflow/react";
 import { PostItCard, Arrow } from "@/types";
 
 /**
  * Convert PostItCard array to React Flow Node array
  */
-export function cardsToNodes(cards: PostItCard[]): Node<PostItNodeData>[] {
+export function cardsToNodes(cards: PostItCard[]): Node<CardNodeData>[] {
   return cards.map((card) => ({
     id: card.id,
-    type: "postItNode",
+    type: "cardNode",
     position: { x: card.x, y: card.y },
     data: {
       id: card.id,
@@ -21,7 +21,7 @@ export function cardsToNodes(cards: PostItCard[]): Node<PostItNodeData>[] {
 /**
  * Convert React Flow Node array to PostItCard array
  */
-export function nodesToCards(nodes: Node<PostItNodeData>[]): PostItCard[] {
+export function nodesToCards(nodes: Node<CardNodeData>[]): PostItCard[] {
   return nodes.map((node) => ({
     id: node.id,
     x: node.position.x,

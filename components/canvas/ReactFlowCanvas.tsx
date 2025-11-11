@@ -19,7 +19,7 @@ import { useAccount } from "wagmi";
 import "@xyflow/react/dist/style.css";
 import { AddLogicSheet } from "./AddLogicSheet";
 import { CanvasToolbar } from "./CanvasToolbar";
-import { PostItNode, type PostItNodeData } from "./PostItNode";
+import { CardNode, type CardNodeData } from "./CardNode";
 import {
   cardsToNodes,
   nodesToCards,
@@ -111,7 +111,7 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
   // Define custom node types
   const nodeTypes: NodeTypes = useMemo(
     () => ({
-      postItNode: PostItNode,
+      cardNode: CardNode,
     }),
     [],
   );
@@ -244,9 +244,9 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
         ? `${formData.title}\n\n${formData.description}`
         : formData.title;
 
-      const newNode: Node<PostItNodeData> = {
+      const newNode: Node<CardNodeData> = {
         id: nodeId,
-        type: "postItNode",
+        type: "cardNode",
         position: { x: position.x, y: position.y },
         data: {
           id: nodeId,
