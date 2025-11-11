@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,10 +14,27 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import type { Card, Arrow, CardMetrics } from "@/types";
 import { generateLogicModelFromIntent } from "@/app/actions/canvas/generateLogicModel";
+
+const generateLogicModelSchema = z.object({
+  intent: z
+    .string()
+    .min(1, "Please enter an intent description")
+    .max(1000, "Intent must be 1000 characters or less"),
+});
+
+type GenerateLogicModelFormData = z.infer<typeof generateLogicModelSchema>;
 
 interface GenerateLogicModelDialogProps {
   onGenerate: (data: {
@@ -26,23 +46,23 @@ interface GenerateLogicModelDialogProps {
 
 export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialogProps) {
   const [open, setOpen] = useState(false);
-  const [intent, setIntent] = useState(
-    "i'm running oss project, and i wan to create positive impact on ethererum ecosystem. can you create logic model for it?",
-  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleGenerate = async () => {
-    if (!intent.trim()) {
-      setError("Please enter an intent description");
-      return;
-    }
+  const form = useForm<GenerateLogicModelFormData>({
+    resolver: zodResolver(generateLogicModelSchema),
+    defaultValues: {
+      intent:
+        "i'm running oss project, and i want to create positive impact on Ethereum ecosystem. can you create logic model for it?",
+    },
+  });
 
+  const handleSubmit = async (data: GenerateLogicModelFormData) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await generateLogicModelFromIntent(intent);
+      const result = await generateLogicModelFromIntent(data.intent);
 
       if (result.success && result.data) {
         onGenerate({
@@ -51,7 +71,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
           cardMetrics: result.data.cardMetrics,
         });
         setOpen(false);
-        setIntent("");
+        form.reset();
       } else {
         setError(result.error || "Failed to generate logic model");
       }
@@ -65,7 +85,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default" size="sm">
+        <Button variant="default" size="sm" className="cursor-pointer">
           🤖 Generate from Intent
         </Button>
       </DialogTrigger>
@@ -77,32 +97,47 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
             for you.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <label htmlFor="intent" className="text-sm font-medium">
-              What intervention or program do you want to create a logic model for?
-            </label>
-            <Textarea
-              id="intent"
-              placeholder="Enter your intent here"
-              value={intent}
-              onChange={(e) => setIntent(e.target.value)}
-              rows={5}
-              className="resize-none"
-              disabled={isLoading}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="intent"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    What intervention or program do you want to create a logic model for?
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter your intent here"
+                      rows={5}
+                      className="resize-none"
+                      disabled={isLoading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
             {error && <p className="text-sm text-red-500">{error}</p>}
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button onClick={handleGenerate} disabled={isLoading || !intent.trim()}>
-            {isLoading && <Spinner className="mr-2" />}
-            {isLoading ? "Generating..." : "Generate Logic Model"}
-          </Button>
-        </DialogFooter>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={isLoading}
+                className="cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" className="cursor-pointer" disabled={isLoading}>
+                {isLoading && <Spinner className="mr-2" />}
+                {isLoading ? "Generating..." : "Generate Logic Model"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
