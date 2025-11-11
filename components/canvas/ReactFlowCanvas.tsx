@@ -594,7 +594,10 @@ export function ReactFlowCanvas({ initialCards = [], initialArrows = [] }: React
           >
             <Background color="#e5e7eb" gap={20} />
             <Controls />
-            <MiniMap />
+            <MiniMap
+              nodeColor={(node): string => (node.data.color as string) || "#6b7280"}
+              maskColor="rgb(240, 240, 240, 0.6)"
+            />
           </ReactFlow>
         </div>
       </div>
