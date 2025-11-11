@@ -40,15 +40,12 @@ export async function generateLogicModelFromIntent(
     );
 
     // Extract the tool response from the agent's result
-    // Mastra wraps tool results in: { type, runId, from, payload: { result: <actual tool return> } }
-    // Our tool returns: { canvasData, explanation }
     if (result.toolResults && result.toolResults.length > 0) {
       const toolResult = result.toolResults[0] as any;
 
       // The actual tool return value is in payload.result
       const toolReturnValue = toolResult.payload?.result;
       const canvasData = toolReturnValue?.canvasData;
-      console.log({ canvasData, toolReturnValue });
 
       if (canvasData?.cards && canvasData?.arrows) {
         console.log("✓ Successfully extracted canvas data:", {
