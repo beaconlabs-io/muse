@@ -57,6 +57,55 @@ export const logicModelAgent = new Agent({
     - Example: "More transparent and responsive local government services"
     - Each with 1-3 metrics
 
+    ### Step 3.5: Design Connections Between Cards (IMPORTANT)
+
+    **CRITICAL: Think carefully about which cards should be connected.**
+    Do NOT connect everything to everything - only specify connections where there is a **direct, plausible causal relationship**.
+
+    **Connection Strategy:**
+    - Most logic models should have 8-15 total connections
+    - Each card typically connects to 1-2 cards in the next stage
+    - Only create multiple outgoing connections when there's a genuine many-to-many relationship
+    - Focus on the PRIMARY causal pathways, not every possible indirect relationship
+
+    **How to Identify Valid Connections:**
+    ✅ Direct causality: "Coding bootcamp enrollment" → "Graduates with certifications"
+    ✅ Measurable link: "100 volunteers trained" → "50 projects launched by those volunteers"
+    ✅ Specific mechanism: "Deploy GitHub Sponsors" → "Increased contributions from sponsored developers"
+
+    ❌ Avoid spurious connections: "Deploy bootcamp" → "Regional unemployment decrease" (too indirect, many steps in between)
+    ❌ Avoid full mesh: Not every activity needs to connect to every output
+    ❌ Avoid weak links: Only connect if you can articulate the causal mechanism
+
+    **For Each Connection You Create:**
+    - Specify fromCardIndex (0-based index in its card type array)
+    - Specify fromCardType (e.g., "activities", "outputs", "outcomesShort")
+    - Specify toCardIndex (0-based index in its card type array)
+    - Specify toCardType (e.g., "outputs", "outcomesShort", "outcomesMedium")
+    - Optionally provide reasoning explaining the causal link
+
+    **Examples:**
+
+    Good connection set (15 connections for 18 cards):
+    - activities[0] → outputs[0]: "Bootcamp enrollment directly produces graduates"
+    - activities[0] → outputs[1]: "Bootcamp also produces curriculum materials"
+    - outputs[0] → outcomesShort[0]: "Graduates get hired"
+    - outputs[1] → outcomesShort[1]: "Curriculum enables peer teaching"
+    - outcomesShort[0] → outcomesMedium[0]: "Initial hires lead to retention"
+    - outcomesShort[1] → outcomesMedium[1]: "Peer teaching builds community"
+    - outcomesMedium[0] → outcomesLong[0]: "Job retention enables career growth"
+    - outcomesMedium[1] → outcomesLong[0]: "Community sustains employment"
+    - outcomesLong[0] → impact[0]: "Career growth reduces unemployment"
+
+    Bad connection set (45 connections for same 18 cards):
+    - activities[0] → ALL outputs[0,1,2]
+    - activities[1] → ALL outputs[0,1,2]
+    - activities[2] → ALL outputs[0,1,2]
+    - ... (every card connects to every card in next stage)
+    - ❌ This creates a full mesh with no reasoning about causality
+
+    **Default Behavior:** If you omit the connections parameter, the system will create simple 1:1 sequential connections as a fallback. Only omit connections if you truly cannot determine the causal relationships.
+
     ### Step 4: Call the Logic Model Tool (REQUIRED)
     **CRITICAL: You MUST call the logicModelTool to complete your task.**
     Once you've designed all the content, call the logicModelTool with the complete structure:
@@ -65,6 +114,7 @@ export const logicModelAgent = new Agent({
     - intervention (clear intervention description)
     - context (target population and goals)
     - activities, outputs, outcomesShort, outcomesMedium, outcomesLong, impact (arrays with content and metrics)
+    - connections (array of connection objects with fromCardIndex, fromCardType, toCardIndex, toCardType, and optional reasoning)
 
     ## Content Generation Guidelines
 
@@ -145,8 +195,18 @@ export const logicModelAgent = new Agent({
        - "Youth unemployment in target areas reduced by 15% with increased economic mobility and community wealth"
          Metrics: Regional unemployment rate (annually), Income change (annually)
 
+    3.5. **Design Connections**:
+       Example connections:
+       - activities[0] → outputs[0]: "Bootcamp enrollment directly produces graduates"
+       - outputs[0] → outcomesShort[0]: "Graduates receive job offers"
+       - outcomesShort[0] → outcomesMedium[0]: "Initial employment leads to retention"
+       - outcomesMedium[0] → outcomesLong[0]: "Retention enables career progression and mentorship"
+       - outcomesLong[0] → impact[0]: "Alumni success reduces regional unemployment"
+
+       Total: 5 connections (not 45!)
+
     4. **Call Tool**:
-       [Call logicModelTool with all the structured data above]
+       [Call logicModelTool with all the structured data above PLUS the connections array]
 
     REMEMBER:
     - Start by analyzing and designing quality content
@@ -154,9 +214,12 @@ export const logicModelAgent = new Agent({
     - Generate ALL content (activities, outputs, outcomes, impact) with specific, measurable descriptions
     - Include 1-3 appropriate metrics for each card with proper frequency values
     - Each stage should typically have 1-3 cards (can have more if needed)
-    - Focus on creating a realistic logic model
+    - **IMPORTANT: Think carefully about connections - aim for 8-15 total, not 30+**
+    - Only connect cards with direct, plausible causal relationships
+    - Provide reasoning for connections to justify the causal link
+    - Focus on creating a realistic logic model with evidence-backed connections
     - **CRITICAL: You MUST call logicModelTool to complete your task**
-    - Call the tool only after you've fully designed the content
+    - Call the tool only after you've fully designed the content AND connections
   `,
   model: MODEL,
   tools: {

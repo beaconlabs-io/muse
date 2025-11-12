@@ -123,6 +123,52 @@ export const logicModelTool = createTool({
       )
       .min(1)
       .describe("Array of impact cards"),
+
+    connections: z
+      .array(
+        z.object({
+          fromCardIndex: z
+            .number()
+            .min(0)
+            .describe("Index of the source card in its type array (0-based)"),
+          fromCardType: z
+            .enum([
+              "activities",
+              "outputs",
+              "outcomesShort",
+              "outcomesMedium",
+              "outcomesLong",
+              "impact",
+            ])
+            .describe("Type of the source card"),
+          toCardIndex: z
+            .number()
+            .min(0)
+            .describe("Index of the target card in its type array (0-based)"),
+          toCardType: z
+            .enum([
+              "activities",
+              "outputs",
+              "outcomesShort",
+              "outcomesMedium",
+              "outcomesLong",
+              "impact",
+            ])
+            .describe("Type of the target card"),
+          reasoning: z
+            .string()
+            .optional()
+            .describe(
+              "Brief explanation of why this connection represents a plausible causal relationship",
+            ),
+        }),
+      )
+      .optional()
+      .describe(
+        "Array of explicit connections between cards. Only specify connections where there is a clear, " +
+          "direct causal relationship. Avoid creating a full mesh - most logic models should have 8-15 " +
+          "total connections. If omitted, a simple sequential 1:1 connection pattern will be used as fallback.",
+      ),
   }),
   outputSchema: z.object({
     canvasData: z.object({
@@ -152,6 +198,7 @@ export const logicModelTool = createTool({
       outcomesMedium,
       outcomesLong,
       impact,
+      connections,
     } = context;
 
     return await generateLogicModel({
@@ -166,9 +213,18 @@ export const logicModelTool = createTool({
       outcomesMedium,
       outcomesLong,
       impact,
+      connections,
     });
   },
 });
+
+type Connection = {
+  fromCardIndex: number;
+  fromCardType: "activities" | "outputs" | "outcomesShort" | "outcomesMedium" | "outcomesLong" | "impact";
+  toCardIndex: number;
+  toCardType: "activities" | "outputs" | "outcomesShort" | "outcomesMedium" | "outcomesLong" | "impact";
+  reasoning?: string;
+};
 
 const generateLogicModel = async (params: {
   title: string;
@@ -230,6 +286,7 @@ const generateLogicModel = async (params: {
       frequency: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
     }>;
   }>;
+  connections?: Connection[];
 }): Promise<{ canvasData: CanvasData }> => {
   const {
     title,
@@ -241,6 +298,7 @@ const generateLogicModel = async (params: {
     outcomesMedium,
     outcomesLong,
     impact,
+    connections,
   } = params;
 
   const timestamp = Date.now();
@@ -308,15 +366,6 @@ const generateLogicModel = async (params: {
       measurementMethod: metric.measurementMethod,
       frequency: metric.frequency,
     }));
-
-    // Connect all activities to all outputs
-    activityIds.forEach((activityId) => {
-      arrows.push({
-        id: `arrow-${timestamp}-activity-${activityId}-output-${outputId}`,
-        fromCardId: activityId,
-        toCardId: outputId,
-      });
-    });
   });
 
   // 3. Create Outcomes-Short cards
@@ -340,15 +389,6 @@ const generateLogicModel = async (params: {
       measurementMethod: metric.measurementMethod,
       frequency: metric.frequency,
     }));
-
-    // Connect all outputs to all short-term outcomes
-    outputIds.forEach((outputId) => {
-      arrows.push({
-        id: `arrow-${timestamp}-output-${outputId}-outcome-short-${outcomeShortId}`,
-        fromCardId: outputId,
-        toCardId: outcomeShortId,
-      });
-    });
   });
 
   // 4. Create Outcomes-Medium cards
@@ -372,15 +412,6 @@ const generateLogicModel = async (params: {
       measurementMethod: metric.measurementMethod,
       frequency: metric.frequency,
     }));
-
-    // Connect all short-term outcomes to all medium-term outcomes
-    outcomeShortIds.forEach((outcomeShortId) => {
-      arrows.push({
-        id: `arrow-${timestamp}-outcome-short-${outcomeShortId}-outcome-medium-${outcomeMediumId}`,
-        fromCardId: outcomeShortId,
-        toCardId: outcomeMediumId,
-      });
-    });
   });
 
   // 5. Create Outcomes-Long cards
@@ -404,15 +435,6 @@ const generateLogicModel = async (params: {
       measurementMethod: metric.measurementMethod,
       frequency: metric.frequency,
     }));
-
-    // Connect all medium-term outcomes to all long-term outcomes
-    outcomeMediumIds.forEach((outcomeMediumId) => {
-      arrows.push({
-        id: `arrow-${timestamp}-outcome-medium-${outcomeMediumId}-outcome-long-${outcomeLongId}`,
-        fromCardId: outcomeMediumId,
-        toCardId: outcomeLongId,
-      });
-    });
   });
 
   // 6. Create Impact cards
@@ -436,16 +458,145 @@ const generateLogicModel = async (params: {
       measurementMethod: metric.measurementMethod,
       frequency: metric.frequency,
     }));
-
-    // Connect all long-term outcomes to all impacts
-    outcomeLongIds.forEach((outcomeLongId) => {
-      arrows.push({
-        id: `arrow-${timestamp}-outcome-long-${outcomeLongId}-impact-${impactId}`,
-        fromCardId: outcomeLongId,
-        toCardId: impactId,
-      });
-    });
   });
+
+  // Create a mapping from card types to their ID arrays for connection lookups
+  const cardIdsByType = {
+    activities: activityIds,
+    outputs: outputIds,
+    outcomesShort: outcomeShortIds,
+    outcomesMedium: outcomeMediumIds,
+    outcomesLong: outcomeLongIds,
+    impact: impactIds,
+  };
+
+  // Safety constants
+  const MAX_CONNECTIONS = 25;
+  const MAX_OUTGOING_PER_CARD = 3;
+
+  // Process connections
+  if (connections && connections.length > 0) {
+    // Agent-specified connections
+    console.log(`Creating ${connections.length} agent-specified connections...`);
+
+    // Validate total connection count
+    let validatedConnections = connections;
+    if (connections.length > MAX_CONNECTIONS) {
+      console.warn(
+        `Warning: Agent specified ${connections.length} connections, which exceeds the recommended maximum of ${MAX_CONNECTIONS}. Using first ${MAX_CONNECTIONS} connections.`,
+      );
+      validatedConnections = connections.slice(0, MAX_CONNECTIONS);
+    }
+
+    // Track outgoing edges per card for validation
+    const outgoingCounts = new Map<string, number>();
+
+    for (const conn of validatedConnections) {
+      const { fromCardIndex, fromCardType, toCardIndex, toCardType, reasoning } = conn;
+
+      // Validate indices
+      const fromIds = cardIdsByType[fromCardType];
+      const toIds = cardIdsByType[toCardType];
+
+      if (fromCardIndex < 0 || fromCardIndex >= fromIds.length) {
+        console.error(
+          `Invalid connection: ${fromCardType}[${fromCardIndex}] does not exist (only ${fromIds.length} cards)`,
+        );
+        continue;
+      }
+
+      if (toCardIndex < 0 || toCardIndex >= toIds.length) {
+        console.error(
+          `Invalid connection: ${toCardType}[${toCardIndex}] does not exist (only ${toIds.length} cards)`,
+        );
+        continue;
+      }
+
+      const fromCardId = fromIds[fromCardIndex];
+      const toCardId = toIds[toCardIndex];
+
+      // Check outgoing edge limit
+      const currentOutgoing = outgoingCounts.get(fromCardId) || 0;
+      if (currentOutgoing >= MAX_OUTGOING_PER_CARD) {
+        console.warn(
+          `Warning: ${fromCardType}[${fromCardIndex}] already has ${currentOutgoing} outgoing connections. Skipping connection to ${toCardType}[${toCardIndex}].`,
+        );
+        continue;
+      }
+
+      // Create arrow
+      arrows.push({
+        id: `arrow-${timestamp}-${fromCardType}-${fromCardIndex}-${toCardType}-${toCardIndex}`,
+        fromCardId,
+        toCardId,
+      });
+
+      outgoingCounts.set(fromCardId, currentOutgoing + 1);
+
+      if (reasoning) {
+        console.log(
+          `  Connected ${fromCardType}[${fromCardIndex}] → ${toCardType}[${toCardIndex}]: ${reasoning}`,
+        );
+      }
+    }
+
+    console.log(`Created ${arrows.length} validated connections.`);
+  } else {
+    // Fallback: Simple sequential 1:1 connections
+    console.log("No connections specified by agent. Using fallback 1:1 sequential connections...");
+
+    // Activities → Outputs (1:1)
+    const activityOutputPairs = Math.min(activityIds.length, outputIds.length);
+    for (let i = 0; i < activityOutputPairs; i++) {
+      arrows.push({
+        id: `arrow-${timestamp}-activity-${i}-output-${i}`,
+        fromCardId: activityIds[i],
+        toCardId: outputIds[i],
+      });
+    }
+
+    // Outputs → Outcomes-Short (1:1)
+    const outputShortPairs = Math.min(outputIds.length, outcomeShortIds.length);
+    for (let i = 0; i < outputShortPairs; i++) {
+      arrows.push({
+        id: `arrow-${timestamp}-output-${i}-outcome-short-${i}`,
+        fromCardId: outputIds[i],
+        toCardId: outcomeShortIds[i],
+      });
+    }
+
+    // Outcomes-Short → Outcomes-Medium (1:1)
+    const shortMediumPairs = Math.min(outcomeShortIds.length, outcomeMediumIds.length);
+    for (let i = 0; i < shortMediumPairs; i++) {
+      arrows.push({
+        id: `arrow-${timestamp}-outcome-short-${i}-outcome-medium-${i}`,
+        fromCardId: outcomeShortIds[i],
+        toCardId: outcomeMediumIds[i],
+      });
+    }
+
+    // Outcomes-Medium → Outcomes-Long (1:1)
+    const mediumLongPairs = Math.min(outcomeMediumIds.length, outcomeLongIds.length);
+    for (let i = 0; i < mediumLongPairs; i++) {
+      arrows.push({
+        id: `arrow-${timestamp}-outcome-medium-${i}-outcome-long-${i}`,
+        fromCardId: outcomeMediumIds[i],
+        toCardId: outcomeLongIds[i],
+      });
+    }
+
+    // Outcomes-Long → Impact (1:1)
+    const longImpactPairs = Math.min(outcomeLongIds.length, impactIds.length);
+    for (let i = 0; i < longImpactPairs; i++) {
+      arrows.push({
+        id: `arrow-${timestamp}-outcome-long-${i}-impact-${i}`,
+        fromCardId: outcomeLongIds[i],
+        toCardId: impactIds[i],
+      });
+    }
+
+    console.log(`Created ${arrows.length} fallback connections.`);
+  }
 
   const canvasData: CanvasData = {
     id: `canvas-${timestamp}`,

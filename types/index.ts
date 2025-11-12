@@ -44,6 +44,18 @@ export interface EvidenceResponse {
   content: React.ReactNode;
 }
 
+// Evidence matching for logic model edges
+export interface EvidenceMatch {
+  evidenceId: string;
+  score: number; // 0-100
+  reasoning: string;
+  strength?: string; // Maryland Scale (0-5)
+  hasWarning: boolean; // true if strength < 3
+  title?: string;
+  interventionText?: string;
+  outcomeText?: string;
+}
+
 // =============================================================================
 // ATTESTATION TYPES
 // =============================================================================
@@ -202,6 +214,18 @@ export const StandardizedLogicModelSchema = z.object({
   metadata: LogicModelMetadataSchema,
 });
 
+// Evidence Match Schema
+export const EvidenceMatchSchema = z.object({
+  evidenceId: z.string(),
+  score: z.number().min(0).max(100),
+  reasoning: z.string(),
+  strength: z.string().optional(),
+  hasWarning: z.boolean(),
+  title: z.string().optional(),
+  interventionText: z.string().optional(),
+  outcomeText: z.string().optional(),
+});
+
 // Card types
 export interface Card {
   id: string;
@@ -219,6 +243,8 @@ export interface Arrow {
   id: string;
   fromCardId: string;
   toCardId: string;
+  evidenceIds?: string[]; // IDs of supporting evidence
+  evidenceMetadata?: EvidenceMatch[]; // Full evidence match details
 }
 
 export interface CardMetrics {
