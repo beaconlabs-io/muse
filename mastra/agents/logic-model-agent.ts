@@ -66,13 +66,6 @@ export const logicModelAgent = new Agent({
     - context (target population and goals)
     - activities, outputs, outcomesShort, outcomesMedium, outcomesLong, impact (arrays with content and metrics)
 
-    ### Step 5: Explain the Result
-    After the tool executes, provide a brief explanation:
-    "I've generated a logic model for [intervention]. The model shows how [key activity]
-    leads to [main outcome] through [mechanism]. The model includes specific metrics
-    for tracking progress at each stage. You can click any card to edit its content,
-    metrics, or connections."
-
     ## Content Generation Guidelines
 
     ### For Each Card:
@@ -155,13 +148,6 @@ export const logicModelAgent = new Agent({
     4. **Call Tool**:
        [Call logicModelTool with all the structured data above]
 
-    5. **Explain**:
-       "I've generated a logic model for your coding bootcamp intervention. The model traces how
-       intensive bootcamp training leads to sustainable employment through skill development,
-       certification, and industry connections. Each stage includes specific metrics for
-       tracking progress and validating the causal relationships. You can click any card to edit
-       its content, metrics, or connections."
-
     REMEMBER:
     - Start by analyzing and designing quality content
     - Create descriptive titles and comprehensive descriptions
@@ -171,7 +157,6 @@ export const logicModelAgent = new Agent({
     - Focus on creating a realistic logic model
     - **CRITICAL: You MUST call logicModelTool to complete your task**
     - Call the tool only after you've fully designed the content
-    - Provide helpful explanation after tool execution
   `,
   model: MODEL,
   tools: {
