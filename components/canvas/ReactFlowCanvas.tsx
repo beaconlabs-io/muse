@@ -14,12 +14,14 @@ import {
   type Edge,
   type Connection,
   type NodeTypes,
+  type EdgeTypes,
 } from "@xyflow/react";
 import { useAccount } from "wagmi";
 import "@xyflow/react/dist/style.css";
 import { AddLogicSheet } from "./AddLogicSheet";
 import { CanvasToolbar } from "./CanvasToolbar";
 import { CardNode, type CardNodeData } from "./CardNode";
+import { EvidenceEdge } from "./EvidenceEdge";
 import {
   cardsToNodes,
   nodesToCards,
@@ -84,8 +86,11 @@ export function ReactFlowCanvas({
 
   // Initialize state from localStorage if available (unless disabled)
   const savedState = disableLocalStorage ? null : loadCanvasState();
-  const initialNodes = cardsToNodes(savedState?.cards || initialCards);
-  const initialEdges = arrowsToEdges(savedState?.arrows || initialArrows);
+  const cards = savedState?.cards || initialCards;
+  const arrows = savedState?.arrows || initialArrows;
+
+  const initialNodes = cardsToNodes(cards);
+  const initialEdges = arrowsToEdges(arrows);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -114,6 +119,14 @@ export function ReactFlowCanvas({
   const nodeTypes: NodeTypes = useMemo(
     () => ({
       cardNode: CardNode,
+    }),
+    [],
+  );
+
+  // Define custom edge types
+  const edgeTypes: EdgeTypes = useMemo(
+    () => ({
+      evidence: EvidenceEdge,
     }),
     [],
   );
@@ -583,6 +596,7 @@ export function ReactFlowCanvas({
             onEdgesChange={onEdgesChange}
             onConnect={handleConnect}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             fitView
             className="bg-gray-50"
