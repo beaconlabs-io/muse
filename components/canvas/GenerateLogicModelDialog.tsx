@@ -53,7 +53,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     resolver: zodResolver(generateLogicModelSchema),
     defaultValues: {
       intent:
-        "i'm running oss project, and i want to create positive impact on Ethereum ecosystem. can you create logic model for it?",
+        "i'm running oss project called MUSE(https://github.com/beaconlabs-io/muse), and i want to create positive impact on Ethereum ecosystem. can you create logic model for it?",
     },
   });
 
