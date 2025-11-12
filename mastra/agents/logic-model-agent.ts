@@ -1,6 +1,8 @@
 import { Agent } from "@mastra/core/agent";
 import { logicModelTool } from "../tools/logic-model-tool";
 
+const MODEL = process.env.MODEL || "anthropic/claude-sonnet-4-5-20250929";
+
 export const logicModelAgent = new Agent({
   name: "Logic Model Agent",
   instructions: `
@@ -171,7 +173,7 @@ export const logicModelAgent = new Agent({
     - Call the tool only after you've fully designed the content
     - Provide helpful explanation after tool execution
   `,
-  model: "anthropic/claude-sonnet-4-5-20250929",
+  model: MODEL,
   tools: {
     logicModelTool,
   },
