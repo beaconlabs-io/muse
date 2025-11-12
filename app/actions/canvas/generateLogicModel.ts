@@ -23,21 +23,13 @@ export async function generateLogicModelFromIntent(
     }
 
     // Generate the logic model using the agent
-    // Force tool usage by setting tool_choice
-    const result = await agent.generate(
-      [
-        {
-          role: "user",
-          content: `Create a logic model for: ${intent}`,
-        },
-      ],
+    // Let the agent think naturally and call the tool when ready
+    const result = await agent.generate([
       {
-        toolChoice: {
-          type: "tool",
-          toolName: "logicModelTool",
-        },
+        role: "user",
+        content: `Create a logic model for: ${intent}`,
       },
-    );
+    ]);
 
     // Extract the tool response from the agent's result
     if (result.toolResults && result.toolResults.length > 0) {
