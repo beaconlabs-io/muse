@@ -12,6 +12,8 @@ import sampleData from "@/sample-logic-model_latest.json";
  *
  * Access at: http://localhost:3000/canvas/test
  */
+
+// TODO: remove this page
 export default function CanvasTestPage() {
   return (
     <div className="h-screen w-full">
