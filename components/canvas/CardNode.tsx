@@ -143,15 +143,15 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
         <Pencil className="h-3 w-3" aria-hidden="true" />
       </button>
 
-      {/* Metrics count (bottom right) */}
-      {data.metrics && data.metrics.length > 0 && (
-        <div
-          className="absolute right-2 bottom-2 rounded bg-gray-700 px-2 py-1 text-xs font-medium text-white"
-          title={`${data.metrics.length} metric${data.metrics.length !== 1 ? "s" : ""} configured`}
-        >
-          {data.metrics.length} metric{data.metrics.length !== 1 ? "s" : ""}
-        </div>
-      )}
+      {/* Bottom badges area */}
+      <div className="absolute right-2 bottom-2 left-2 flex items-center justify-end gap-2">
+        {/* Metrics count (bottom right) */}
+        {data.metrics && data.metrics.length > 0 && (
+          <div className="rounded bg-gray-700 px-2 py-1 text-xs font-medium text-white">
+            {data.metrics.length} metric{data.metrics.length !== 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
     </div>
   );
 });

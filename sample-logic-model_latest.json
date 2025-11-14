@@ -1,0 +1,545 @@
+{
+  "id": "canvas-1762934015745-490q5p935",
+  "title": "Logic Model 11/12/2025",
+  "description": "Logic model created with Muse",
+  "cards": [
+    {
+      "id": "activities-1762933553904-0",
+      "x": 40.06436030573505,
+      "y": 111.67681832212085,
+      "content": "Develop and maintain MUSE platform with core features: logic model builder, evidence library, impact metrics framework, and GitHub integration for Ethereum ecosystem use cases",
+      "color": "#c7d2fe",
+      "type": "activities"
+    },
+    {
+      "id": "activities-1762933553904-1",
+      "x": 47.161245801638586,
+      "y": 386.90380457869844,
+      "content": "Engage Ethereum community through documentation, tutorials, conference presentations (Devcon, ETHGlobal), and partnerships with key ecosystem organizations (EF, Gitcoin, Optimism)",
+      "color": "#c7d2fe",
+      "type": "activities"
+    },
+    {
+      "id": "activities-1762933553904-2",
+      "x": 50,
+      "y": 694.7764641164323,
+      "content": "Create Ethereum-specific templates and case studies: grant program evaluation, protocol upgrade impact assessment, DAO governance decision frameworks, and public goods funding models",
+      "color": "#c7d2fe",
+      "type": "activities"
+    },
+    {
+      "id": "output-1762933553904-0",
+      "x": 450,
+      "y": 150,
+      "content": "Active user base of 500+ Ethereum ecosystem stakeholders (DAO members, grant managers, core devs) using MUSE for decision-making and impact assessment",
+      "color": "#d1fae5",
+      "type": "outputs"
+    },
+    {
+      "id": "output-1762933553904-1",
+      "x": 450,
+      "y": 350,
+      "content": "1,000+ logic models created for Ethereum projects covering grants evaluation, protocol improvements, ecosystem development, and public goods funding decisions",
+      "color": "#d1fae5",
+      "type": "outputs"
+    },
+    {
+      "id": "output-1762933553904-2",
+      "x": 450,
+      "y": 550,
+      "content": "50+ GitHub stars, 20+ contributors, and integration with major Ethereum tools (Gitcoin Grants, Snapshot, Charmverse) demonstrating ecosystem adoption",
+      "color": "#d1fae5",
+      "type": "outputs"
+    },
+    {
+      "id": "outcomes-short-1762933553904-0",
+      "x": 850,
+      "y": 250,
+      "content": "Ethereum grant programs (Gitcoin, Optimism RPGF, Arbitrum) adopt MUSE for structured evaluation, leading to 30% more evidence-based funding decisions within 6 months",
+      "color": "#fef08a",
+      "type": "outcomes-short"
+    },
+    {
+      "id": "outcomes-short-1762933553904-1",
+      "x": 850,
+      "y": 450,
+      "content": "DAOs using MUSE report 40% reduction in governance proposal revision cycles due to clearer impact frameworks and stakeholder alignment",
+      "color": "#fef08a",
+      "type": "outcomes-short"
+    },
+    {
+      "id": "outcomes-medium-1762933553904-0",
+      "x": 1254.2581312975421,
+      "y": 97.48304733031372,
+      "content": "Ethereum ecosystem develops culture of impact measurement with 100+ projects publicly sharing logic models and impact data, increasing transparency and accountability (12-18 months)",
+      "color": "#fef08a",
+      "type": "outcomes-medium"
+    },
+    {
+      "id": "outcomes-medium-1762933553904-1",
+      "x": 1250,
+      "y": 350,
+      "content": "Improved capital allocation efficiency: $50M+ in Ethereum grants and DAO treasuries allocated using MUSE frameworks, with measurable impact tracking and retrospective analysis",
+      "color": "#fef08a",
+      "type": "outcomes-medium"
+    },
+    {
+      "id": "outcomes-medium-1762933553904-2",
+      "x": 1250,
+      "y": 550,
+      "content": "MUSE becomes standard tool referenced in Ethereum governance discussions, with integration into major DAO platforms and grant program workflows",
+      "color": "#fef08a",
+      "type": "outcomes-medium"
+    },
+    {
+      "id": "outcomes-long-1762933553904-0",
+      "x": 1650,
+      "y": 250,
+      "content": "Ethereum ecosystem achieves 25% improvement in public goods funding effectiveness, with better alignment between funded projects and ecosystem needs (18-36 months)",
+      "color": "#fef08a",
+      "type": "outcomes-long"
+    },
+    {
+      "id": "outcomes-long-1762933553904-1",
+      "x": 1650,
+      "y": 450,
+      "content": "MUSE methodology adopted beyond Ethereum to other blockchain ecosystems (Cosmos, Polkadot, Solana), establishing cross-chain standards for impact measurement",
+      "color": "#fef08a",
+      "type": "outcomes-long"
+    },
+    {
+      "id": "impact-1762933553904-0",
+      "x": 2050,
+      "y": 250,
+      "content": "Ethereum ecosystem becomes model for evidence-based, transparent, and accountable decentralized governance, attracting more developers, users, and institutional adoption",
+      "color": "#e9d5ff",
+      "type": "impact"
+    },
+    {
+      "id": "impact-1762933553904-1",
+      "x": 2050,
+      "y": 450,
+      "content": "Broader Web3 industry establishes impact measurement as core practice, leading to more sustainable funding models and increased legitimacy for decentralized organizations",
+      "color": "#e9d5ff",
+      "type": "impact"
+    }
+  ],
+  "arrows": [
+    {
+      "id": "arrow-1762933553904-activities-0-outputs-0",
+      "fromCardId": "activities-1762933553904-0",
+      "toCardId": "output-1762933553904-0"
+    },
+    {
+      "id": "arrow-1762933553904-activities-0-outputs-1",
+      "fromCardId": "activities-1762933553904-0",
+      "toCardId": "output-1762933553904-1"
+    },
+    {
+      "id": "arrow-1762933553904-activities-1-outputs-0",
+      "fromCardId": "activities-1762933553904-1",
+      "toCardId": "output-1762933553904-0",
+      "evidenceIds": ["00", "15"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "00",
+          "score": 85,
+          "reasoning": "Evidence shows that community engagement through conferences and partnerships directly increases active user adoption, as demonstrated by GitHub Sponsors impact on contributor engagement",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "Effect of Pull Request Submission by listing individual OSS contributors on GitHub Sponsors",
+          "interventionText": "Listing individual OSS contributors on GitHub Sponsors",
+          "outcomeText": "Submitting Pull Requests (PRs)"
+        },
+        {
+          "evidenceId": "15",
+          "score": 78,
+          "reasoning": "Community outreach and documentation efforts correlate with increased platform adoption, similar to how open-source project visibility drives contributor growth",
+          "strength": "4",
+          "hasWarning": false,
+          "title": "Impact of community engagement on OSS adoption",
+          "interventionText": "Conference presentations and documentation",
+          "outcomeText": "Active user base growth"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1762933553904-activities-1-outputs-2",
+      "fromCardId": "activities-1762933553904-1",
+      "toCardId": "output-1762933553904-2",
+      "evidenceIds": ["03"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "03",
+          "score": 92,
+          "reasoning": "Strong evidence that community engagement activities (conferences, partnerships) directly lead to increased GitHub metrics including stars and contributors, as shown by ecosystem growth patterns",
+          "strength": "5",
+          "hasWarning": false,
+          "title": "Community engagement impact on GitHub ecosystem metrics",
+          "interventionText": "Devcon and ETHGlobal presentations",
+          "outcomeText": "GitHub stars and contributor growth"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1762933553904-activities-2-outputs-1",
+      "fromCardId": "activities-1762933553904-2",
+      "toCardId": "output-1762933553904-1"
+    },
+    {
+      "id": "arrow-1762933553904-outputs-0-outcomesShort-0",
+      "fromCardId": "output-1762933553904-0",
+      "toCardId": "outcomes-short-1762933553904-0"
+    },
+    {
+      "id": "arrow-1762933553904-outputs-0-outcomesShort-1",
+      "fromCardId": "output-1762933553904-0",
+      "toCardId": "outcomes-short-1762933553904-1",
+      "evidenceIds": ["07"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "07",
+          "score": 72,
+          "reasoning": "Preliminary evidence suggests active users improve governance efficiency, though more rigorous studies needed to confirm 40% reduction claim",
+          "strength": "2",
+          "hasWarning": true,
+          "title": "User adoption impact on DAO governance cycles (preliminary)",
+          "interventionText": "Active user base using MUSE",
+          "outcomeText": "Reduction in governance proposal revision cycles"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1762933553904-outputs-1-outcomesShort-0",
+      "fromCardId": "output-1762933553904-1",
+      "toCardId": "outcomes-short-1762933553904-0",
+      "evidenceIds": ["12"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "12",
+          "score": 88,
+          "reasoning": "Well-documented evidence that availability of structured evaluation tools leads to institutional adoption by grant programs, with clear patterns of evidence-based decision-making improvements",
+          "strength": "4",
+          "hasWarning": false,
+          "title": "Structured tools drive grant program adoption and evidence-based funding",
+          "interventionText": "Logic models created for grant evaluation",
+          "outcomeText": "Grant programs adopt structured evaluation"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1762933553904-outputs-2-outcomesMedium-2",
+      "fromCardId": "output-1762933553904-2",
+      "toCardId": "outcomes-medium-1762933553904-2"
+    },
+    {
+      "id": "arrow-1762933553904-outcomesShort-0-outcomesMedium-1",
+      "fromCardId": "outcomes-short-1762933553904-0",
+      "toCardId": "outcomes-medium-1762933553904-1",
+      "evidenceIds": ["18", "19"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "18",
+          "score": 95,
+          "reasoning": "Rigorous RCT evidence demonstrates that evidence-based grant evaluation frameworks significantly improve capital allocation efficiency, with measured improvements in funding effectiveness across multiple blockchain ecosystems",
+          "strength": "5",
+          "hasWarning": false,
+          "title": "RCT: Evidence-based frameworks improve grant allocation efficiency",
+          "interventionText": "Grant programs adopt evidence-based evaluation",
+          "outcomeText": "Improved capital allocation efficiency"
+        },
+        {
+          "evidenceId": "19",
+          "score": 91,
+          "reasoning": "Meta-analysis of public goods funding shows structured evaluation methods lead to better resource allocation and measurable impact tracking",
+          "strength": "5",
+          "hasWarning": false,
+          "title": "Meta-analysis: Structured evaluation in public goods funding",
+          "interventionText": "Structured evaluation adoption",
+          "outcomeText": "Better capital allocation and impact tracking"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1762933553904-outcomesShort-1-outcomesMedium-0",
+      "fromCardId": "outcomes-short-1762933553904-1",
+      "toCardId": "outcomes-medium-1762933553904-0"
+    },
+    {
+      "id": "arrow-1762933553904-outcomesMedium-0-outcomesLong-0",
+      "fromCardId": "outcomes-medium-1762933553904-0",
+      "toCardId": "outcomes-long-1762933553904-0"
+    },
+    {
+      "id": "arrow-1762933553904-outcomesMedium-1-outcomesLong-0",
+      "fromCardId": "outcomes-medium-1762933553904-1",
+      "toCardId": "outcomes-long-1762933553904-0"
+    },
+    {
+      "id": "arrow-1762933553904-outcomesMedium-2-outcomesLong-1",
+      "fromCardId": "outcomes-medium-1762933553904-2",
+      "toCardId": "outcomes-long-1762933553904-1"
+    },
+    {
+      "id": "arrow-1762933553904-outcomesLong-0-impact-0",
+      "fromCardId": "outcomes-long-1762933553904-0",
+      "toCardId": "impact-1762933553904-0"
+    },
+    {
+      "id": "arrow-1762933553904-outcomesLong-1-impact-1",
+      "fromCardId": "outcomes-long-1762933553904-1",
+      "toCardId": "impact-1762933553904-1"
+    },
+    {
+      "id": "arrow-1762933553904-impact-0-impact-1",
+      "fromCardId": "impact-1762933553904-0",
+      "toCardId": "impact-1762933553904-1"
+    }
+  ],
+  "cardMetrics": {
+    "activities-1762933553904-0": [
+      {
+        "id": "metric-1762933553904-activity-0-0",
+        "name": "Feature releases",
+        "description": "Number of major features and updates shipped",
+        "measurementMethod": "GitHub release tracking and changelog documentation",
+        "frequency": "monthly"
+      },
+      {
+        "id": "metric-1762933553904-activity-0-1",
+        "name": "Code quality metrics",
+        "description": "Test coverage percentage, bug resolution time, and code review completion rate",
+        "measurementMethod": "Automated CI/CD metrics and GitHub analytics",
+        "frequency": "weekly"
+      }
+    ],
+    "activities-1762933553904-1": [
+      {
+        "id": "metric-1762933553904-activity-1-0",
+        "name": "Community engagement events",
+        "description": "Number of presentations, workshops, and partnership meetings conducted",
+        "measurementMethod": "Event calendar tracking and attendance records",
+        "frequency": "quarterly"
+      },
+      {
+        "id": "metric-1762933553904-activity-1-1",
+        "name": "Documentation completeness",
+        "description": "Percentage of features with comprehensive guides and examples",
+        "measurementMethod": "Documentation audit against feature list",
+        "frequency": "monthly"
+      }
+    ],
+    "activities-1762933553904-2": [
+      {
+        "id": "metric-1762933553904-activity-2-0",
+        "name": "Template library size",
+        "description": "Number of ready-to-use logic model templates for common Ethereum use cases",
+        "measurementMethod": "Repository template count and categorization",
+        "frequency": "quarterly"
+      },
+      {
+        "id": "metric-1762933553904-activity-2-1",
+        "name": "Case study publications",
+        "description": "Number of detailed case studies showing MUSE application in real Ethereum projects",
+        "measurementMethod": "Published case study count with community validation",
+        "frequency": "quarterly"
+      }
+    ],
+    "output-1762933553904-0": [
+      {
+        "id": "metric-1762933553904-output-0-0",
+        "name": "Monthly active users",
+        "description": "Number of unique users creating or editing logic models per month",
+        "measurementMethod": "Platform analytics and authentication logs",
+        "frequency": "monthly"
+      },
+      {
+        "id": "metric-1762933553904-output-0-1",
+        "name": "User role distribution",
+        "description": "Breakdown of users by role (DAO governance, grant programs, developers, researchers)",
+        "measurementMethod": "User profile surveys and usage pattern analysis",
+        "frequency": "quarterly"
+      }
+    ],
+    "output-1762933553904-1": [
+      {
+        "id": "metric-1762933553904-output-1-0",
+        "name": "Logic models created",
+        "description": "Total number of logic models built using MUSE platform",
+        "measurementMethod": "Database query of created models with metadata",
+        "frequency": "monthly"
+      },
+      {
+        "id": "metric-1762933553904-output-1-1",
+        "name": "Model quality score",
+        "description": "Average completeness and evidence-backing of created models",
+        "measurementMethod": "Automated scoring based on metrics, connections, and evidence citations",
+        "frequency": "quarterly"
+      }
+    ],
+    "output-1762933553904-2": [
+      {
+        "id": "metric-1762933553904-output-2-0",
+        "name": "GitHub engagement",
+        "description": "Stars, forks, contributors, and pull requests on MUSE repository",
+        "measurementMethod": "GitHub API metrics tracking",
+        "frequency": "weekly"
+      },
+      {
+        "id": "metric-1762933553904-output-2-1",
+        "name": "Integration partnerships",
+        "description": "Number of active integrations with Ethereum ecosystem tools and platforms",
+        "measurementMethod": "Partnership agreements and API usage tracking",
+        "frequency": "quarterly"
+      }
+    ],
+    "outcomes-short-1762933553904-0": [
+      {
+        "id": "metric-1762933553904-outcome-short-0-0",
+        "name": "Grant program adoption rate",
+        "description": "Percentage of major Ethereum grant programs using MUSE in evaluation process",
+        "measurementMethod": "Direct surveys and partnership tracking with grant programs",
+        "frequency": "quarterly"
+      },
+      {
+        "id": "metric-1762933553904-outcome-short-0-1",
+        "name": "Evidence quality improvement",
+        "description": "Increase in evidence citations and structured reasoning in grant decisions",
+        "measurementMethod": "Content analysis of grant decision documentation before/after MUSE adoption",
+        "frequency": "quarterly"
+      }
+    ],
+    "outcomes-short-1762933553904-1": [
+      {
+        "id": "metric-1762933553904-outcome-short-1-0",
+        "name": "Proposal efficiency",
+        "description": "Average number of revision rounds for governance proposals using MUSE vs. baseline",
+        "measurementMethod": "DAO governance platform data analysis (Snapshot, Tally)",
+        "frequency": "monthly"
+      },
+      {
+        "id": "metric-1762933553904-outcome-short-1-1",
+        "name": "Stakeholder satisfaction",
+        "description": "DAO member satisfaction scores with proposal clarity and decision quality",
+        "measurementMethod": "Post-vote surveys and sentiment analysis",
+        "frequency": "quarterly"
+      }
+    ],
+    "outcomes-medium-1762933553904-0": [
+      {
+        "id": "metric-1762933553904-outcome-medium-0-0",
+        "name": "Public impact reporting",
+        "description": "Number of Ethereum projects publishing logic models and impact metrics",
+        "measurementMethod": "Public repository tracking and ecosystem report aggregation",
+        "frequency": "quarterly"
+      },
+      {
+        "id": "metric-1762933553904-outcome-medium-0-1",
+        "name": "Data sharing rate",
+        "description": "Percentage of MUSE users who make their models public vs. private",
+        "measurementMethod": "Platform privacy settings analysis",
+        "frequency": "quarterly"
+      }
+    ],
+    "outcomes-medium-1762933553904-1": [
+      {
+        "id": "metric-1762933553904-outcome-medium-1-0",
+        "name": "Capital influenced",
+        "description": "Total USD value of grants and funding decisions made using MUSE-based evaluation",
+        "measurementMethod": "Grant program reporting and DAO treasury transaction tracking",
+        "frequency": "quarterly"
+      },
+      {
+        "id": "metric-1762933553904-outcome-medium-1-1",
+        "name": "Retrospective completion rate",
+        "description": "Percentage of funded projects that complete impact retrospectives using MUSE",
+        "measurementMethod": "Follow-up surveys and platform usage tracking",
+        "frequency": "quarterly"
+      }
+    ],
+    "outcomes-medium-1762933553904-2": [
+      {
+        "id": "metric-1762933553904-outcome-medium-2-0",
+        "name": "Platform integration depth",
+        "description": "Number of native MUSE integrations in DAO and grant platforms",
+        "measurementMethod": "API usage logs and partnership documentation",
+        "frequency": "quarterly"
+      },
+      {
+        "id": "metric-1762933553904-outcome-medium-2-1",
+        "name": "Governance mention frequency",
+        "description": "References to MUSE in DAO forum discussions and governance proposals",
+        "measurementMethod": "Text analysis of Discourse, Commonwealth, and governance forums",
+        "frequency": "monthly"
+      }
+    ],
+    "outcomes-long-1762933553904-0": [
+      {
+        "id": "metric-1762933553904-outcome-long-0-0",
+        "name": "Funding effectiveness score",
+        "description": "Composite metric of project success rate, ecosystem impact, and capital efficiency",
+        "measurementMethod": "Longitudinal study comparing funded project outcomes against stated goals",
+        "frequency": "annually"
+      },
+      {
+        "id": "metric-1762933553904-outcome-long-0-1",
+        "name": "Ecosystem health indicators",
+        "description": "Developer retention, active project count, and user growth in funded categories",
+        "measurementMethod": "Electric Capital Developer Report data and ecosystem analytics",
+        "frequency": "annually"
+      }
+    ],
+    "outcomes-long-1762933553904-1": [
+      {
+        "id": "metric-1762933553904-outcome-long-1-0",
+        "name": "Cross-chain adoption",
+        "description": "Number of non-Ethereum blockchain projects and ecosystems using MUSE",
+        "measurementMethod": "User registration data and ecosystem partnership tracking",
+        "frequency": "quarterly"
+      },
+      {
+        "id": "metric-1762933553904-outcome-long-1-1",
+        "name": "Standard establishment",
+        "description": "Citations in ecosystem reports and adoption by cross-chain organizations",
+        "measurementMethod": "Academic and industry report analysis",
+        "frequency": "annually"
+      }
+    ],
+    "impact-1762933553904-0": [
+      {
+        "id": "metric-1762933553904-impact-0-0",
+        "name": "Ecosystem growth rate",
+        "description": "Year-over-year growth in Ethereum developers, active addresses, and TVL compared to baseline",
+        "measurementMethod": "Electric Capital reports, Dune Analytics dashboards, and DeFi Llama data",
+        "frequency": "annually"
+      },
+      {
+        "id": "metric-1762933553904-impact-0-1",
+        "name": "Governance reputation score",
+        "description": "External perception of Ethereum governance quality in industry surveys and media analysis",
+        "measurementMethod": "Sentiment analysis of governance coverage and stakeholder surveys",
+        "frequency": "annually"
+      }
+    ],
+    "impact-1762933553904-1": [
+      {
+        "id": "metric-1762933553904-impact-1-0",
+        "name": "Industry practice adoption",
+        "description": "Percentage of top 100 crypto projects with public impact frameworks",
+        "measurementMethod": "Industry survey and public documentation review",
+        "frequency": "annually"
+      },
+      {
+        "id": "metric-1762933553904-impact-1-1",
+        "name": "Regulatory recognition",
+        "description": "Citations of impact measurement practices in regulatory guidance and policy discussions",
+        "measurementMethod": "Policy document analysis and regulatory engagement tracking",
+        "frequency": "annually"
+      }
+    ]
+  },
+  "metadata": {
+    "createdAt": "2025-11-12T07:53:35.745Z",
+    "version": "1.0.0"
+  }
+}

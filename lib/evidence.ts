@@ -87,3 +87,19 @@ export const getAllEvidenceMeta = async () => {
 
   return posts;
 };
+
+/**
+ * Get multiple evidence items by their IDs
+ */
+export const getEvidenceByIds = async (ids: string[]): Promise<Evidence[]> => {
+  const evidence: Evidence[] = [];
+
+  for (const id of ids) {
+    const data = await getEvidenceBySlug(id);
+    if (data?.meta) {
+      evidence.push(data.meta);
+    }
+  }
+
+  return evidence;
+};

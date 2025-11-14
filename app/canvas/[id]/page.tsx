@@ -26,8 +26,6 @@ export default function LogicModelPage({ params }: Props) {
     retry: 2,
   });
 
-  console.log({ canvasData });
-
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
