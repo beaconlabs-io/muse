@@ -11,9 +11,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
-  serverExternalPackages: ["@mastra/*", "@lancedb/lancedb", "vectordb"],
+  serverExternalPackages: ["@mastra/*", "@lancedb/lancedb"],
   experimental: {
-    mdxRs: false,
+    mdxRs: true,
   },
 };
 
