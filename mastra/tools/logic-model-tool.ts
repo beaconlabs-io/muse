@@ -220,9 +220,21 @@ export const logicModelTool = createTool({
 
 type Connection = {
   fromCardIndex: number;
-  fromCardType: "activities" | "outputs" | "outcomesShort" | "outcomesMedium" | "outcomesLong" | "impact";
+  fromCardType:
+    | "activities"
+    | "outputs"
+    | "outcomesShort"
+    | "outcomesMedium"
+    | "outcomesLong"
+    | "impact";
   toCardIndex: number;
-  toCardType: "activities" | "outputs" | "outcomesShort" | "outcomesMedium" | "outcomesLong" | "impact";
+  toCardType:
+    | "activities"
+    | "outputs"
+    | "outcomesShort"
+    | "outcomesMedium"
+    | "outcomesLong"
+    | "impact";
   reasoning?: string;
 };
 

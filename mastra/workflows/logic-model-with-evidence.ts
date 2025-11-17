@@ -47,7 +47,9 @@ const generateLogicModelStep = createStep({
     const canvasData: CanvasData = toolReturnValue?.canvasData;
 
     if (!canvasData || !canvasData.cards || !canvasData.arrows) {
-      throw new Error("Failed to generate logic model. The agent did not return valid canvas data.");
+      throw new Error(
+        "Failed to generate logic model. The agent did not return valid canvas data.",
+      );
     }
 
     return {
@@ -100,10 +102,7 @@ const searchEvidenceStep = createStep({
       }
 
       try {
-        const matches = await searchEvidenceForEdge(
-          fromCard.content,
-          toCard.content
-        );
+        const matches = await searchEvidenceForEdge(fromCard.content, toCard.content);
 
         return {
           arrowId: arrow.id,
@@ -120,10 +119,13 @@ const searchEvidenceStep = createStep({
 
     const evidenceResults = await Promise.all(evidenceSearchPromises);
 
-    const evidenceByArrow = evidenceResults.reduce((acc: Record<string, EvidenceMatch[]>, result) => {
-      acc[result.arrowId] = result.matches;
-      return acc;
-    }, {} as Record<string, EvidenceMatch[]>);
+    const evidenceByArrow = evidenceResults.reduce(
+      (acc: Record<string, EvidenceMatch[]>, result) => {
+        acc[result.arrowId] = result.matches;
+        return acc;
+      },
+      {} as Record<string, EvidenceMatch[]>,
+    );
 
     return {
       canvasData,
@@ -182,11 +184,11 @@ const enrichCanvasStep = createStep({
         totalCards: enrichedCanvasData.cards.length,
         totalArrows: enrichedCanvasData.arrows.length,
         arrowsWithEvidence: enrichedArrows.filter(
-          (a) => a.evidenceMetadata && a.evidenceMetadata.length > 0
+          (a) => a.evidenceMetadata && a.evidenceMetadata.length > 0,
         ).length,
         totalEvidenceMatches: enrichedArrows.reduce(
           (sum, a) => sum + (a.evidenceMetadata?.length || 0),
-          0
+          0,
         ),
       },
     };
