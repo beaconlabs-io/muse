@@ -11,12 +11,12 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { Evidence } from "@/types";
 
-const blogsContentDirectory = path.join(process.cwd(), "contents", "evidence");
+const evidenceContentDirectory = path.join(process.cwd(), "contents", "evidence");
 
 export const getEvidenceBySlug = cache(
   async (slug: string): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
     const realSlug = slug.replace(/\.mdx$/, "");
-    const filePath = path.join(blogsContentDirectory, `${realSlug}.mdx`);
+    const filePath = path.join(evidenceContentDirectory, `${realSlug}.mdx`);
     const deploymentPath = path.join(process.cwd(), "contents", "deployments", `${realSlug}.json`);
     let fileContent;
     let deploymentData = {};
@@ -67,7 +67,7 @@ export const getEvidenceBySlug = cache(
 );
 
 export const getAllEvidenceMeta = async () => {
-  const files = fs.readdirSync(blogsContentDirectory).filter((file) => file.endsWith(".mdx"));
+  const files = fs.readdirSync(evidenceContentDirectory).filter((file) => file.endsWith(".mdx"));
 
   const posts: Evidence[] = [];
 
