@@ -2,8 +2,8 @@ import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { logicModelAgent } from "../agents/logic-model-agent";
 import type { CanvasData, Card, Arrow, EvidenceMatch } from "@/types";
-import { searchEvidenceForEdge } from "@/lib/evidence-search";
-
+// import { searchEvidenceForEdge } from "@/lib/evidence-search";
+// TODO: complete RAG workflow
 /**
  * Workflow: Generate Logic Model with Evidence Search
  *
@@ -102,12 +102,11 @@ const searchEvidenceStep = createStep({
       }
 
       try {
-        const matches = await searchEvidenceForEdge(fromCard.content, toCard.content);
-
-        return {
-          arrowId: arrow.id,
-          matches,
-        };
+        // const matches = await searchEvidenceForEdge(fromCard.content, toCard.content);
+        // return {
+        //   arrowId: arrow.id,
+        //   matches,
+        // };
       } catch (error) {
         console.error(`Evidence search failed for arrow ${arrow.id}:`, error);
         return {

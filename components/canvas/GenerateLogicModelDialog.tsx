@@ -25,7 +25,8 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import type { Card, Arrow, CardMetrics } from "@/types";
-import { generateLogicModelFromIntent } from "@/app/actions/canvas/generateLogicModel";
+// import { generateLogicModelFromIntent } from "@/app/actions/canvas/generateLogicModel";
+// TODO: complete RAG workflow
 
 const generateLogicModelSchema = z.object({
   intent: z
@@ -61,25 +62,25 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setIsLoading(true);
     setError(null);
 
-    try {
-      const result = await generateLogicModelFromIntent(data.intent);
+    // try {
+    // const result = await generateLogicModelFromIntent(data.intent);
 
-      if (result.success && result.data) {
-        onGenerate({
-          cards: result.data.cards,
-          arrows: result.data.arrows,
-          cardMetrics: result.data.cardMetrics,
-        });
-        setOpen(false);
-        form.reset();
-      } else {
-        setError(result.error || "Failed to generate logic model");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
+    //   if (result.success && result.data) {
+    //     onGenerate({
+    //       cards: result.data.cards,
+    //       arrows: result.data.arrows,
+    //       cardMetrics: result.data.cardMetrics,
+    //     });
+    //     setOpen(false);
+    //     form.reset();
+    //   } else {
+    //     setError(result.error || "Failed to generate logic model");
+    //   }
+    // } catch (err) {
+    //   setError(err instanceof Error ? err.message : "An error occurred");
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   return (

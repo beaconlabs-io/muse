@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "pnpm lint && pnpm sync:embeddings && next build --webpack",
+    "build": "pnpm lint && next build --webpack",
     "start": "next start",
     "lint": "eslint . --fix",
     "typecheck": "tsc --noEmit 2>&1 | head -50",
@@ -12,10 +12,7 @@
     "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx}\" \"components/**/*.{js,jsx,ts,tsx}\" \"hooks/**/*.{js,jsx,ts,tsx}\" \"utils/**/*.{js,jsx,ts,tsx}\" \"types/**/*.{js,jsx,ts,tsx}\" \"lib/**/*.{js,jsx,ts,tsx}\" \"mastra/**/*.{js,jsx,ts,tsx}\"",
     "prepare": "husky",
     "dev:mastra": "mastra dev --dir mastra",
-    "build:mastra": "mastra build --dir mastra",
-    "sync:embeddings": "tsx scripts/sync-evidence-embeddings.ts",
-    "sync:embeddings:dry": "tsx scripts/sync-evidence-embeddings.ts --dry-run",
-    "sync:embeddings:incremental": "tsx scripts/sync-evidence-embeddings.ts --incremental"
+    "build:mastra": "mastra build --dir mastra"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.44",
