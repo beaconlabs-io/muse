@@ -69,21 +69,21 @@ export const getEvidenceBySlug = cache(
 export const getAllEvidenceMeta = async () => {
   const files = fs.readdirSync(evidenceContentDirectory).filter((file) => file.endsWith(".mdx"));
 
-  const posts: Evidence[] = [];
+  const evidence: Evidence[] = [];
 
   for (const file of files) {
     const data = await getEvidenceBySlug(file);
     if (data?.meta) {
-      posts.push(data.meta as Evidence);
+      evidence.push(data.meta as Evidence);
     }
   }
 
-  posts.sort((a, b) => {
+  evidence.sort((a, b) => {
     const idA = parseInt(a.evidence_id, 10);
     const idB = parseInt(b.evidence_id, 10);
     if (isNaN(idA) || isNaN(idB)) return 0;
     return idA - idB;
   });
 
-  return posts;
+  return evidence;
 };
