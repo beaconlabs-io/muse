@@ -66,6 +66,53 @@ export const getEvidenceBySlug = cache(
   },
 );
 
+export const getAllEvidence = async () => {
+  const files = fs.readdirSync(evidenceContentDirectory).filter((file) => file.endsWith(".mdx"));
+
+  const evidence: Array<{ meta: Evidence; content: string }> = [];
+
+  for (const file of files) {
+    const realSlug = file.replace(/\.mdx$/, "");
+    const filePath = path.join(evidenceContentDirectory, file);
+
+    let fileContent;
+
+    try {
+      // Read raw markdown content
+      fileContent = fs.readFileSync(filePath, { encoding: "utf8" });
+
+      // Parse frontmatter to get metadata
+      const { frontmatter } = await compileMDX({
+        source: fileContent,
+        options: {
+          parseFrontmatter: true,
+        },
+      });
+
+      evidence.push({
+        meta: {
+          evidence_id: realSlug,
+          ...frontmatter,
+        } as Evidence,
+        content: fileContent, // Raw markdown content
+      });
+    } catch (error) {
+      console.error(`Error processing ${file}:`, error);
+      continue;
+    }
+  }
+
+  // Sort by evidence_id
+  evidence.sort((a, b) => {
+    const idA = parseInt(a.meta.evidence_id, 10);
+    const idB = parseInt(b.meta.evidence_id, 10);
+    if (isNaN(idA) || isNaN(idB)) return 0;
+    return idA - idB;
+  });
+
+  return evidence;
+};
+
 export const getAllEvidenceMeta = async () => {
   const files = fs.readdirSync(evidenceContentDirectory).filter((file) => file.endsWith(".mdx"));
 
