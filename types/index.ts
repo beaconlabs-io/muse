@@ -301,8 +301,7 @@ export const TYPE_COLOR_MAP = {
   activities: "#c7d2fe", // blue
   outputs: "#d1fae5", // green
   "outcomes-short": "#fef08a", // yellow
-  "outcomes-medium": "#fef08a", // yellow
-  "outcomes-long": "#fef08a", // yellow
+  "outcomes-intermediate": "#fef08a", // yellow
   impact: "#e9d5ff", // purple
 } as const;
 

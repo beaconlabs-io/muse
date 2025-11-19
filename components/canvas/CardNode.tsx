@@ -29,8 +29,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: LucideIcon }> = {
   activities: { label: "Activities", icon: Zap },
   outputs: { label: "Outputs", icon: Package },
   "outcomes-short": { label: "Outcomes - Short Term", icon: Target },
-  "outcomes-medium": { label: "Outcomes - Medium Term", icon: Target },
-  "outcomes-long": { label: "Outcomes - Long Term", icon: Target },
+  "outcomes-intermediate": { label: "Outcomes - Intermediate Term", icon: Target },
   impact: { label: "Impact", icon: Sparkles },
 };
 

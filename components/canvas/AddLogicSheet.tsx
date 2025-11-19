@@ -72,8 +72,7 @@ const LOGIC_TYPES = [
   { value: "activities", label: "Activities" },
   { value: "outputs", label: "Outputs" },
   { value: "outcomes-short", label: "Outcomes - Short Term" },
-  { value: "outcomes-medium", label: "Outcomes - Medium Term" },
-  { value: "outcomes-long", label: "Outcomes - Long Term" },
+  { value: "outcomes-intermediate", label: "Outcomes - Intermediate Term" },
   { value: "impact", label: "Impact" },
 ] as const;
 

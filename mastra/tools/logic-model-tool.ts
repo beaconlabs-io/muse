@@ -73,10 +73,10 @@ export const logicModelTool = createTool({
       .min(1)
       .describe("Array of short-term outcome cards"),
 
-    outcomesMedium: z
+    outcomesIntermediate: z
       .array(
         z.object({
-          content: z.string().describe("Medium-term outcome (6-18 months)"),
+          content: z.string().describe("Intermediate-term outcome (6-18 months)"),
           metrics: z.array(
             z.object({
               name: z.string(),
@@ -88,29 +88,12 @@ export const logicModelTool = createTool({
         }),
       )
       .min(1)
-      .describe("Array of medium-term outcome cards"),
-
-    outcomesLong: z
-      .array(
-        z.object({
-          content: z.string().describe("Long-term outcome (18+ months)"),
-          metrics: z.array(
-            z.object({
-              name: z.string(),
-              description: z.string().optional(),
-              measurementMethod: z.string(),
-              frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]),
-            }),
-          ),
-        }),
-      )
-      .min(1)
-      .describe("Array of long-term outcome cards"),
+      .describe("Array of intermediate-term outcome cards"),
 
     impact: z
       .array(
         z.object({
-          content: z.string().describe("Long-term societal impact"),
+          content: z.string().describe("Long-term impact (18+ months, ultimate societal outcome)"),
           metrics: z.array(
             z.object({
               name: z.string(),
@@ -132,28 +115,14 @@ export const logicModelTool = createTool({
             .min(0)
             .describe("Index of the source card in its type array (0-based)"),
           fromCardType: z
-            .enum([
-              "activities",
-              "outputs",
-              "outcomesShort",
-              "outcomesMedium",
-              "outcomesLong",
-              "impact",
-            ])
+            .enum(["activities", "outputs", "outcomesShort", "outcomesIntermediate", "impact"])
             .describe("Type of the source card"),
           toCardIndex: z
             .number()
             .min(0)
             .describe("Index of the target card in its type array (0-based)"),
           toCardType: z
-            .enum([
-              "activities",
-              "outputs",
-              "outcomesShort",
-              "outcomesMedium",
-              "outcomesLong",
-              "impact",
-            ])
+            .enum(["activities", "outputs", "outcomesShort", "outcomesIntermediate", "impact"])
             .describe("Type of the target card"),
           reasoning: z
             .string()
@@ -183,8 +152,7 @@ export const logicModelTool = createTool({
       activities,
       outputs,
       outcomesShort,
-      outcomesMedium,
-      outcomesLong,
+      outcomesIntermediate,
       impact,
       connections,
     } = context;
@@ -198,8 +166,7 @@ export const logicModelTool = createTool({
       activities,
       outputs,
       outcomesShort,
-      outcomesMedium,
-      outcomesLong,
+      outcomesIntermediate,
       impact,
       connections,
     });
@@ -208,21 +175,9 @@ export const logicModelTool = createTool({
 
 type Connection = {
   fromCardIndex: number;
-  fromCardType:
-    | "activities"
-    | "outputs"
-    | "outcomesShort"
-    | "outcomesMedium"
-    | "outcomesLong"
-    | "impact";
+  fromCardType: "activities" | "outputs" | "outcomesShort" | "outcomesIntermediate" | "impact";
   toCardIndex: number;
-  toCardType:
-    | "activities"
-    | "outputs"
-    | "outcomesShort"
-    | "outcomesMedium"
-    | "outcomesLong"
-    | "impact";
+  toCardType: "activities" | "outputs" | "outcomesShort" | "outcomesIntermediate" | "impact";
   reasoning?: string;
 };
 
@@ -259,16 +214,7 @@ const generateLogicModel = async (params: {
       frequency: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
     }>;
   }>;
-  outcomesMedium: Array<{
-    content: string;
-    metrics: Array<{
-      name: string;
-      description?: string;
-      measurementMethod: string;
-      frequency: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-    }>;
-  }>;
-  outcomesLong: Array<{
+  outcomesIntermediate: Array<{
     content: string;
     metrics: Array<{
       name: string;
@@ -295,8 +241,7 @@ const generateLogicModel = async (params: {
     activities,
     outputs,
     outcomesShort,
-    outcomesMedium,
-    outcomesLong,
+    outcomesIntermediate,
     impact,
     connections,
   } = params;
@@ -391,22 +336,22 @@ const generateLogicModel = async (params: {
     }));
   });
 
-  // 4. Create Outcomes-Medium cards
-  const outcomeMediumIds: string[] = [];
-  outcomesMedium.forEach((outcome, index) => {
-    const outcomeMediumId = generateId("outcomes-medium", index);
-    outcomeMediumIds.push(outcomeMediumId);
+  // 4. Create Outcomes-Intermediate cards
+  const outcomeIntermediateIds: string[] = [];
+  outcomesIntermediate.forEach((outcome, index) => {
+    const outcomeIntermediateId = generateId("outcomes-intermediate", index);
+    outcomeIntermediateIds.push(outcomeIntermediateId);
     cards.push({
-      id: outcomeMediumId,
+      id: outcomeIntermediateId,
       x: START_X + HORIZONTAL_SPACING * 3,
-      y: calculateY(index, outcomesMedium.length),
+      y: calculateY(index, outcomesIntermediate.length),
       content: outcome.content,
-      color: TYPE_COLOR_MAP["outcomes-medium"],
-      type: "outcomes-medium",
+      color: TYPE_COLOR_MAP["outcomes-intermediate"],
+      type: "outcomes-intermediate",
     });
 
-    cardMetrics[outcomeMediumId] = outcome.metrics.map((metric, metricIndex) => ({
-      id: `metric-${timestamp}-outcome-medium-${index}-${metricIndex}`,
+    cardMetrics[outcomeIntermediateId] = outcome.metrics.map((metric, metricIndex) => ({
+      id: `metric-${timestamp}-outcome-intermediate-${index}-${metricIndex}`,
       name: metric.name,
       description: metric.description,
       measurementMethod: metric.measurementMethod,
@@ -414,37 +359,14 @@ const generateLogicModel = async (params: {
     }));
   });
 
-  // 5. Create Outcomes-Long cards
-  const outcomeLongIds: string[] = [];
-  outcomesLong.forEach((outcome, index) => {
-    const outcomeLongId = generateId("outcomes-long", index);
-    outcomeLongIds.push(outcomeLongId);
-    cards.push({
-      id: outcomeLongId,
-      x: START_X + HORIZONTAL_SPACING * 4,
-      y: calculateY(index, outcomesLong.length),
-      content: outcome.content,
-      color: TYPE_COLOR_MAP["outcomes-long"],
-      type: "outcomes-long",
-    });
-
-    cardMetrics[outcomeLongId] = outcome.metrics.map((metric, metricIndex) => ({
-      id: `metric-${timestamp}-outcome-long-${index}-${metricIndex}`,
-      name: metric.name,
-      description: metric.description,
-      measurementMethod: metric.measurementMethod,
-      frequency: metric.frequency,
-    }));
-  });
-
-  // 6. Create Impact cards
+  // 5. Create Impact cards
   const impactIds: string[] = [];
   impact.forEach((impactItem, index) => {
     const impactId = generateId("impact", index);
     impactIds.push(impactId);
     cards.push({
       id: impactId,
-      x: START_X + HORIZONTAL_SPACING * 5,
+      x: START_X + HORIZONTAL_SPACING * 4,
       y: calculateY(index, impact.length),
       content: impactItem.content,
       color: TYPE_COLOR_MAP.impact,
@@ -465,8 +387,7 @@ const generateLogicModel = async (params: {
     activities: activityIds,
     outputs: outputIds,
     outcomesShort: outcomeShortIds,
-    outcomesMedium: outcomeMediumIds,
-    outcomesLong: outcomeLongIds,
+    outcomesIntermediate: outcomeIntermediateIds,
     impact: impactIds,
   };
 
@@ -565,32 +486,22 @@ const generateLogicModel = async (params: {
       });
     }
 
-    // Outcomes-Short → Outcomes-Medium (1:1)
-    const shortMediumPairs = Math.min(outcomeShortIds.length, outcomeMediumIds.length);
-    for (let i = 0; i < shortMediumPairs; i++) {
+    // Outcomes-Short → Outcomes-Intermediate (1:1)
+    const shortIntermediatePairs = Math.min(outcomeShortIds.length, outcomeIntermediateIds.length);
+    for (let i = 0; i < shortIntermediatePairs; i++) {
       arrows.push({
-        id: `arrow-${timestamp}-outcome-short-${i}-outcome-medium-${i}`,
+        id: `arrow-${timestamp}-outcome-short-${i}-outcome-intermediate-${i}`,
         fromCardId: outcomeShortIds[i],
-        toCardId: outcomeMediumIds[i],
+        toCardId: outcomeIntermediateIds[i],
       });
     }
 
-    // Outcomes-Medium → Outcomes-Long (1:1)
-    const mediumLongPairs = Math.min(outcomeMediumIds.length, outcomeLongIds.length);
-    for (let i = 0; i < mediumLongPairs; i++) {
+    // Outcomes-Intermediate → Impact (1:1)
+    const intermediateImpactPairs = Math.min(outcomeIntermediateIds.length, impactIds.length);
+    for (let i = 0; i < intermediateImpactPairs; i++) {
       arrows.push({
-        id: `arrow-${timestamp}-outcome-medium-${i}-outcome-long-${i}`,
-        fromCardId: outcomeMediumIds[i],
-        toCardId: outcomeLongIds[i],
-      });
-    }
-
-    // Outcomes-Long → Impact (1:1)
-    const longImpactPairs = Math.min(outcomeLongIds.length, impactIds.length);
-    for (let i = 0; i < longImpactPairs; i++) {
-      arrows.push({
-        id: `arrow-${timestamp}-outcome-long-${i}-impact-${i}`,
-        fromCardId: outcomeLongIds[i],
+        id: `arrow-${timestamp}-outcome-intermediate-${i}-impact-${i}`,
+        fromCardId: outcomeIntermediateIds[i],
         toCardId: impactIds[i],
       });
     }

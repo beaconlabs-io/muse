@@ -42,18 +42,14 @@ export const logicModelAgent = new Agent({
     - Example: "Increased civic tech project contributions (page edits, code commits)"
     - Each with 1-3 metrics
 
-    **Outcomes-Medium** (1-3 cards, 6-18 months):
+    **Outcomes-Intermediate** (1-3 cards, 6-18 months):
     - Sustained changes in practices or systems
     - Example: "Established regular hackathons and community engagement"
     - Each with 1-3 metrics
 
-    **Outcomes-Long** (1-3 cards, 18+ months):
-    - Systemic changes that persist
-    - Example: "Self-sustaining civic tech ecosystem in target cities"
-    - Each with 1-3 metrics
-
-    **Impact** (1-2 cards):
-    - Long-term societal or community transformation
+    **Impact** (1-2 cards, 18+ months):
+    - Long-term societal or community transformation (ultimate outcome)
+    - Represents systemic changes that persist beyond the intervention
     - Example: "More transparent and responsive local government services"
     - Each with 1-3 metrics
 
@@ -81,21 +77,20 @@ export const logicModelAgent = new Agent({
     - Specify fromCardIndex (0-based index in its card type array)
     - Specify fromCardType (e.g., "activities", "outputs", "outcomesShort")
     - Specify toCardIndex (0-based index in its card type array)
-    - Specify toCardType (e.g., "outputs", "outcomesShort", "outcomesMedium")
+    - Specify toCardType (e.g., "outputs", "outcomesShort", "outcomesIntermediate")
     - Optionally provide reasoning explaining the causal link
 
     **Examples:**
 
-    Good connection set (15 connections for 18 cards):
+    Good connection set (12 connections for 15 cards):
     - activities[0] → outputs[0]: "Bootcamp enrollment directly produces graduates"
     - activities[0] → outputs[1]: "Bootcamp also produces curriculum materials"
     - outputs[0] → outcomesShort[0]: "Graduates get hired"
     - outputs[1] → outcomesShort[1]: "Curriculum enables peer teaching"
-    - outcomesShort[0] → outcomesMedium[0]: "Initial hires lead to retention"
-    - outcomesShort[1] → outcomesMedium[1]: "Peer teaching builds community"
-    - outcomesMedium[0] → outcomesLong[0]: "Job retention enables career growth"
-    - outcomesMedium[1] → outcomesLong[0]: "Community sustains employment"
-    - outcomesLong[0] → impact[0]: "Career growth reduces unemployment"
+    - outcomesShort[0] → outcomesIntermediate[0]: "Initial hires lead to retention"
+    - outcomesShort[1] → outcomesIntermediate[1]: "Peer teaching builds community"
+    - outcomesIntermediate[0] → impact[0]: "Job retention enables career growth and reduces unemployment"
+    - outcomesIntermediate[1] → impact[0]: "Community sustains long-term employment ecosystem"
 
     Bad connection set (45 connections for same 18 cards):
     - activities[0] → ALL outputs[0,1,2]
@@ -113,7 +108,7 @@ export const logicModelAgent = new Agent({
     - description (comprehensive overview string, optional)
     - intervention (clear intervention description string)
     - context (MUST BE A STRING describing target population and goals - NOT an object. Example: "Targeting unemployed youth aged 18-24 in urban areas with tech industry partnerships for job placement")
-    - activities, outputs, outcomesShort, outcomesMedium, outcomesLong, impact (arrays with content and metrics)
+    - activities, outputs, outcomesShort, outcomesIntermediate, impact (arrays with content and metrics)
     - connections (array of connection objects with fromCardIndex, fromCardType, toCardIndex, toCardType, and optional reasoning)
 
     **IMPORTANT - context field format:**
@@ -229,8 +224,8 @@ export const logicModelAgent = new Agent({
     - Create descriptive titles and comprehensive descriptions
     - Generate ALL content (activities, outputs, outcomes, impact) with specific, measurable descriptions
     - Include 1-3 appropriate metrics for each card with proper frequency values
-    - Each stage should typically have 1-3 cards (can have more if needed)
-    - **IMPORTANT: Think carefully about connections - aim for 8-15 total, not 30+**
+    - Each stage should typically have 1-3 cards
+    - **IMPORTANT: Think carefully about connections - aim for 8-10 total, not 30+**
     - Only connect cards with direct, plausible causal relationships
     - Provide reasoning for connections to justify the causal link
     - Focus on creating a realistic logic model with evidence-backed connections

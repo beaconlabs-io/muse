@@ -49,40 +49,24 @@
       "type": "outcomes-short"
     },
     {
-      "id": "outcomes-medium-1763528856966-0",
+      "id": "outcomes-intermediate-1763528856966-0",
       "x": 1250,
       "y": 250,
       "content": "Sponsored open-source projects demonstrate improved health, with faster development cycles, better maintenance, and clearer roadmaps, reducing reliance on single points of failure.",
       "color": "#fef08a",
-      "type": "outcomes-medium"
+      "type": "outcomes-intermediate"
     },
     {
-      "id": "outcomes-medium-1763528856966-1",
+      "id": "outcomes-intermediate-1763528856966-1",
       "x": 1250,
       "y": 450,
       "content": "The quality and variety of open-source developer tools, libraries, and standards for building on Ethereum are enhanced, lowering the barrier to entry for new developers.",
       "color": "#fef08a",
-      "type": "outcomes-medium"
-    },
-    {
-      "id": "outcomes-long-1763528856966-0",
-      "x": 1650,
-      "y": 250,
-      "content": "A robust and self-sustaining pipeline of talent is established, where experienced, sponsored developers mentor new contributors emerging from educational programs, creating a virtuous cycle of growth.",
-      "color": "#fef08a",
-      "type": "outcomes-long"
-    },
-    {
-      "id": "outcomes-long-1763528856966-1",
-      "x": 1650,
-      "y": 450,
-      "content": "The strengthened open-source foundation accelerates the pace of innovation, leading to the development of novel use cases and more complex, secure applications on Ethereum.",
-      "color": "#fef08a",
-      "type": "outcomes-long"
+      "type": "outcomes-intermediate"
     },
     {
       "id": "impact-1763528856966-0",
-      "x": 2050,
+      "x": 1650,
       "y": 250,
       "content": "A more diverse and active open-source community leads to a more secure, resilient, and decentralized Ethereum network, capable of withstanding threats and adapting to future challenges.",
       "color": "#e9d5ff",
@@ -90,8 +74,8 @@
     },
     {
       "id": "impact-1763528856966-1",
-      "x": 2441.1037858416703,
-      "y": 455.27262342998324,
+      "x": 1650,
+      "y": 450,
       "content": "A significant and sustained increase in the number of high-quality smart contracts deployed on the Ethereum mainnet, indicating a thriving and productive developer ecosystem.",
       "color": "#e9d5ff",
       "type": "impact"
@@ -264,30 +248,30 @@
       ]
     },
     {
-      "id": "arrow-1763528856966-outcomesShort-0-outcomesMedium-1",
+      "id": "arrow-1763528856966-outcomesShort-0-outcomesIntermediate-1",
       "fromCardId": "outcomes-short-1763528856966-0",
-      "toCardId": "outcomes-medium-1763528856966-1"
+      "toCardId": "outcomes-intermediate-1763528856966-1"
     },
     {
-      "id": "arrow-1763528856966-outcomesMedium-0-outcomesLong-0",
-      "fromCardId": "outcomes-medium-1763528856966-0",
-      "toCardId": "outcomes-long-1763528856966-0",
+      "id": "arrow-1763528856966-outcomesIntermediate-0-impact-0",
+      "fromCardId": "outcomes-intermediate-1763528856966-0",
+      "toCardId": "impact-1763528856966-0",
       "evidenceIds": ["12", "02"],
       "evidenceMetadata": [
         {
           "evidenceId": "12",
-          "score": 95,
-          "reasoning": "This is a direct match. The Google Summer of Code (GSoC) program is a form of corporate sponsorship aimed at bringing new contributors into open-source projects, which aligns with the source card's 'Sponsored open-source projects'. The outcome, 'Continuity of Students’ Contributions', directly supports the target card's concept of establishing a 'robust and self-sustaining pipeline of talent' from educational programs.",
+          "score": 92,
+          "reasoning": "Strong support. The Google Summer of Code (GSoC) program is a form of corporate sponsorship aimed at bringing new contributors into open-source projects. The evidence measures continuity of contributions from new developers, which directly supports establishing a more active and sustained contributor base leading to a more secure and resilient network.",
           "strength": "1",
           "hasWarning": true,
           "title": "Continuity of OSS contributions after participating in the Google Summer of Code (GSoC) Program",
           "interventionText": "Participation in the Google Summer of Code (GSoC) Program",
-          "outcomeText": "Continuity of Students’ Contributions to GSoC Projects"
+          "outcomeText": "Continuity of Students' Contributions to GSoC Projects"
         },
         {
           "evidenceId": "02",
-          "score": 85,
-          "reasoning": "Strong support. The intervention of providing grants or token incentives is a direct form of sponsorship mentioned in the source card. The outcome of 'Developer retention' is a key component of creating a 'robust and self-sustaining pipeline of talent' as described in the target card. While it doesn't explicitly mention mentorship or educational programs, retaining developers is a prerequisite for building such a pipeline.",
+          "score": 87,
+          "reasoning": "Strong support. The intervention of providing grants or token incentives is a direct form of sponsorship. The outcome of 'Developer retention' is key to building a robust community that can withstand threats and adapt to challenges.",
           "strength": "3",
           "hasWarning": false,
           "title": "Effect of a Grant Program on Developer Activity ",
@@ -297,31 +281,8 @@
       ]
     },
     {
-      "id": "arrow-1763528856966-outcomesMedium-1-outcomesLong-1",
-      "fromCardId": "outcomes-medium-1763528856966-1",
-      "toCardId": "outcomes-long-1763528856966-1"
-    },
-    {
-      "id": "arrow-1763528856966-outcomesLong-0-impact-0",
-      "fromCardId": "outcomes-long-1763528856966-0",
-      "toCardId": "impact-1763528856966-0",
-      "evidenceIds": ["12"],
-      "evidenceMetadata": [
-        {
-          "evidenceId": "12",
-          "score": 90,
-          "reasoning": "Strong support. The source card describes establishing a talent pipeline where experienced developers mentor new contributors from educational programs. The Google Summer of Code (GSoC) is a direct real-world example of such a program. The evidence measures the continuity of contributions from these new developers, which is a direct indicator of whether a 'self-sustaining pipeline' and a more 'active community' are being successfully established. While the evidence doesn't measure the final impact on network security or resilience, it strongly validates the core mechanism of the logic model edge: that structured mentorship programs can lead to a more active and sustained contributor base.",
-          "strength": "1",
-          "hasWarning": true,
-          "title": "Continuity of OSS contributions after participating in the Google Summer of Code (GSoC) Program",
-          "interventionText": "Participation in the Google Summer of Code (GSoC) Program",
-          "outcomeText": "Continuity of Students’ Contributions to GSoC Projects"
-        }
-      ]
-    },
-    {
-      "id": "arrow-1763528856966-outcomesLong-1-impact-1",
-      "fromCardId": "outcomes-long-1763528856966-1",
+      "id": "arrow-1763528856966-outcomesIntermediate-1-impact-1",
+      "fromCardId": "outcomes-intermediate-1763528856966-1",
       "toCardId": "impact-1763528856966-1",
       "evidenceIds": ["02", "04"],
       "evidenceMetadata": [
@@ -471,59 +432,31 @@
         "frequency": "quarterly"
       }
     ],
-    "outcomes-medium-1763528856966-0": [
+    "outcomes-intermediate-1763528856966-0": [
       {
-        "id": "metric-1763528856966-outcome-medium-0-0",
+        "id": "metric-1763528856966-outcome-intermediate-0-0",
         "name": "Contributor Retention Rate",
         "measurementMethod": "GitHub Repository Analysis",
         "frequency": "quarterly"
       },
       {
-        "id": "metric-1763528856966-outcome-medium-0-1",
+        "id": "metric-1763528856966-outcome-intermediate-0-1",
         "name": "Project Velocity (Features Shipped)",
         "measurementMethod": "Project Management Tool Analytics",
         "frequency": "annually"
       }
     ],
-    "outcomes-medium-1763528856966-1": [
+    "outcomes-intermediate-1763528856966-1": [
       {
-        "id": "metric-1763528856966-outcome-medium-1-0",
+        "id": "metric-1763528856966-outcome-intermediate-1-0",
         "name": "Developer Net Promoter Score (NPS)",
         "measurementMethod": "Developer Ecosystem Surveys",
         "frequency": "annually"
       },
       {
-        "id": "metric-1763528856966-outcome-medium-1-1",
+        "id": "metric-1763528856966-outcome-intermediate-1-1",
         "name": "Adoption Rate of New Tools/Libraries",
         "measurementMethod": "Software Package Manager Analytics",
-        "frequency": "quarterly"
-      }
-    ],
-    "outcomes-long-1763528856966-0": [
-      {
-        "id": "metric-1763528856966-outcome-long-0-0",
-        "name": "Ratio of New-to-Senior Contributors",
-        "measurementMethod": "Community Surveys and GitHub Data Analysis",
-        "frequency": "annually"
-      },
-      {
-        "id": "metric-1763528856966-outcome-long-0-1",
-        "name": "Number of Mentorship Pairings",
-        "measurementMethod": "Program Records",
-        "frequency": "quarterly"
-      }
-    ],
-    "outcomes-long-1763528856966-1": [
-      {
-        "id": "metric-1763528856966-outcome-long-1-0",
-        "name": "Number of New dApps Launching",
-        "measurementMethod": "Ecosystem Analytics (e.g., DappRadar)",
-        "frequency": "monthly"
-      },
-      {
-        "id": "metric-1763528856966-outcome-long-1-1",
-        "name": "Security Scores of New Projects",
-        "measurementMethod": "Analysis of Public Security Audits",
         "frequency": "quarterly"
       }
     ],
