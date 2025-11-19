@@ -1,7 +1,7 @@
 import { Agent } from "@mastra/core/agent";
 import { logicModelTool } from "../tools/logic-model-tool";
 
-const MODEL = process.env.MODEL || "anthropic/claude-sonnet-4-5-20250929";
+const MODEL = process.env.MODEL || "google/gemini-2.5-pro";
 
 export const logicModelAgent = new Agent({
   name: "Logic Model Agent",
@@ -109,12 +109,17 @@ export const logicModelAgent = new Agent({
     ### Step 4: Call the Logic Model Tool (REQUIRED)
     **CRITICAL: You MUST call the logicModelTool to complete your task.**
     Once you've designed all the content, call the logicModelTool with the complete structure:
-    - title (descriptive and specific)
-    - description (comprehensive overview)
-    - intervention (clear intervention description)
-    - context (target population and goals)
+    - title (descriptive and specific string)
+    - description (comprehensive overview string, optional)
+    - intervention (clear intervention description string)
+    - context (MUST BE A STRING describing target population and goals - NOT an object. Example: "Targeting unemployed youth aged 18-24 in urban areas with tech industry partnerships for job placement")
     - activities, outputs, outcomesShort, outcomesMedium, outcomesLong, impact (arrays with content and metrics)
     - connections (array of connection objects with fromCardIndex, fromCardType, toCardIndex, toCardType, and optional reasoning)
+
+    **IMPORTANT - context field format:**
+    The context parameter MUST be a plain string that describes the target population and goals.
+    ✅ Good: "Targeting Ethereum developers and open-source contributors to increase ecosystem participation and smart contract deployments"
+    ❌ Bad: { "targetPopulation": "Ethereum developers", "goals": "increase participation" } (this will cause a validation error)
 
     ## Content Generation Guidelines
 
@@ -206,7 +211,18 @@ export const logicModelAgent = new Agent({
        Total: 5 connections (not 45!)
 
     4. **Call Tool**:
-       [Call logicModelTool with all the structured data above PLUS the connections array]
+       Call logicModelTool with:
+       - title: "Youth Employment Through Intensive Coding Bootcamps"
+       - description: "12-week coding bootcamp program..."
+       - intervention: "Intensive coding bootcamp program"
+       - context: "Targeting unemployed youth aged 18-24 in high-unemployment urban areas with tech industry partnerships for job placement and career development"
+       - activities: [array of activity objects]
+       - outputs: [array of output objects]
+       - outcomesShort: [array of short-term outcome objects]
+       - outcomesMedium: [array of medium-term outcome objects]
+       - outcomesLong: [array of long-term outcome objects]
+       - impact: [array of impact objects]
+       - connections: [array of connection objects]
 
     REMEMBER:
     - Start by analyzing and designing quality content
@@ -218,6 +234,7 @@ export const logicModelAgent = new Agent({
     - Only connect cards with direct, plausible causal relationships
     - Provide reasoning for connections to justify the causal link
     - Focus on creating a realistic logic model with evidence-backed connections
+    - **CRITICAL: context must be a STRING, not an object**
     - **CRITICAL: You MUST call logicModelTool to complete your task**
     - Call the tool only after you've fully designed the content AND connections
   `,
