@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Card, Arrow, CardMetrics, EvidenceMatch } from "@/types";
 import {
   generateLogicModelStructure,
-  searchEvidenceForSingleArrow,
+  searchEvidenceForAllArrows,
 } from "@/app/actions/canvas/generateLogicModel";
 
 const generateLogicModelSchema = z.object({
@@ -65,10 +65,11 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   });
 
   const steps = [
-    { id: "analyze", description: "Analyzing user intent" },
+    { id: "analyze", description: "Analyzing intent" },
     { id: "structure", description: "Generating logic model from intent" },
     { id: "search", description: "Searching evidence for edges" },
     { id: "illustrate", description: "Illustrating canvas with evidence" },
+    { id: "complete", description: "Completed!" },
   ];
 
   const handleSubmit = async (data: GenerateLogicModelFormData) => {
@@ -78,10 +79,8 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setStepDialogOpen(true);
 
     try {
-      // Step 1: Analyze user intent
+      // Step 1: Analyze user intent(Dummy)
       await setDialogStep("analyze", "active");
-      // Brief delay to show the step
-      await new Promise((resolve) => setTimeout(resolve, 800));
       await setDialogStep("analyze", "completed");
 
       // Step 2: Generate logic model structure (REAL - server action)
@@ -95,59 +94,28 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
       const canvasData = structureResult.data;
       await setDialogStep("structure", "completed");
 
-      // Step 3: Search evidence for each arrow (REAL - sequential server actions)
+      // Step 3: Search evidence for ALL arrows in PARALLEL (REAL - server action)
       await setDialogStep("search", "active");
+      const searchResult = await searchEvidenceForAllArrows(canvasData);
 
-      const evidenceResults: Array<{ arrowId: string; matches: EvidenceMatch[] }> = [];
-
-      for (let i = 0; i < canvasData.arrows.length; i++) {
-        const arrow = canvasData.arrows[i];
-        const fromCard = canvasData.cards.find((c) => c.id === arrow.fromCardId);
-        const toCard = canvasData.cards.find((c) => c.id === arrow.toCardId);
-
-        if (!fromCard || !toCard) {
-          console.warn(`Arrow ${i + 1}/${canvasData.arrows.length}: Missing cards`);
-          evidenceResults.push({ arrowId: arrow.id, matches: [] });
-          continue;
-        }
-
-        // Update progress with current arrow being processed
-        const progressMessage = `Searching arrow ${i + 1}/${canvasData.arrows.length}: ${fromCard.content} → ${toCard.content}`;
-        await setDialogStep("search", "active", progressMessage);
-
-        // Call server action for THIS arrow
-        const evidenceResult = await searchEvidenceForSingleArrow(
-          fromCard.content,
-          toCard.content,
-          arrow.id,
-        );
-
-        if (evidenceResult.success && evidenceResult.matches) {
-          evidenceResults.push({ arrowId: arrow.id, matches: evidenceResult.matches });
-        } else {
-          // Even if search fails, continue with empty matches
-          console.warn(`Failed to search evidence for arrow ${arrow.id}:`, evidenceResult.error);
-          evidenceResults.push({ arrowId: arrow.id, matches: [] });
-        }
+      if (!searchResult.success || !searchResult.evidenceByArrow) {
+        throw new Error(searchResult.error || "Failed to search evidence");
       }
 
+      const coverageMessage = `Found evidence for ${searchResult.stats?.arrowsWithEvidence || 0}/${searchResult.stats?.totalArrows || 0} arrows (${searchResult.stats?.coveragePercent.toFixed(1) || 0}% coverage)`;
+      await setDialogStep("search", "active", coverageMessage);
       await setDialogStep("search", "completed");
 
-      // Step 4: illustrate canvas with evidence (client-side)
+      // Step 4: Illustrate canvas with evidence (client-side)
       await setDialogStep("illustrate", "active");
 
-      const evidenceMap = new Map<string, EvidenceMatch[]>();
-      evidenceResults.forEach((result) => {
-        evidenceMap.set(result.arrowId, result.matches);
-      });
-
-      const illustrateedArrows = canvasData.arrows.map((arrow) => {
-        const matches = evidenceMap.get(arrow.id) || [];
+      const enrichedArrows = canvasData.arrows.map((arrow) => {
+        const matches = searchResult.evidenceByArrow![arrow.id] || [];
         if (matches.length === 0) return arrow;
 
         return {
           ...arrow,
-          evidenceIds: matches.map((m) => m.evidenceId),
+          evidenceIds: matches.map((m: EvidenceMatch) => m.evidenceId),
           evidenceMetadata: matches,
         };
       });
@@ -157,9 +125,11 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
       // Success: pass data and close
       onGenerate({
         cards: canvasData.cards,
-        arrows: illustrateedArrows,
+        arrows: enrichedArrows,
         cardMetrics: canvasData.cardMetrics,
       });
+
+      await setDialogStep("complete", "completed");
 
       // Auto-close after brief delay
       await new Promise((resolve) => setTimeout(resolve, 500));

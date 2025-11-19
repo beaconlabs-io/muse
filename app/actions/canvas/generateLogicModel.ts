@@ -9,13 +9,6 @@ interface GenerateLogicModelStructureResult {
   error?: string;
 }
 
-interface SearchEvidenceResult {
-  success: boolean;
-  arrowId: string;
-  matches?: EvidenceMatch[];
-  error?: string;
-}
-
 interface GenerateLogicModelResult {
   success: boolean;
   data?: CanvasData;
@@ -287,33 +280,85 @@ export async function generateLogicModelStructure(
 }
 
 /**
- * Step 2: Search evidence for a single arrow
- * Called sequentially by client for each arrow to show real-time progress
+ * Step 2: Search evidence for ALL arrows in parallel
+ * This replaces the old sequential searchEvidenceForSingleArrow approach
+ * Expected to be 20-30x faster (5min → 10-15s)
  */
-export async function searchEvidenceForSingleArrow(
-  fromCardContent: string,
-  toCardContent: string,
-  arrowId: string,
-): Promise<SearchEvidenceResult> {
+export async function searchEvidenceForAllArrows(
+  canvasData: CanvasData,
+): Promise<{
+  success: boolean;
+  evidenceByArrow?: Record<string, EvidenceMatch[]>;
+  stats?: {
+    totalArrows: number;
+    arrowsWithEvidence: number;
+    coveragePercent: number;
+  };
+  error?: string;
+}> {
   try {
     console.log(
-      `[Server Action] Searching evidence for arrow ${arrowId}: "${fromCardContent}" → "${toCardContent}"`,
+      `[Server Action] Searching evidence for ${canvasData.arrows.length} arrows in PARALLEL...`,
     );
 
-    const matches = await searchEvidenceForEdge(fromCardContent, toCardContent);
+    const startTime = Date.now();
 
-    console.log(`[Server Action] ✓ Found ${matches.length} evidence matches for arrow ${arrowId}`);
+    // Search evidence for all arrows in PARALLEL using Promise.all()
+    const evidenceSearchPromises = canvasData.arrows.map(async (arrow: Arrow) => {
+      const fromCard = canvasData.cards.find((c: Card) => c.id === arrow.fromCardId);
+      const toCard = canvasData.cards.find((c: Card) => c.id === arrow.toCardId);
+
+      if (!fromCard || !toCard) {
+        console.warn(
+          `[Server Action] Arrow ${arrow.id}: Missing cards (from: ${!!fromCard}, to: ${!!toCard})`,
+        );
+        return { arrowId: arrow.id, matches: [] as EvidenceMatch[] };
+      }
+
+      try {
+        console.log(
+          `[Server Action] Searching arrow ${arrow.id.substring(0, 20)}...: "${fromCard.content.substring(0, 40)}..." → "${toCard.content.substring(0, 40)}..."`,
+        );
+        const matches = await searchEvidenceForEdge(fromCard.content, toCard.content);
+        console.log(`[Server Action] ✓ Arrow ${arrow.id.substring(0, 20)}...: Found ${matches.length} matches`);
+        return { arrowId: arrow.id, matches };
+      } catch (error) {
+        console.error(`[Server Action] ❌ Arrow ${arrow.id}: Search failed:`, error);
+        return { arrowId: arrow.id, matches: [] as EvidenceMatch[] };
+      }
+    });
+
+    // Wait for all searches to complete
+    const evidenceResults = await Promise.all(evidenceSearchPromises);
+
+    // Convert to map for easy lookup
+    const evidenceByArrow: Record<string, EvidenceMatch[]> = {};
+    evidenceResults.forEach((result) => {
+      evidenceByArrow[result.arrowId] = result.matches;
+    });
+
+    // Calculate statistics
+    const arrowsWithEvidence = evidenceResults.filter((r) => r.matches.length > 0).length;
+    const coveragePercent = ((arrowsWithEvidence / canvasData.arrows.length) * 100).toFixed(1);
+    const totalDuration = ((Date.now() - startTime) / 1000).toFixed(2);
+
+    console.log(
+      `[Server Action] ✓ Evidence search completed in ${totalDuration}s (${arrowsWithEvidence}/${canvasData.arrows.length} arrows with evidence, ${coveragePercent}% coverage)`,
+    );
 
     return {
       success: true,
-      arrowId,
-      matches,
+      evidenceByArrow,
+      stats: {
+        totalArrows: canvasData.arrows.length,
+        arrowsWithEvidence,
+        coveragePercent: parseFloat(coveragePercent),
+      },
     };
   } catch (error) {
-    console.error(`[Server Action] ❌ Error searching evidence for arrow ${arrowId}:`, error);
+    console.error("[Server Action] Error in parallel evidence search:", error);
     return {
       success: false,
-      arrowId,
       error: error instanceof Error ? error.message : "Unknown error occurred",
     };
   }

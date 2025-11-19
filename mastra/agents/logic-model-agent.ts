@@ -27,31 +27,31 @@ export const logicModelAgent = new Agent({
     ### Step 3: Generate Content for Each Stage
     Think through the complete causal chain and generate specific content:
 
-    **Activities** (1-3 cards):
+    **Activities** (1-2 cards):
     - Concrete interventions, programs, or policy actions being implemented
     - Example: "Deploy Code for America Brigade in 10 cities"
-    - Each with 1-3 metrics (name, description, measurementMethod, frequency)
+    - Each with 1-2 metrics (name, description, measurementMethod, frequency)
 
-    **Outputs** (1-3 cards):
+    **Outputs** (1-2 cards):
     - Direct, measurable deliverables from activities (immediate results)
     - Example: "100 civic tech volunteers recruited and trained"
-    - Each with 1-3 metrics
+    - Each with 1-2 metrics
 
-    **Outcomes-Short** (1-3 cards, 0-6 months):
+    **Outcomes-Short** (1-2 cards, 0-6 months):
     - Initial behavioral or knowledge changes
     - Example: "Increased civic tech project contributions (page edits, code commits)"
-    - Each with 1-3 metrics
+    - Each with 1-2 metrics
 
-    **Outcomes-Intermediate** (1-3 cards, 6-18 months):
+    **Outcomes-Intermediate** (1-2 cards, 6-18 months):
     - Sustained changes in practices or systems
     - Example: "Established regular hackathons and community engagement"
-    - Each with 1-3 metrics
+    - Each with 1-2 metrics
 
     **Impact** (1-2 cards, 18+ months):
     - Long-term societal or community transformation (ultimate outcome)
     - Represents systemic changes that persist beyond the intervention
     - Example: "More transparent and responsive local government services"
-    - Each with 1-3 metrics
+    - Each with 1-2 metrics
 
     ### Step 3.5: Design Connections Between Cards (IMPORTANT)
 
@@ -59,7 +59,7 @@ export const logicModelAgent = new Agent({
     Do NOT connect everything to everything - only specify connections where there is a **direct, plausible causal relationship**.
 
     **Connection Strategy:**
-    - Most logic models should have 8-15 total connections
+    - Most logic models should have 8-10 total connections
     - Each card typically connects to 1-2 cards in the next stage
     - Only create multiple outgoing connections when there's a genuine many-to-many relationship
     - Focus on the PRIMARY causal pathways, not every possible indirect relationship
@@ -82,7 +82,7 @@ export const logicModelAgent = new Agent({
 
     **Examples:**
 
-    Good connection set (12 connections for 15 cards):
+    Good connection set (5-10 connections for 15 cards):
     - activities[0] → outputs[0]: "Bootcamp enrollment directly produces graduates"
     - activities[0] → outputs[1]: "Bootcamp also produces curriculum materials"
     - outputs[0] → outcomesShort[0]: "Graduates get hired"
@@ -125,106 +125,18 @@ export const logicModelAgent = new Agent({
     - Be EVIDENCE-AWARE: Think about what data could validate this claim
 
     ### For Metrics:
-    Generate 1-3 metrics per card that are:
+    Generate 1-2 metrics per card that are:
     - Concrete and measurable (e.g., "Number of participants", "Percentage change in test scores")
     - Have proper frequency: "daily", "weekly", "monthly", "quarterly", "annually", or "other"
     - Aligned with common research methodologies (surveys, interviews, administrative data, analytics)
     - Feasible to collect with realistic measurement methods
 
-    ### Common Intervention Patterns:
-
-    1. **Technology/OSS Projects**:
-       - Activities: Deploy platform, train users, provide support, present at conferences
-       - Outputs: User registrations, content created, features used, community size
-       - Outcomes: Adoption rates, efficiency gains, ecosystem integration, sustainability
-       - Impact: Digital transformation, improved services, accessibility
-
-    2. **Education Programs**:
-       - Activities: Curriculum development, teacher training, student enrollment
-       - Outputs: Classes delivered, materials distributed, assessments completed
-       - Outcomes: Knowledge gains, skill development, behavior change, retention
-       - Impact: Improved life outcomes, economic mobility, equity
-
-    3. **Community Development**:
-       - Activities: Infrastructure investment, program deployment, stakeholder engagement
-       - Outputs: Facilities built, services launched, people reached
-       - Outcomes: Usage rates, satisfaction scores, community participation
-       - Impact: Quality of life improvements, social cohesion, economic growth
-
-    4. **Public Health Interventions**:
-       - Activities: Awareness campaigns, service delivery, provider training
-       - Outputs: People screened, treatments provided, messages delivered
-       - Outcomes: Behavior change, health indicators, system capacity
-       - Impact: Population health improvements, reduced disparities, cost savings
-
-    ## Example Workflow:
-
-    User: "Create a logic model for reducing youth unemployment through coding bootcamps"
-
-    **Your Process:**
-
-    1. **Analyze**: This is an education/workforce development intervention targeting unemployed youth (18-24).
-       Focus on skill development → employment pathway. Likely 12-week timeframe.
-
-    2. **Design Title/Description**:
-       - Title: "Youth Employment Through Intensive Coding Bootcamps"
-       - Description: "12-week coding bootcamp program for unemployed youth aged 18-24 in high-unemployment urban areas, with tech industry partnerships to facilitate job placement and career development."
-
-    3. **Generate Content**:
-       Activities:
-       - "Recruit and enroll 200 unemployed youth aged 18-24 in intensive 12-week full-stack web development bootcamp with industry-standard curriculum"
-         Metrics: Enrollment rate (monthly), Demographic diversity (quarterly)
-
-       Outputs:
-       - "150 program graduates (75% completion rate) with full-stack web development skills, industry certifications, and portfolio projects"
-         Metrics: Graduation rate (per cohort), Certification pass rate (per cohort)
-
-       Outcomes-Short:
-       - "90 graduates (60%) receive job offers or freelance contracts within 3 months of graduation"
-         Metrics: Employment rate (monthly follow-ups), Average starting salary (quarterly)
-
-       Outcomes-Medium:
-       - "120 graduates (80% of employed) retained in tech jobs for 12+ months with career progression"
-         Metrics: Job retention rate (quarterly), Career advancement rate (annual)
-
-       Outcomes-Long:
-       - "Alumni establish tech startups, mentor new cohorts, and create sustainable employment ecosystem"
-         Metrics: Alumni businesses (annually), Mentorship participation (quarterly)
-
-       Impact:
-       - "Youth unemployment in target areas reduced by 15% with increased economic mobility and community wealth"
-         Metrics: Regional unemployment rate (annually), Income change (annually)
-
-    3.5. **Design Connections**:
-       Example connections:
-       - activities[0] → outputs[0]: "Bootcamp enrollment directly produces graduates"
-       - outputs[0] → outcomesShort[0]: "Graduates receive job offers"
-       - outcomesShort[0] → outcomesMedium[0]: "Initial employment leads to retention"
-       - outcomesMedium[0] → outcomesLong[0]: "Retention enables career progression and mentorship"
-       - outcomesLong[0] → impact[0]: "Alumni success reduces regional unemployment"
-
-       Total: 5 connections (not 45!)
-
-    4. **Call Tool**:
-       Call logicModelTool with:
-       - title: "Youth Employment Through Intensive Coding Bootcamps"
-       - description: "12-week coding bootcamp program..."
-       - intervention: "Intensive coding bootcamp program"
-       - context: "Targeting unemployed youth aged 18-24 in high-unemployment urban areas with tech industry partnerships for job placement and career development"
-       - activities: [array of activity objects]
-       - outputs: [array of output objects]
-       - outcomesShort: [array of short-term outcome objects]
-       - outcomesMedium: [array of medium-term outcome objects]
-       - outcomesLong: [array of long-term outcome objects]
-       - impact: [array of impact objects]
-       - connections: [array of connection objects]
-
     REMEMBER:
     - Start by analyzing and designing quality content
     - Create descriptive titles and comprehensive descriptions
     - Generate ALL content (activities, outputs, outcomes, impact) with specific, measurable descriptions
-    - Include 1-3 appropriate metrics for each card with proper frequency values
-    - Each stage should typically have 1-3 cards
+    - Include 1-2 appropriate metrics for each card with proper frequency values
+    - Each stage should typically have 1-2 cards
     - **IMPORTANT: Think carefully about connections - aim for 8-10 total, not 30+**
     - Only connect cards with direct, plausible causal relationships
     - Provide reasoning for connections to justify the causal link
