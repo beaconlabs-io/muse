@@ -121,12 +121,6 @@ sequenceDiagram
     FE->>User: Show evidence detail page
 ```
 
-**Performance Benefits:**
-
-- **Without Workflow (Sequential)**: 10 arrows × 21 evidence × 2s = 420 seconds (~7 minutes)
-- **With Workflow (Parallel)**: 21 evidence × 2s = 42 seconds per arrow, but ALL run simultaneously = **~42 seconds total**
-- **Speedup**: **10x faster** for typical logic models
-
 ### Evidence Matching Example
 
 **Logic Model Edge:**
