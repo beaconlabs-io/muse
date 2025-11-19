@@ -44,5 +44,4 @@ next-env.d.ts
 .serena
 .mastra
 # Vector store for RAG evidence search
-.vector-store/
-.lancedb/
+vector.*
