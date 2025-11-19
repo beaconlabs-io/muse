@@ -272,7 +272,6 @@ export const CanvasDataSchema = z.object({
 
 export type CanvasData = z.infer<typeof CanvasDataSchema>;
 
-
 export interface LogicModel {
   id: string;
   title: string;

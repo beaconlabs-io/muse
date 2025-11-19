@@ -13,9 +13,7 @@ export async function getCanvasData(): Promise<{
 }
 
 // Helper function to validate canvas data
-export function validateCanvasData(
-  data: unknown,
-): data is { cards: Card[]; arrows: Arrow[] } {
+export function validateCanvasData(data: unknown): data is { cards: Card[]; arrows: Arrow[] } {
   if (!data || typeof data !== "object") return false;
 
   const { cards, arrows } = data as any;
