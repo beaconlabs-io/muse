@@ -5,14 +5,14 @@
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Policy Maker
+    actor User as User
     participant FE as Frontend (Muse)
     participant Agent as Logic Model Agent
     participant Evidence as Evidence Repository
 
     Note over User, Evidence: Logic Model Generation with Agent
 
-    User->>FE: Provide intent (policy goal)
+    User->>FE: Provide intent (goal)
     FE->>Agent: Send intent
     Agent->>Evidence: Query relevant evidence
     Evidence-->>Agent: Return evidence data
@@ -30,95 +30,70 @@ Muse automatically validates causal relationships in logic models by searching f
 **Key Features:**
 
 - **Automatic Validation**: Evidence search happens during logic model generation
-- **LLM-Based Matching**: Uses Claude to semantically match evidence intervention→outcome relationships with logic model edges
+- **LLM-Based Matching**: Uses LLM to semantically match evidence intervention→outcome relationships with logic model edges
 - **Quality Indicators**: Shows evidence strength ratings (Maryland Scientific Method Scale 0-5) with warnings for low-quality evidence
 - **Evidence Metadata**: Each edge stores matched evidence IDs, scores, and reasoning
 
 ### How It Works
 
-1. **Logic Model Generation**: Agent creates cards (Activities→Outputs→Outcomes→Impact) and arrows connecting them
-2. **Evidence Search**: For each arrow (Card A → Card B), the agent calls the Evidence Search Tool in parallel
+1. **Logic Model Generation**: Agent creates cards (Activities → Outputs → Outcomes-Short → Outcomes-Intermediate → Impact) and arrows connecting them
+2. **Evidence Search**: For each arrow (Card A → Card B), evidence search runs sequentially with rate limiting to avoid API throttling
 3. **Semantic Matching**: The tool uses an LLM to evaluate if evidence intervention→outcome pairs support the edge relationship
 4. **Evidence Attachment**: Top matching evidence IDs are attached to arrows with metadata (score, reasoning, strength)
 5. **UI Display**: Frontend renders arrows with evidence as green thick edges with interactive buttons; clicking opens a dialog with full evidence details including clickable links to evidence pages
 
-### Detailed Sequence Diagram with Workflow Architecture
+### Detailed Sequence Diagram
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Policy Maker
+    actor User as User
     participant FE as Frontend (Muse)
     participant Canvas as ReactFlowCanvas
     participant Edge as EvidenceEdge Component
     participant Dialog as EvidenceDialog
-    participant Workflow as Mastra Workflow
+    participant Action as Server Action
     participant Agent as Logic Model Agent
-    participant Files as Evidence Files (MDX)
-    participant LLM as Claude LLM
+    participant Tool as Logic Model Tool
+    participant Search as Evidence Search
+    participant LLM
 
-    Note over User, LLM: Logic Model Generation with Evidence Validation (Workflow-Based)
+    Note over User, LLM: Logic Model Generation with Evidence Validation
 
     User->>FE: Provide intent (e.g., "OSS impact on Ethereum")
-    FE->>Workflow: Execute workflow(intent)
+    FE->>Action: generateLogicModelStructure(intent)
 
-    Note over Workflow: Step 1: Generate Logic Model Structure
-    Workflow->>Agent: Generate logic model from intent
-    Agent->>Agent: Analyze, design, generate content
-    Agent->>Agent: Create cards (Activities→Outputs→Outcomes→Impact)
-    Agent->>Agent: Create arrows (edges connecting cards)
-    Agent-->>Workflow: Return { cards, arrows, cardMetrics }
+    Note over Action: Step 1: Generate Logic Model Structure
+    Action->>Agent: agent.generate(intent, maxSteps: 1)
+    Agent->>Agent: Analyze user intent
+    Agent->>Agent: Design logic model structure
+    Agent->>Tool: Call logicModelTool (ONCE)
+    Tool->>Tool: Create Activities cards (1-3)
+    Tool->>Tool: Create Outputs cards (1-3)
+    Tool->>Tool: Create Outcomes-Short cards (1-3, 0-6 months)
+    Tool->>Tool: Create Outcomes-Intermediate cards (1-3, 6-18 months)
+    Tool->>Tool: Create Impact cards (1-2, 18+ months)
+    Tool->>Tool: Create arrows with connections
+    Tool-->>Agent: Return { canvasData }
+    Agent-->>Action: Return { cards, arrows, cardMetrics }
 
-    Note over Workflow, LLM: Step 2: Search Evidence (PARALLEL - All Arrows Simultaneously)
-    Workflow->>Files: Load all evidence once (getAllEvidenceMeta)
-    Files-->>Workflow: Return 21 evidence files with intervention→outcome
-
-    par Arrow 1 Evidence Search
-        Workflow->>LLM: Evaluate Arrow 1 vs all evidence
-        loop For each of 21 evidence files
-            LLM->>LLM: Match evidence to Arrow 1
-            Note over LLM: "Does [intervention→outcome]<br/>support [Card A→Card B]?"
-        end
-        LLM-->>Workflow: Top matches for Arrow 1 (score, reasoning)
-    and Arrow 2 Evidence Search
-        Workflow->>LLM: Evaluate Arrow 2 vs all evidence
-        loop For each of 21 evidence files
-            LLM->>LLM: Match evidence to Arrow 2
-        end
-        LLM-->>Workflow: Top matches for Arrow 2
-    and Arrow N Evidence Search
-        Workflow->>LLM: Evaluate Arrow N vs all evidence
-        loop For each of 21 evidence files
-            LLM->>LLM: Match evidence to Arrow N
-        end
-        LLM-->>Workflow: Top matches for Arrow N
+    Note over Action, LLM: Step 2: Search Evidence (SEQUENTIAL with rate limiting)
+    loop For each arrow (sequential, 1s delay between)
+        Action->>Search: searchEvidenceForEdge(fromCard, toCard)
+        Search->>LLM: Evaluate arrow vs all evidence
+        LLM->>LLM: Match intervention→outcome pairs
+        Note over LLM: "Does evidence support<br/>this relationship?"
+        LLM-->>Search: Top matches (score, reasoning, strength)
+        Search-->>Action: Return matches for arrow
+        Action->>Action: Wait 1 second (rate limit)
     end
 
-    Note over Workflow: Step 3: Enrich Canvas Data
-    Workflow->>Workflow: Merge evidence results into arrows
-    Workflow->>Workflow: Add quality warnings (strength < 3)
-    Workflow->>Workflow: Generate final CanvasData
+    Note over Action: Step 3: Enrich Canvas Data
+    Action->>Action: Attach evidence IDs to arrows
+    Action->>Action: Add quality warnings (strength < 3)
+    Action->>Action: Generate final CanvasData
 
-    Workflow-->>FE: Return canvasData (cards, arrows with evidence)
-
-    Note over FE, Edge: Evidence Display & Interaction (Frontend)
-    FE->>Canvas: Load canvasData (cards, arrows, metrics)
-    Canvas->>Canvas: arrowsToEdges(arrows)
-    Note over Canvas: For arrows with evidenceIds:<br/>type="evidence" (green, thick)<br/>For arrows without:<br/>type="default" (gray, normal)
-
-    Canvas->>Edge: Render EvidenceEdge with data
-    Edge->>Edge: Display smooth bezier curve
-    Edge->>Edge: Show green button at edge midpoint
-    Edge->>User: Display Logic Model with green evidence edges
-
-    Note over User, Dialog: User Interaction with Evidence
-    User->>Edge: Click green button on edge
-    Edge->>Dialog: Open dialog with evidenceIds & metadata
-    Dialog->>Dialog: Display evidence details:<br/>- ID (with link to /evidence/{id})<br/>- Relevance score<br/>- Title, reasoning<br/>- Strength rating<br/>- Intervention & Outcome text
-    Dialog->>User: Show evidence information
-    User->>Dialog: Click evidence ID link
-    Dialog->>FE: Navigate to /evidence/{id}
-    FE->>User: Show evidence detail page
+    Action-->>FE: Return canvasData (cards, arrows with evidence)
 ```
 
 ### Evidence Matching Example
@@ -185,9 +160,10 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 
 **Core Components:**
 
-- `lib/evidence-search.ts`: LLM-based matching logic with hybrid RAG approach
-- `mastra/tools/evidence-search-tool.ts`: Mastra tool for agent use
-- `mastra/agents/logic-model-agent.ts`: Workflow integration
+- `lib/evidence-search-mastra.ts`: LLM-based matching logic using Mastra agent
+- `mastra/tools/logic-model-tool.ts`: Tool for generating logic model structure
+- `mastra/agents/logic-model-agent.ts`: Agent with maxSteps: 1 to prevent duplicate calls
+- `app/actions/canvas/generateLogicModel.ts`: Server actions for logic model generation
 - `types/index.ts`: Arrow type extended with `evidenceIds` and `evidenceMetadata`
 
 **Frontend Components:**
