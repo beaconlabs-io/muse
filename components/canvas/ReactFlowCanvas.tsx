@@ -477,24 +477,27 @@ export function ReactFlowCanvas({
   }, [nodes, edges, cardMetrics, address, createCanvasDataFromCanvas, router]);
 
   const exportAsJSON = useCallback(() => {
-    const canvasData = createCanvasDataFromCanvas(
-      `Logic Model ${new Date().toLocaleDateString()}`,
-      "Logic model created with Muse",
-      address,
-    );
+    const cards = nodesToCards(nodes);
+    const arrows = edgesToArrows(edges);
 
-    const jsonData = JSON.stringify(canvasData, null, 2);
+    const rawData = {
+      cards,
+      arrows,
+      cardMetrics,
+    };
+
+    const jsonData = JSON.stringify(rawData, null, 2);
     const blob = new Blob([jsonData], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `canvas-${canvasData.id}.json`;
+    a.download = `canvas-raw-${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [address, createCanvasDataFromCanvas]);
+  }, [nodes, edges, cardMetrics]);
 
   const clearAllData = useCallback(() => {
     if (

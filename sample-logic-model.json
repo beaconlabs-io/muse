@@ -1,100 +1,559 @@
 {
-  "nodes": {
-    "impact": [
+  "cards": [
+    {
+      "id": "activities-1763528856966-0",
+      "x": 50,
+      "y": 250,
+      "content": "Launch and promote a GitHub Sponsors program to provide direct financial support to active maintainers and contributors of critical Ethereum open-source projects (e.g., clients, libraries, developer tools).",
+      "color": "#c7d2fe",
+      "type": "activities"
+    },
+    {
+      "id": "activities-1763528856966-1",
+      "x": 50,
+      "y": 450,
+      "content": "Develop and deliver a series of free, high-quality workshops, tutorials, and documentation focused on contributing to Ethereum's open-source projects and building decentralized applications.",
+      "color": "#c7d2fe",
+      "type": "activities"
+    },
+    {
+      "id": "output-1763528856966-0",
+      "x": 450,
+      "y": 250,
+      "content": "A cohort of 100+ key open-source contributors and maintainers receive regular funding through GitHub Sponsors, enabling them to dedicate more time to their projects.",
+      "color": "#d1fae5",
+      "type": "outputs"
+    },
+    {
+      "id": "output-1763528856966-1",
+      "x": 450,
+      "y": 450,
+      "content": "Over 1,000 developers are trained and equipped with the necessary skills to contribute to Ethereum's open-source software and develop smart contracts.",
+      "color": "#d1fae5",
+      "type": "outputs"
+    },
+    {
+      "id": "outcomes-short-1763528856966-0",
+      "x": 850,
+      "y": 250,
+      "content": "A measurable increase in developer activity within sponsored open-source repositories (e.g., more pull requests, bug fixes, issue resolution).",
+      "color": "#fef08a",
+      "type": "outcomes-short"
+    },
+    {
+      "id": "outcomes-short-1763528856966-1",
+      "x": 850,
+      "y": 450,
+      "content": "A rise in the number of first-time contributors to core Ethereum projects, originating from educational program participants.",
+      "color": "#fef08a",
+      "type": "outcomes-short"
+    },
+    {
+      "id": "outcomes-medium-1763528856966-0",
+      "x": 1250,
+      "y": 250,
+      "content": "Sponsored open-source projects demonstrate improved health, with faster development cycles, better maintenance, and clearer roadmaps, reducing reliance on single points of failure.",
+      "color": "#fef08a",
+      "type": "outcomes-medium"
+    },
+    {
+      "id": "outcomes-medium-1763528856966-1",
+      "x": 1250,
+      "y": 450,
+      "content": "The quality and variety of open-source developer tools, libraries, and standards for building on Ethereum are enhanced, lowering the barrier to entry for new developers.",
+      "color": "#fef08a",
+      "type": "outcomes-medium"
+    },
+    {
+      "id": "outcomes-long-1763528856966-0",
+      "x": 1650,
+      "y": 250,
+      "content": "A robust and self-sustaining pipeline of talent is established, where experienced, sponsored developers mentor new contributors emerging from educational programs, creating a virtuous cycle of growth.",
+      "color": "#fef08a",
+      "type": "outcomes-long"
+    },
+    {
+      "id": "outcomes-long-1763528856966-1",
+      "x": 1650,
+      "y": 450,
+      "content": "The strengthened open-source foundation accelerates the pace of innovation, leading to the development of novel use cases and more complex, secure applications on Ethereum.",
+      "color": "#fef08a",
+      "type": "outcomes-long"
+    },
+    {
+      "id": "impact-1763528856966-0",
+      "x": 2050,
+      "y": 250,
+      "content": "A more diverse and active open-source community leads to a more secure, resilient, and decentralized Ethereum network, capable of withstanding threats and adapting to future challenges.",
+      "color": "#e9d5ff",
+      "type": "impact"
+    },
+    {
+      "id": "impact-1763528856966-1",
+      "x": 2441.1037858416703,
+      "y": 455.27262342998324,
+      "content": "A significant and sustained increase in the number of high-quality smart contracts deployed on the Ethereum mainnet, indicating a thriving and productive developer ecosystem.",
+      "color": "#e9d5ff",
+      "type": "impact"
+    }
+  ],
+  "arrows": [
+    {
+      "id": "arrow-1763528856966-activities-0-outputs-0",
+      "fromCardId": "activities-1763528856966-0",
+      "toCardId": "output-1763528856966-0",
+      "evidenceIds": ["00", "02", "12"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "00",
+          "score": 95,
+          "reasoning": "Direct match. The intervention in the evidence, 'Listing individual OSS contributors on GitHub Sponsors,' is a direct implementation of the source card's proposed activity. The outcome, measuring the effect on 'Submitting Pull Requests (PRs),' is a strong and direct indicator of contributors being able to 'dedicate more time to their projects,' as stated in the target card.",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "Effect of Pull Request Submission by listing individual OSS contributors on GitHub Sponsors",
+          "interventionText": "Listing individual OSS contributors on GitHub Sponsors",
+          "outcomeText": "Submitting Pull Requests (PRs)"
+        },
+        {
+          "evidenceId": "02",
+          "score": 75,
+          "reasoning": "Strong support. The evidence examines the effect of financial incentives ('grants were received or token incentives were provided') on 'Developer retention'. This aligns well with the logic model's goal of providing financial support to enable contributors to dedicate more time. While the mechanism isn't specifically GitHub Sponsors, it supports the core causal assumption that financial support leads to sustained contributor engagement.",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "Effect of a Grant Program on Developer Activity ",
+          "interventionText": "Whether grants were received or token incentives were provided",
+          "outcomeText": "Developer retention, user activity, and Total Value Locked (TVL) of the network"
+        },
+        {
+          "evidenceId": "12",
+          "score": 70,
+          "reasoning": "Moderate support. The evidence studies the Google Summer of Code (GSoC), a program that provides financial stipends to students for OSS contributions. This is conceptually similar to the logic model's intervention of providing direct financial support. The outcome, 'Continuity of Students’ Contributions,' aligns with the target of enabling contributors to 'dedicate more time.' The match is not direct because the program (GSoC) and target audience (students) are more specific, but it supports the general hypothesis.",
+          "strength": "1",
+          "hasWarning": true,
+          "title": "Continuity of OSS contributions after participating in the Google Summer of Code (GSoC) Program",
+          "interventionText": "Participation in the Google Summer of Code (GSoC) Program",
+          "outcomeText": "Continuity of Students’ Contributions to GSoC Projects"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1763528856966-activities-1-outputs-1",
+      "fromCardId": "activities-1763528856966-1",
+      "toCardId": "output-1763528856966-1",
+      "evidenceIds": ["12", "09", "10"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "12",
+          "score": 95,
+          "reasoning": "Strong support. The Google Summer of Code (GSoC) program is a well-established initiative that provides structured mentorship and hands-on experience, which is analogous to the proposed 'workshops, tutorials, and documentation'. The outcome of GSoC, measuring the continuity of student contributions, directly aligns with the logic model's goal of equipping developers with skills to contribute to open-source software.",
+          "strength": "1",
+          "hasWarning": true,
+          "title": "Continuity of OSS contributions after participating in the Google Summer of Code (GSoC) Program",
+          "interventionText": "Participation in the Google Summer of Code (GSoC) Program",
+          "outcomeText": "Continuity of Students’ Contributions to GSoC Projects"
+        },
+        {
+          "evidenceId": "09",
+          "score": 85,
+          "reasoning": "Strong support. The evidence shows that offline meetings for Wikipedia contributors lead to an increase in their contributions. This provides a strong parallel to the proposed intervention of workshops and tutorials, suggesting that such focused, in-person or synchronous events can effectively increase active contributions to a project, even though the context is Wikipedia rather than Ethereum.",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "How Wikipedia Offline Meetings Shape Participants’ Editing Activity: An Empirical Analysis of the German-Language Community",
+          "interventionText": "Participation in Wikipedia offline meetings",
+          "outcomeText": "Increase in contributions to Wikipedia(overall change in editing activity)"
+        },
+        {
+          "evidenceId": "10",
+          "score": 80,
+          "reasoning": "Strong support. This evidence refines the findings of evidence #09 by demonstrating that work-oriented meetings are particularly effective at increasing user activity. This directly supports the logic that 'workshops, tutorials, and documentation' (which are work-oriented) are a valid method for equipping developers with skills and motivating them to contribute.",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "Effects of Work-Oriented vs. Social Offline Meetings on User Editing Activity",
+          "interventionText": "Type of offline meeting (work-oriented vs. social)",
+          "outcomeText": "Increase the volume of users’ editing activity (number of edits) and the posibility of presence of editing"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1763528856966-outputs-0-outcomesShort-0",
+      "fromCardId": "output-1763528856966-0",
+      "toCardId": "outcomes-short-1763528856966-0",
+      "evidenceIds": ["00", "02", "12"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "00",
+          "score": 95,
+          "reasoning": "Direct match. The intervention is almost identical to the source card (funding contributors via GitHub Sponsors), and the outcome (Pull Requests) is a specific example of the developer activity mentioned in the target card.",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "Effect of Pull Request Submission by listing individual OSS contributors on GitHub Sponsors",
+          "interventionText": "Listing individual OSS contributors on GitHub Sponsors",
+          "outcomeText": "Submitting Pull Requests (PRs)"
+        },
+        {
+          "evidenceId": "02",
+          "score": 85,
+          "reasoning": "Strong support. The intervention 'grants were received' is a direct form of funding for developers, aligning well with the source card. The outcome 'Developer retention, user activity' strongly supports the target card's goal of increasing developer activity.",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "Effect of a Grant Program on Developer Activity ",
+          "interventionText": "Whether grants were received or token incentives were provided",
+          "outcomeText": "Developer retention, user activity, and Total Value Locked (TVL) of the network"
+        },
+        {
+          "evidenceId": "12",
+          "score": 80,
+          "reasoning": "Strong support. The Google Summer of Code (GSoC) program is a well-known initiative that provides stipends (funding) to individuals to contribute to open-source projects. The outcome measured is the continuity of these contributions, which directly relates to the target card's goal of increasing developer activity.",
+          "strength": "1",
+          "hasWarning": true,
+          "title": "Continuity of OSS contributions after participating in the Google Summer of Code (GSoC) Program",
+          "interventionText": "Participation in the Google Summer of Code (GSoC) Program",
+          "outcomeText": "Continuity of Students’ Contributions to GSoC Projects"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1763528856966-outputs-1-outcomesShort-1",
+      "fromCardId": "output-1763528856966-1",
+      "toCardId": "outcomes-short-1763528856966-1",
+      "evidenceIds": ["12"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "12",
+          "score": 95,
+          "reasoning": "This evidence provides a strong parallel. The Google Summer of Code (GSoC) program is an intervention that trains and equips student developers with skills to contribute to open-source projects, which is directly analogous to the source card's 'developers are trained and equipped'. The outcome measured is the 'Continuity of Students’ Contributions,' which is a direct proxy for the target card's 'rise in the number of first-time contributors... originating from educational program participants.' The study examines whether a structured program for new developers leads to sustained contributions, which is the core causal link in the logic model edge.",
+          "strength": "1",
+          "hasWarning": true,
+          "title": "Continuity of OSS contributions after participating in the Google Summer of Code (GSoC) Program",
+          "interventionText": "Participation in the Google Summer of Code (GSoC) Program",
+          "outcomeText": "Continuity of Students’ Contributions to GSoC Projects"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1763528856966-outcomesShort-0-outcomesMedium-0",
+      "fromCardId": "outcomes-short-1763528856966-0",
+      "toCardId": "outcomes-medium-1763528856966-0"
+    },
+    {
+      "id": "arrow-1763528856966-outcomesShort-1-outcomesMedium-0",
+      "fromCardId": "outcomes-short-1763528856966-1",
+      "toCardId": "outcomes-medium-1763528856966-0",
+      "evidenceIds": ["12", "09"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "12",
+          "score": 95,
+          "reasoning": "Direct match. The intervention, 'Participation in the Google Summer of Code (GSoC) Program,' is a perfect example of an educational program designed to bring new contributors to open-source projects. The outcome, 'Continuity of Students’ Contributions,' directly supports the idea of improving project health and reducing reliance on single points of failure by retaining these new contributors long-term. This evidence strongly validates the causal link between educational onboarding and sustained project health.",
+          "strength": "1",
+          "hasWarning": true,
+          "title": "Continuity of OSS contributions after participating in the Google Summer of Code (GSoC) Program",
+          "interventionText": "Participation in the Google Summer of Code (GSoC) Program",
+          "outcomeText": "Continuity of Students’ Contributions to GSoC Projects"
+        },
+        {
+          "evidenceId": "09",
+          "score": 70,
+          "reasoning": "Strong support. This evidence shows that 'Participation in Wikipedia offline meetings' (an educational/onboarding activity) leads to an 'Increase in contributions to Wikipedia.' While the domain is Wikipedia editing and not Ethereum code, the principle is the same: a structured program for participants leads to increased project activity. This increased activity is a core component of the target card's concept of 'improved health.'",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "How Wikipedia Offline Meetings Shape Participants’ Editing Activity: An Empirical Analysis of the German-Language Community",
+          "interventionText": "Participation in Wikipedia offline meetings",
+          "outcomeText": "Increase in contributions to Wikipedia(overall change in editing activity)"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1763528856966-outcomesShort-0-outcomesMedium-1",
+      "fromCardId": "outcomes-short-1763528856966-0",
+      "toCardId": "outcomes-medium-1763528856966-1"
+    },
+    {
+      "id": "arrow-1763528856966-outcomesMedium-0-outcomesLong-0",
+      "fromCardId": "outcomes-medium-1763528856966-0",
+      "toCardId": "outcomes-long-1763528856966-0",
+      "evidenceIds": ["12", "02"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "12",
+          "score": 95,
+          "reasoning": "This is a direct match. The Google Summer of Code (GSoC) program is a form of corporate sponsorship aimed at bringing new contributors into open-source projects, which aligns with the source card's 'Sponsored open-source projects'. The outcome, 'Continuity of Students’ Contributions', directly supports the target card's concept of establishing a 'robust and self-sustaining pipeline of talent' from educational programs.",
+          "strength": "1",
+          "hasWarning": true,
+          "title": "Continuity of OSS contributions after participating in the Google Summer of Code (GSoC) Program",
+          "interventionText": "Participation in the Google Summer of Code (GSoC) Program",
+          "outcomeText": "Continuity of Students’ Contributions to GSoC Projects"
+        },
+        {
+          "evidenceId": "02",
+          "score": 85,
+          "reasoning": "Strong support. The intervention of providing grants or token incentives is a direct form of sponsorship mentioned in the source card. The outcome of 'Developer retention' is a key component of creating a 'robust and self-sustaining pipeline of talent' as described in the target card. While it doesn't explicitly mention mentorship or educational programs, retaining developers is a prerequisite for building such a pipeline.",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "Effect of a Grant Program on Developer Activity ",
+          "interventionText": "Whether grants were received or token incentives were provided",
+          "outcomeText": "Developer retention, user activity, and Total Value Locked (TVL) of the network"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1763528856966-outcomesMedium-1-outcomesLong-1",
+      "fromCardId": "outcomes-medium-1763528856966-1",
+      "toCardId": "outcomes-long-1763528856966-1"
+    },
+    {
+      "id": "arrow-1763528856966-outcomesLong-0-impact-0",
+      "fromCardId": "outcomes-long-1763528856966-0",
+      "toCardId": "impact-1763528856966-0",
+      "evidenceIds": ["12"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "12",
+          "score": 90,
+          "reasoning": "Strong support. The source card describes establishing a talent pipeline where experienced developers mentor new contributors from educational programs. The Google Summer of Code (GSoC) is a direct real-world example of such a program. The evidence measures the continuity of contributions from these new developers, which is a direct indicator of whether a 'self-sustaining pipeline' and a more 'active community' are being successfully established. While the evidence doesn't measure the final impact on network security or resilience, it strongly validates the core mechanism of the logic model edge: that structured mentorship programs can lead to a more active and sustained contributor base.",
+          "strength": "1",
+          "hasWarning": true,
+          "title": "Continuity of OSS contributions after participating in the Google Summer of Code (GSoC) Program",
+          "interventionText": "Participation in the Google Summer of Code (GSoC) Program",
+          "outcomeText": "Continuity of Students’ Contributions to GSoC Projects"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1763528856966-outcomesLong-1-impact-1",
+      "fromCardId": "outcomes-long-1763528856966-1",
+      "toCardId": "impact-1763528856966-1",
+      "evidenceIds": ["02", "04"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "02",
+          "score": 90,
+          "reasoning": "This is a direct match. The intervention of providing grants and token incentives is a primary method for 'strengthening the open-source foundation.' The measured outcomes—developer retention, user activity, and Total Value Locked (TVL)—are strong proxies for a 'thriving and productive developer ecosystem' and are directly linked to the deployment and use of high-quality smart contracts.",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "Effect of a Grant Program on Developer Activity ",
+          "interventionText": "Whether grants were received or token incentives were provided",
+          "outcomeText": "Developer retention, user activity, and Total Value Locked (TVL) of the network"
+        },
+        {
+          "evidenceId": "04",
+          "score": 75,
+          "reasoning": "This evidence provides strong support. The 'SuperStacks' rewards program is an example of an intervention that strengthens a specific open-source ecosystem (the Superchain). The outcome, 'Growth and retention of TVL,' is a key indicator of a healthy and productive on-chain environment, which is a direct consequence of the deployment and utilization of smart contracts. While specific to a Layer 2 and DeFi, the principle directly supports the logic model's causal link between ecosystem support and on-chain value.",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "SuperStacks increase TVL",
+          "interventionText": "SuperStacks: A New Approach to Rewards on the Superchain",
+          "outcomeText": "Growth and retention of TVL"
+        }
+      ]
+    },
+    {
+      "id": "arrow-1763528856966-impact-0-impact-1",
+      "fromCardId": "impact-1763528856966-0",
+      "toCardId": "impact-1763528856966-1",
+      "evidenceIds": ["02", "12", "00"],
+      "evidenceMetadata": [
+        {
+          "evidenceId": "02",
+          "score": 90,
+          "reasoning": "Strong support. The source card posits that a more active community leads to a more productive ecosystem. This evidence directly tests a mechanism for creating an active community (grants and token incentives) and measures outcomes (developer retention, user activity) that are excellent proxies for a 'thriving and productive developer ecosystem' which would naturally lead to more high-quality smart contracts.",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "Effect of a Grant Program on Developer Activity ",
+          "interventionText": "Whether grants were received or token incentives were provided",
+          "outcomeText": "Developer retention, user activity, and Total Value Locked (TVL) of the network"
+        },
+        {
+          "evidenceId": "12",
+          "score": 85,
+          "reasoning": "Strong support. The intervention (Google Summer of Code) is a well-established program for fostering a diverse and active open-source community by bringing in new developers. The outcome (Continuity of Students’ Contributions) is a direct measure of sustained developer activity, which aligns with the target card's goal of a 'thriving and productive developer ecosystem' capable of deploying high-quality contracts.",
+          "strength": "1",
+          "hasWarning": true,
+          "title": "Continuity of OSS contributions after participating in the Google Summer of Code (GSoC) Program",
+          "interventionText": "Participation in the Google Summer of Code (GSoC) Program",
+          "outcomeText": "Continuity of Students’ Contributions to GSoC Projects"
+        },
+        {
+          "evidenceId": "00",
+          "score": 75,
+          "reasoning": "Strong support. The intervention (listing contributors on GitHub Sponsors) is an activity designed to support and sustain an active open-source community. The outcome (Submitting Pull Requests) is a direct measure of developer productivity. This aligns well with the logic that supporting a community leads to more development activity, which is a necessary precursor to deploying smart contracts.",
+          "strength": "3",
+          "hasWarning": false,
+          "title": "Effect of Pull Request Submission by listing individual OSS contributors on GitHub Sponsors",
+          "interventionText": "Listing individual OSS contributors on GitHub Sponsors",
+          "outcomeText": "Submitting Pull Requests (PRs)"
+        }
+      ]
+    }
+  ],
+  "cardMetrics": {
+    "activities-1763528856966-0": [
       {
-        "id": "goal-1760049775571",
-        "type": "impact",
-        "content": "Economic Growth",
-        "from": ["evidence-04-1760049760056-outcome-0", "evidence-00-1760049758263-outcome-0"],
-        "to": []
+        "id": "metric-1763528856966-activity-0-0",
+        "name": "Number of Sponsored Developers",
+        "measurementMethod": "Platform Analytics",
+        "frequency": "monthly"
+      },
+      {
+        "id": "metric-1763528856966-activity-0-1",
+        "name": "Total Funding Distributed",
+        "measurementMethod": "Financial Reports",
+        "frequency": "quarterly"
       }
     ],
-    "outcome": [
+    "activities-1763528856966-1": [
       {
-        "id": "evidence-00-1760049758263-outcome-0",
-        "type": "outcome",
-        "content": "Mixed effect on Submitting Pull Requests (PRs)",
-        "from": ["evidence-00-1760049758263-output-0"],
-        "to": ["goal-1760049775571"],
-        "metrics": [
-          {
-            "id": "evidence-00-1760049758263-metric-0",
-            "name": "Submitting Pull Requests (PRs) Measurement",
-            "description": "Evidence-based metric from: Effect of Pull Request Submission by listing individual OSS contributors on GitHub Sponsors",
-            "measurementMethod": "DID、Coarsened Exact Matching(CEM) technique、Robustness Tests",
-            "frequency": "quarterly"
-          }
-        ]
+        "id": "metric-1763528856966-activity-1-0",
+        "name": "Number of Educational Events",
+        "measurementMethod": "Event Records",
+        "frequency": "monthly"
       },
       {
-        "id": "evidence-04-1760049760056-outcome-0",
-        "type": "outcome",
-        "content": "Positive effect on Growth and retention of TVL",
-        "from": ["evidence-04-1760049760056-output-0", "evidence-00-1760049758263-output-0"],
-        "to": ["goal-1760049775571"],
-        "metrics": [
-          {
-            "id": "evidence-04-1760049760056-metric-0",
-            "name": "Growth and retention of TVL Measurement",
-            "description": "Evidence-based metric from: SuperStacks increase TVL",
-            "measurementMethod": "Pro-rata model, One-sided t-tests",
-            "frequency": "quarterly"
-          }
-        ]
+        "id": "metric-1763528856966-activity-1-1",
+        "name": "Participant Completion Rates",
+        "measurementMethod": "Learning Management System (LMS) Analytics",
+        "frequency": "quarterly"
       }
     ],
-    "output": [
+    "output-1763528856966-0": [
       {
-        "id": "evidence-00-1760049758263-output-0",
-        "type": "output",
-        "content": "Listing individual OSS contributors on GitHub Sponsors",
-        "from": ["1760049746104", "1760049746427"],
-        "to": ["evidence-00-1760049758263-outcome-0", "evidence-04-1760049760056-outcome-0"]
+        "id": "metric-1763528856966-output-0-0",
+        "name": "Number of Funded Developers",
+        "measurementMethod": "GitHub Sponsors Dashboard",
+        "frequency": "monthly"
       },
       {
-        "id": "evidence-04-1760049760056-output-0",
-        "type": "output",
-        "content": "SuperStacks: A New Approach to Rewards on the Superchain",
-        "from": ["1760049746658", "1760049746268"],
-        "to": ["evidence-04-1760049760056-outcome-0"]
+        "id": "metric-1763528856966-output-0-1",
+        "name": "Average Monthly Sponsorship Amount",
+        "measurementMethod": "Financial Payment Records",
+        "frequency": "quarterly"
       }
     ],
-    "activities": [
+    "output-1763528856966-1": [
       {
-        "id": "1760049746104",
-        "type": "activities",
-        "content": "New activities note",
-        "from": [],
-        "to": ["evidence-00-1760049758263-output-0"]
+        "id": "metric-1763528856966-output-1-0",
+        "name": "Number of Workshop Graduates",
+        "measurementMethod": "LMS Records",
+        "frequency": "quarterly"
       },
       {
-        "id": "1760049746268",
-        "type": "activities",
-        "content": "New activities note",
-        "from": [],
-        "to": ["evidence-04-1760049760056-output-0"]
+        "id": "metric-1763528856966-output-1-1",
+        "name": "Skill Assessment Scores",
+        "measurementMethod": "Post-Workshop Assessments",
+        "frequency": "other"
+      }
+    ],
+    "outcomes-short-1763528856966-0": [
+      {
+        "id": "metric-1763528856966-outcome-short-0-0",
+        "name": "Rate of Code Commits & Pull Requests",
+        "measurementMethod": "GitHub API Analytics",
+        "frequency": "monthly"
       },
       {
-        "id": "1760049746427",
-        "type": "activities",
-        "content": "New activities note",
-        "from": [],
-        "to": ["evidence-00-1760049758263-output-0"]
+        "id": "metric-1763528856966-outcome-short-0-1",
+        "name": "Time-to-Resolution for Issues",
+        "measurementMethod": "GitHub API Analytics",
+        "frequency": "monthly"
+      }
+    ],
+    "outcomes-short-1763528856966-1": [
+      {
+        "id": "metric-1763528856966-outcome-short-1-0",
+        "name": "Number of New Contributors per Month",
+        "measurementMethod": "GitHub Repository Contributor Analysis",
+        "frequency": "monthly"
       },
       {
-        "id": "1760049746658",
-        "type": "activities",
-        "content": "New activities note",
-        "from": [],
-        "to": ["evidence-04-1760049760056-output-0"]
+        "id": "metric-1763528856966-outcome-short-1-1",
+        "name": "First Contribution Rate of Graduates",
+        "measurementMethod": "Participant Surveys and Follow-ups",
+        "frequency": "quarterly"
+      }
+    ],
+    "outcomes-medium-1763528856966-0": [
+      {
+        "id": "metric-1763528856966-outcome-medium-0-0",
+        "name": "Contributor Retention Rate",
+        "measurementMethod": "GitHub Repository Analysis",
+        "frequency": "quarterly"
+      },
+      {
+        "id": "metric-1763528856966-outcome-medium-0-1",
+        "name": "Project Velocity (Features Shipped)",
+        "measurementMethod": "Project Management Tool Analytics",
+        "frequency": "annually"
+      }
+    ],
+    "outcomes-medium-1763528856966-1": [
+      {
+        "id": "metric-1763528856966-outcome-medium-1-0",
+        "name": "Developer Net Promoter Score (NPS)",
+        "measurementMethod": "Developer Ecosystem Surveys",
+        "frequency": "annually"
+      },
+      {
+        "id": "metric-1763528856966-outcome-medium-1-1",
+        "name": "Adoption Rate of New Tools/Libraries",
+        "measurementMethod": "Software Package Manager Analytics",
+        "frequency": "quarterly"
+      }
+    ],
+    "outcomes-long-1763528856966-0": [
+      {
+        "id": "metric-1763528856966-outcome-long-0-0",
+        "name": "Ratio of New-to-Senior Contributors",
+        "measurementMethod": "Community Surveys and GitHub Data Analysis",
+        "frequency": "annually"
+      },
+      {
+        "id": "metric-1763528856966-outcome-long-0-1",
+        "name": "Number of Mentorship Pairings",
+        "measurementMethod": "Program Records",
+        "frequency": "quarterly"
+      }
+    ],
+    "outcomes-long-1763528856966-1": [
+      {
+        "id": "metric-1763528856966-outcome-long-1-0",
+        "name": "Number of New dApps Launching",
+        "measurementMethod": "Ecosystem Analytics (e.g., DappRadar)",
+        "frequency": "monthly"
+      },
+      {
+        "id": "metric-1763528856966-outcome-long-1-1",
+        "name": "Security Scores of New Projects",
+        "measurementMethod": "Analysis of Public Security Audits",
+        "frequency": "quarterly"
+      }
+    ],
+    "impact-1763528856966-0": [
+      {
+        "id": "metric-1763528856966-impact-0-0",
+        "name": "Network Security Incidents",
+        "measurementMethod": "Security Audits and Incident Reports",
+        "frequency": "quarterly"
+      },
+      {
+        "id": "metric-1763528856966-impact-0-1",
+        "name": "Contributor Diversity Index",
+        "measurementMethod": "Contributor Demographics Analysis",
+        "frequency": "annually"
+      }
+    ],
+    "impact-1763528856966-1": [
+      {
+        "id": "metric-1763528856966-impact-1-0",
+        "name": "Monthly Active Smart Contracts",
+        "measurementMethod": "On-chain Data Analysis",
+        "frequency": "monthly"
+      },
+      {
+        "id": "metric-1763528856966-impact-1-1",
+        "name": "Total Value Secured (TVS) in New Contracts",
+        "measurementMethod": "DeFi Analytics Platforms",
+        "frequency": "quarterly"
       }
     ]
-  },
-  "metadata": {
-    "id": "lm-1760049838852-h9ewhd9gj",
-    "title": "Logic Model 10/10/2025",
-    "description": "Logic model created with Muse",
-    "createdAt": "2025-10-09T22:43:58.852Z",
-    "version": "1.0.0"
   }
 }
