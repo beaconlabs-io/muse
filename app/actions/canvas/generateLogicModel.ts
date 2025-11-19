@@ -3,6 +3,19 @@ import type { CanvasData, Card, Arrow, EvidenceMatch } from "@/types";
 import { searchEvidenceForEdge } from "@/lib/evidence-search-mastra";
 import { mastra } from "@/mastra";
 
+interface GenerateLogicModelStructureResult {
+  success: boolean;
+  data?: CanvasData;
+  error?: string;
+}
+
+interface SearchEvidenceResult {
+  success: boolean;
+  arrowId: string;
+  matches?: EvidenceMatch[];
+  error?: string;
+}
+
 interface GenerateLogicModelResult {
   success: boolean;
   data?: CanvasData;
@@ -14,6 +27,10 @@ interface GenerateLogicModelResult {
   };
 }
 
+/**
+ * @deprecated Use generateLogicModelStructure() and searchEvidenceForSingleArrow() instead
+ * This function will timeout on Vercel Hobby plan (>10s limit)
+ */
 export async function generateLogicModelFromIntent(
   intent: string,
 ): Promise<GenerateLogicModelResult> {
@@ -184,6 +201,113 @@ export async function generateLogicModelFromIntent(
     console.error("[Server Action] Error generating logic model:", error);
     return {
       success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Step 1: Generate logic model structure from intent (without evidence search)
+ * This completes quickly (<10s) and returns the canvas structure
+ */
+export async function generateLogicModelStructure(
+  intent: string,
+): Promise<GenerateLogicModelStructureResult> {
+  try {
+    console.log("[Server Action] Generating logic model structure...");
+    console.log(`[Server Action] Intent: "${intent}"`);
+
+    const agent = mastra.getAgent("logicModelAgent");
+
+    if (!agent) {
+      return {
+        success: false,
+        error: "Logic model agent not found",
+      };
+    }
+
+    const result = await agent.generate([
+      {
+        role: "user",
+        content: `Create a logic model for: ${intent}`,
+      },
+    ]);
+
+    // Debug logging
+    console.log("[Server Action] Agent result:", {
+      text: result.text?.slice(0, 200),
+      toolResultsLength: result.toolResults?.length || 0,
+      hasToolResults: !!result.toolResults,
+    });
+
+    // Extract canvas data from tool results
+    let canvasData: CanvasData | null = null;
+
+    if (result.toolResults && result.toolResults.length > 0) {
+      console.log(
+        `[Server Action] Found ${result.toolResults.length} tool result(s), extracting canvas data...`,
+      );
+      const toolResult = result.toolResults[0] as any;
+      const toolReturnValue = toolResult.payload?.result;
+      canvasData = toolReturnValue?.canvasData;
+    } else {
+      console.error("[Server Action] ✗ Agent did not call any tools");
+      console.error("[Server Action] Agent response text:", result.text?.slice(0, 500));
+    }
+
+    if (!canvasData || !canvasData.cards || !canvasData.arrows) {
+      console.error("[Server Action] ✗ Failed to generate logic model structure");
+      return {
+        success: false,
+        error: "Failed to generate logic model. The agent did not return valid canvas data.",
+      };
+    }
+
+    console.log(
+      `[Server Action] ✓ Generated ${canvasData.cards.length} cards and ${canvasData.arrows.length} arrows`,
+    );
+
+    return {
+      success: true,
+      data: canvasData,
+    };
+  } catch (error) {
+    console.error("[Server Action] Error generating logic model structure:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Step 2: Search evidence for a single arrow
+ * Called sequentially by client for each arrow to show real-time progress
+ */
+export async function searchEvidenceForSingleArrow(
+  fromCardContent: string,
+  toCardContent: string,
+  arrowId: string,
+): Promise<SearchEvidenceResult> {
+  try {
+    console.log(
+      `[Server Action] Searching evidence for arrow ${arrowId}: "${fromCardContent}" → "${toCardContent}"`,
+    );
+
+    const matches = await searchEvidenceForEdge(fromCardContent, toCardContent);
+
+    console.log(`[Server Action] ✓ Found ${matches.length} evidence matches for arrow ${arrowId}`);
+
+    return {
+      success: true,
+      arrowId,
+      matches,
+    };
+  } catch (error) {
+    console.error(`[Server Action] ❌ Error searching evidence for arrow ${arrowId}:`, error);
+    return {
+      success: false,
+      arrowId,
       error: error instanceof Error ? error.message : "Unknown error occurred",
     };
   }
