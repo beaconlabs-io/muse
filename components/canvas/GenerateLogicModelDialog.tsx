@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useStepProcessDialogContext } from "@/components/step-process-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,11 +23,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import type { Card, Arrow, CardMetrics } from "@/types";
-// import { generateLogicModelFromIntent } from "@/app/actions/canvas/generateLogicModel";
-// TODO: complete RAG workflow
+import { generateLogicModelFromIntent } from "@/app/actions/canvas/generateLogicModel";
 
 const generateLogicModelSchema = z.object({
   intent: z
@@ -47,8 +46,12 @@ interface GenerateLogicModelDialogProps {
 
 export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialogProps) {
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    setSteps,
+    setDialogStep,
+    setOpen: setStepDialogOpen,
+    setTitle,
+  } = useStepProcessDialogContext();
 
   const form = useForm<GenerateLogicModelFormData>({
     resolver: zodResolver(generateLogicModelSchema),
@@ -58,29 +61,73 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     },
   });
 
+  const steps = [
+    { id: "analyze", description: "Analyzing your intent and requirements" },
+    { id: "search", description: "Searching relevant evidence in database" },
+    { id: "structure", description: "Creating logic model structure" },
+    { id: "generate", description: "Generating cards and metrics" },
+    { id: "finalize", description: "Finalizing logic model" },
+  ];
+
   const handleSubmit = async (data: GenerateLogicModelFormData) => {
-    setIsLoading(true);
-    setError(null);
+    // Initialize step dialog
+    setTitle("Generating Logic Model");
+    setSteps(steps);
+    setStepDialogOpen(true);
 
-    // try {
-    // const result = await generateLogicModelFromIntent(data.intent);
+    try {
+      // TODO: complete this steps
+      // Step 1: Analyze intent
+      await setDialogStep("analyze", "active");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await setDialogStep("analyze", "completed");
 
-    //   if (result.success && result.data) {
-    //     onGenerate({
-    //       cards: result.data.cards,
-    //       arrows: result.data.arrows,
-    //       cardMetrics: result.data.cardMetrics,
-    //     });
-    //     setOpen(false);
-    //     form.reset();
-    //   } else {
-    //     setError(result.error || "Failed to generate logic model");
-    //   }
-    // } catch (err) {
-    //   setError(err instanceof Error ? err.message : "An error occurred");
-    // } finally {
-    //   setIsLoading(false);
-    // }
+      // Step 2: Search evidence
+      await setDialogStep("search", "active");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await setDialogStep("search", "completed");
+
+      // Step 3: Create structure
+      await setDialogStep("structure", "active");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await setDialogStep("structure", "completed");
+
+      // Step 4: Generate (actual backend call)
+      await setDialogStep("generate", "active");
+      const result = await generateLogicModelFromIntent(data.intent);
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Failed to generate logic model");
+      }
+
+      await setDialogStep("generate", "completed");
+
+      // Step 5: Finalize
+      await setDialogStep("finalize", "active");
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await setDialogStep("finalize", "completed");
+
+      // Success: pass data and close
+      onGenerate({
+        cards: result.data.cards,
+        arrows: result.data.arrows,
+        cardMetrics: result.data.cardMetrics,
+      });
+
+      // Auto-close after brief delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setStepDialogOpen(false);
+      setOpen(false);
+      form.reset();
+    } catch (err) {
+      // Find the current active step and set it to error
+      const currentStep = steps.find((step) => step.id === "generate") || steps[0];
+      await setDialogStep(
+        currentStep.id,
+        "error",
+        err instanceof Error ? err.message : "An error occurred",
+      );
+    }
   };
 
   return (
@@ -113,7 +160,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                       placeholder="Enter your intent here"
                       rows={5}
                       className="resize-none"
-                      disabled={isLoading}
+                      disabled={form.formState.isSubmitting}
                       {...field}
                     />
                   </FormControl>
@@ -121,20 +168,22 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                 </FormItem>
               )}
             />
-            {error && <p className="text-sm text-red-500">{error}</p>}
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
-                disabled={isLoading}
+                disabled={form.formState.isSubmitting}
                 className="cursor-pointer"
               >
                 Cancel
               </Button>
-              <Button type="submit" className="cursor-pointer" disabled={isLoading}>
-                {isLoading && <Spinner className="mr-2" />}
-                {isLoading ? "Generating..." : "Generate Logic Model"}
+              <Button
+                type="submit"
+                className="cursor-pointer"
+                disabled={form.formState.isSubmitting}
+              >
+                Generate Logic Model
               </Button>
             </DialogFooter>
           </form>
