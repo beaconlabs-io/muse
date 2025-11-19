@@ -4,6 +4,7 @@ import { embedMany } from "ai";
 import { getAllEvidence } from "@/lib/evidence";
 import { mastra } from "@/mastra";
 
+// TODO: enable RAG search if evidence > 100
 // Load all evidence
 console.log("Loading all evidence...");
 const allEvidence = await getAllEvidence();
