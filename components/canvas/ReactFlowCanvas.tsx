@@ -28,16 +28,7 @@ import {
   arrowsToEdges,
   edgesToArrows,
 } from "@/lib/canvas/react-flow-utils";
-import { Card, Arrow, CARD_COLORS, CanvasData, TYPE_COLOR_MAP } from "@/types";
-
-interface CardMetrics {
-  id: string;
-  name: string;
-  description?: string;
-  measurementMethod?: string;
-  targetValue?: string;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-}
+import { Card, Arrow, CARD_COLORS, CanvasData, TYPE_COLOR_MAP, CardMetrics } from "@/types";
 
 interface ReactFlowCanvasProps {
   initialCards?: Card[];

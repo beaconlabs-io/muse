@@ -1,8 +1,8 @@
-import { PostItCard, Arrow } from "@/types";
+import { Card, Arrow } from "@/types";
 
 // Server-side data fetching functions
 export async function getCanvasData(): Promise<{
-  cards: PostItCard[];
+  cards: Card[];
   arrows: Arrow[];
 }> {
   // Start with an empty canvas - users will add evidence cards themselves
@@ -15,7 +15,7 @@ export async function getCanvasData(): Promise<{
 // Helper function to validate canvas data
 export function validateCanvasData(
   data: unknown,
-): data is { cards: PostItCard[]; arrows: Arrow[] } {
+): data is { cards: Card[]; arrows: Arrow[] } {
   if (!data || typeof data !== "object") return false;
 
   const { cards, arrows } = data as any;

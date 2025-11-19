@@ -144,24 +144,20 @@ export const createStageInputSchema = () =>
 
 // Connection schema for tool input
 export const ConnectionInputSchema = z.object({
-  fromCardIndex: z
-    .number()
-    .min(0)
-    .describe("Index of the source card in its type array (0-based)"),
+  fromCardIndex: z.number().min(0).describe("Index of the source card in its type array (0-based)"),
   fromCardType: z
     .enum(["activities", "outputs", "outcomesShort", "outcomesIntermediate", "impact"])
     .describe("Type of the source card"),
-  toCardIndex: z
-    .number()
-    .min(0)
-    .describe("Index of the target card in its type array (0-based)"),
+  toCardIndex: z.number().min(0).describe("Index of the target card in its type array (0-based)"),
   toCardType: z
     .enum(["activities", "outputs", "outcomesShort", "outcomesIntermediate", "impact"])
     .describe("Type of the target card"),
   reasoning: z
     .string()
     .optional()
-    .describe("Brief explanation of why this connection represents a plausible causal relationship"),
+    .describe(
+      "Brief explanation of why this connection represents a plausible causal relationship",
+    ),
 });
 
 // Infer TypeScript types
@@ -233,6 +229,8 @@ export const CardSchema = z.object({
   type: z.string().optional(),
 });
 
+export type Card = z.infer<typeof CardSchema>;
+
 export const CardMetricSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -242,6 +240,8 @@ export const CardMetricSchema = z.object({
   frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]).optional(),
 });
 
+export type CardMetrics = z.infer<typeof CardMetricSchema>;
+
 export const ArrowSchema = z.object({
   id: z.string(),
   fromCardId: z.string(),
@@ -250,11 +250,15 @@ export const ArrowSchema = z.object({
   evidenceMetadata: z.array(EvidenceMatchSchema).optional(),
 });
 
+export type Arrow = z.infer<typeof ArrowSchema>;
+
 export const CanvasMetadataSchema = z.object({
   createdAt: z.string(),
   version: z.string(),
   author: z.string().optional(),
 });
+
+export type CanvasMetadata = z.infer<typeof CanvasMetadataSchema>;
 
 export const CanvasDataSchema = z.object({
   id: z.string(),
@@ -266,35 +270,8 @@ export const CanvasDataSchema = z.object({
   metadata: CanvasMetadataSchema,
 });
 
-// Card types
-export interface Card {
-  id: string;
-  x: number;
-  y: number;
-  content: string;
-  color: string;
-  type?: string;
-}
+export type CanvasData = z.infer<typeof CanvasDataSchema>;
 
-// Legacy alias for backward compatibility
-export type PostItCard = Card;
-
-export interface Arrow {
-  id: string;
-  fromCardId: string;
-  toCardId: string;
-  evidenceIds?: string[]; // IDs of supporting evidence
-  evidenceMetadata?: EvidenceMatch[]; // Full evidence match details
-}
-
-export interface CardMetrics {
-  id: string;
-  name: string;
-  description?: string;
-  measurementMethod?: string;
-  targetValue?: string;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-}
 
 export interface LogicModel {
   id: string;
@@ -306,21 +283,6 @@ export interface LogicModel {
   metadata: {
     createdAt: string;
     updatedAt: string;
-    version: string;
-    author?: string;
-  };
-}
-
-// Canvas data format for IPFS storage (simplified, no conversions needed)
-export interface CanvasData {
-  id: string;
-  title: string;
-  description?: string;
-  cards: Card[];
-  arrows: Arrow[];
-  cardMetrics: Record<string, CardMetrics[]>;
-  metadata: {
-    createdAt: string;
     version: string;
     author?: string;
   };

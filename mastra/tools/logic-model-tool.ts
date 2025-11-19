@@ -47,10 +47,7 @@ export const logicModelTool = createTool({
       .min(1)
       .describe("Array of intermediate-term outcome cards"),
 
-    impact: z
-      .array(createStageInputSchema())
-      .min(1)
-      .describe("Array of impact cards"),
+    impact: z.array(createStageInputSchema()).min(1).describe("Array of impact cards"),
 
     connections: z
       .array(ConnectionInputSchema)
