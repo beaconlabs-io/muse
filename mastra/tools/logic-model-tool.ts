@@ -1,7 +1,12 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import type { Card, Arrow, CardMetrics, CanvasData } from "@/types";
-import { CanvasDataSchema, TYPE_COLOR_MAP } from "@/types";
+import type { Card, Arrow, CardMetrics, CanvasData, StageInput, ConnectionInput } from "@/types";
+import {
+  CanvasDataSchema,
+  TYPE_COLOR_MAP,
+  createStageInputSchema,
+  ConnectionInputSchema,
+} from "@/types";
 
 export const logicModelTool = createTool({
   id: "generate-logic-model",
@@ -23,115 +28,32 @@ export const logicModelTool = createTool({
 
     // Generated content for each stage
     activities: z
-      .array(
-        z.object({
-          content: z.string().describe("Specific activity description"),
-          metrics: z.array(
-            z.object({
-              name: z.string(),
-              description: z.string().optional(),
-              measurementMethod: z.string(),
-              frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]),
-            }),
-          ),
-        }),
-      )
+      .array(createStageInputSchema())
       .min(1)
       .describe("Array of activity cards with content and metrics"),
 
     outputs: z
-      .array(
-        z.object({
-          content: z.string().describe("Direct deliverable from activities"),
-          metrics: z.array(
-            z.object({
-              name: z.string(),
-              description: z.string().optional(),
-              measurementMethod: z.string(),
-              frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]),
-            }),
-          ),
-        }),
-      )
+      .array(createStageInputSchema())
       .min(1)
       .describe("Array of output cards with content and metrics"),
 
     outcomesShort: z
-      .array(
-        z.object({
-          content: z.string().describe("Short-term outcome (0-6 months)"),
-          metrics: z.array(
-            z.object({
-              name: z.string(),
-              description: z.string().optional(),
-              measurementMethod: z.string(),
-              frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]),
-            }),
-          ),
-        }),
-      )
+      .array(createStageInputSchema())
       .min(1)
       .describe("Array of short-term outcome cards"),
 
     outcomesIntermediate: z
-      .array(
-        z.object({
-          content: z.string().describe("Intermediate-term outcome (6-18 months)"),
-          metrics: z.array(
-            z.object({
-              name: z.string(),
-              description: z.string().optional(),
-              measurementMethod: z.string(),
-              frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]),
-            }),
-          ),
-        }),
-      )
+      .array(createStageInputSchema())
       .min(1)
       .describe("Array of intermediate-term outcome cards"),
 
     impact: z
-      .array(
-        z.object({
-          content: z.string().describe("Long-term impact (18+ months, ultimate societal outcome)"),
-          metrics: z.array(
-            z.object({
-              name: z.string(),
-              description: z.string().optional(),
-              measurementMethod: z.string(),
-              frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]),
-            }),
-          ),
-        }),
-      )
+      .array(createStageInputSchema())
       .min(1)
       .describe("Array of impact cards"),
 
     connections: z
-      .array(
-        z.object({
-          fromCardIndex: z
-            .number()
-            .min(0)
-            .describe("Index of the source card in its type array (0-based)"),
-          fromCardType: z
-            .enum(["activities", "outputs", "outcomesShort", "outcomesIntermediate", "impact"])
-            .describe("Type of the source card"),
-          toCardIndex: z
-            .number()
-            .min(0)
-            .describe("Index of the target card in its type array (0-based)"),
-          toCardType: z
-            .enum(["activities", "outputs", "outcomesShort", "outcomesIntermediate", "impact"])
-            .describe("Type of the target card"),
-          reasoning: z
-            .string()
-            .optional()
-            .describe(
-              "Brief explanation of why this connection represents a plausible causal relationship",
-            ),
-        }),
-      )
+      .array(ConnectionInputSchema)
       .optional()
       .describe(
         "Array of explicit connections between cards. Only specify connections where there is a clear, " +
@@ -173,66 +95,18 @@ export const logicModelTool = createTool({
   },
 });
 
-type Connection = {
-  fromCardIndex: number;
-  fromCardType: "activities" | "outputs" | "outcomesShort" | "outcomesIntermediate" | "impact";
-  toCardIndex: number;
-  toCardType: "activities" | "outputs" | "outcomesShort" | "outcomesIntermediate" | "impact";
-  reasoning?: string;
-};
-
 const generateLogicModel = async (params: {
   title: string;
   description?: string;
   intervention: string;
   context?: string;
   evidenceIds?: string[];
-  activities: Array<{
-    content: string;
-    metrics: Array<{
-      name: string;
-      description?: string;
-      measurementMethod: string;
-      frequency: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-    }>;
-  }>;
-  outputs: Array<{
-    content: string;
-    metrics: Array<{
-      name: string;
-      description?: string;
-      measurementMethod: string;
-      frequency: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-    }>;
-  }>;
-  outcomesShort: Array<{
-    content: string;
-    metrics: Array<{
-      name: string;
-      description?: string;
-      measurementMethod: string;
-      frequency: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-    }>;
-  }>;
-  outcomesIntermediate: Array<{
-    content: string;
-    metrics: Array<{
-      name: string;
-      description?: string;
-      measurementMethod: string;
-      frequency: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-    }>;
-  }>;
-  impact: Array<{
-    content: string;
-    metrics: Array<{
-      name: string;
-      description?: string;
-      measurementMethod: string;
-      frequency: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-    }>;
-  }>;
-  connections?: Connection[];
+  activities: StageInput[];
+  outputs: StageInput[];
+  outcomesShort: StageInput[];
+  outcomesIntermediate: StageInput[];
+  impact: StageInput[];
+  connections?: ConnectionInput[];
 }): Promise<{ canvasData: CanvasData }> => {
   const {
     title,

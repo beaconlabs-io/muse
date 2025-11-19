@@ -123,6 +123,52 @@ export const LogicModelMetricSchema = z.object({
   frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]).optional(),
 });
 
+// =============================================================================
+// TOOL INPUT SCHEMAS (for Mastra agents)
+// =============================================================================
+
+// Metric schema for tool input validation (stricter than storage)
+export const ToolMetricInputSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  measurementMethod: z.string(), // REQUIRED for LLM generation
+  frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]),
+});
+
+// Reusable schema factory for logic model stages
+export const createStageInputSchema = () =>
+  z.object({
+    content: z.string(),
+    metrics: z.array(ToolMetricInputSchema),
+  });
+
+// Connection schema for tool input
+export const ConnectionInputSchema = z.object({
+  fromCardIndex: z
+    .number()
+    .min(0)
+    .describe("Index of the source card in its type array (0-based)"),
+  fromCardType: z
+    .enum(["activities", "outputs", "outcomesShort", "outcomesIntermediate", "impact"])
+    .describe("Type of the source card"),
+  toCardIndex: z
+    .number()
+    .min(0)
+    .describe("Index of the target card in its type array (0-based)"),
+  toCardType: z
+    .enum(["activities", "outputs", "outcomesShort", "outcomesIntermediate", "impact"])
+    .describe("Type of the target card"),
+  reasoning: z
+    .string()
+    .optional()
+    .describe("Brief explanation of why this connection represents a plausible causal relationship"),
+});
+
+// Infer TypeScript types
+export type ToolMetricInput = z.infer<typeof ToolMetricInputSchema>;
+export type StageInput = z.infer<ReturnType<typeof createStageInputSchema>>;
+export type ConnectionInput = z.infer<typeof ConnectionInputSchema>;
+
 export const LogicModelNodeSchema = z.object({
   id: z.string(),
   type: z.enum(["impact", "outcome", "output", "activities"]),
