@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -24,13 +24,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import type { Card, Arrow, CardMetrics } from "@/types";
-import { generateLogicModelFromIntent } from "@/app/actions/canvas/generateLogicModel";
+import type { Card, Arrow, CardMetrics, EvidenceMatch } from "@/types";
+import {
+  generateLogicModelStructure,
+  searchEvidenceForSingleArrow,
+} from "@/app/actions/canvas/generateLogicModel";
 
 const generateLogicModelSchema = z.object({
   intent: z
     .string()
-    .min(1, "Please enter an intent description")
+    .min(1, "Please enter your intent")
     .max(1000, "Intent must be 1000 characters or less"),
 });
 
@@ -62,11 +65,10 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   });
 
   const steps = [
-    { id: "analyze", description: "Analyzing your intent and requirements" },
-    { id: "search", description: "Searching relevant evidence in database" },
-    { id: "structure", description: "Creating logic model structure" },
-    { id: "generate", description: "Generating cards and metrics" },
-    { id: "finalize", description: "Finalizing logic model" },
+    { id: "analyze", description: "Analyzing user intent" },
+    { id: "structure", description: "Generating logic model from intent" },
+    { id: "search", description: "Searching evidence for edges" },
+    { id: "illustrate", description: "Enriching canvas with evidence" },
   ];
 
   const handleSubmit = async (data: GenerateLogicModelFormData) => {
@@ -76,42 +78,87 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setStepDialogOpen(true);
 
     try {
-      // TODO: complete this steps
-      // Step 1: Analyze intent
+      // Step 1: Analyze user intent
       await setDialogStep("analyze", "active");
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Brief delay to show the step
+      await new Promise((resolve) => setTimeout(resolve, 800));
       await setDialogStep("analyze", "completed");
 
-      // Step 2: Search evidence
-      await setDialogStep("search", "active");
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      await setDialogStep("search", "completed");
-
-      // Step 3: Create structure
+      // Step 2: Generate logic model structure (REAL - server action)
       await setDialogStep("structure", "active");
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      await setDialogStep("structure", "completed");
+      const structureResult = await generateLogicModelStructure(data.intent);
 
-      // Step 4: Generate (actual backend call)
-      await setDialogStep("generate", "active");
-      const result = await generateLogicModelFromIntent(data.intent);
-
-      if (!result.success || !result.data) {
-        throw new Error(result.error || "Failed to generate logic model");
+      if (!structureResult.success || !structureResult.data) {
+        throw new Error(structureResult.error || "Failed to generate logic model structure");
       }
 
-      await setDialogStep("generate", "completed");
+      const canvasData = structureResult.data;
+      await setDialogStep("structure", "completed");
 
-      // Step 5: Finalize
-      await setDialogStep("finalize", "active");
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await setDialogStep("finalize", "completed");
+      // Step 3: Search evidence for each arrow (REAL - sequential server actions)
+      await setDialogStep("search", "active");
+
+      const evidenceResults: Array<{ arrowId: string; matches: EvidenceMatch[] }> = [];
+
+      for (let i = 0; i < canvasData.arrows.length; i++) {
+        const arrow = canvasData.arrows[i];
+        const fromCard = canvasData.cards.find((c) => c.id === arrow.fromCardId);
+        const toCard = canvasData.cards.find((c) => c.id === arrow.toCardId);
+
+        if (!fromCard || !toCard) {
+          console.warn(`Arrow ${i + 1}/${canvasData.arrows.length}: Missing cards`);
+          evidenceResults.push({ arrowId: arrow.id, matches: [] });
+          continue;
+        }
+
+        // Update progress with current arrow being processed
+        const progressMessage = `Searching arrow ${i + 1}/${canvasData.arrows.length}: ${fromCard.content} → ${toCard.content}`;
+        await setDialogStep("search", "active", progressMessage);
+
+        // Call server action for THIS arrow
+        const evidenceResult = await searchEvidenceForSingleArrow(
+          fromCard.content,
+          toCard.content,
+          arrow.id,
+        );
+
+        if (evidenceResult.success && evidenceResult.matches) {
+          evidenceResults.push({ arrowId: arrow.id, matches: evidenceResult.matches });
+        } else {
+          // Even if search fails, continue with empty matches
+          console.warn(`Failed to search evidence for arrow ${arrow.id}:`, evidenceResult.error);
+          evidenceResults.push({ arrowId: arrow.id, matches: [] });
+        }
+      }
+
+      await setDialogStep("search", "completed");
+
+      // Step 4: Enrich canvas with evidence (client-side)
+      await setDialogStep("illustrate", "active");
+
+      const evidenceMap = new Map<string, EvidenceMatch[]>();
+      evidenceResults.forEach((result) => {
+        evidenceMap.set(result.arrowId, result.matches);
+      });
+
+      const enrichedArrows = canvasData.arrows.map((arrow) => {
+        const matches = evidenceMap.get(arrow.id) || [];
+        if (matches.length === 0) return arrow;
+
+        return {
+          ...arrow,
+          evidenceIds: matches.map((m) => m.evidenceId),
+          evidenceMetadata: matches,
+        };
+      });
+
+      await setDialogStep("illustrate", "completed");
 
       // Success: pass data and close
       onGenerate({
-        cards: result.data.cards,
-        arrows: result.data.arrows,
-        cardMetrics: result.data.cardMetrics,
+        cards: canvasData.cards,
+        arrows: enrichedArrows,
+        cardMetrics: canvasData.cardMetrics,
       });
 
       // Auto-close after brief delay
@@ -121,7 +168,12 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
       form.reset();
     } catch (err) {
       // Find the current active step and set it to error
-      const currentStep = steps.find((step) => step.id === "generate") || steps[0];
+      const currentStep =
+        steps.find((step) => step.id === "analyze") ||
+        steps.find((step) => step.id === "structure") ||
+        steps.find((step) => step.id === "search") ||
+        steps.find((step) => step.id === "illustrate") ||
+        steps[0];
       await setDialogStep(
         currentStep.id,
         "error",
