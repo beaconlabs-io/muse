@@ -11,8 +11,8 @@
     "clean": "rm -rf .next node_modules && pnpm install",
     "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx}\" \"components/**/*.{js,jsx,ts,tsx}\" \"hooks/**/*.{js,jsx,ts,tsx}\" \"utils/**/*.{js,jsx,ts,tsx}\" \"types/**/*.{js,jsx,ts,tsx}\" \"lib/**/*.{js,jsx,ts,tsx}\" \"mastra/**/*.{js,jsx,ts,tsx}\"",
     "prepare": "husky",
-    "dev:mastra": "mastra dev --dir mastra",
-    "build:mastra": "mastra build --dir mastra"
+    "dev:mastra": "PROJECT_ROOT=$(pwd) mastra dev --dir mastra",
+    "build:mastra": "PROJECT_ROOT=$(pwd) mastra build --dir mastra"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.68",

@@ -203,6 +203,8 @@ export async function generateLogicModelFromIntent(
 }
 
 /**
+ * v
+ * @deprecated We use mastra workflow
  * Step 1: Generate logic model structure from intent (without evidence search)
  * This completes quickly (<10s) and returns the canvas structure
  */
@@ -280,6 +282,7 @@ export async function generateLogicModelStructure(
 }
 
 /**
+ * @deprecated We use mastra workflow
  * Step 2: Search evidence for ALL arrows in parallel
  * This replaces the old sequential searchEvidenceForSingleArrow approach
  * Expected to be 20-30x faster (5min → 10-15s)

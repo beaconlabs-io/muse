@@ -24,11 +24,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import type { Card, Arrow, CardMetrics, EvidenceMatch } from "@/types";
-import {
-  generateLogicModelStructure,
-  searchEvidenceForAllArrows,
-} from "@/app/actions/canvas/generateLogicModel";
+import type { Card, Arrow, CardMetrics } from "@/types";
+import { runLogicModelWorkflow } from "@/app/actions/canvas/runWorkflow";
 
 const generateLogicModelSchema = z.object({
   intent: z
@@ -79,53 +76,38 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setStepDialogOpen(true);
 
     try {
-      // Step 1: Analyze user intent(Dummy)
+      // Step 1: Analyze user intent (Dummy)
       await setDialogStep("analyze", "active");
       await setDialogStep("analyze", "completed");
 
       // Step 2: Generate logic model structure (REAL - server action)
       await setDialogStep("structure", "active");
-      const structureResult = await generateLogicModelStructure(data.intent);
 
-      if (!structureResult.success || !structureResult.data) {
-        throw new Error(structureResult.error || "Failed to generate logic model structure");
+      // Execute the workflow via server action
+      const result = await runLogicModelWorkflow(data.intent);
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to generate logic model");
       }
 
-      const canvasData = structureResult.data;
+      const { canvasData } = result;
+
+      console.log("Generated canvas:", canvasData);
+
       await setDialogStep("structure", "completed");
 
-      // Step 3: Search evidence for ALL arrows in PARALLEL (REAL - server action)
+      // Step 3: Search evidence (handled by workflow)
       await setDialogStep("search", "active");
-      const searchResult = await searchEvidenceForAllArrows(canvasData);
-
-      if (!searchResult.success || !searchResult.evidenceByArrow) {
-        throw new Error(searchResult.error || "Failed to search evidence");
-      }
-
-      const coverageMessage = `Found evidence for ${searchResult.stats?.arrowsWithEvidence || 0}/${searchResult.stats?.totalArrows || 0} arrows (${searchResult.stats?.coveragePercent.toFixed(1) || 0}% coverage)`;
-      await setDialogStep("search", "active", coverageMessage);
       await setDialogStep("search", "completed");
 
-      // Step 4: Illustrate canvas with evidence (client-side)
+      // Step 4: Illustrate canvas with evidence (handled by workflow)
       await setDialogStep("illustrate", "active");
-
-      const enrichedArrows = canvasData.arrows.map((arrow) => {
-        const matches = searchResult.evidenceByArrow![arrow.id] || [];
-        if (matches.length === 0) return arrow;
-
-        return {
-          ...arrow,
-          evidenceIds: matches.map((m: EvidenceMatch) => m.evidenceId),
-          evidenceMetadata: matches,
-        };
-      });
-
       await setDialogStep("illustrate", "completed");
 
-      // Success: pass data and close
+      // Success: pass data to canvas
       onGenerate({
         cards: canvasData.cards,
-        arrows: enrichedArrows,
+        arrows: canvasData.arrows,
         cardMetrics: canvasData.cardMetrics,
       });
 

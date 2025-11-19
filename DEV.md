@@ -183,13 +183,16 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 - `lib/evidence-search-mastra.ts`: LLM-based matching logic using Mastra agent
 - `mastra/tools/logic-model-tool.ts`: Tool for generating logic model structure
 - `mastra/agents/logic-model-agent.ts`: Agent with maxSteps: 1 to prevent duplicate calls
-- `app/actions/canvas/generateLogicModel.ts`: Server actions for logic model generation
-  - `generateLogicModelStructure(intent)`: **Step 1** - Generates logic model structure only (~30s)
-  - `searchEvidenceForAllArrows(canvasData)`: **Step 2** - Parallel evidence search using `Promise.all()` (~10-15s)
-  - ~~`searchEvidenceForSingleArrow()`~~: Removed (replaced by parallel approach)
-  - ~~`generateLogicModelWithParallelEvidence()`~~: Removed (monolithic, replaced by two-step approach)
-- `mastra/workflows/logic-model-with-evidence.ts`: Parallel workflow implementation (reference implementation, not currently used)
-- `types/index.ts`: Arrow type extended with `evidenceIds` and `evidenceMetadata`
+- `app/actions/canvas/runWorkflow.ts`: Server action wrapper for workflow execution
+  - `runLogicModelWorkflow(intent)`: Executes Mastra workflow, returns simplified result (canvasData only)
+  - Sets PROJECT_ROOT environment variable for correct path resolution
+  - Returns `{ success: true, canvasData }` on success or `{ success: false, error }` on failure
+- `mastra/workflows/logic-model-with-evidence.ts`: **Active production workflow** with 3 steps:
+  - **Step 1**: Generate logic model structure using Logic Model Agent (~30s)
+  - **Step 2**: Parallel evidence search for all arrows using `Promise.all()` (~10-15s)
+  - **Step 3**: Enrich canvas data with evidence metadata (instant)
+  - Returns simplified output: `{ canvasData }` (stats derived from data, no separate tracking)
+- `types/index.ts`: Arrow type extended with `evidenceIds` and `evidenceMetadata`, CanvasDataSchema reused throughout
 
 **Architecture Benefits:**
 
@@ -199,6 +202,21 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 - **No Rate Limiting Delays**: Removed sequential 1-second delays between arrows
 - **Fast Model**: Uses `openai/gpt-4o-mini` for 3-5x faster LLM evaluation
 - **Expected Performance**: 5 minutes → 10-15 seconds (20-30x speedup)
+- **Simplified API**: Returns just CanvasData, consumers calculate stats as needed (no duplicate tracking)
+- **Environment-aware**: PROJECT_ROOT handling ensures correct file paths in all contexts (dev, build, Next.js)
+- **Production-ready Logging**: Detailed progress logs with `[Workflow]` prefix and emoji markers (✓, ✗, ⚠️, ❌, ✅) for observability
+- **Schema Reuse**: 100% reuse of types from `types/index.ts` (CanvasDataSchema, EvidenceMatchSchema, etc.)
+
+**Environment Configuration:**
+
+- `PROJECT_ROOT` environment variable ensures correct file paths when Mastra bundles code
+- Set automatically in `package.json` scripts:
+  - `"dev:mastra": "PROJECT_ROOT=$(pwd) mastra dev --dir mastra"`
+  - `"build:mastra": "PROJECT_ROOT=$(pwd) mastra build --dir mastra"`
+- Fallback in server action (`app/actions/canvas/runWorkflow.ts`) ensures it works from Next.js context
+- **Why needed**: When Mastra bundles and runs code, `process.cwd()` points to `.mastra/output/` instead of project root
+- **Solution**: `lib/evidence.ts` uses `process.env.PROJECT_ROOT || process.cwd()` for path resolution
+- Resolves `ENOENT` errors when loading evidence files from `contents/evidence/`
 
 **UI Flow (5 Steps):**
 

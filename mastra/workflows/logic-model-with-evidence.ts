@@ -27,43 +27,71 @@ const generateLogicModelStep = createStep({
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
-    stats: z.object({
-      totalCards: z.number(),
-      totalArrows: z.number(),
-    }),
   }),
   execute: async ({ inputData }) => {
     const { intent } = inputData;
 
+    console.log("[Workflow] Step 1: Generating logic model structure...");
+    console.log(`[Workflow] Intent: "${intent}"`);
+
     // Use the logic model agent to generate the structure
-    const result = await logicModelAgent.generate([
-      {
-        role: "user",
-        content: `Create a logic model for: ${intent}`,
-      },
-    ]);
+    const result = await logicModelAgent.generate(
+      [
+        {
+          role: "user",
+          content: `Create a logic model for: ${intent}`,
+        },
+      ],
+      { maxSteps: 1 },
+    );
+
+    // Debug logging
+    console.log("[Workflow] Agent result:", {
+      text: result.text?.slice(0, 200),
+      toolResultsLength: result.toolResults?.length || 0,
+      hasToolResults: !!result.toolResults,
+    });
 
     // Parse the tool result to extract canvas data
     if (!result.toolResults || result.toolResults.length === 0) {
+      console.error("[Workflow] ✗ Agent did not call any tools");
+      console.error("[Workflow] Agent response text:", result.text?.slice(0, 500));
       throw new Error("Agent did not call logicModelTool");
     }
 
+    console.log(
+      `[Workflow] Found ${result.toolResults.length} tool result(s), extracting canvas data...`,
+    );
+
     const toolResult = result.toolResults[0] as any;
+    console.log("[Workflow] Tool result structure:", {
+      toolName: toolResult.toolName,
+      hasPayload: !!toolResult.payload,
+      hasResult: !!toolResult.payload?.result,
+      hasCanvasData: !!toolResult.payload?.result?.canvasData,
+    });
+
     const toolReturnValue = toolResult.payload?.result;
     const canvasData: CanvasData = toolReturnValue?.canvasData;
 
     if (!canvasData || !canvasData.cards || !canvasData.arrows) {
+      console.error("[Workflow] ✗ Failed to generate logic model structure");
+      console.error("[Workflow] Canvas data status:", {
+        exists: !!canvasData,
+        hasCards: !!canvasData?.cards,
+        hasArrows: !!canvasData?.arrows,
+      });
       throw new Error(
         "Failed to generate logic model. The agent did not return valid canvas data.",
       );
     }
 
+    console.log(
+      `[Workflow] ✓ Generated ${canvasData.cards.length} cards and ${canvasData.arrows.length} arrows`,
+    );
+
     return {
       canvasData,
-      stats: {
-        totalCards: canvasData.cards.length,
-        totalArrows: canvasData.arrows.length,
-      },
     };
   },
 });
@@ -73,21 +101,17 @@ const searchEvidenceStep = createStep({
   id: "search-evidence",
   inputSchema: z.object({
     canvasData: CanvasDataSchema,
-    stats: z.object({
-      totalCards: z.number(),
-      totalArrows: z.number(),
-    }),
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
     evidenceByArrow: z.record(z.array(EvidenceMatchSchema)),
-    stats: z.object({
-      totalArrowsProcessed: z.number(),
-      arrowsWithEvidence: z.number(),
-    }),
   }),
   execute: async ({ inputData }) => {
     const { canvasData } = inputData;
+
+    console.log(
+      `[Workflow] Step 2: Searching evidence for ${canvasData.arrows.length} arrows in PARALLEL...`,
+    );
 
     // Create a map of card IDs to card content for quick lookup
     const cardMap = new Map<string, Card>();
@@ -101,6 +125,9 @@ const searchEvidenceStep = createStep({
       const toCard = cardMap.get(arrow.toCardId);
 
       if (!fromCard || !toCard) {
+        console.warn(
+          `[Workflow] Arrow ${arrow.id}: Missing cards (from: ${!!fromCard}, to: ${!!toCard})`,
+        );
         return {
           arrowId: arrow.id,
           matches: [] as EvidenceMatch[],
@@ -108,13 +135,20 @@ const searchEvidenceStep = createStep({
       }
 
       try {
+        console.log(
+          `[Workflow] Searching arrow ${arrow.id.substring(0, 20)}...: ` +
+            `"${fromCard.content.substring(0, 40)}..." → "${toCard.content.substring(0, 40)}..."`,
+        );
         const matches = await searchEvidenceForEdge(fromCard.content, toCard.content);
+        console.log(
+          `[Workflow] ✓ Arrow ${arrow.id.substring(0, 20)}...: Found ${matches.length} matches`,
+        );
         return {
           arrowId: arrow.id,
           matches,
         };
       } catch (error) {
-        console.error(`Evidence search failed for arrow ${arrow.id}:`, error);
+        console.error(`[Workflow] ❌ Arrow ${arrow.id}: Search failed:`, error);
         return {
           arrowId: arrow.id,
           matches: [] as EvidenceMatch[],
@@ -132,13 +166,16 @@ const searchEvidenceStep = createStep({
       {} as Record<string, EvidenceMatch[]>,
     );
 
+    // Calculate summary stats for logging
+    const totalEvidenceMatches = evidenceResults.reduce((sum, r) => sum + r.matches.length, 0);
+    console.log(
+      `[Workflow] ✓ Evidence search completed ` +
+        `(${totalEvidenceMatches} total matches across ${canvasData.arrows.length} arrows)`,
+    );
+
     return {
       canvasData,
       evidenceByArrow,
-      stats: {
-        totalArrowsProcessed: evidenceResults.length,
-        arrowsWithEvidence: evidenceResults.filter((r) => r.matches.length > 0).length,
-      },
     };
   },
 });
@@ -149,22 +186,14 @@ const enrichCanvasStep = createStep({
   inputSchema: z.object({
     canvasData: CanvasDataSchema,
     evidenceByArrow: z.record(z.array(EvidenceMatchSchema)),
-    stats: z.object({
-      totalArrowsProcessed: z.number(),
-      arrowsWithEvidence: z.number(),
-    }),
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
-    stats: z.object({
-      totalCards: z.number(),
-      totalArrows: z.number(),
-      arrowsWithEvidence: z.number(),
-      totalEvidenceMatches: z.number(),
-    }),
   }),
   execute: async ({ inputData }) => {
     const { canvasData, evidenceByArrow } = inputData;
+
+    console.log("[Workflow] Step 3: Enriching canvas data with evidence...");
 
     // Create enriched arrows with evidence metadata
     const enrichedArrows: Arrow[] = canvasData.arrows.map((arrow: Arrow) => {
@@ -183,19 +212,10 @@ const enrichCanvasStep = createStep({
       arrows: enrichedArrows,
     };
 
+    console.log("[Workflow] ✅ Workflow complete");
+
     return {
       canvasData: enrichedCanvasData,
-      stats: {
-        totalCards: enrichedCanvasData.cards.length,
-        totalArrows: enrichedCanvasData.arrows.length,
-        arrowsWithEvidence: enrichedArrows.filter(
-          (a) => a.evidenceMetadata && a.evidenceMetadata.length > 0,
-        ).length,
-        totalEvidenceMatches: enrichedArrows.reduce(
-          (sum, a) => sum + (a.evidenceMetadata?.length || 0),
-          0,
-        ),
-      },
     };
   },
 });
@@ -208,12 +228,6 @@ export const logicModelWithEvidenceWorkflow = createWorkflow({
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
-    stats: z.object({
-      totalCards: z.number(),
-      totalArrows: z.number(),
-      arrowsWithEvidence: z.number(),
-      totalEvidenceMatches: z.number(),
-    }),
   }),
 })
   .then(generateLogicModelStep)
