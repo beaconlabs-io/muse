@@ -390,7 +390,7 @@ const generateLogicModel = async (params: {
     metadata: {
       createdAt: new Date().toISOString(),
       version: "1.0.0",
-      author: "Mastra Logic Model Agent",
+      author: "Logic Model Agent",
     },
   };
 

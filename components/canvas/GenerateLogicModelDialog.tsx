@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -68,7 +68,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     { id: "analyze", description: "Analyzing user intent" },
     { id: "structure", description: "Generating logic model from intent" },
     { id: "search", description: "Searching evidence for edges" },
-    { id: "illustrate", description: "Enriching canvas with evidence" },
+    { id: "illustrate", description: "Illustrating canvas with evidence" },
   ];
 
   const handleSubmit = async (data: GenerateLogicModelFormData) => {
@@ -133,7 +133,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
 
       await setDialogStep("search", "completed");
 
-      // Step 4: Enrich canvas with evidence (client-side)
+      // Step 4: illustrate canvas with evidence (client-side)
       await setDialogStep("illustrate", "active");
 
       const evidenceMap = new Map<string, EvidenceMatch[]>();
@@ -141,7 +141,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
         evidenceMap.set(result.arrowId, result.matches);
       });
 
-      const enrichedArrows = canvasData.arrows.map((arrow) => {
+      const illustrateedArrows = canvasData.arrows.map((arrow) => {
         const matches = evidenceMap.get(arrow.id) || [];
         if (matches.length === 0) return arrow;
 
@@ -157,7 +157,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
       // Success: pass data and close
       onGenerate({
         cards: canvasData.cards,
-        arrows: enrichedArrows,
+        arrows: illustrateedArrows,
         cardMetrics: canvasData.cardMetrics,
       });
 

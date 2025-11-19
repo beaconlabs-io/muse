@@ -50,12 +50,15 @@ export async function generateLogicModelFromIntent(
       };
     }
 
-    const result = await agent.generate([
-      {
-        role: "user",
-        content: `Create a logic model for: ${intent}`,
-      },
-    ]);
+    const result = await agent.generate(
+      [
+        {
+          role: "user",
+          content: `Create a logic model for: ${intent}`,
+        },
+      ],
+      { maxSteps: 1 },
+    );
 
     // Debug logging
     console.log("[Server Action] Agent result:", {
@@ -226,12 +229,15 @@ export async function generateLogicModelStructure(
       };
     }
 
-    const result = await agent.generate([
-      {
-        role: "user",
-        content: `Create a logic model for: ${intent}`,
-      },
-    ]);
+    const result = await agent.generate(
+      [
+        {
+          role: "user",
+          content: `Create a logic model for: ${intent}`,
+        },
+      ],
+      { maxSteps: 1 },
+    );
 
     // Debug logging
     console.log("[Server Action] Agent result:", {

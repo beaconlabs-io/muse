@@ -24,7 +24,7 @@ export async function searchEvidenceForEdge(
   const { maxMatches = 3, minScore = 70 } = options;
 
   try {
-    console.log(`\n[Evidence Search] Using Mastra evidenceSearchAgent`);
+    console.log(`\n[Evidence Search] Using evidenceSearchAgent`);
     console.log(`Edge: "${fromCardContent}" → "${toCardContent}"`);
 
     // Get the agent from Mastra
