@@ -1,7 +1,7 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import type { Card, Arrow, CardMetrics, CanvasData } from "@/types";
-import { TYPE_COLOR_MAP } from "@/types";
+import { CanvasDataSchema, TYPE_COLOR_MAP } from "@/types";
 
 export const logicModelTool = createTool({
   id: "generate-logic-model",
@@ -171,19 +171,7 @@ export const logicModelTool = createTool({
       ),
   }),
   outputSchema: z.object({
-    canvasData: z.object({
-      id: z.string(),
-      title: z.string(),
-      description: z.string().optional(),
-      cards: z.array(z.any()),
-      arrows: z.array(z.any()),
-      cardMetrics: z.record(z.array(z.any())),
-      metadata: z.object({
-        createdAt: z.string(),
-        version: z.string(),
-        author: z.string().optional(),
-      }),
-    }),
+    canvasData: CanvasDataSchema,
   }),
   execute: async ({ context }) => {
     const {

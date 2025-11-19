@@ -109,69 +109,6 @@ export interface IPFSStorageResult {
   size: number;
   timestamp: string;
 }
-
-// =============================================================================
-// GRAPH VISUALIZATION TYPES
-// =============================================================================
-
-export type Node = {
-  [key: string]: unknown;
-  id: string;
-  value?: number;
-  color?: string;
-  size?: number;
-};
-
-export type Link = {
-  source: string;
-  target: string;
-  time?: string;
-  width?: number;
-  color?: string;
-};
-
-// =============================================================================
-// LOGIC MODEL TYPES
-// =============================================================================
-
-export interface LogicModelNode {
-  id: string;
-  type: "impact" | "outcome" | "output" | "activities";
-  content: string;
-  from: string[];
-  to: string[];
-  metrics?: LogicModelMetric[];
-}
-
-export interface LogicModelMetric {
-  id: string;
-  name: string;
-  description?: string;
-  measurementMethod?: string;
-  targetValue?: string;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-}
-
-export interface LogicModelMetadata {
-  id: string;
-  title: string;
-  description: string;
-  createdAt: string;
-  version: string;
-  author?: string;
-}
-
-export interface StandardizedLogicModel {
-  nodes: {
-    impact: LogicModelNode[];
-    outcome: LogicModelNode[];
-    output: LogicModelNode[];
-    activities: LogicModelNode[];
-  };
-  metadata: LogicModelMetadata;
-}
-
-// =============================================================================
 // ZOD SCHEMAS FOR VALIDATION
 // =============================================================================
 
@@ -224,6 +161,63 @@ export const EvidenceMatchSchema = z.object({
   title: z.string().optional(),
   interventionText: z.string().optional(),
   outcomeText: z.string().optional(),
+});
+
+export const EvidenceResultSchema = z.object({
+  intervention: z.string(),
+  outcome_variable: z.string(),
+  outcome: z.string().optional(),
+});
+
+export const EvidenceSummarySchema = z.object({
+  evidenceId: z.string(),
+  title: z.string(),
+  strength: z.string().optional(),
+  results: z.array(EvidenceResultSchema),
+});
+
+export type EvidenceSummary = z.infer<typeof EvidenceSummarySchema>;
+
+export const CardSchema = z.object({
+  id: z.string(),
+  x: z.number(),
+  y: z.number(),
+  content: z.string(),
+  color: z.string(),
+  type: z.string().optional(),
+});
+
+export const CardMetricSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  measurementMethod: z.string().optional(),
+  targetValue: z.string().optional(),
+  frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]).optional(),
+});
+
+export const ArrowSchema = z.object({
+  id: z.string(),
+  fromCardId: z.string(),
+  toCardId: z.string(),
+  evidenceIds: z.array(z.string()).optional(),
+  evidenceMetadata: z.array(EvidenceMatchSchema).optional(),
+});
+
+export const CanvasMetadataSchema = z.object({
+  createdAt: z.string(),
+  version: z.string(),
+  author: z.string().optional(),
+});
+
+export const CanvasDataSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  cards: z.array(CardSchema),
+  arrows: z.array(ArrowSchema),
+  cardMetrics: z.record(z.array(CardMetricSchema)),
+  metadata: CanvasMetadataSchema,
 });
 
 // Card types
@@ -283,176 +277,6 @@ export interface CanvasData {
     createdAt: string;
     version: string;
     author?: string;
-  };
-}
-
-// =============================================================================
-// CONVERSION UTILITIES
-// =============================================================================
-
-export function toStandardizedFormat(legacy: LogicModel): StandardizedLogicModel {
-  const nodes: {
-    impact: LogicModelNode[];
-    outcome: LogicModelNode[];
-    output: LogicModelNode[];
-    activities: LogicModelNode[];
-  } = {
-    impact: [],
-    outcome: [],
-    output: [],
-    activities: [],
-  };
-
-  legacy.cards.forEach((card) => {
-    // Determine type based on color
-    let type: LogicModelNode["type"] = "activities";
-    if (card.color === "#d1fae5") type = "output";
-    else if (card.color === "#fef08a") type = "outcome";
-    else if (card.color === "#e9d5ff") type = "impact";
-    else if (card.color === "#c7d2fe") type = "activities";
-
-    // Find connections
-    const from = legacy.arrows
-      .filter((arrow) => arrow.toCardId === card.id)
-      .map((arrow) => arrow.fromCardId);
-    const to = legacy.arrows
-      .filter((arrow) => arrow.fromCardId === card.id)
-      .map((arrow) => arrow.toCardId);
-
-    // Convert metrics
-    const metrics = legacy.cardMetrics[card.id]?.map((metric) => ({
-      id: metric.id,
-      name: metric.name,
-      description: metric.description,
-      measurementMethod: metric.measurementMethod,
-      targetValue: metric.targetValue,
-      frequency: metric.frequency,
-    }));
-
-    const node: LogicModelNode = {
-      id: card.id,
-      type,
-      content: card.content,
-      from,
-      to,
-      metrics: metrics?.length ? metrics : undefined,
-    };
-
-    // Add node to appropriate type array
-    nodes[type].push(node);
-  });
-
-  return {
-    nodes,
-    metadata: {
-      id: legacy.id,
-      title: legacy.title,
-      description: legacy.description || "",
-      createdAt: legacy.metadata.createdAt,
-      version: legacy.metadata.version,
-      author: legacy.metadata.author,
-    },
-  };
-}
-
-export function toDisplayFormat(standardized: StandardizedLogicModel): LogicModel {
-  const cards: Card[] = [];
-
-  // Activities column (left)
-  standardized.nodes.activities.forEach((node, index) => {
-    cards.push({
-      id: node.id,
-      x: 100,
-      y: 150 + index * 150,
-      content: node.content,
-      color: "#c7d2fe",
-      type: "activities",
-    });
-  });
-
-  // Output column (center-left)
-  standardized.nodes.output.forEach((node, index) => {
-    cards.push({
-      id: node.id,
-      x: 350,
-      y: 150 + index * 150,
-      content: node.content,
-      color: "#d1fae5",
-      type: "outputs",
-    });
-  });
-
-  // Outcome column (center-right)
-  standardized.nodes.outcome.forEach((node, index) => {
-    cards.push({
-      id: node.id,
-      x: 600,
-      y: 150 + index * 150,
-      content: node.content,
-      color: "#fef08a",
-      type: "outcomes-short",
-    });
-  });
-
-  // Impact column (right)
-  standardized.nodes.impact.forEach((node, index) => {
-    cards.push({
-      id: node.id,
-      x: 850,
-      y: 150 + index * 150,
-      content: node.content,
-      color: "#e9d5ff",
-      type: "impact",
-    });
-  });
-
-  const arrows: Arrow[] = [];
-  const cardMetrics: Record<string, CardMetrics[]> = {};
-
-  // Process all node types
-  const allNodes = [
-    ...standardized.nodes.impact,
-    ...standardized.nodes.outcome,
-    ...standardized.nodes.output,
-    ...standardized.nodes.activities,
-  ];
-
-  allNodes.forEach((node) => {
-    // Create arrows from connections
-    node.to.forEach((toId) => {
-      arrows.push({
-        id: `${node.id}-to-${toId}`,
-        fromCardId: node.id,
-        toCardId: toId,
-      });
-    });
-
-    // Convert metrics
-    if (node.metrics?.length) {
-      cardMetrics[node.id] = node.metrics.map((metric) => ({
-        id: metric.id,
-        name: metric.name,
-        description: metric.description,
-        measurementMethod: metric.measurementMethod,
-        targetValue: metric.targetValue,
-        frequency: metric.frequency,
-      }));
-    }
-  });
-
-  return {
-    id: standardized.metadata.id,
-    title: standardized.metadata.title,
-    description: standardized.metadata.description,
-    cards,
-    arrows,
-    cardMetrics,
-    metadata: {
-      createdAt: standardized.metadata.createdAt,
-      updatedAt: standardized.metadata.createdAt, // Use createdAt since updatedAt is removed
-      version: standardized.metadata.version,
-      author: standardized.metadata.author,
-    },
   };
 }
 

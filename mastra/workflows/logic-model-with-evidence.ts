@@ -1,8 +1,15 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { logicModelAgent } from "../agents/logic-model-agent";
-import type { CanvasData, Card, Arrow, EvidenceMatch } from "@/types";
 import { searchEvidenceForEdge } from "@/lib/evidence-search-mastra";
+import {
+  CanvasDataSchema,
+  EvidenceMatchSchema,
+  type CanvasData,
+  type Card,
+  type Arrow,
+  type EvidenceMatch,
+} from "@/types";
 /**
  * Workflow: Generate Logic Model with Evidence Search
  *
@@ -19,7 +26,7 @@ const generateLogicModelStep = createStep({
     intent: z.string().describe("User's intent for creating the logic model"),
   }),
   outputSchema: z.object({
-    canvasData: z.any(),
+    canvasData: CanvasDataSchema,
     stats: z.object({
       totalCards: z.number(),
       totalArrows: z.number(),
@@ -65,15 +72,15 @@ const generateLogicModelStep = createStep({
 const searchEvidenceStep = createStep({
   id: "search-evidence",
   inputSchema: z.object({
-    canvasData: z.any(),
+    canvasData: CanvasDataSchema,
     stats: z.object({
       totalCards: z.number(),
       totalArrows: z.number(),
     }),
   }),
   outputSchema: z.object({
-    canvasData: z.any(),
-    evidenceByArrow: z.record(z.array(z.any())),
+    canvasData: CanvasDataSchema,
+    evidenceByArrow: z.record(z.array(EvidenceMatchSchema)),
     stats: z.object({
       totalArrowsProcessed: z.number(),
       arrowsWithEvidence: z.number(),
@@ -140,15 +147,15 @@ const searchEvidenceStep = createStep({
 const enrichCanvasStep = createStep({
   id: "enrich-canvas",
   inputSchema: z.object({
-    canvasData: z.any(),
-    evidenceByArrow: z.record(z.array(z.any())),
+    canvasData: CanvasDataSchema,
+    evidenceByArrow: z.record(z.array(EvidenceMatchSchema)),
     stats: z.object({
       totalArrowsProcessed: z.number(),
       arrowsWithEvidence: z.number(),
     }),
   }),
   outputSchema: z.object({
-    canvasData: z.any(),
+    canvasData: CanvasDataSchema,
     stats: z.object({
       totalCards: z.number(),
       totalArrows: z.number(),
@@ -200,7 +207,7 @@ export const logicModelWithEvidenceWorkflow = createWorkflow({
     intent: z.string().describe("User's intent for creating the logic model"),
   }),
   outputSchema: z.object({
-    canvasData: z.any(),
+    canvasData: CanvasDataSchema,
     stats: z.object({
       totalCards: z.number(),
       totalArrows: z.number(),

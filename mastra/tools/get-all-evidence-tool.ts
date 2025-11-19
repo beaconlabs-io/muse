@@ -1,6 +1,7 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { getAllEvidenceMeta } from "@/lib/evidence";
+import { EvidenceSummarySchema, type EvidenceSummary } from "@/types";
 
 /**
  * Tool for loading all evidence metadata
@@ -16,20 +17,7 @@ export const getAllEvidenceTool = createTool({
     This tool takes no input parameters.`,
   inputSchema: z.object({}).default({}),
   outputSchema: z.object({
-    evidence: z.array(
-      z.object({
-        evidenceId: z.string(),
-        title: z.string(),
-        strength: z.string().optional(),
-        results: z.array(
-          z.object({
-            intervention: z.string(),
-            outcome_variable: z.string(),
-            outcome: z.string().optional(),
-          }),
-        ),
-      }),
-    ),
+    evidence: z.array(EvidenceSummarySchema),
     totalEvidence: z.number(),
   }),
   execute: async () => {
@@ -37,22 +25,22 @@ export const getAllEvidenceTool = createTool({
     const allEvidenceMeta = await getAllEvidenceMeta();
 
     // Transform to simplified format for agent
-    const evidence = allEvidenceMeta
-      .map((ev) => {
-        if (!ev.results || ev.results.length === 0) return null;
+    const evidence = allEvidenceMeta.reduce<EvidenceSummary[]>((acc, ev) => {
+      if (!ev.results || ev.results.length === 0) return acc;
 
-        return {
-          evidenceId: ev.evidence_id,
-          title: ev.title,
-          strength: ev.strength,
-          results: ev.results.map((r) => ({
-            intervention: r.intervention,
-            outcome_variable: r.outcome_variable,
-            outcome: r.outcome,
-          })),
-        };
-      })
-      .filter((ev) => ev !== null);
+      acc.push({
+        evidenceId: ev.evidence_id,
+        title: ev.title,
+        strength: ev.strength,
+        results: ev.results.map((r) => ({
+          intervention: r.intervention,
+          outcome_variable: r.outcome_variable,
+          outcome: r.outcome,
+        })),
+      });
+
+      return acc;
+    }, []);
 
     return {
       evidence,
