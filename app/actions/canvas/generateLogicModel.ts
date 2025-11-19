@@ -284,9 +284,7 @@ export async function generateLogicModelStructure(
  * This replaces the old sequential searchEvidenceForSingleArrow approach
  * Expected to be 20-30x faster (5min → 10-15s)
  */
-export async function searchEvidenceForAllArrows(
-  canvasData: CanvasData,
-): Promise<{
+export async function searchEvidenceForAllArrows(canvasData: CanvasData): Promise<{
   success: boolean;
   evidenceByArrow?: Record<string, EvidenceMatch[]>;
   stats?: {
@@ -320,7 +318,9 @@ export async function searchEvidenceForAllArrows(
           `[Server Action] Searching arrow ${arrow.id.substring(0, 20)}...: "${fromCard.content.substring(0, 40)}..." → "${toCard.content.substring(0, 40)}..."`,
         );
         const matches = await searchEvidenceForEdge(fromCard.content, toCard.content);
-        console.log(`[Server Action] ✓ Arrow ${arrow.id.substring(0, 20)}...: Found ${matches.length} matches`);
+        console.log(
+          `[Server Action] ✓ Arrow ${arrow.id.substring(0, 20)}...: Found ${matches.length} matches`,
+        );
         return { arrowId: arrow.id, matches };
       } catch (error) {
         console.error(`[Server Action] ❌ Arrow ${arrow.id}: Search failed:`, error);
