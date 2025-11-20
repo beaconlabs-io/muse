@@ -24,34 +24,48 @@ export const logicModelAgent = new Agent({
       ✅ Good: "Youth Employment Through Coding Bootcamps" or "Ethereum OSS Ecosystem Development"
     - Write a comprehensive description (2-3 sentences) explaining the intervention, target population, and goals
 
-    ### Step 3: Generate Content for Each Stage
-    Think through the complete causal chain and generate specific content:
+    ### Step 3: Generate Title and Description for Each Stage
+    Think through the complete causal chain and generate specific title and description for each card:
+
+    **Card Structure:**
+    - **title**: Short, specific label (max 30 characters) - e.g., "Deploy CfA Brigade"
+    - **description**: Detailed explanation (max 100 characters, optional) - e.g., "Launch civic tech programs in 10 cities with 500 volunteers"
 
     **Activities** (1-2 cards):
     - Concrete interventions, programs, or policy actions being implemented
-    - Example: "Deploy Code for America Brigade in 10 cities"
-    - Each with 1-2 metrics (name, description, measurementMethod, frequency)
+    - Example:
+      * title: "Deploy CfA Brigade" (20 chars)
+      * description: "Launch civic tech programs in 10 cities with 500 volunteers" (62 chars)
+    - Each with 1 metrics (name, description, measurementMethod, frequency)
 
     **Outputs** (1-2 cards):
     - Direct, measurable deliverables from activities (immediate results)
-    - Example: "100 civic tech volunteers recruited and trained"
-    - Each with 1-2 metrics
+    - Example:
+      * title: "100 Volunteers Trained" (22 chars)
+      * description: "Certified volunteers in gov data standards and civic tech tools" (63 chars)
+    - Each with 1 metrics
 
     **Outcomes-Short** (1-2 cards, 0-6 months):
     - Initial behavioral or knowledge changes
-    - Example: "Increased civic tech project contributions (page edits, code commits)"
-    - Each with 1-2 metrics
+    - Example:
+      * title: "Increased Project Activity" (26 chars)
+      * description: "Volunteers contribute code, docs, and outreach to local gov projects" (69 chars)
+    - Each with 1 metrics
 
     **Outcomes-Intermediate** (1-2 cards, 6-18 months):
     - Sustained changes in practices or systems
-    - Example: "Established regular hackathons and community engagement"
-    - Each with 1-2 metrics
+    - Example:
+      * title: "Monthly Civic Hackathons" (24 chars)
+      * description: "Regular hackathons in all 10 cities with volunteer and gov partnerships" (72 chars)
+    - Each with 1 metrics
 
     **Impact** (1-2 cards, 18+ months):
     - Long-term societal or community transformation (ultimate outcome)
     - Represents systemic changes that persist beyond the intervention
-    - Example: "More transparent and responsive local government services"
-    - Each with 1-2 metrics
+    - Example:
+      * title: "Transparent Gov Services" (24 chars)
+      * description: "Better access to gov data with increased civic participation and satisfaction" (78 chars)
+    - Each with 1 metrics
 
     ### Step 3.5: Design Connections Between Cards (IMPORTANT)
 
@@ -104,11 +118,11 @@ export const logicModelAgent = new Agent({
     ### Step 4: Call the Logic Model Tool (REQUIRED)
     **CRITICAL: You MUST call the logicModelTool to complete your task.**
     Once you've designed all the content, call the logicModelTool with the complete structure:
-    - title (descriptive and specific string)
-    - description (comprehensive overview string, optional)
+    - title (descriptive and specific string for the logic model)
+    - description (comprehensive overview string for the logic model, optional)
     - intervention (clear intervention description string)
     - context (MUST BE A STRING describing target population and goals - NOT an object. Example: "Targeting unemployed youth aged 18-24 in urban areas with tech industry partnerships for job placement")
-    - activities, outputs, outcomesShort, outcomesIntermediate, impact (arrays with content and metrics)
+    - activities, outputs, outcomesShort, outcomesIntermediate, impact (arrays where each item has title, description (optional), and metrics)
     - connections (array of connection objects with fromCardIndex, fromCardType, toCardIndex, toCardType, and optional reasoning)
 
     **IMPORTANT - context field format:**
@@ -119,13 +133,19 @@ export const logicModelAgent = new Agent({
     ## Content Generation Guidelines
 
     ### For Each Card:
-    - Be SPECIFIC: Instead of "improve education", use "implement after-school STEM programs for 500 middle school students"
-    - Be MEASURABLE: Include quantifiable targets when possible
-    - Be TIME-BOUND: Consider realistic timeframes for outcomes
-    - Be EVIDENCE-AWARE: Think about what data could validate this claim
+    - **Title**: Short, specific label (max 30 characters)
+      * Be SPECIFIC: Instead of "Improve Education", use "STEM After-School Program"
+      * Be CONCISE: Capture the essence without full details
+      * Examples: "Deploy CfA Brigade", "100 Volunteers Trained", "Increased Participation"
+
+    - **Description** (optional, max 100 characters):
+      * Be DETAILED: Provide context and specifics that don't fit in the title
+      * Be MEASURABLE: Include quantifiable targets ("500 students", "10 cities")
+      * Be CONCISE: Stay under 100 chars
+      * Example: "Launch civic tech programs in 10 cities with 500 volunteers" (62 chars)
 
     ### For Metrics:
-    Generate 1-2 metrics per card that are:
+    Generate 1 metrics per card that are:
     - Concrete and measurable (e.g., "Number of participants", "Percentage change in test scores")
     - Have proper frequency: "daily", "weekly", "monthly", "quarterly", "annually", or "other"
     - Aligned with common research methodologies (surveys, interviews, administrative data, analytics)
@@ -133,8 +153,10 @@ export const logicModelAgent = new Agent({
 
     REMEMBER:
     - Start by analyzing and designing quality content
-    - Create descriptive titles and comprehensive descriptions
-    - Generate ALL content (activities, outputs, outcomes, impact) with specific, measurable descriptions
+    - Create descriptive logic model title and comprehensive logic model description
+    - Generate ALL cards (activities, outputs, outcomes, impact) with BOTH:
+      * **title**: Short, specific label (max 30 chars, required)
+      * **description**: Detailed explanation (max 100 chars, optional but recommended)
     - Include 1-2 appropriate metrics for each card with proper frequency values
     - Each stage should typically have 1-2 cards
     - **IMPORTANT: Think carefully about connections - aim for 8-10 total, not 30+**
@@ -143,7 +165,7 @@ export const logicModelAgent = new Agent({
     - Focus on creating a realistic logic model with evidence-backed connections
     - **CRITICAL: context must be a STRING, not an object**
     - **CRITICAL: You MUST call logicModelTool to complete your task**
-    - Call the tool only after you've fully designed the content AND connections
+    - Call the tool only after you've fully designed the title, description, AND connections for each card
   `,
   model: MODEL,
   tools: {

@@ -55,21 +55,25 @@ sequenceDiagram
     participant Edge as EvidenceEdge Component
     participant Dialog as EvidenceDialog
     participant Action as Server Action
+    participant Workflow as Mastra Workflow
     participant Agent as Logic Model Agent
     participant Tool as Logic Model Tool
     participant Search as Evidence Search
     participant LLM
 
-    Note over User, LLM: Logic Model Generation with Evidence Validation (New Architecture)
+    Note over User, LLM: Logic Model Generation with Evidence Validation (Mastra Workflow)
 
     User->>FE: Provide intent (e.g., "OSS impact on Ethereum")
 
     Note over FE: Step 1: Analyze Intent (UI only)
     FE->>FE: Mark analyze as active → completed
 
-    Note over FE, Agent: Step 2: Generate Logic Model Structure
-    FE->>Action: generateLogicModelStructure(intent)
-    Action->>Agent: agent.generate(intent, maxSteps: 1)
+    Note over FE, LLM: Step 2-4: Mastra Workflow (All-in-One)
+    FE->>Action: runLogicModelWorkflow(intent)
+    Action->>Workflow: logicModelWithEvidenceWorkflow.start()
+
+    Note over Workflow, Agent: Workflow Step 1: Generate Logic Model Structure
+    Workflow->>Agent: agent.generate(intent, maxSteps: 1)
     Agent->>Agent: Analyze user intent
     Agent->>Agent: Design logic model structure
     Agent->>Tool: Call logicModelTool (ONCE)
@@ -80,38 +84,36 @@ sequenceDiagram
     Tool->>Tool: Create Impact cards (1-2, 18+ months)
     Tool->>Tool: Create arrows with connections
     Tool-->>Agent: Return { canvasData }
-    Agent-->>Action: Return { cards, arrows, cardMetrics }
-    Action-->>FE: Return canvasData (structure only)
+    Agent-->>Workflow: Return { canvasData }
 
-    Note over FE, LLM: Step 3: Search Evidence (PARALLEL - all arrows at once)
-    FE->>Action: searchEvidenceForAllArrows(canvasData)
+    Note over Workflow, LLM: Workflow Step 2: Search Evidence (PARALLEL - all arrows at once)
     par For each arrow (parallel with Promise.all)
-        Action->>Search: searchEvidenceForEdge(fromCard1, toCard1)
+        Workflow->>Search: searchEvidenceForEdge(fromCard1, toCard1)
         Search->>LLM: Evaluate arrow vs all evidence
         LLM->>LLM: Match intervention→outcome pairs
         Note over LLM: "Does evidence support<br/>this relationship?"
         LLM-->>Search: Top matches (score, reasoning, strength)
-        Search-->>Action: Return matches for arrow 1
+        Search-->>Workflow: Return matches for arrow 1
     and
-        Action->>Search: searchEvidenceForEdge(fromCard2, toCard2)
+        Workflow->>Search: searchEvidenceForEdge(fromCard2, toCard2)
         Search->>LLM: Evaluate arrow vs all evidence
         LLM-->>Search: Top matches (score, reasoning, strength)
-        Search-->>Action: Return matches for arrow 2
+        Search-->>Workflow: Return matches for arrow 2
     and
-        Action->>Search: searchEvidenceForEdge(fromCardN, toCardN)
+        Workflow->>Search: searchEvidenceForEdge(fromCardN, toCardN)
         Search->>LLM: Evaluate arrow vs all evidence
         LLM-->>Search: Top matches (score, reasoning, strength)
-        Search-->>Action: Return matches for arrow N
+        Search-->>Workflow: Return matches for arrow N
     end
-    Note over Action: All searches complete simultaneously<br/>(20-30x faster than sequential)
-    Action-->>FE: Return evidenceByArrow + stats
+    Note over Workflow: All searches complete simultaneously<br/>(20-30x faster than sequential)
 
-    Note over FE: Step 4: Illustrate Canvas (Client-side)
-    FE->>FE: Enrich arrows with evidence
-    FE->>FE: Attach evidence IDs and metadata
-    FE->>FE: Add quality warnings (strength < 3)
+    Note over Workflow: Workflow Step 3: Enrich Canvas with Evidence
+    Workflow->>Workflow: Attach evidence IDs to arrows
+    Workflow->>Workflow: Add evidence metadata (score, reasoning, strength)
+    Workflow-->>Action: Return { canvasData } (fully enriched)
+    Action-->>FE: Return canvasData with evidence
 
-    Note over FE: Step 5: Complete
+    Note over FE: Step 5: Display Canvas
     FE->>Canvas: Display logic model with evidence
     FE-->>User: Show canvasData (green edges for evidence-backed arrows)
 ```

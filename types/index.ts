@@ -138,7 +138,8 @@ export const ToolMetricInputSchema = z.object({
 // Reusable schema factory for logic model stages
 export const createStageInputSchema = () =>
   z.object({
-    content: z.string(),
+    title: z.string().min(1).max(30),
+    description: z.string().max(100).optional(),
     metrics: z.array(ToolMetricInputSchema),
   });
 
@@ -224,7 +225,8 @@ export const CardSchema = z.object({
   id: z.string(),
   x: z.number(),
   y: z.number(),
-  content: z.string(),
+  title: z.string().min(1, "Title is required").max(30, "Title must be 30 characters or less"),
+  description: z.string().max(100, "Description must be 100 characters or less").optional(),
   color: z.string(),
   type: z.string().optional(),
 });

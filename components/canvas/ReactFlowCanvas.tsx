@@ -157,9 +157,11 @@ export function ReactFlowCanvas({
               type: node.data.type || getTypeFromColor(node.data.color),
               // Load metrics from cardMetrics state
               metrics: nodeMetrics,
-              onContentChange: (content: string) => {
+              onContentChange: (title: string, description?: string) => {
                 setNodes((nds) =>
-                  nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, content } } : n)),
+                  nds.map((n) =>
+                    n.id === node.id ? { ...n, data: { ...n.data, title, description } } : n,
+                  ),
                 );
               },
               onDeleteCard: () => {
@@ -247,25 +249,21 @@ export function ReactFlowCanvas({
       const position = getSectionPosition(formData.type);
       const nodeId = Date.now().toString();
 
-      // Combine title and description into content
-      const content = formData.description
-        ? `${formData.title}\n\n${formData.description}`
-        : formData.title;
-
       const newNode: Node<CardNodeData> = {
         id: nodeId,
         type: "cardNode",
         position: { x: position.x, y: position.y },
         data: {
           id: nodeId,
-          content,
+          title: formData.title,
+          description: formData.description,
           color: position.color,
           type: formData.type,
           metrics: formData.metrics as any[] | undefined,
-          onContentChange: (content: string) => {
+          onContentChange: (title: string, description?: string) => {
             setNodes((nds) =>
               nds.map((node) =>
-                node.id === nodeId ? { ...node, data: { ...node.data, content } } : node,
+                node.id === nodeId ? { ...node, data: { ...node.data, title, description } } : node,
               ),
             );
           },
@@ -330,9 +328,6 @@ export function ReactFlowCanvas({
       };
 
       const position = getSectionPosition(formData.type);
-      const content = formData.description
-        ? `${formData.title}\n\n${formData.description}`
-        : formData.title;
 
       setNodes((nds) =>
         nds.map((node) => {
@@ -341,14 +336,17 @@ export function ReactFlowCanvas({
               ...node,
               data: {
                 ...node.data,
-                content,
+                title: formData.title,
+                description: formData.description,
                 color: position.color,
                 type: formData.type,
                 metrics: formData.metrics as any[] | undefined,
-                onContentChange: (content: string) => {
+                onContentChange: (title: string, description?: string) => {
                   setNodes((nds) =>
                     nds.map((n) =>
-                      n.id === editingNodeId ? { ...n, data: { ...n.data, content } } : n,
+                      n.id === editingNodeId
+                        ? { ...n, data: { ...n.data, title, description } }
+                        : n,
                     ),
                   );
                 },
@@ -520,9 +518,11 @@ export function ReactFlowCanvas({
           ...node.data,
           type: node.data.type || getTypeFromColor(node.data.color),
           metrics: data.cardMetrics[node.id],
-          onContentChange: (content: string) => {
+          onContentChange: (title: string, description?: string) => {
             setNodes((nds) =>
-              nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, content } } : n)),
+              nds.map((n) =>
+                n.id === node.id ? { ...n, data: { ...n.data, title, description } } : n,
+              ),
             );
           },
           onDeleteCard: () => {
@@ -557,16 +557,13 @@ export function ReactFlowCanvas({
     const node = nodes.find((n) => n.id === editingNodeId);
     if (!node) return null;
 
-    const parts = node.data.content.split("\n\n");
-    const title = parts[0] || "";
-    const description = parts.slice(1).join("\n\n");
     // Use the node's type if available, otherwise infer from color
     const type = node.data.type || getTypeFromColor(node.data.color);
 
     return {
       type,
-      title,
-      description: description || undefined,
+      title: node.data.title,
+      description: node.data.description,
       metrics: node.data.metrics,
     };
   }, [editingNodeId, nodes, getTypeFromColor]);

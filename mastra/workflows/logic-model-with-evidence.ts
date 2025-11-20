@@ -72,6 +72,7 @@ const generateLogicModelStep = createStep({
     });
 
     const toolReturnValue = toolResult.payload?.result;
+    console.log("[Workflow] Tool return value:", JSON.stringify(toolReturnValue, null, 2));
     const canvasData: CanvasData = toolReturnValue?.canvasData;
 
     if (!canvasData || !canvasData.cards || !canvasData.arrows) {
@@ -81,6 +82,7 @@ const generateLogicModelStep = createStep({
         hasCards: !!canvasData?.cards,
         hasArrows: !!canvasData?.arrows,
       });
+      console.error("[Workflow] Full tool result:", JSON.stringify(toolResult, null, 2));
       throw new Error(
         "Failed to generate logic model. The agent did not return valid canvas data.",
       );
@@ -135,11 +137,17 @@ const searchEvidenceStep = createStep({
       }
 
       try {
+        const fromContent = fromCard.description
+          ? `${fromCard.title}. ${fromCard.description}`
+          : fromCard.title;
+        const toContent = toCard.description
+          ? `${toCard.title}. ${toCard.description}`
+          : toCard.title;
         console.log(
           `[Workflow] Searching arrow ${arrow.id.substring(0, 20)}...: ` +
-            `"${fromCard.content.substring(0, 40)}..." → "${toCard.content.substring(0, 40)}..."`,
+            `"${fromContent.substring(0, 40)}..." → "${toContent.substring(0, 40)}..."`,
         );
-        const matches = await searchEvidenceForEdge(fromCard.content, toCard.content);
+        const matches = await searchEvidenceForEdge(fromContent, toContent);
         console.log(
           `[Workflow] ✓ Arrow ${arrow.id.substring(0, 20)}...: Found ${matches.length} matches`,
         );

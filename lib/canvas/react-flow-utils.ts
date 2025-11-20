@@ -61,7 +61,8 @@ export function cardsToNodes(
     position: { x: card.x, y: card.y },
     data: {
       id: card.id,
-      content: card.content,
+      title: card.title,
+      description: card.description,
       color: card.color,
       type: card.type,
       evidenceCounts: evidenceCounts?.[card.id],
@@ -77,7 +78,8 @@ export function nodesToCards(nodes: Node<CardNodeData>[]): Card[] {
     id: node.id,
     x: node.position.x,
     y: node.position.y,
-    content: node.data.content,
+    title: node.data.title,
+    description: node.data.description,
     color: node.data.color,
     type: node.data.type,
   }));

@@ -147,7 +147,8 @@ const generateLogicModel = async (params: {
       id: activityId,
       x: START_X,
       y: calculateY(index, activities.length),
-      content: activity.content,
+      title: activity.title,
+      description: activity.description,
       color: TYPE_COLOR_MAP.activities,
       type: "activities",
     });
@@ -170,7 +171,8 @@ const generateLogicModel = async (params: {
       id: outputId,
       x: START_X + HORIZONTAL_SPACING,
       y: calculateY(index, outputs.length),
-      content: output.content,
+      title: output.title,
+      description: output.description,
       color: TYPE_COLOR_MAP.outputs,
       type: "outputs",
     });
@@ -193,7 +195,8 @@ const generateLogicModel = async (params: {
       id: outcomeShortId,
       x: START_X + HORIZONTAL_SPACING * 2,
       y: calculateY(index, outcomesShort.length),
-      content: outcome.content,
+      title: outcome.title,
+      description: outcome.description,
       color: TYPE_COLOR_MAP["outcomes-short"],
       type: "outcomes-short",
     });
@@ -216,7 +219,8 @@ const generateLogicModel = async (params: {
       id: outcomeIntermediateId,
       x: START_X + HORIZONTAL_SPACING * 3,
       y: calculateY(index, outcomesIntermediate.length),
-      content: outcome.content,
+      title: outcome.title,
+      description: outcome.description,
       color: TYPE_COLOR_MAP["outcomes-intermediate"],
       type: "outcomes-intermediate",
     });
@@ -239,7 +243,8 @@ const generateLogicModel = async (params: {
       id: impactId,
       x: START_X + HORIZONTAL_SPACING * 4,
       y: calculateY(index, impact.length),
-      content: impactItem.content,
+      title: impactItem.title,
+      description: impactItem.description,
       color: TYPE_COLOR_MAP.impact,
       type: "impact",
     });
