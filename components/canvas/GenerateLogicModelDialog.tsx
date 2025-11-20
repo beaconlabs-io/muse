@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { GenerationTimeInfo } from "@/components/canvas/GenerationTimeInfo";
 import { useStepProcessDialogContext } from "@/components/step-process-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +52,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setDialogStep,
     setOpen: setStepDialogOpen,
     setTitle,
+    setExtraContent,
   } = useStepProcessDialogContext();
 
   const form = useForm<GenerateLogicModelFormData>({
@@ -64,7 +66,6 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   const steps = [
     { id: "analyze", description: "Analyzing intent" },
     { id: "structure", description: "Generating logic model from intent" },
-    { id: "search", description: "Searching evidence for edges" },
     { id: "illustrate", description: "Illustrating canvas with evidence" },
     { id: "complete", description: "Completed!" },
   ];
@@ -73,14 +74,13 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     // Initialize step dialog
     setTitle("Generating Logic Model");
     setSteps(steps);
+    setExtraContent(<GenerationTimeInfo />);
     setStepDialogOpen(true);
 
     try {
-      // Step 1: Analyze user intent (Dummy)
       await setDialogStep("analyze", "active");
       await setDialogStep("analyze", "completed");
 
-      // Step 2: Generate logic model structure (REAL - server action)
       await setDialogStep("structure", "active");
 
       // Execute the workflow via server action
@@ -96,13 +96,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
 
       await setDialogStep("structure", "completed");
 
-      // Step 3: Search evidence (handled by workflow)
-      await setDialogStep("search", "active");
-      await setDialogStep("search", "completed");
-
-      // Step 4: Illustrate canvas with evidence (handled by workflow)
       await setDialogStep("illustrate", "active");
-      await setDialogStep("illustrate", "completed");
 
       // Success: pass data to canvas
       onGenerate({
@@ -111,6 +105,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
         cardMetrics: canvasData.cardMetrics,
       });
 
+      await setDialogStep("illustrate", "completed");
       await setDialogStep("complete", "completed");
 
       // Auto-close after brief delay
@@ -145,9 +140,9 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
         <DialogHeader>
           <DialogTitle>Generate Logic Model from Intent</DialogTitle>
           <DialogDescription>
-            Describe your policy intervention or program, and our AI agent will create a logic model
-            for you.
+            Describe your project or program, and AI agent will create a logic model for you.
           </DialogDescription>
+          <GenerationTimeInfo />
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
