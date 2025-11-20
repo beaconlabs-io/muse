@@ -38,11 +38,13 @@ Muse automatically validates causal relationships in logic models by searching f
 
 1. **Logic Model Generation**: Agent creates cards (Activities → Outputs → Outcomes-Short → Outcomes-Intermediate → Impact) and arrows connecting them
 2. **Evidence Search**: For each arrow (Card A → Card B), evidence search runs **in parallel** for all arrows simultaneously using `Promise.all()` for maximum performance
-3. **Semantic Matching**: The tool uses an LLM to evaluate if evidence intervention→outcome pairs support the edge relationship
-4. **Evidence Attachment**: Top matching evidence IDs are attached to arrows with metadata (score, reasoning, strength)
+3. **Semantic Matching**: The Evidence Search Agent (using google/gemini-2.5-pro) evaluates if evidence intervention→outcome pairs support the edge relationship, calling the get-all-evidence tool to load metadata
+4. **Evidence Attachment**: Top matching evidence IDs (score ≥ 70) are attached to arrows with metadata (score, reasoning, strength, intervention/outcome text)
 5. **UI Display**: Frontend renders arrows with evidence as green thick edges with interactive buttons; clicking opens a dialog with full evidence details including clickable links to evidence pages
 
 **Performance**: Parallel processing provides **20-30x speedup** compared to sequential approach (5 minutes → 10-15 seconds)
+
+**UI Flow**: Users see 4 steps (analyze → structure → illustrate → complete), but the complete 3-step workflow (generate structure → search evidence → enrich) executes invisibly during the "structure" step (~40-45 seconds total)
 
 ### Detailed Sequence Diagram
 
@@ -59,21 +61,23 @@ sequenceDiagram
     participant Agent as Logic Model Agent
     participant Tool as Logic Model Tool
     participant Search as Evidence Search
+    participant EvidenceAgent as Evidence Search Agent
     participant LLM
 
     Note over User, LLM: Logic Model Generation with Evidence Validation (Mastra Workflow)
 
     User->>FE: Provide intent (e.g., "OSS impact on Ethereum")
 
-    Note over FE: Step 1: Analyze Intent (UI only)
-    FE->>FE: Mark analyze as active → completed
+    Note over FE: UI Step 1: Analyze Intent (UI only)
+    FE->>FE: Mark "analyze" as active → completed (instant)
 
-    Note over FE, LLM: Step 2-4: Mastra Workflow (All-in-One)
+    Note over FE, LLM: UI Step 2: Generate Structure (Workflow Runs Here)
+    FE->>FE: Mark "structure" as active
     FE->>Action: runLogicModelWorkflow(intent)
     Action->>Workflow: logicModelWithEvidenceWorkflow.start()
 
     Note over Workflow, Agent: Workflow Step 1: Generate Logic Model Structure
-    Workflow->>Agent: agent.generate(intent, maxSteps: 1)
+    Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 1)
     Agent->>Agent: Analyze user intent
     Agent->>Agent: Design logic model structure
     Agent->>Tool: Call logicModelTool (ONCE)
@@ -89,20 +93,27 @@ sequenceDiagram
     Note over Workflow, LLM: Workflow Step 2: Search Evidence (PARALLEL - all arrows at once)
     par For each arrow (parallel with Promise.all)
         Workflow->>Search: searchEvidenceForEdge(fromCard1, toCard1)
-        Search->>LLM: Evaluate arrow vs all evidence
+        Search->>EvidenceAgent: evidenceSearchAgent.generate(edge relationship)
+        EvidenceAgent->>EvidenceAgent: Call get-all-evidence tool
+        EvidenceAgent->>LLM: Evaluate arrow vs all evidence (gemini-2.5-pro)
         LLM->>LLM: Match intervention→outcome pairs
         Note over LLM: "Does evidence support<br/>this relationship?"
-        LLM-->>Search: Top matches (score, reasoning, strength)
+        LLM-->>EvidenceAgent: Scored matches (JSON)
+        EvidenceAgent-->>Search: Parse JSON, enrich with metadata
         Search-->>Workflow: Return matches for arrow 1
     and
         Workflow->>Search: searchEvidenceForEdge(fromCard2, toCard2)
-        Search->>LLM: Evaluate arrow vs all evidence
-        LLM-->>Search: Top matches (score, reasoning, strength)
+        Search->>EvidenceAgent: evidenceSearchAgent.generate(edge relationship)
+        EvidenceAgent->>LLM: Evaluate arrow vs all evidence
+        LLM-->>EvidenceAgent: Scored matches (JSON)
+        EvidenceAgent-->>Search: Parse JSON, enrich with metadata
         Search-->>Workflow: Return matches for arrow 2
     and
         Workflow->>Search: searchEvidenceForEdge(fromCardN, toCardN)
-        Search->>LLM: Evaluate arrow vs all evidence
-        LLM-->>Search: Top matches (score, reasoning, strength)
+        Search->>EvidenceAgent: evidenceSearchAgent.generate(edge relationship)
+        EvidenceAgent->>LLM: Evaluate arrow vs all evidence
+        LLM-->>EvidenceAgent: Scored matches (JSON)
+        EvidenceAgent-->>Search: Parse JSON, enrich with metadata
         Search-->>Workflow: Return matches for arrow N
     end
     Note over Workflow: All searches complete simultaneously<br/>(20-30x faster than sequential)
@@ -112,10 +123,26 @@ sequenceDiagram
     Workflow->>Workflow: Add evidence metadata (score, reasoning, strength)
     Workflow-->>Action: Return { canvasData } (fully enriched)
     Action-->>FE: Return canvasData with evidence
+    FE->>FE: Mark "structure" as completed
 
-    Note over FE: Step 5: Display Canvas
-    FE->>Canvas: Display logic model with evidence
+    Note over FE: UI Step 3: Illustrate Canvas (Client-side)
+    FE->>FE: Mark "illustrate" as active
+    FE->>Canvas: loadGeneratedCanvas(canvasData)
+    Canvas->>Canvas: Convert cards to React Flow nodes
+    Canvas->>Canvas: Convert arrows to React Flow edges
+    Note over Canvas: Arrows with evidenceIds get type="evidence"<br/>Green color (#10b981), 3px strokeWidth
+    FE->>FE: Mark "illustrate" as completed
+
+    Note over FE: UI Step 4: Complete
+    FE->>FE: Mark "complete" as completed
     FE-->>User: Show canvasData (green edges for evidence-backed arrows)
+
+    Note over User, Edge: User Interaction with Evidence
+    User->>Edge: Click green evidence button on edge
+    Edge->>Dialog: Open EvidenceDialog
+    Dialog-->>User: Show evidence details (ID, score, reasoning, strength)
+    User->>Dialog: Click evidence ID link
+    Dialog->>User: Navigate to /evidence/{id} page
 ```
 
 ### Evidence Matching Example
@@ -182,9 +209,12 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 
 **Core Components:**
 
-- `lib/evidence-search-mastra.ts`: LLM-based matching logic using Mastra agent
-- `mastra/tools/logic-model-tool.ts`: Tool for generating logic model structure
-- `mastra/agents/logic-model-agent.ts`: Agent with maxSteps: 1 to prevent duplicate calls
+- `components/canvas/GenerateLogicModelDialog.tsx`: Main UI component with 4-step process
+  - Step 1: "analyze" - Instant UI-only step
+  - Step 2: "structure" - Calls server action, all workflow steps execute here
+  - Step 3: "illustrate" - Client-side rendering with `loadGeneratedCanvas()`
+  - Step 4: "complete" - Final state
+  - Form validation with Zod, default intent example provided
 - `app/actions/canvas/runWorkflow.ts`: Server action wrapper for workflow execution
   - `runLogicModelWorkflow(intent)`: Executes Mastra workflow, returns simplified result (canvasData only)
   - Sets PROJECT_ROOT environment variable for correct path resolution
@@ -194,20 +224,32 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
   - **Step 2**: Parallel evidence search for all arrows using `Promise.all()` (~10-15s)
   - **Step 3**: Enrich canvas data with evidence metadata (instant)
   - Returns simplified output: `{ canvasData }` (stats derived from data, no separate tracking)
+- `mastra/agents/logic-model-agent.ts`: Agent with maxSteps: 1 to prevent duplicate calls
+- `mastra/agents/evidence-search-agent.ts`: LLM-based evidence matching agent
+  - Uses `google/gemini-2.5-pro` model for high-quality evaluation
+  - Calls `get-all-evidence-tool` to load evidence metadata
+  - Returns JSON with matches (evidenceId, score, reasoning, intervention/outcome text)
+  - Only returns matches with score ≥ 70 (configurable via minScore parameter)
+- `lib/evidence-search-mastra.ts`: Evidence search function wrapper
+  - Calls evidenceSearchAgent.generate() with edge relationship
+  - Parses JSON response, enriches matches with metadata (title, strength, warnings)
+  - Returns array of EvidenceMatch objects sorted by score
+- `mastra/tools/logic-model-tool.ts`: Tool for generating logic model structure
 - `types/index.ts`: Arrow type extended with `evidenceIds` and `evidenceMetadata`, CanvasDataSchema reused throughout
 
 **Architecture Benefits:**
 
-- **Separation of Concerns**: Structure generation isolated from evidence search
-- **Step-by-Step UI**: Users see clear progress through 5 distinct steps
-- **Parallel Processing**: All evidence searches execute simultaneously via `Promise.all()`
+- **Separation of Concerns**: Structure generation isolated from evidence search (3 distinct workflow steps)
+- **Step-by-Step UI**: Users see clear progress through 4 UI steps (analyze → structure → illustrate → complete)
+- **Parallel Processing**: All evidence searches execute simultaneously via `Promise.all()` for maximum performance
 - **No Rate Limiting Delays**: Removed sequential 1-second delays between arrows
-- **Fast Model**: Uses `openai/gpt-4o-mini` for 3-5x faster LLM evaluation
-- **Expected Performance**: 5 minutes → 10-15 seconds (20-30x speedup)
+- **Fast Model**: Uses `google/gemini-2.5-pro` for high-quality LLM evaluation with tool calling support
+- **Expected Performance**: 5 minutes → 10-15 seconds (20-30x speedup from parallel execution)
 - **Simplified API**: Returns just CanvasData, consumers calculate stats as needed (no duplicate tracking)
 - **Environment-aware**: PROJECT_ROOT handling ensures correct file paths in all contexts (dev, build, Next.js)
 - **Production-ready Logging**: Detailed progress logs with `[Workflow]` prefix and emoji markers (✓, ✗, ⚠️, ❌, ✅) for observability
 - **Schema Reuse**: 100% reuse of types from `types/index.ts` (CanvasDataSchema, EvidenceMatchSchema, etc.)
+- **Transparent Evidence Search**: Evidence search happens invisibly during structure step, no separate UI loading state
 
 **Environment Configuration:**
 
@@ -220,13 +262,16 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 - **Solution**: `lib/evidence.ts` uses `process.env.PROJECT_ROOT || process.cwd()` for path resolution
 - Resolves `ENOENT` errors when loading evidence files from `contents/evidence/`
 
-**UI Flow (5 Steps):**
+**UI Flow (4 Steps):**
 
-1. **Analyze Intent** (UI only) - Marks step as active → completed immediately
-2. **Generate Structure** (Server) - LLM generates cards and arrows (~30s)
-3. **Search Evidence** (Server) - Parallel search across all arrows (~10-15s), shows coverage stats
-4. **Illustrate Canvas** (Client) - Enriches arrows with evidence metadata
-5. **Complete** (UI) - Displays final logic model with green edges for evidence-backed arrows
+1. **Analyze Intent** (UI only) - Marks step as active → completed immediately (instant)
+2. **Generate Structure** (Server) - **Full workflow executes here**:
+   - Workflow Step 1: LLM generates cards and arrows (~30s)
+   - Workflow Step 2: Parallel evidence search across all arrows (~10-15s)
+   - Workflow Step 3: Enrich arrows with evidence metadata (instant)
+   - Total: ~40-45 seconds for complete logic model with evidence
+3. **Illustrate Canvas** (Client) - Renders canvasData with React Flow, applies evidence styling
+4. **Complete** (UI) - Displays final logic model with green edges for evidence-backed arrows
 
 **Frontend Components:**
 
