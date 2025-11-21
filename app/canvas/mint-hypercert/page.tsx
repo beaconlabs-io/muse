@@ -283,7 +283,6 @@ export default function MintHypercertPage() {
           confirmations: 3,
           hash: txHash,
         });
-        console.log({ receipt });
       } catch (error: unknown) {
         console.error("Error waiting for transaction receipt:", error);
         await setDialogStep(
@@ -308,7 +307,6 @@ export default function MintHypercertPage() {
         track("Mint completed", {
           hypercertId: hypercertId || "not found",
         });
-        console.log({ hypercertId });
       } catch (error) {
         console.error("Error generating hypercert ID:", error);
         await setDialogStep(

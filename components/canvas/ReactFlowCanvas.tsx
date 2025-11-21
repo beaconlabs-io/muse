@@ -14,28 +14,21 @@ import {
   type Edge,
   type Connection,
   type NodeTypes,
+  type EdgeTypes,
 } from "@xyflow/react";
 import { useAccount } from "wagmi";
 import "@xyflow/react/dist/style.css";
 import { AddLogicSheet } from "./AddLogicSheet";
 import { CanvasToolbar } from "./CanvasToolbar";
 import { CardNode, type CardNodeData } from "./CardNode";
+import { EvidenceEdge } from "./EvidenceEdge";
 import {
   cardsToNodes,
   nodesToCards,
   arrowsToEdges,
   edgesToArrows,
 } from "@/lib/canvas/react-flow-utils";
-import { Card, Arrow, CARD_COLORS, CanvasData } from "@/types";
-
-interface CardMetrics {
-  id: string;
-  name: string;
-  description?: string;
-  measurementMethod?: string;
-  targetValue?: string;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-}
+import { Card, Arrow, CARD_COLORS, CanvasData, TYPE_COLOR_MAP, CardMetrics } from "@/types";
 
 interface ReactFlowCanvasProps {
   initialCards?: Card[];
@@ -84,8 +77,11 @@ export function ReactFlowCanvas({
 
   // Initialize state from localStorage if available (unless disabled)
   const savedState = disableLocalStorage ? null : loadCanvasState();
-  const initialNodes = cardsToNodes(savedState?.cards || initialCards);
-  const initialEdges = arrowsToEdges(savedState?.arrows || initialArrows);
+  const cards = savedState?.cards || initialCards;
+  const arrows = savedState?.arrows || initialArrows;
+
+  const initialNodes = cardsToNodes(cards);
+  const initialEdges = arrowsToEdges(arrows);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -100,11 +96,12 @@ export function ReactFlowCanvas({
 
   // Helper function to get type from color
   const getTypeFromColor = useCallback((color: string): string => {
+    // All outcome types share the same color, so default to outcomes-short
     const colorMap: Record<string, string> = {
-      [CARD_COLORS[3]]: "activities",
-      [CARD_COLORS[4]]: "outputs",
-      [CARD_COLORS[0]]: "outcomes-short",
-      [CARD_COLORS[5]]: "impact",
+      [TYPE_COLOR_MAP.activities]: "activities",
+      [TYPE_COLOR_MAP.outputs]: "outputs",
+      [TYPE_COLOR_MAP["outcomes-short"]]: "outcomes-short", // All outcomes share same color
+      [TYPE_COLOR_MAP.impact]: "impact",
     };
     return colorMap[color] || "activities";
   }, []);
@@ -113,6 +110,14 @@ export function ReactFlowCanvas({
   const nodeTypes: NodeTypes = useMemo(
     () => ({
       cardNode: CardNode,
+    }),
+    [],
+  );
+
+  // Define custom edge types
+  const edgeTypes: EdgeTypes = useMemo(
+    () => ({
+      evidence: EvidenceEdge,
     }),
     [],
   );
@@ -152,9 +157,11 @@ export function ReactFlowCanvas({
               type: node.data.type || getTypeFromColor(node.data.color),
               // Load metrics from cardMetrics state
               metrics: nodeMetrics,
-              onContentChange: (content: string) => {
+              onContentChange: (title: string, description?: string) => {
                 setNodes((nds) =>
-                  nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, content } } : n)),
+                  nds.map((n) =>
+                    n.id === node.id ? { ...n, data: { ...n.data, title, description } } : n,
+                  ),
                 );
               },
               onDeleteCard: () => {
@@ -208,13 +215,13 @@ export function ReactFlowCanvas({
             return {
               x: 50 + Math.random() * 150,
               y: 150 + Math.random() * 300,
-              color: CARD_COLORS[3],
+              color: TYPE_COLOR_MAP.activities,
             };
           case "outputs":
             return {
               x: 300 + Math.random() * 150,
               y: 150 + Math.random() * 300,
-              color: CARD_COLORS[4],
+              color: TYPE_COLOR_MAP.outputs,
             };
           case "outcomes-short":
           case "outcomes-medium":
@@ -222,13 +229,13 @@ export function ReactFlowCanvas({
             return {
               x: 550 + Math.random() * 150,
               y: 150 + Math.random() * 300,
-              color: CARD_COLORS[0],
+              color: TYPE_COLOR_MAP["outcomes-short"],
             };
           case "impact":
             return {
               x: 800 + Math.random() * 150,
               y: 150 + Math.random() * 300,
-              color: CARD_COLORS[5],
+              color: TYPE_COLOR_MAP.impact,
             };
           default:
             return {
@@ -242,25 +249,21 @@ export function ReactFlowCanvas({
       const position = getSectionPosition(formData.type);
       const nodeId = Date.now().toString();
 
-      // Combine title and description into content
-      const content = formData.description
-        ? `${formData.title}\n\n${formData.description}`
-        : formData.title;
-
       const newNode: Node<CardNodeData> = {
         id: nodeId,
         type: "cardNode",
         position: { x: position.x, y: position.y },
         data: {
           id: nodeId,
-          content,
+          title: formData.title,
+          description: formData.description,
           color: position.color,
           type: formData.type,
           metrics: formData.metrics as any[] | undefined,
-          onContentChange: (content: string) => {
+          onContentChange: (title: string, description?: string) => {
             setNodes((nds) =>
               nds.map((node) =>
-                node.id === nodeId ? { ...node, data: { ...node.data, content } } : node,
+                node.id === nodeId ? { ...node, data: { ...node.data, title, description } } : node,
               ),
             );
           },
@@ -310,24 +313,21 @@ export function ReactFlowCanvas({
       const getSectionPosition = (sectionType: string) => {
         switch (sectionType) {
           case "activities":
-            return { color: CARD_COLORS[3] };
+            return { color: TYPE_COLOR_MAP.activities };
           case "outputs":
-            return { color: CARD_COLORS[4] };
+            return { color: TYPE_COLOR_MAP.outputs };
           case "outcomes-short":
           case "outcomes-medium":
           case "outcomes-long":
-            return { color: CARD_COLORS[0] };
+            return { color: TYPE_COLOR_MAP["outcomes-short"] };
           case "impact":
-            return { color: CARD_COLORS[5] };
+            return { color: TYPE_COLOR_MAP.impact };
           default:
-            return { color: CARD_COLORS[0] };
+            return { color: TYPE_COLOR_MAP["outcomes-short"] };
         }
       };
 
       const position = getSectionPosition(formData.type);
-      const content = formData.description
-        ? `${formData.title}\n\n${formData.description}`
-        : formData.title;
 
       setNodes((nds) =>
         nds.map((node) => {
@@ -336,14 +336,17 @@ export function ReactFlowCanvas({
               ...node,
               data: {
                 ...node.data,
-                content,
+                title: formData.title,
+                description: formData.description,
                 color: position.color,
                 type: formData.type,
                 metrics: formData.metrics as any[] | undefined,
-                onContentChange: (content: string) => {
+                onContentChange: (title: string, description?: string) => {
                   setNodes((nds) =>
                     nds.map((n) =>
-                      n.id === editingNodeId ? { ...n, data: { ...n.data, content } } : n,
+                      n.id === editingNodeId
+                        ? { ...n, data: { ...n.data, title, description } }
+                        : n,
                     ),
                   );
                 },
@@ -463,24 +466,27 @@ export function ReactFlowCanvas({
   }, [nodes, edges, cardMetrics, address, createCanvasDataFromCanvas, router]);
 
   const exportAsJSON = useCallback(() => {
-    const canvasData = createCanvasDataFromCanvas(
-      `Logic Model ${new Date().toLocaleDateString()}`,
-      "Logic model created with Muse",
-      address,
-    );
+    const cards = nodesToCards(nodes);
+    const arrows = edgesToArrows(edges);
 
-    const jsonData = JSON.stringify(canvasData, null, 2);
+    const rawData = {
+      cards,
+      arrows,
+      cardMetrics,
+    };
+
+    const jsonData = JSON.stringify(rawData, null, 2);
     const blob = new Blob([jsonData], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `canvas-${canvasData.id}.json`;
+    a.download = `canvas-raw-${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [address, createCanvasDataFromCanvas]);
+  }, [nodes, edges, cardMetrics]);
 
   const clearAllData = useCallback(() => {
     if (
@@ -499,6 +505,51 @@ export function ReactFlowCanvas({
     }
   }, [setNodes, setEdges]);
 
+  // Load generated canvas data from agent
+  const loadGeneratedCanvas = useCallback(
+    (data: { cards: Card[]; arrows: Arrow[]; cardMetrics: Record<string, CardMetrics[]> }) => {
+      const newNodes = cardsToNodes(data.cards);
+      const newEdges = arrowsToEdges(data.arrows);
+
+      // Add callbacks to nodes
+      const nodesWithCallbacks = newNodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          type: node.data.type || getTypeFromColor(node.data.color),
+          metrics: data.cardMetrics[node.id],
+          onContentChange: (title: string, description?: string) => {
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === node.id ? { ...n, data: { ...n.data, title, description } } : n,
+              ),
+            );
+          },
+          onDeleteCard: () => {
+            setNodes((nds) => nds.filter((n) => n.id !== node.id));
+            setEdges((eds) =>
+              eds.filter((edge) => edge.source !== node.id && edge.target !== node.id),
+            );
+            setCardMetrics((prev) => {
+              const newMetrics = { ...prev };
+              delete newMetrics[node.id];
+              return newMetrics;
+            });
+          },
+          onEdit: () => {
+            setEditingNodeId(node.id);
+            setEditSheetOpen(true);
+          },
+        },
+      }));
+
+      setNodes(nodesWithCallbacks);
+      setEdges(newEdges);
+      setCardMetrics(data.cardMetrics);
+    },
+    [setNodes, setEdges, getTypeFromColor, setEditingNodeId, setEditSheetOpen],
+  );
+
   // Get editing node data for the form
   const editingNodeData = useMemo(() => {
     if (!editingNodeId) return null;
@@ -506,16 +557,13 @@ export function ReactFlowCanvas({
     const node = nodes.find((n) => n.id === editingNodeId);
     if (!node) return null;
 
-    const parts = node.data.content.split("\n\n");
-    const title = parts[0] || "";
-    const description = parts.slice(1).join("\n\n");
     // Use the node's type if available, otherwise infer from color
     const type = node.data.type || getTypeFromColor(node.data.color);
 
     return {
       type,
-      title,
-      description: description || undefined,
+      title: node.data.title,
+      description: node.data.description,
       metrics: node.data.metrics,
     };
   }, [editingNodeId, nodes, getTypeFromColor]);
@@ -527,6 +575,7 @@ export function ReactFlowCanvas({
         onSaveLogicModel={openHypercertDialog}
         onExportStandardizedJSON={exportAsJSON}
         onClearAllData={clearAllData}
+        onLoadGeneratedCanvas={loadGeneratedCanvas}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -538,6 +587,7 @@ export function ReactFlowCanvas({
             onEdgesChange={onEdgesChange}
             onConnect={handleConnect}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             fitView
             className="bg-gray-50"

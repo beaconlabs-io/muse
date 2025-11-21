@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useRef, useEffect } from "react";
+import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Pencil, Zap, Package, Target, Sparkles } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -15,11 +15,12 @@ interface MetricData {
 
 export interface CardNodeData extends Record<string, unknown> {
   id: string;
-  content: string;
+  title: string;
+  description?: string;
   color: string;
   type?: string;
   metrics?: MetricData[];
-  onContentChange?: (content: string) => void;
+  onContentChange?: (title: string, description?: string) => void;
   onDeleteCard?: () => void;
   onEdit?: () => void;
 }
@@ -29,56 +30,23 @@ const TYPE_CONFIG: Record<string, { label: string; icon: LucideIcon }> = {
   activities: { label: "Activities", icon: Zap },
   outputs: { label: "Outputs", icon: Package },
   "outcomes-short": { label: "Outcomes - Short Term", icon: Target },
-  "outcomes-medium": { label: "Outcomes - Medium Term", icon: Target },
-  "outcomes-long": { label: "Outcomes - Long Term", icon: Target },
+  "outcomes-intermediate": { label: "Outcomes - Intermediate Term", icon: Target },
   impact: { label: "Impact", icon: Sparkles },
 };
 
 export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeData }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [content, setContent] = useState(data.content);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Parse content into title and description
-  const parts = content.split("\n\n");
-  const title = parts[0] || "";
-  const description = parts.slice(1).join("\n\n");
-
   // Get type config (label and icon)
   const typeConfig = data.type ? TYPE_CONFIG[data.type] : null;
   const typeLabel = typeConfig?.label || "Node";
   const TypeIcon = typeConfig?.icon;
 
-  useEffect(() => {
-    setContent(data.content);
-  }, [data.content]);
-
-  useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.select();
-    }
-  }, [isEditing]);
-
   const handleDoubleClick = () => {
-    setIsEditing(true);
-  };
-
-  const handleBlur = () => {
-    setIsEditing(false);
-    if (content !== data.content && data.onContentChange) {
-      data.onContentChange(content);
-    }
+    // Open edit dialog
+    data.onEdit?.();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleBlur();
-    } else if (e.key === "Escape") {
-      setContent(data.content);
-      setIsEditing(false);
-    } else if ((e.key === "Delete" || e.key === "Backspace") && !isEditing) {
+    if (e.key === "Delete" || e.key === "Backspace") {
       data.onDeleteCard?.();
     }
   };
@@ -116,14 +84,14 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
         <div className="flex-1 px-3 py-3">
           <div className="flex flex-col gap-2">
             {/* Title */}
-            <div className="text-sm font-semibold break-words text-gray-900">{title}</div>
+            <div className="text-sm font-semibold break-words text-gray-900">{data.title}</div>
 
             {/* Description (if exists) */}
-            {description && (
+            {data.description && (
               <>
                 <div className="border-t border-gray-300/50" />
                 <div className="text-xs break-words whitespace-pre-wrap text-gray-700">
-                  {description}
+                  {data.description}
                 </div>
               </>
             )}
@@ -143,15 +111,15 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
         <Pencil className="h-3 w-3" aria-hidden="true" />
       </button>
 
-      {/* Metrics count (bottom right) */}
-      {data.metrics && data.metrics.length > 0 && (
-        <div
-          className="absolute right-2 bottom-2 rounded bg-gray-700 px-2 py-1 text-xs font-medium text-white"
-          title={`${data.metrics.length} metric${data.metrics.length !== 1 ? "s" : ""} configured`}
-        >
-          {data.metrics.length} metric{data.metrics.length !== 1 ? "s" : ""}
-        </div>
-      )}
+      {/* Bottom badges area */}
+      <div className="absolute right-2 bottom-2 left-2 flex items-center justify-end gap-2">
+        {/* Metrics count (bottom right) */}
+        {data.metrics && data.metrics.length > 0 && (
+          <div className="rounded bg-gray-700 px-2 py-1 text-xs font-medium text-white">
+            {data.metrics.length} metric{data.metrics.length !== 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
     </div>
   );
 });
