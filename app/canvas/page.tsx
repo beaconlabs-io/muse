@@ -1,6 +1,6 @@
 import React from "react";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
-import { CanvasClient } from "@/components/canvas/CanvasClient";
+import { ReactFlowCanvas } from "@/components/canvas/ReactFlowCanvas";
 import { getCanvasData } from "@/lib/canvas/server-data";
 import { getAllEvidenceMeta } from "@/lib/evidence";
 
@@ -28,7 +28,7 @@ export default async function CanvasPage() {
 
   return (
     <HydrationBoundary state={dehydratedState}>
-      <CanvasClient initialCards={cards} initialArrows={arrows} />
+      <ReactFlowCanvas initialCards={cards} initialArrows={arrows} />
     </HydrationBoundary>
   );
 }

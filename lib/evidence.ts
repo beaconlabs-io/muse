@@ -11,13 +11,14 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { Evidence } from "@/types";
 
-const blogsContentDirectory = path.join(process.cwd(), "contents", "evidence");
+const PROJECT_ROOT = process.env.PROJECT_ROOT || process.cwd();
+const evidenceContentDirectory = path.join(PROJECT_ROOT, "contents", "evidence");
 
 export const getEvidenceBySlug = cache(
   async (slug: string): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
     const realSlug = slug.replace(/\.mdx$/, "");
-    const filePath = path.join(blogsContentDirectory, `${realSlug}.mdx`);
-    const deploymentPath = path.join(process.cwd(), "contents", "deployments", `${realSlug}.json`);
+    const filePath = path.join(evidenceContentDirectory, `${realSlug}.mdx`);
+    const deploymentPath = path.join(PROJECT_ROOT, "contents", "deployments", `${realSlug}.json`);
     let fileContent;
     let deploymentData = {};
 
@@ -66,24 +67,71 @@ export const getEvidenceBySlug = cache(
   },
 );
 
-export const getAllEvidenceMeta = async () => {
-  const files = fs.readdirSync(blogsContentDirectory).filter((file) => file.endsWith(".mdx"));
+export const getAllEvidence = async () => {
+  const files = fs.readdirSync(evidenceContentDirectory).filter((file) => file.endsWith(".mdx"));
 
-  const posts: Evidence[] = [];
+  const evidence: Array<{ meta: Evidence; content: string }> = [];
+
+  for (const file of files) {
+    const realSlug = file.replace(/\.mdx$/, "");
+    const filePath = path.join(evidenceContentDirectory, file);
+
+    let fileContent;
+
+    try {
+      // Read raw markdown content
+      fileContent = fs.readFileSync(filePath, { encoding: "utf8" });
+
+      // Parse frontmatter to get metadata
+      const { frontmatter } = await compileMDX({
+        source: fileContent,
+        options: {
+          parseFrontmatter: true,
+        },
+      });
+
+      evidence.push({
+        meta: {
+          evidence_id: realSlug,
+          ...frontmatter,
+        } as Evidence,
+        content: fileContent, // Raw markdown content
+      });
+    } catch (error) {
+      console.error(`Error processing ${file}:`, error);
+      continue;
+    }
+  }
+
+  // Sort by evidence_id
+  evidence.sort((a, b) => {
+    const idA = parseInt(a.meta.evidence_id, 10);
+    const idB = parseInt(b.meta.evidence_id, 10);
+    if (isNaN(idA) || isNaN(idB)) return 0;
+    return idA - idB;
+  });
+
+  return evidence;
+};
+
+export const getAllEvidenceMeta = async () => {
+  const files = fs.readdirSync(evidenceContentDirectory).filter((file) => file.endsWith(".mdx"));
+
+  const evidence: Evidence[] = [];
 
   for (const file of files) {
     const data = await getEvidenceBySlug(file);
     if (data?.meta) {
-      posts.push(data.meta as Evidence);
+      evidence.push(data.meta as Evidence);
     }
   }
 
-  posts.sort((a, b) => {
+  evidence.sort((a, b) => {
     const idA = parseInt(a.evidence_id, 10);
     const idB = parseInt(b.evidence_id, 10);
     if (isNaN(idA) || isNaN(idB)) return 0;
     return idA - idB;
   });
 
-  return posts;
+  return evidence;
 };
