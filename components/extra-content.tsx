@@ -1,8 +1,7 @@
 import { ExternalLink } from "lucide-react";
-import { baseSepolia, filecoinCalibration, sepolia } from "viem/chains";
 import { Button } from "@/components/ui/button";
 import type { Chain, TransactionReceipt } from "viem";
-// import { HYPERCERTS_URL } from "@/configs/hypercerts";
+import { HYPERCERTS_URL } from "@/configs/hypercerts";
 import { generateBlockExplorerLink } from "@/utils/generateExploreLink";
 interface ExtraContentProps {
   message?: React.ReactNode;
@@ -18,12 +17,6 @@ export function ExtraContent({
   chain,
   receipt,
 }: ExtraContentProps) {
-  // TODO: separate testnet
-  const HYPERCERTS_URL =
-    chain.id == baseSepolia.id || sepolia.id || filecoinCalibration.id
-      ? "https://testnet.hypercerts.org"
-      : "https://app.hypercerts.org";
-
   return (
     <div className="flex flex-col space-y-2">
       <p className="text-lg font-medium">Success</p>
