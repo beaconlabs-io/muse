@@ -1,6 +1,13 @@
 # MUSE by Beacon Labs
 
-<img src="/public/canvas-og.svg">
+<img alt="canvas" src="/public/canvas-og.svg">
+
+## Deployments
+
+|         | NEXT_PUBLIC_ENV | Location                                                         |
+| ------- | --------------- | ---------------------------------------------------------------- |
+| Testnet | `development`   | [https://dev.muse.beaconlabs.io](https://dev.muse.beaconlabs.io) |
+| Mainnet | `production`    | [https://muse.beaconlabs.io](https://muse.beaconlabs.io)         |
 
 ## Getting Started
 
