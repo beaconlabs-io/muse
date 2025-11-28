@@ -42,7 +42,6 @@ Run Prettier before committing to keep the codebase consistent.
 
 ```bash
 pnpm format
-pnpm format:write
 ```
 
 ### Adding New Evidence
