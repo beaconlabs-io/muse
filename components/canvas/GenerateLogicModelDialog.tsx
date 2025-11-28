@@ -58,8 +58,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   const form = useForm<GenerateLogicModelFormData>({
     resolver: zodResolver(generateLogicModelSchema),
     defaultValues: {
-      intent:
-        "i'm running oss project called MUSE(https://github.com/beaconlabs-io/muse), and i want to create positive impact on Ethereum ecosystem. can you create logic model for it?",
+      intent: "",
     },
   });
 
