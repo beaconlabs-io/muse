@@ -29,5 +29,12 @@ export const mastra = new Mastra({
   telemetry: {
     serviceName: "Muse",
     enabled: true,
+    export: {
+      type: "otlp",
+      endpoint: "https://ingest.us.signoz.cloud:443/v1/traces",
+      headers: {
+        "signoz-access-token": process.env.SIGNOZ_API_KEY!,
+      },
+    },
   },
 });
