@@ -3,7 +3,7 @@ import { AttachedLinks } from "@/components/AttachedLinks";
 import type { EvidenceCitation } from "@/types";
 
 interface EvidenceCitationProps {
-  citations: EvidenceCitation[];
+  citations: EvidenceCitation[] | undefined;
 }
 
 export function EvidenceCitation({ citations }: EvidenceCitationProps) {
