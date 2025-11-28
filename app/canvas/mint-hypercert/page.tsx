@@ -30,7 +30,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { getHypercertsClient } from "@/configs/hypercerts";
 import { cn } from "@/lib/utils";
-import { StandardizedLogicModel } from "@/types";
+import { CanvasData } from "@/types";
 import { generateHypercertIdFromReceipt } from "@/utils/generateHypercertIdFromReceipt";
 import { uploadToIPFS } from "@/utils/ipfs";
 
@@ -62,15 +62,15 @@ const hypercertFormSchema = z.object({
 
 type FormData = z.infer<typeof hypercertFormSchema>;
 
-// Helper function to get stored logic model
-const getStoredLogicModel = (): StandardizedLogicModel | null => {
+// Helper function to get stored canvas data
+const getStoredCanvasData = (): CanvasData | null => {
   if (typeof window === "undefined") return null;
-  const storedLogicModel = sessionStorage.getItem("currentLogicModel");
-  if (storedLogicModel) {
+  const storedCanvasData = sessionStorage.getItem("currentCanvasData");
+  if (storedCanvasData) {
     try {
-      return JSON.parse(storedLogicModel) as StandardizedLogicModel;
+      return JSON.parse(storedCanvasData) as CanvasData;
     } catch (error) {
-      console.error("Failed to parse stored logic model:", error);
+      console.error("Failed to parse stored canvas data:", error);
       return null;
     }
   }
@@ -79,9 +79,9 @@ const getStoredLogicModel = (): StandardizedLogicModel | null => {
 
 export default function MintHypercertPage() {
   const router = useRouter();
-  const storedLogicModel = getStoredLogicModel();
+  const storedCanvasData = getStoredCanvasData();
 
-  const [logicModel] = useState<StandardizedLogicModel | null>(storedLogicModel);
+  const [canvasData] = useState<CanvasData | null>(storedCanvasData);
   const [hypercertImage, setHypercertImage] = useState<string>(""); // Refs for file inputs
   const logoFileInputRef = useRef<HTMLInputElement>(null);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
@@ -124,8 +124,8 @@ export default function MintHypercertPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(hypercertFormSchema),
     defaultValues: {
-      title: storedLogicModel?.metadata?.title || "Logic Model " + new Date().toLocaleDateString(),
-      description: storedLogicModel?.metadata?.description || "Logic model created with Muse",
+      title: storedCanvasData?.title || "Logic Model " + new Date().toLocaleDateString(),
+      description: storedCanvasData?.description || "Logic model created with Muse",
       impactScope: "",
       workDates: [new Date(), new Date()],
       contributors: "",
@@ -166,7 +166,7 @@ export default function MintHypercertPage() {
       return;
     }
 
-    if (!logicModel) {
+    if (!canvasData) {
       console.error("No logic model found");
       return;
     }
@@ -190,7 +190,7 @@ export default function MintHypercertPage() {
       currentStep = "upload-ipfs";
       await setDialogStep("upload-ipfs", "active");
 
-      ipfsResult = await uploadToIPFS(logicModel);
+      ipfsResult = await uploadToIPFS(canvasData);
       await setDialogStep("upload-ipfs", "completed");
 
       // Step 2: Generate image
@@ -270,7 +270,6 @@ export default function MintHypercertPage() {
           confirmations: 3,
           hash: txHash,
         });
-        console.log({ receipt });
       } catch (error: unknown) {
         console.error("Error waiting for transaction receipt:", error);
         await setDialogStep(
@@ -295,7 +294,6 @@ export default function MintHypercertPage() {
         track("Mint completed", {
           hypercertId: hypercertId || "not found",
         });
-        console.log({ hypercertId });
       } catch (error) {
         console.error("Error generating hypercert ID:", error);
         await setDialogStep(
@@ -324,7 +322,7 @@ export default function MintHypercertPage() {
     }
   };
 
-  if (!logicModel) {
+  if (!canvasData) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
