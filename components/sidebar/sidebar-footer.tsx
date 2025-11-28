@@ -27,26 +27,22 @@ export function SidebarFooterComponent() {
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" className="w-48">
-              <DropdownMenuItem>
-                <Link href="https://beaconlabs.io" target="_blank" rel="noopener noreferrer">
-                  <div className="flex items-center gap-2">
-                    <span>Website</span>
-                    <SquareArrowOutUpRight />
-                  </div>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link
-                  href="https://github.com/beaconlabs-io"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <div className="flex items-center gap-2">
-                    <span>Github</span>
-                    <SquareArrowOutUpRight />
-                  </div>
-                </Link>
-              </DropdownMenuItem>
+              <Link href="https://beaconlabs.io" target="_blank" rel="noopener noreferrer">
+                <DropdownMenuItem className="flex flex-row items-center justify-between">
+                  <span>Website</span>
+                  <SquareArrowOutUpRight />
+                </DropdownMenuItem>
+              </Link>
+              <Link
+                href="https://github.com/beaconlabs-io/muse"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <DropdownMenuItem className="flex flex-row items-center justify-between">
+                  <span>Github</span>
+                  <SquareArrowOutUpRight />
+                </DropdownMenuItem>
+              </Link>
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
