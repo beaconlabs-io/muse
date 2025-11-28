@@ -11,14 +11,13 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { Evidence } from "@/types";
 
-const PROJECT_ROOT = process.env.PROJECT_ROOT || process.cwd();
-const evidenceContentDirectory = path.join(PROJECT_ROOT, "contents", "evidence");
+const evidenceContentDirectory = path.join(process.cwd(), "contents", "evidence");
 
 export const getEvidenceBySlug = cache(
   async (slug: string): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
     const realSlug = slug.replace(/\.mdx$/, "");
     const filePath = path.join(evidenceContentDirectory, `${realSlug}.mdx`);
-    const deploymentPath = path.join(PROJECT_ROOT, "contents", "deployments", `${realSlug}.json`);
+    const deploymentPath = path.join(process.cwd(), "contents", "deployments", `${realSlug}.json`);
     let fileContent;
     let deploymentData = {};
 
