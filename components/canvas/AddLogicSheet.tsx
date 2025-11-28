@@ -186,7 +186,7 @@ export function AddLogicSheet({
     <Sheet open={open} onOpenChange={setOpen}>
       {!editMode && (
         <SheetTrigger asChild>
-          <Button size="sm" className="flex cursor-pointer items-center gap-2">
+          <Button size="sm" variant="outline" className="flex cursor-pointer items-center gap-2">
             <Plus className="h-4 w-4" />
             Add Node
           </Button>

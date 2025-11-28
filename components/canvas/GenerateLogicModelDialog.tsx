@@ -131,7 +131,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default" size="sm" className="cursor-pointer">
+        <Button variant="outline" size="sm" className="cursor-pointer">
           🤖 Generate from Intent
         </Button>
       </DialogTrigger>
