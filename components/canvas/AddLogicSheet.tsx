@@ -188,7 +188,7 @@ export function AddLogicSheet({
         <SheetTrigger asChild>
           <Button size="sm" variant="outline" className="flex cursor-pointer items-center gap-2">
             <Plus className="h-4 w-4" />
-            Add Node
+            <span className="hidden sm:inline">Add Node</span>
           </Button>
         </SheetTrigger>
       )}

@@ -132,7 +132,8 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="cursor-pointer">
-          🤖 Generate from Intent
+          <span>🤖</span>
+          <span className="hidden sm:inline">Generate from Intent</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
