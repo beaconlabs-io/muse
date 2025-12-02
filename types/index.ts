@@ -141,7 +141,7 @@ export const createStageInputSchema = () =>
     title: z.string().min(1).max(100),
     description: z.string().max(200).optional(),
     metrics: z.array(ToolMetricInputSchema),
-  });;
+  });
 
 // Connection schema for tool input
 export const ConnectionInputSchema = z.object({
