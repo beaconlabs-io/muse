@@ -11,13 +11,13 @@ import {
 export const logicModelTool = createTool({
   id: "generate-logic-model",
   description:
-    "Generate a logic model structure with activities, outputs, outcomes, and impact based on policy interventions and evidence. " +
+    "Generate a logic model structure with activities, outputs, outcomes, and impact based on interventions and evidence. " +
     "Accepts the generated content for each stage of the logic model (activities, outputs, outcomes, impact) with their metrics.",
   inputSchema: z.object({
     title: z.string().describe("Title of the logic model"),
     description: z.string().optional().describe("Description of the logic model"),
-    intervention: z.string().describe("The policy intervention or program being modeled"),
-    context: z
+    intervention: z.string().describe("The intervention or program being modeled"),
+    targetContext: z
       .string()
       .optional()
       .describe("Additional context about the intervention, target population, or goals"),
@@ -66,7 +66,7 @@ export const logicModelTool = createTool({
       title,
       description,
       intervention,
-      context: additionalContext,
+      targetContext,
       evidenceIds,
       activities,
       outputs,
@@ -80,7 +80,7 @@ export const logicModelTool = createTool({
       title,
       description,
       intervention,
-      context: additionalContext,
+      context: targetContext,
       evidenceIds,
       activities,
       outputs,
