@@ -21,15 +21,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-Muse is a Next.js 16 application that facilitates evidence-based policy making through a workflow connecting communities, policy makers, and blockchain attestations.
+Muse is a Next.js 16 application that facilitates evidence-based impact planning through Theory of Change methodology, connecting communities, users, and blockchain attestations.
 
 ### Core Workflow
 
 1. **Evidence Collection**: Communities submit research evidence via pull requests to `contents/evidence/`
 2. **Evidence Attestation**: GitHub Actions automatically create attestations when PRs are merged
-3. **Logic Model Creation**: Policy makers build logic models using the evidence in the frontend via Mastra-powered AI agents
+3. **Logic Model Creation**: Users build logic models using the evidence in the frontend via Mastra-powered AI agents
 4. **Evidence Validation**: Automated semantic matching of logic model relationships with research evidence
 5. **Impact Claims**: Logic models generate hypercerts for impact tracking
+
+### Theory of Change & Logic Models
+
+A Theory of Change (ToC) maps how interventions lead to desired outcomes. MUSE uses logic models—visual ToC representations—with:
+
+- **Cards**: Represent stages (inputs, activities, outputs, outcomes, impact)
+- **Arrows**: Represent causal relationships ("if X, then Y")
+- **Evidence**: Validates causal assumptions with research data
+
+**Stage Progression**:
+
+1. **Activities**: Actions and interventions being implemented
+2. **Outputs**: Direct, measurable results from activities
+3. **Outcomes (Short-term, 0-6 months)**: Initial behavioral or knowledge changes
+4. **Outcomes (Intermediate, 6-18 months)**: Sustained changes in practices or systems
+5. **Impact (18+ months)**: Long-term systemic transformation
+
+This methodology is used by non-profits, social enterprises, researchers, funders, and organizations measuring social impact.
 
 ### Key Directories
 
