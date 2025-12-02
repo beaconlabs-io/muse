@@ -34,16 +34,32 @@ const generateLogicModelStep = createStep({
     console.log("[Workflow] Step 1: Generating logic model structure...");
     console.log(`[Workflow] Intent: "${intent}"`);
 
-    // Use the logic model agent to generate the structure
-    const result = await logicModelAgent.generate(
-      [
-        {
-          role: "user",
-          content: `Create a logic model for: ${intent}`,
-        },
-      ],
-      { maxSteps: 1 },
-    );
+    // Helper function with retry logic for tool validation errors
+    const generateWithRetry = async (isRetry = false) => {
+      const userContent = isRetry
+        ? `Create a logic model for: ${intent}
+
+IMPORTANT: Previous attempt failed due to JSON format error.
+Ensure ALL metrics are objects with { name, measurementMethod, frequency }, NOT strings.
+Example metric: { "name": "Number of participants", "measurementMethod": "Survey", "frequency": "monthly" }`
+        : `Create a logic model for: ${intent}`;
+
+      try {
+        return await logicModelAgent.generate([{ role: "user", content: userContent }], {
+          maxSteps: 1,
+        });
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (!isRetry && errorMessage.includes("Tool input validation failed")) {
+          console.warn("[Workflow] ⚠️ Tool validation failed, retrying with stricter prompt...");
+          return generateWithRetry(true);
+        }
+        throw error;
+      }
+    };
+
+    // Use the logic model agent to generate the structure (with retry)
+    const result = await generateWithRetry();
 
     // Debug logging
     console.log("[Workflow] Agent result:", {
