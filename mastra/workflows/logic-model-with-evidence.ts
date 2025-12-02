@@ -1,48 +1,222 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
+import { intentAnalysisAgent } from "../agents/intent-analysis-agent";
 import { logicModelAgent } from "../agents/logic-model-agent";
-import { searchEvidenceForEdge } from "@/lib/evidence-search-mastra";
+import { RetrievedEvidenceSchema } from "../tools/evidence-retrieval-tool";
+import { retrieveEvidence } from "@/lib/evidence-retrieval";
 import {
   CanvasDataSchema,
-  EvidenceMatchSchema,
+  StructuredIntentSchema,
   type CanvasData,
-  type Card,
-  type Arrow,
-  type EvidenceMatch,
+  type StructuredIntent,
 } from "@/types";
+
 /**
- * Workflow: Generate Logic Model with Evidence Search
+ * Workflow: Generate Logic Model with Evidence (RAG-based)
  *
- * This workflow generates a complete logic model with evidence validation:
- * 1. Generate logic model structure using AI agent
- * 2. Search evidence for all arrows in parallel
- * 3. Enrich canvas data with evidence metadata
+ * This workflow generates a complete logic model with evidence-informed connections:
+ * 1. Analyze Intent: Extract structured information from user's raw intent
+ * 2. Retrieve Evidence: Use optimized query for vector similarity search
+ * 3. Generate Logic Model: Create canvas with evidence-backed connections
+ *
+ * The agent uses the retrieved evidence to:
+ * - Inform connection design
+ * - Attach evidenceIds to connections where research supports the causal link
  */
 
-// Step 1: Generate logic model structure
+// Step 1: Analyze and structure the user's intent
+const analyzeIntentStep = createStep({
+  id: "analyze-intent",
+  inputSchema: z.object({
+    intent: z.string().describe("User's raw intent for creating the logic model"),
+  }),
+  outputSchema: z.object({
+    rawIntent: z.string(),
+    structuredIntent: StructuredIntentSchema,
+  }),
+  execute: async ({ inputData }) => {
+    const { intent } = inputData;
+
+    console.log("[Workflow] Step 1: Analyzing intent...");
+    console.log(`[Workflow] Raw intent: "${intent}"`);
+
+    // Use the intent analysis agent to extract structured information
+    const result = await intentAnalysisAgent.generate(
+      [
+        {
+          role: "user",
+          content: intent,
+        },
+      ],
+      { maxSteps: 2 },
+    );
+
+    // Extract structured intent from tool results
+    let structuredIntent: StructuredIntent | undefined;
+
+    for (const tr of result.toolResults || []) {
+      const toolResult = tr as any;
+      const possibleIntent =
+        toolResult?.result?.structuredIntent ||
+        toolResult?.payload?.result?.structuredIntent ||
+        toolResult?.structuredIntent;
+
+      if (possibleIntent?.intervention && possibleIntent?.ragQuery) {
+        structuredIntent = possibleIntent;
+        break;
+      }
+    }
+
+    if (!structuredIntent) {
+      console.error("[Workflow] ✗ Intent analysis agent did not return structured intent");
+      // Fallback: use raw intent as-is
+      structuredIntent = {
+        intervention: intent,
+        targetPopulation: "Not specified",
+        desiredOutcomes: ["Improved outcomes"],
+        ragQuery: intent,
+      };
+    }
+
+    console.log("[Workflow] ✓ Structured intent extracted:");
+    console.log(`[Workflow]   Intervention: ${structuredIntent.intervention}`);
+    console.log(`[Workflow]   Target: ${structuredIntent.targetPopulation}`);
+    console.log(`[Workflow]   Outcomes: ${structuredIntent.desiredOutcomes.join(", ")}`);
+    console.log(`[Workflow]   RAG Query: ${structuredIntent.ragQuery}`);
+
+    return {
+      rawIntent: intent,
+      structuredIntent,
+    };
+  },
+});
+
+// Step 2: Retrieve evidence via RAG using optimized query
+const retrieveEvidenceStep = createStep({
+  id: "retrieve-evidence",
+  inputSchema: z.object({
+    rawIntent: z.string(),
+    structuredIntent: StructuredIntentSchema,
+  }),
+  outputSchema: z.object({
+    rawIntent: z.string(),
+    structuredIntent: StructuredIntentSchema,
+    retrievedEvidence: z.array(RetrievedEvidenceSchema),
+    totalRetrieved: z.number(),
+  }),
+  execute: async ({ inputData }) => {
+    const { rawIntent, structuredIntent } = inputData;
+
+    console.log("[Workflow] Step 2: Retrieving evidence via RAG...");
+    console.log(`[Workflow] Using optimized query: "${structuredIntent.ragQuery}"`);
+
+    // Use the optimized RAG query from intent analysis
+    const result = await retrieveEvidence(structuredIntent.ragQuery);
+
+    console.log(`[Workflow] ✓ Retrieved ${result.totalRetrieved} evidence items`);
+
+    // Log retrieved evidence for debugging
+    for (const evidence of result.evidence) {
+      console.log(
+        `[Workflow]   - ${evidence.evidenceId}: ${evidence.title} (score: ${evidence.relevanceScore}%, strength: ${evidence.strength || "N/A"})`,
+      );
+    }
+
+    return {
+      rawIntent,
+      structuredIntent,
+      retrievedEvidence: result.evidence,
+      totalRetrieved: result.totalRetrieved,
+    };
+  },
+});
+
+// Step 3: Generate logic model with structured intent and evidence context
 const generateLogicModelStep = createStep({
   id: "generate-logic-model",
   inputSchema: z.object({
-    intent: z.string().describe("User's intent for creating the logic model"),
+    rawIntent: z.string(),
+    structuredIntent: StructuredIntentSchema,
+    retrievedEvidence: z.array(RetrievedEvidenceSchema),
+    totalRetrieved: z.number(),
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
   }),
   execute: async ({ inputData }) => {
-    const { intent } = inputData;
+    const { rawIntent, structuredIntent, retrievedEvidence } = inputData;
 
-    console.log("[Workflow] Step 1: Generating logic model structure...");
-    console.log(`[Workflow] Intent: "${intent}"`);
+    console.log("[Workflow] Step 3: Generating logic model with evidence context...");
+
+    // Format evidence context for the agent - NOW INCLUDING chunkText
+    const evidenceContext = retrievedEvidence
+      .map((e) => {
+        const interventions =
+          e.interventions
+            ?.map((i) => `    - ${i.intervention} → ${i.outcome_variable} [${i.outcome}]`)
+            .join("\n") || "    (no structured interventions)";
+
+        return `Evidence ${e.evidenceId}: "${e.title}"
+  Strength: ${e.strength || "N/A"} (Maryland Scale: 5=RCT, 3=quasi-experimental, 1=correlational)
+
+  Key Research Findings:
+  ${e.chunkText}
+
+  Structured Interventions → Outcomes:
+${interventions}`;
+      })
+      .join("\n\n---\n\n");
+
+    // Create prompt with structured intent and evidence context
+    const prompt = `Create a logic model for the following:
+
+## User Request
+${rawIntent}
+
+## Structured Analysis
+- **Intervention**: ${structuredIntent.intervention}
+- **Target Population**: ${structuredIntent.targetPopulation}
+- **Desired Outcomes**: ${structuredIntent.desiredOutcomes.join(", ")}
+
+## Available Research Evidence (retrieved via RAG)
+
+The following evidence was found to be relevant. Pay close attention to the "Key Research Findings" section for each evidence item.
+
+${evidenceContext}
+
+---
+
+## INSTRUCTIONS
+
+1. **Design the Logic Model** aligned with the user's desired outcomes:
+   - Activities should implement the intervention
+   - Outputs should be direct deliverables
+   - Short-term outcomes (0-6 months) should show initial changes
+   - Intermediate outcomes (6-18 months) should show sustained changes
+   - Impact (18+ months) should reflect the desired outcomes listed above
+
+2. **For connections supported by evidence, you MUST:**
+   - Include evidenceIds: array of evidence IDs (e.g., ["00", "02"])
+   - Include evidenceRationale that cites SPECIFIC findings from the "Key Research Findings":
+     * What the study measured and found
+     * Effect direction: + (positive), - (no effect), +- (mixed), ! (side effects)
+     * Study strength (Maryland Scale)
+     * Any caveats or conditions
+
+   ❌ Bad rationale: "Evidence 02 shows grants affect developer activity"
+   ✅ Good rationale: "Evidence 02 (strength 3) evaluated Optimism Retro Funding and found mixed effects [+-] on developer retention and TVL, with effectiveness varying by project type and cohort characteristics"
+
+3. **It's OK if some connections don't have evidence** - not all causal links will have research backing. Focus on quality over quantity for evidence citations.`;
 
     // Use the logic model agent to generate the structure
     const result = await logicModelAgent.generate(
       [
         {
           role: "user",
-          content: `Create a logic model for: ${intent}`,
+          content: prompt,
         },
       ],
-      { maxSteps: 1 },
+      { maxSteps: 3 },
     );
 
     // Debug logging
@@ -52,183 +226,52 @@ const generateLogicModelStep = createStep({
       hasToolResults: !!result.toolResults,
     });
 
-    // Parse the tool result to extract canvas data
-    if (!result.toolResults || result.toolResults.length === 0) {
-      console.error("[Workflow] ✗ Agent did not call any tools");
-      console.error("[Workflow] Agent response text:", result.text?.slice(0, 500));
-      throw new Error("Agent did not call logicModelTool");
+    // Find the logicModelTool result
+    let canvasData: CanvasData | undefined;
+
+    for (const tr of result.toolResults || []) {
+      const toolResult = tr as any;
+
+      // Try different paths to find canvasData
+      const possibleCanvasData =
+        toolResult?.result?.canvasData ||
+        toolResult?.payload?.result?.canvasData ||
+        toolResult?.canvasData;
+
+      if (possibleCanvasData?.cards && possibleCanvasData?.arrows) {
+        canvasData = possibleCanvasData;
+        console.log("[Workflow] Found canvasData in toolResult");
+        break;
+      }
     }
-
-    console.log(
-      `[Workflow] Found ${result.toolResults.length} tool result(s), extracting canvas data...`,
-    );
-
-    const toolResult = result.toolResults[0] as any;
-    console.log("[Workflow] Tool result structure:", {
-      toolName: toolResult.toolName,
-      hasPayload: !!toolResult.payload,
-      hasResult: !!toolResult.payload?.result,
-      hasCanvasData: !!toolResult.payload?.result?.canvasData,
-    });
-
-    const toolReturnValue = toolResult.payload?.result;
-    console.log("[Workflow] Tool return value:", JSON.stringify(toolReturnValue, null, 2));
-    const canvasData: CanvasData = toolReturnValue?.canvasData;
 
     if (!canvasData || !canvasData.cards || !canvasData.arrows) {
-      console.error("[Workflow] ✗ Failed to generate logic model structure");
-      console.error("[Workflow] Canvas data status:", {
-        exists: !!canvasData,
-        hasCards: !!canvasData?.cards,
-        hasArrows: !!canvasData?.arrows,
-      });
-      console.error("[Workflow] Full tool result:", JSON.stringify(toolResult, null, 2));
-      throw new Error(
-        "Failed to generate logic model. The agent did not return valid canvas data.",
+      console.error("[Workflow] ✗ Could not find valid canvasData in any tool result");
+      console.error(
+        "[Workflow] Full toolResults:",
+        JSON.stringify(result.toolResults, null, 2).slice(0, 2000),
       );
+      throw new Error("Agent did not return valid canvas data");
     }
+
+    // Count evidence-backed connections
+    const evidenceBackedArrows = canvasData.arrows.filter(
+      (arrow) => arrow.evidenceIds && arrow.evidenceIds.length > 0,
+    ).length;
 
     console.log(
       `[Workflow] ✓ Generated ${canvasData.cards.length} cards and ${canvasData.arrows.length} arrows`,
     );
-
-    return {
-      canvasData,
-    };
-  },
-});
-
-// Step 2: Parallel evidence search for all arrows
-const searchEvidenceStep = createStep({
-  id: "search-evidence",
-  inputSchema: z.object({
-    canvasData: CanvasDataSchema,
-  }),
-  outputSchema: z.object({
-    canvasData: CanvasDataSchema,
-    evidenceByArrow: z.record(z.array(EvidenceMatchSchema)),
-  }),
-  execute: async ({ inputData }) => {
-    const { canvasData } = inputData;
-
-    console.log(
-      `[Workflow] Step 2: Searching evidence for ${canvasData.arrows.length} arrows in PARALLEL...`,
-    );
-
-    // Create a map of card IDs to card content for quick lookup
-    const cardMap = new Map<string, Card>();
-    canvasData.cards.forEach((card: Card) => {
-      cardMap.set(card.id, card);
-    });
-
-    // Search evidence for all arrows in parallel
-    const evidenceSearchPromises = canvasData.arrows.map(async (arrow: Arrow) => {
-      const fromCard = cardMap.get(arrow.fromCardId);
-      const toCard = cardMap.get(arrow.toCardId);
-
-      if (!fromCard || !toCard) {
-        console.warn(
-          `[Workflow] Arrow ${arrow.id}: Missing cards (from: ${!!fromCard}, to: ${!!toCard})`,
-        );
-        return {
-          arrowId: arrow.id,
-          matches: [] as EvidenceMatch[],
-        };
-      }
-
-      try {
-        const fromContent = fromCard.description
-          ? `${fromCard.title}. ${fromCard.description}`
-          : fromCard.title;
-        const toContent = toCard.description
-          ? `${toCard.title}. ${toCard.description}`
-          : toCard.title;
-        console.log(
-          `[Workflow] Searching arrow ${arrow.id.substring(0, 20)}...: ` +
-            `"${fromContent.substring(0, 40)}..." → "${toContent.substring(0, 40)}..."`,
-        );
-        const matches = await searchEvidenceForEdge(fromContent, toContent);
-        console.log(
-          `[Workflow] ✓ Arrow ${arrow.id.substring(0, 20)}...: Found ${matches.length} matches`,
-        );
-        return {
-          arrowId: arrow.id,
-          matches,
-        };
-      } catch (error) {
-        console.error(`[Workflow] ❌ Arrow ${arrow.id}: Search failed:`, error);
-        return {
-          arrowId: arrow.id,
-          matches: [] as EvidenceMatch[],
-        };
-      }
-    });
-
-    const evidenceResults = await Promise.all(evidenceSearchPromises);
-
-    const evidenceByArrow = evidenceResults.reduce(
-      (acc: Record<string, EvidenceMatch[]>, result) => {
-        acc[result.arrowId] = result.matches;
-        return acc;
-      },
-      {} as Record<string, EvidenceMatch[]>,
-    );
-
-    // Calculate summary stats for logging
-    const totalEvidenceMatches = evidenceResults.reduce((sum, r) => sum + r.matches.length, 0);
-    console.log(
-      `[Workflow] ✓ Evidence search completed ` +
-        `(${totalEvidenceMatches} total matches across ${canvasData.arrows.length} arrows)`,
-    );
-
-    return {
-      canvasData,
-      evidenceByArrow,
-    };
-  },
-});
-
-// Step 3: Enrich canvas data with evidence
-const enrichCanvasStep = createStep({
-  id: "enrich-canvas",
-  inputSchema: z.object({
-    canvasData: CanvasDataSchema,
-    evidenceByArrow: z.record(z.array(EvidenceMatchSchema)),
-  }),
-  outputSchema: z.object({
-    canvasData: CanvasDataSchema,
-  }),
-  execute: async ({ inputData }) => {
-    const { canvasData, evidenceByArrow } = inputData;
-
-    console.log("[Workflow] Step 3: Enriching canvas data with evidence...");
-
-    // Create enriched arrows with evidence metadata
-    const enrichedArrows: Arrow[] = canvasData.arrows.map((arrow: Arrow) => {
-      const evidenceMatches = evidenceByArrow[arrow.id] || [];
-
-      return {
-        ...arrow,
-        evidenceIds: evidenceMatches.map((match: EvidenceMatch) => match.evidenceId),
-        evidenceMetadata: evidenceMatches,
-      };
-    });
-
-    // Create final enriched canvas data
-    const enrichedCanvasData: CanvasData = {
-      ...canvasData,
-      arrows: enrichedArrows,
-    };
-
+    console.log(`[Workflow] ✓ ${evidenceBackedArrows} connections have evidence backing`);
     console.log("[Workflow] ✅ Workflow complete");
 
     return {
-      canvasData: enrichedCanvasData,
+      canvasData,
     };
   },
 });
 
-// Create the workflow
+// Create the 3-step workflow
 export const logicModelWithEvidenceWorkflow = createWorkflow({
   id: "logic-model-with-evidence",
   inputSchema: z.object({
@@ -238,7 +281,7 @@ export const logicModelWithEvidenceWorkflow = createWorkflow({
     canvasData: CanvasDataSchema,
   }),
 })
+  .then(analyzeIntentStep)
+  .then(retrieveEvidenceStep)
   .then(generateLogicModelStep)
-  .then(searchEvidenceStep)
-  .then(enrichCanvasStep)
   .commit();
