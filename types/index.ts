@@ -138,10 +138,10 @@ export const ToolMetricInputSchema = z.object({
 // Reusable schema factory for logic model stages
 export const createStageInputSchema = () =>
   z.object({
-    title: z.string().min(1).max(30),
-    description: z.string().max(100).optional(),
+    title: z.string().min(1).max(100),
+    description: z.string().max(200).optional(),
     metrics: z.array(ToolMetricInputSchema),
-  });
+  });;
 
 // Connection schema for tool input
 export const ConnectionInputSchema = z.object({
