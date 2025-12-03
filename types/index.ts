@@ -127,6 +127,20 @@ export const LogicModelMetricSchema = z.object({
 // TOOL INPUT SCHEMAS (for Mastra agents)
 // =============================================================================
 
+// Structured intent schema for intent analysis agent
+export const StructuredIntentSchema = z.object({
+  intervention: z.string().describe("The program or action being proposed"),
+  targetPopulation: z.string().describe("Who the intervention targets"),
+  desiredOutcomes: z
+    .array(z.string())
+    .min(1)
+    .max(4)
+    .describe("Specific outcomes the user wants to achieve (1-4 items)"),
+  ragQuery: z.string().describe("Optimized search query for finding relevant research evidence"),
+});
+
+export type StructuredIntent = z.infer<typeof StructuredIntentSchema>;
+
 // Metric schema for tool input validation (stricter than storage)
 export const ToolMetricInputSchema = z.object({
   name: z.string(),
@@ -159,6 +173,14 @@ export const ConnectionInputSchema = z.object({
     .describe(
       "Brief explanation of why this connection represents a plausible causal relationship",
     ),
+  evidenceIds: z
+    .array(z.string())
+    .optional()
+    .describe("IDs of evidence that support this causal relationship (e.g., ['00', '02'])"),
+  evidenceRationale: z
+    .string()
+    .optional()
+    .describe("Brief explanation of how the evidence supports this connection"),
 });
 
 // Infer TypeScript types

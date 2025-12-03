@@ -21,13 +21,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-Muse is a Next.js 16 application that facilitates evidence-based policy making through a workflow connecting communities, policy makers, and blockchain attestations.
+Muse is a Next.js 16 application that facilitates evidence-based impact design through a workflow connecting communities, changemakers, and blockchain attestations.
 
 ### Core Workflow
 
 1. **Evidence Collection**: Communities submit research evidence via pull requests to `contents/evidence/`
 2. **Evidence Attestation**: GitHub Actions automatically create attestations when PRs are merged
-3. **Logic Model Creation**: Policy makers build logic models using the evidence in the frontend via Mastra-powered AI agents
+3. **Logic Model Creation**: Changemakers build logic models (Theories of Change) using the evidence in the frontend via Mastra-powered AI agents
 4. **Evidence Validation**: Automated semantic matching of logic model relationships with research evidence
 5. **Impact Claims**: Logic models generate hypercerts for impact tracking
 

@@ -11,13 +11,13 @@ import {
 export const logicModelTool = createTool({
   id: "generate-logic-model",
   description:
-    "Generate a logic model structure with activities, outputs, outcomes, and impact based on policy interventions and evidence. " +
+    "Generate a logic model structure with activities, outputs, outcomes, and impact based on program interventions and evidence. " +
     "Accepts the generated content for each stage of the logic model (activities, outputs, outcomes, impact) with their metrics.",
   inputSchema: z.object({
     title: z.string().describe("Title of the logic model"),
     description: z.string().optional().describe("Description of the logic model"),
-    intervention: z.string().describe("The policy intervention or program being modeled"),
-    context: z
+    intervention: z.string().describe("The program intervention or initiative being modeled"),
+    additionalContext: z
       .string()
       .optional()
       .describe("Additional context about the intervention, target population, or goals"),
@@ -61,12 +61,12 @@ export const logicModelTool = createTool({
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
   }),
-  execute: async ({ context }) => {
+  execute: async ({ context: inputContext }) => {
     const {
       title,
       description,
       intervention,
-      context: additionalContext,
+      additionalContext,
       evidenceIds,
       activities,
       outputs,
@@ -74,7 +74,7 @@ export const logicModelTool = createTool({
       outcomesIntermediate,
       impact,
       connections,
-    } = context;
+    } = inputContext;
 
     return await generateLogicModel({
       title,
@@ -289,7 +289,15 @@ const generateLogicModel = async (params: {
     const outgoingCounts = new Map<string, number>();
 
     for (const conn of validatedConnections) {
-      const { fromCardIndex, fromCardType, toCardIndex, toCardType, reasoning } = conn;
+      const {
+        fromCardIndex,
+        fromCardType,
+        toCardIndex,
+        toCardType,
+        reasoning,
+        evidenceIds,
+        evidenceRationale,
+      } = conn;
 
       // Validate indices
       const fromIds = cardIdsByType[fromCardType];
@@ -321,11 +329,21 @@ const generateLogicModel = async (params: {
         continue;
       }
 
-      // Create arrow
+      // Create arrow with evidence if provided
       arrows.push({
         id: `arrow-${timestamp}-${fromCardType}-${fromCardIndex}-${toCardType}-${toCardIndex}`,
         fromCardId,
         toCardId,
+        ...(evidenceIds &&
+          evidenceIds.length > 0 && {
+            evidenceIds,
+            evidenceMetadata: evidenceIds.map((id) => ({
+              evidenceId: id,
+              score: 100, // TODO: use actual score
+              reasoning: evidenceRationale || "Agent-identified evidence support",
+              hasWarning: false,
+            })),
+          }),
       });
 
       outgoingCounts.set(fromCardId, currentOutgoing + 1);
