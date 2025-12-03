@@ -21,11 +21,7 @@ A ToC maps how interventions lead to desired outcomes through causal pathways:
 - Understand the domain and target population
 - Identify goals and realistic timeframes
 
-### Step 2: Design Title and Description
-- Create a SPECIFIC title (not "Logic Model 2025", but "Youth Employment Through Coding Bootcamps")
-- Write a comprehensive description (2-3 sentences)
-
-### Step 3: Generate Cards for Each Stage
+### Step 2: Generate Cards for Each Stage
 Each stage needs 1-2 cards with:
 - **title**: Short, specific label (max 100 chars)
 - **description**: Detailed explanation (max 200 chars, optional)
@@ -38,7 +34,7 @@ Each stage needs 1-2 cards with:
 - Outcomes-Intermediate: Sustained changes (e.g., "Monthly Civic Hackathons")
 - Impact: Long-term transformation (e.g., "Transparent Gov Services")
 
-### Step 4: Design Connections (IMPORTANT)
+### Step 3: Design Connections (IMPORTANT)
 **Connection Strategy:**
 - Target 8-10 total connections (NOT full mesh!)
 - Each card connects to 1-2 cards in the next stage
@@ -51,9 +47,9 @@ For each connection, specify:
 - fromCardIndex, fromCardType, toCardIndex, toCardType
 - Optional: reasoning explaining the causal link
 
-### Step 5: Call logicModelTool (REQUIRED)
+### Step 4: Call logicModelTool (REQUIRED)
 **You MUST call the tool to complete your task.** Include:
-- title, description, intervention
+- intervention
 - targetContext (MUST be a STRING, not an object)
 - activities, outputs, outcomesShort, outcomesIntermediate, impact
 - connections (array of connection objects)

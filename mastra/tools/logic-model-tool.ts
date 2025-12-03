@@ -17,8 +17,6 @@ export const logicModelTool = createTool({
     "Metrics must be objects with {name, measurementMethod, frequency} - NOT strings. " +
     "Connections should be 8-10 total with direct causal relationships only.",
   inputSchema: z.object({
-    title: z.string().describe("Title of the logic model"),
-    description: z.string().optional().describe("Description of the logic model"),
     intervention: z.string().describe("The intervention or program being modeled"),
     targetContext: z
       .string()
@@ -66,8 +64,6 @@ export const logicModelTool = createTool({
   }),
   execute: async ({ context }) => {
     const {
-      title,
-      description,
       intervention,
       targetContext,
       evidenceIds,
@@ -80,8 +76,6 @@ export const logicModelTool = createTool({
     } = context;
 
     return await generateLogicModel({
-      title,
-      description,
       intervention,
       context: targetContext,
       evidenceIds,
@@ -96,8 +90,6 @@ export const logicModelTool = createTool({
 });
 
 const generateLogicModel = async (params: {
-  title: string;
-  description?: string;
   intervention: string;
   context?: string;
   evidenceIds?: string[];
@@ -108,17 +100,7 @@ const generateLogicModel = async (params: {
   impact: StageInput[];
   connections?: ConnectionInput[];
 }): Promise<{ canvasData: CanvasData }> => {
-  const {
-    title,
-    description,
-    intervention,
-    activities,
-    outputs,
-    outcomesShort,
-    outcomesIntermediate,
-    impact,
-    connections,
-  } = params;
+  const { activities, outputs, outcomesShort, outcomesIntermediate, impact, connections } = params;
 
   const timestamp = Date.now();
   const generateId = (type: string, index: number) => `${type}-${timestamp}-${index}`;
@@ -390,8 +372,6 @@ const generateLogicModel = async (params: {
 
   const canvasData: CanvasData = {
     id: `canvas-${timestamp}`,
-    title,
-    description: description || `Logic model for ${intervention}`,
     cards,
     arrows,
     cardMetrics,
