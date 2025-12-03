@@ -264,8 +264,6 @@ export type CanvasMetadata = z.infer<typeof CanvasMetadataSchema>;
 
 export const CanvasDataSchema = z.object({
   id: z.string(),
-  title: z.string(),
-  description: z.string().optional(),
   cards: z.array(CardSchema),
   arrows: z.array(ArrowSchema),
   cardMetrics: z.record(z.array(CardMetricSchema)),
@@ -276,8 +274,6 @@ export type CanvasData = z.infer<typeof CanvasDataSchema>;
 
 export interface LogicModel {
   id: string;
-  title: string;
-  description?: string;
   cards: Card[];
   arrows: Arrow[];
   cardMetrics: Record<string, CardMetrics[]>;

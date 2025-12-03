@@ -420,7 +420,7 @@ export function ReactFlowCanvas({
   );
 
   const createCanvasDataFromCanvas = useCallback(
-    (title?: string, description?: string, author?: string): CanvasData => {
+    (author?: string): CanvasData => {
       const cards = nodesToCards(nodes);
       const arrows = edgesToArrows(edges);
 
@@ -429,8 +429,6 @@ export function ReactFlowCanvas({
 
       return {
         id,
-        title: title || `Logic Model ${new Date().toLocaleDateString()}`,
-        description: description || "",
         cards,
         arrows,
         cardMetrics,
@@ -446,11 +444,7 @@ export function ReactFlowCanvas({
 
   const openHypercertDialog = useCallback(() => {
     try {
-      const canvasData = createCanvasDataFromCanvas(
-        `Logic Model ${new Date().toLocaleDateString()}`,
-        "Logic model created with Muse",
-        address,
-      );
+      const canvasData = createCanvasDataFromCanvas(address);
 
       const cards = nodesToCards(nodes);
       const arrows = edgesToArrows(edges);

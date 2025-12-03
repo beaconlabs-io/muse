@@ -113,7 +113,7 @@ export const getAllEvidence = async () => {
   return evidence;
 };
 
-export const getAllEvidenceMeta = async () => {
+export const getAllEvidenceMeta = async (): Promise<Evidence[]> => {
   const files = fs.readdirSync(evidenceContentDirectory).filter((file) => file.endsWith(".mdx"));
 
   const evidence: Evidence[] = [];
