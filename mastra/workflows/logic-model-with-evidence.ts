@@ -1,7 +1,8 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
+import { evidenceSearchAgent } from "../agents/evidence-search-agent";
 import { logicModelAgent } from "../agents/logic-model-agent";
-import { searchEvidenceForEdge } from "@/lib/evidence-search-mastra";
+import { searchEvidenceForAllEdges, type EdgeInput } from "@/lib/evidence-search-batch";
 import {
   CanvasDataSchema,
   EvidenceMatchSchema,
@@ -114,7 +115,7 @@ Example metric: { "name": "Number of participants", "measurementMethod": "Survey
   },
 });
 
-// Step 2: Parallel evidence search for all arrows
+// Step 2: Batch evidence search for all arrows (single LLM call)
 const searchEvidenceStep = createStep({
   id: "search-evidence",
   inputSchema: z.object({
@@ -128,7 +129,7 @@ const searchEvidenceStep = createStep({
     const { canvasData } = inputData;
 
     console.log(
-      `[Workflow] Step 2: Searching evidence for ${canvasData.arrows.length} arrows in PARALLEL...`,
+      `[Workflow] Step 2: Searching evidence for ${canvasData.arrows.length} arrows in BATCH...`,
     );
 
     // Create a map of card IDs to card content for quick lookup
@@ -137,61 +138,51 @@ const searchEvidenceStep = createStep({
       cardMap.set(card.id, card);
     });
 
-    // Search evidence for all arrows in parallel
-    const evidenceSearchPromises = canvasData.arrows.map(async (arrow: Arrow) => {
-      const fromCard = cardMap.get(arrow.fromCardId);
-      const toCard = cardMap.get(arrow.toCardId);
+    // Prepare edges for batch processing
+    const edges: EdgeInput[] = canvasData.arrows
+      .map((arrow: Arrow) => {
+        const fromCard = cardMap.get(arrow.fromCardId);
+        const toCard = cardMap.get(arrow.toCardId);
 
-      if (!fromCard || !toCard) {
-        console.warn(
-          `[Workflow] Arrow ${arrow.id}: Missing cards (from: ${!!fromCard}, to: ${!!toCard})`,
-        );
-        return {
-          arrowId: arrow.id,
-          matches: [] as EvidenceMatch[],
-        };
-      }
+        if (!fromCard || !toCard) {
+          console.warn(
+            `[Workflow] Arrow ${arrow.id}: Missing cards (from: ${!!fromCard}, to: ${!!toCard})`,
+          );
+          return null;
+        }
 
-      try {
         const fromContent = fromCard.description
           ? `${fromCard.title}. ${fromCard.description}`
           : fromCard.title;
         const toContent = toCard.description
           ? `${toCard.title}. ${toCard.description}`
           : toCard.title;
-        console.log(
-          `[Workflow] Searching arrow ${arrow.id.substring(0, 20)}...: ` +
-            `"${fromContent.substring(0, 40)}..." → "${toContent.substring(0, 40)}..."`,
-        );
-        const matches = await searchEvidenceForEdge(fromContent, toContent);
-        console.log(
-          `[Workflow] ✓ Arrow ${arrow.id.substring(0, 20)}...: Found ${matches.length} matches`,
-        );
+
         return {
           arrowId: arrow.id,
-          matches,
+          fromContent,
+          toContent,
         };
-      } catch (error) {
-        console.error(`[Workflow] ❌ Arrow ${arrow.id}: Search failed:`, error);
-        return {
-          arrowId: arrow.id,
-          matches: [] as EvidenceMatch[],
-        };
+      })
+      .filter((edge): edge is EdgeInput => edge !== null);
+
+    console.log(`[Workflow] Prepared ${edges.length} valid edges for batch search`);
+
+    // Single batch call for all edges
+    const evidenceByArrow = await searchEvidenceForAllEdges(evidenceSearchAgent, edges);
+
+    // Ensure all arrows have entries (even if empty)
+    for (const arrow of canvasData.arrows) {
+      if (!(arrow.id in evidenceByArrow)) {
+        evidenceByArrow[arrow.id] = [];
       }
-    });
-
-    const evidenceResults = await Promise.all(evidenceSearchPromises);
-
-    const evidenceByArrow = evidenceResults.reduce(
-      (acc: Record<string, EvidenceMatch[]>, result) => {
-        acc[result.arrowId] = result.matches;
-        return acc;
-      },
-      {} as Record<string, EvidenceMatch[]>,
-    );
+    }
 
     // Calculate summary stats for logging
-    const totalEvidenceMatches = evidenceResults.reduce((sum, r) => sum + r.matches.length, 0);
+    const totalEvidenceMatches = Object.values(evidenceByArrow).reduce(
+      (sum, matches) => sum + matches.length,
+      0,
+    );
     console.log(
       `[Workflow] ✓ Evidence search completed ` +
         `(${totalEvidenceMatches} total matches across ${canvasData.arrows.length} arrows)`,

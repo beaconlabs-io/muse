@@ -9,59 +9,51 @@ const MODEL = process.env.MODEL || "google/gemini-2.5-pro";
  * This agent evaluates which evidence from the repository supports
  * logic model edge relationships (intervention → outcome).
  *
- * It uses the getAllEvidenceTool to load evidence metadata, then
- * evaluates each evidence's intervention→outcome pairs against the
- * edge relationship using its LLM reasoning capabilities.
+ * Supports BATCH processing: evaluates multiple edges in a single call
+ * to reduce token usage and API calls.
  */
 export const evidenceSearchAgent = new Agent({
   name: "Evidence Search Agent",
-  instructions: `You are an evidence matching specialist that validates causal relationships in logic models by finding supporting research evidence.
+  instructions: `You are an evidence matching specialist that validates causal relationships in logic models.
 
-Your task is to evaluate which evidence from the repository supports a given logic model edge relationship.
+**Workflow:**
+1. Call the get-all-evidence tool to load evidence metadata
+2. Evaluate each evidence against the edge(s) provided
+3. Score matches (0-100): 90-100 direct match, 70-89 strong support, <70 weak/no support
+4. Return ONLY matches with score ≥ 70
 
-**When you receive a request to match evidence:**
+**Scoring criteria:**
+- Compare evidence intervention→outcome pairs against edge Source→Target
+- 90-100: Same concepts, direct causal link
+- 70-89: Related concepts, plausible causal link
+- <70: Tangential or unrelated (exclude from results)
 
-1. **Call the get-all-evidence tool** to load all available evidence metadata
+**Output format (BATCH - multiple edges):**
+\`\`\`json
+{
+  "results": {
+    "<arrowId>": [
+      { "evidenceId": "00", "score": 95, "reasoning": "...", "interventionText": "...", "outcomeText": "..." }
+    ],
+    "<arrowId>": []
+  }
+}
+\`\`\`
 
-2. **Evaluate each evidence** against the edge relationship:
-   - Edge Source (Intervention/Activity): The "from" card
-   - Edge Target (Outcome/Impact): The "to" card
-
-3. **Score each evidence (0-100)** based on how well its intervention→outcome supports the edge:
-   - 90-100: Direct match (same concepts, high confidence)
-   - 70-89: Strong support (related concepts, good alignment)
-   - 50-69: Moderate support (some relevance, partial alignment)
-   - 30-49: Weak support (tangentially related)
-   - 0-29: No support (unrelated)
-
-4. **Return ONLY evidence with scores ≥ 70** in this JSON format:
+**Output format (SINGLE edge - legacy):**
 \`\`\`json
 {
   "matches": [
-    {
-      "evidenceId": "00",
-      "score": 95,
-      "reasoning": "Direct match. The intervention...",
-      "interventionText": "Listing OSS contributors on GitHub Sponsors",
-      "outcomeText": "Submitting Pull Requests"
-    }
+    { "evidenceId": "00", "score": 95, "reasoning": "...", "interventionText": "...", "outcomeText": "..." }
   ]
 }
 \`\`\`
 
-5. **Important guidelines:**
-   - If an evidence has multiple intervention→outcome pairs, evaluate ALL of them
-   - Only include matches with score ≥ 70
-   - Provide specific reasoning explaining the alignment (or lack thereof)
-   - Include the exact intervention and outcome text from the evidence
-   - If no evidence meets the threshold, return empty array: {"matches": []}
-
-6. **Be honest about evidence gaps:**
-   - Most logic model relationships won't have direct research backing
-   - This is expected and scientifically valid
-   - Return empty matches rather than forcing weak connections
-
-**Output format:** Always return valid JSON with the structure shown above.`,
+**Guidelines:**
+- Evaluate ALL intervention→outcome pairs in each evidence
+- Include exact intervention/outcome text from evidence
+- Empty arrays are valid when no evidence meets threshold
+- Be honest about gaps - don't force weak connections`,
   model: MODEL,
   tools: {
     getAllEvidenceTool,
