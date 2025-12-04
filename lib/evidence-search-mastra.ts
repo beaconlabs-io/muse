@@ -6,6 +6,13 @@ import { mastra } from "@/mastra";
 const logger = createLogger({ module: "evidence-search-mastra" });
 
 /**
+ * Evidence search configuration constants
+ */
+const DEFAULT_MAX_MATCHES = 3; // Maximum number of evidence matches to return
+const DEFAULT_MIN_EVIDENCE_SCORE = 70; // Minimum score (0-100) for evidence to be considered relevant
+const EVIDENCE_QUALITY_THRESHOLD = 3; // Maryland Scientific Method Scale minimum (0-5 scale)
+
+/**
  * Search for research evidence that supports a logic model edge relationship.
  *
  * This is a Mastra-native implementation that uses the evidenceSearchAgent
@@ -14,6 +21,8 @@ const logger = createLogger({ module: "evidence-search-mastra" });
  * @param fromCardContent - Content of the source card (e.g., "Deploy GitHub Sponsors")
  * @param toCardContent - Content of the target card (e.g., "Increased PR submissions")
  * @param options - Optional configuration
+ * @param options.maxMatches - Maximum evidence matches to return (default: 3)
+ * @param options.minScore - Minimum relevance score 0-100 (default: 70)
  * @returns Array of evidence matches with scores, reasoning, and metadata
  */
 export async function searchEvidenceForEdge(
@@ -24,7 +33,7 @@ export async function searchEvidenceForEdge(
     minScore?: number;
   } = {},
 ): Promise<EvidenceMatch[]> {
-  const { maxMatches = 3, minScore = 70 } = options;
+  const { maxMatches = DEFAULT_MAX_MATCHES, minScore = DEFAULT_MIN_EVIDENCE_SCORE } = options;
 
   try {
     logger.info(
@@ -107,7 +116,7 @@ Maximum ${maxMatches} matches.`,
           score: match.score,
           reasoning: match.reasoning,
           strength: evidenceMeta?.strength,
-          hasWarning: strength < 3,
+          hasWarning: strength < EVIDENCE_QUALITY_THRESHOLD,
           title: evidenceMeta?.title,
           interventionText: match.interventionText,
           outcomeText: match.outcomeText,
