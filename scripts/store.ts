@@ -2,13 +2,16 @@ import { openai } from "@ai-sdk/openai";
 import { MDocument } from "@mastra/rag";
 import { embedMany } from "ai";
 import { getAllEvidence } from "@/lib/evidence";
+import { createLogger } from "@/lib/logger";
 import { mastra } from "@/mastra";
+
+const logger = createLogger({ module: "scripts:store" });
 
 // TODO: enable RAG search if evidence > 100
 // Load all evidence
-console.log("Loading all evidence...");
+logger.info("Loading all evidence...");
 const allEvidence = await getAllEvidence();
-console.log(`Loaded ${allEvidence.length} evidence files`);
+logger.info({ count: allEvidence.length }, "Evidence files loaded");
 
 // Get the vector store instance from Mastra
 const vectorStore = mastra.getVector("libSqlVector");
@@ -21,8 +24,12 @@ await vectorStore.createIndex({
 
 // Process each evidence file
 for (const evidence of allEvidence) {
-  console.log(
-    `Processing evidence ${evidence.meta.evidence_id}: ${evidence.meta.title || "Untitled"}`,
+  logger.info(
+    {
+      evidenceId: evidence.meta.evidence_id,
+      title: evidence.meta.title || "Untitled",
+    },
+    "Processing evidence",
   );
 
   // Create document and chunk it
@@ -34,7 +41,7 @@ for (const evidence of allEvidence) {
     separators: ["\n\n", "\n", " "],
   });
 
-  console.log(`  - Created ${chunks.length} chunks`);
+  logger.debug({ chunksCount: chunks.length }, "Chunks created");
 
   // Generate embeddings
   const { embeddings } = await embedMany({
@@ -42,7 +49,7 @@ for (const evidence of allEvidence) {
     values: chunks.map((chunk) => chunk.text),
   });
 
-  console.log(`  - Generated ${embeddings.length} embeddings`);
+  logger.debug({ embeddingsCount: embeddings.length }, "Embeddings generated");
 
   // Store embeddings with metadata
   await vectorStore.upsert({
@@ -58,7 +65,7 @@ for (const evidence of allEvidence) {
     })),
   });
 
-  console.log(`  - Stored in vector database`);
+  logger.debug("Stored in vector database");
 }
 
-console.log("\n✅ All evidence stored successfully!");
+logger.info("All evidence stored successfully");

@@ -1,6 +1,9 @@
 import type { EvidenceMatch } from "@/types";
 import { getAllEvidenceMeta } from "@/lib/evidence";
+import { createLogger } from "@/lib/logger";
 import { mastra } from "@/mastra";
+
+const logger = createLogger({ module: "evidence-search-mastra" });
 
 /**
  * Search for research evidence that supports a logic model edge relationship.
@@ -24,14 +27,21 @@ export async function searchEvidenceForEdge(
   const { maxMatches = 3, minScore = 70 } = options;
 
   try {
-    console.log(`\n[Evidence Search] Using evidenceSearchAgent`);
-    console.log(`Edge: "${fromCardContent}" → "${toCardContent}"`);
+    logger.info(
+      {
+        from: fromCardContent,
+        to: toCardContent,
+        maxMatches,
+        minScore,
+      },
+      "Searching evidence for edge",
+    );
 
     // Get the agent from Mastra
     const agent = mastra.getAgent("evidenceSearchAgent");
 
     if (!agent) {
-      console.error("[Evidence Search] evidenceSearchAgent not found in Mastra");
+      logger.error("evidenceSearchAgent not found in Mastra");
       return [];
     }
 
@@ -49,7 +59,12 @@ Maximum ${maxMatches} matches.`,
       },
     ]);
 
-    console.log(`[Evidence Search] Agent response received (${result.text?.length || 0} chars)`);
+    logger.debug(
+      {
+        responseLength: result.text?.length || 0,
+      },
+      "Agent response received",
+    );
 
     // Parse the JSON response from the agent
     const responseText = result.text || "";
@@ -65,12 +80,17 @@ Maximum ${maxMatches} matches.`,
         parsedMatches = parsed.matches || [];
       }
     } catch (parseError) {
-      console.error("[Evidence Search] Failed to parse agent JSON response:", parseError);
-      console.log("[Evidence Search] Response preview:", responseText.slice(0, 500));
+      logger.error(
+        {
+          error: parseError instanceof Error ? parseError.message : String(parseError),
+          responsePreview: responseText.slice(0, 500),
+        },
+        "Failed to parse agent JSON response",
+      );
       return [];
     }
 
-    console.log(`[Evidence Search] Parsed ${parsedMatches.length} matches from agent`);
+    logger.debug({ matchesCount: parsedMatches.length }, "Parsed matches from agent");
 
     // Load evidence metadata for enrichment
     const allEvidenceMeta = await getAllEvidenceMeta();
@@ -96,11 +116,21 @@ Maximum ${maxMatches} matches.`,
       .sort((a, b) => b.score - a.score)
       .slice(0, maxMatches);
 
-    console.log(`[Evidence Search] Returning ${enrichedMatches.length} enriched matches`);
+    logger.info(
+      {
+        enrichedMatchesCount: enrichedMatches.length,
+      },
+      "Evidence search completed",
+    );
 
     return enrichedMatches;
   } catch (error) {
-    console.error("[Evidence Search] Error:", error);
+    logger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      "Evidence search failed",
+    );
     return [];
   }
 }
