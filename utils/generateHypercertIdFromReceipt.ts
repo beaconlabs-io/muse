@@ -7,7 +7,6 @@ export const generateHypercertIdFromReceipt = (
   chainId: number,
 ): string => {
   if (!receipt || !receipt.logs) {
-    console.log("No receipt found");
     return "";
   }
 

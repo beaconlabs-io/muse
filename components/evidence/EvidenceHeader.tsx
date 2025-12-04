@@ -1,10 +1,8 @@
-import React from "react";
-
 interface EvidenceHeaderProps {
-  title: string;
-  date: string;
-  author: string;
-  version?: string;
+  title: string | undefined;
+  date: string | undefined;
+  author: string | undefined;
+  version?: string | undefined;
 }
 
 export function EvidenceHeader({ title, date, author, version }: EvidenceHeaderProps) {

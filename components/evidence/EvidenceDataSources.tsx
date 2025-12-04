@@ -1,7 +1,7 @@
 import React from "react";
 
 interface EvidenceDataSourcesProps {
-  datasets: string[];
+  datasets: string[] | undefined;
 }
 
 export function EvidenceDataSources({ datasets }: EvidenceDataSourcesProps) {

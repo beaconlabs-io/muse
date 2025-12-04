@@ -9,6 +9,7 @@ export default [
       "node_modules/**",
       "dist/**",
       ".next/**",
+      ".mastra/**",
       "public/**",
       "**/components/ui/**",
     ],

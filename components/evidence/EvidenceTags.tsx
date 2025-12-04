@@ -1,7 +1,7 @@
 import React from "react";
 
 interface EvidenceTagsProps {
-  tags: string[];
+  tags: string[] | undefined;
 }
 
 export function EvidenceTags({ tags }: EvidenceTagsProps) {
