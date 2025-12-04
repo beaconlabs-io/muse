@@ -2,6 +2,7 @@ import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { logicModelAgent } from "../agents/logic-model-agent";
 import { searchEvidenceForEdge } from "@/lib/evidence-search-mastra";
+import { createLogger } from "@/lib/logger";
 import {
   CanvasDataSchema,
   EvidenceMatchSchema,
@@ -10,6 +11,8 @@ import {
   type Arrow,
   type EvidenceMatch,
 } from "@/types";
+
+const logger = createLogger({ module: "workflow:logic-model-with-evidence" });
 /**
  * Workflow: Generate Logic Model with Evidence Search
  *
@@ -31,8 +34,7 @@ const generateLogicModelStep = createStep({
   execute: async ({ inputData }) => {
     const { intent } = inputData;
 
-    console.log("[Workflow] Step 1: Generating logic model structure...");
-    console.log(`[Workflow] Intent: "${intent}"`);
+    logger.info({ intent }, "Step 1: Generating logic model structure");
 
     // Helper function with retry logic for tool validation errors
     const generateWithRetry = async (isRetry = false) => {
@@ -51,7 +53,7 @@ Example metric: { "name": "Number of participants", "measurementMethod": "Survey
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (!isRetry && errorMessage.includes("Tool input validation failed")) {
-          console.warn("[Workflow] ⚠️ Tool validation failed, retrying with stricter prompt...");
+          logger.warn("Tool validation failed, retrying with stricter prompt");
           return generateWithRetry(true);
         }
         throw error;
@@ -62,50 +64,69 @@ Example metric: { "name": "Number of participants", "measurementMethod": "Survey
     const result = await generateWithRetry();
 
     // Debug logging
-    console.log("[Workflow] Agent result:", {
-      text: result.text?.slice(0, 200),
-      toolResultsLength: result.toolResults?.length || 0,
-      hasToolResults: !!result.toolResults,
-    });
+    logger.debug(
+      {
+        textPreview: result.text?.slice(0, 200),
+        toolResultsLength: result.toolResults?.length || 0,
+        hasToolResults: !!result.toolResults,
+      },
+      "Agent result received",
+    );
 
     // Parse the tool result to extract canvas data
     if (!result.toolResults || result.toolResults.length === 0) {
-      console.error("[Workflow] ✗ Agent did not call any tools");
-      console.error("[Workflow] Agent response text:", result.text?.slice(0, 500));
+      logger.error(
+        {
+          responseTextPreview: result.text?.slice(0, 500),
+        },
+        "Agent did not call any tools",
+      );
       throw new Error("Agent did not call logicModelTool");
     }
 
-    console.log(
-      `[Workflow] Found ${result.toolResults.length} tool result(s), extracting canvas data...`,
+    logger.debug(
+      {
+        toolResultsCount: result.toolResults.length,
+      },
+      "Extracting canvas data from tool results",
     );
 
     const toolResult = result.toolResults[0] as any;
-    console.log("[Workflow] Tool result structure:", {
-      toolName: toolResult.toolName,
-      hasPayload: !!toolResult.payload,
-      hasResult: !!toolResult.payload?.result,
-      hasCanvasData: !!toolResult.payload?.result?.canvasData,
-    });
+    logger.debug(
+      {
+        toolName: toolResult.toolName,
+        hasPayload: !!toolResult.payload,
+        hasResult: !!toolResult.payload?.result,
+        hasCanvasData: !!toolResult.payload?.result?.canvasData,
+      },
+      "Tool result structure",
+    );
 
     const toolReturnValue = toolResult.payload?.result;
-    console.log("[Workflow] Tool return value:", JSON.stringify(toolReturnValue, null, 2));
+    logger.debug({ toolReturnValue }, "Tool return value");
     const canvasData: CanvasData = toolReturnValue?.canvasData;
 
     if (!canvasData || !canvasData.cards || !canvasData.arrows) {
-      console.error("[Workflow] ✗ Failed to generate logic model structure");
-      console.error("[Workflow] Canvas data status:", {
-        exists: !!canvasData,
-        hasCards: !!canvasData?.cards,
-        hasArrows: !!canvasData?.arrows,
-      });
-      console.error("[Workflow] Full tool result:", JSON.stringify(toolResult, null, 2));
+      logger.error(
+        {
+          canvasDataExists: !!canvasData,
+          hasCards: !!canvasData?.cards,
+          hasArrows: !!canvasData?.arrows,
+          toolResult,
+        },
+        "Failed to generate logic model structure",
+      );
       throw new Error(
         "Failed to generate logic model. The agent did not return valid canvas data.",
       );
     }
 
-    console.log(
-      `[Workflow] ✓ Generated ${canvasData.cards.length} cards and ${canvasData.arrows.length} arrows`,
+    logger.info(
+      {
+        cardsCount: canvasData.cards.length,
+        arrowsCount: canvasData.arrows.length,
+      },
+      "Logic model structure generated successfully",
     );
 
     return {
@@ -127,8 +148,11 @@ const searchEvidenceStep = createStep({
   execute: async ({ inputData }) => {
     const { canvasData } = inputData;
 
-    console.log(
-      `[Workflow] Step 2: Searching evidence for ${canvasData.arrows.length} arrows in PARALLEL...`,
+    logger.info(
+      {
+        arrowsCount: canvasData.arrows.length,
+      },
+      "Step 2: Searching evidence in parallel",
     );
 
     // Create a map of card IDs to card content for quick lookup
@@ -143,8 +167,13 @@ const searchEvidenceStep = createStep({
       const toCard = cardMap.get(arrow.toCardId);
 
       if (!fromCard || !toCard) {
-        console.warn(
-          `[Workflow] Arrow ${arrow.id}: Missing cards (from: ${!!fromCard}, to: ${!!toCard})`,
+        logger.warn(
+          {
+            arrowId: arrow.id,
+            hasFromCard: !!fromCard,
+            hasToCard: !!toCard,
+          },
+          "Arrow missing cards",
         );
         return {
           arrowId: arrow.id,
@@ -159,20 +188,34 @@ const searchEvidenceStep = createStep({
         const toContent = toCard.description
           ? `${toCard.title}. ${toCard.description}`
           : toCard.title;
-        console.log(
-          `[Workflow] Searching arrow ${arrow.id.substring(0, 20)}...: ` +
-            `"${fromContent.substring(0, 40)}..." → "${toContent.substring(0, 40)}..."`,
+        logger.debug(
+          {
+            arrowId: arrow.id.substring(0, 20),
+            fromPreview: fromContent.substring(0, 40),
+            toPreview: toContent.substring(0, 40),
+          },
+          "Searching evidence for arrow",
         );
         const matches = await searchEvidenceForEdge(fromContent, toContent);
-        console.log(
-          `[Workflow] ✓ Arrow ${arrow.id.substring(0, 20)}...: Found ${matches.length} matches`,
+        logger.debug(
+          {
+            arrowId: arrow.id.substring(0, 20),
+            matchesCount: matches.length,
+          },
+          "Evidence search completed for arrow",
         );
         return {
           arrowId: arrow.id,
           matches,
         };
       } catch (error) {
-        console.error(`[Workflow] ❌ Arrow ${arrow.id}: Search failed:`, error);
+        logger.error(
+          {
+            arrowId: arrow.id,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          "Evidence search failed for arrow",
+        );
         return {
           arrowId: arrow.id,
           matches: [] as EvidenceMatch[],
@@ -192,9 +235,12 @@ const searchEvidenceStep = createStep({
 
     // Calculate summary stats for logging
     const totalEvidenceMatches = evidenceResults.reduce((sum, r) => sum + r.matches.length, 0);
-    console.log(
-      `[Workflow] ✓ Evidence search completed ` +
-        `(${totalEvidenceMatches} total matches across ${canvasData.arrows.length} arrows)`,
+    logger.info(
+      {
+        totalMatches: totalEvidenceMatches,
+        arrowsCount: canvasData.arrows.length,
+      },
+      "Evidence search completed",
     );
 
     return {
@@ -217,7 +263,7 @@ const enrichCanvasStep = createStep({
   execute: async ({ inputData }) => {
     const { canvasData, evidenceByArrow } = inputData;
 
-    console.log("[Workflow] Step 3: Enriching canvas data with evidence...");
+    logger.info("Step 3: Enriching canvas data with evidence");
 
     // Create enriched arrows with evidence metadata
     const enrichedArrows: Arrow[] = canvasData.arrows.map((arrow: Arrow) => {
@@ -236,7 +282,7 @@ const enrichCanvasStep = createStep({
       arrows: enrichedArrows,
     };
 
-    console.log("[Workflow] ✅ Workflow complete");
+    logger.info("Workflow completed successfully");
 
     return {
       canvasData: enrichedCanvasData,
