@@ -69,12 +69,12 @@ export function CanvasToolbar({
                 Export Image
               </DropdownMenuItem>
             )}
-            {process.env.NODE_ENV === "development" && onExportStandardizedJSON && (
-              <DropdownMenuItem onClick={onExportStandardizedJSON} className="cursor-pointer">
-                <Download className="mr-2 h-4 w-4" />
-                Export JSON
-              </DropdownMenuItem>
-            )}
+
+            <DropdownMenuItem onClick={onExportStandardizedJSON} className="cursor-pointer">
+              <Download className="mr-2 h-4 w-4" />
+              Export JSON
+            </DropdownMenuItem>
+
             {onClearAllData && <DropdownMenuSeparator />}
             {onClearAllData && (
               <DropdownMenuItem
