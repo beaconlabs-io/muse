@@ -10,12 +10,15 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
+  getNodesBounds,
+  getViewportForBounds,
   type Node,
   type Edge,
   type Connection,
   type NodeTypes,
   type EdgeTypes,
 } from "@xyflow/react";
+import { toPng } from "html-to-image";
 import { useAccount } from "wagmi";
 import "@xyflow/react/dist/style.css";
 import { AddLogicSheet } from "./AddLogicSheet";
@@ -488,6 +491,43 @@ export function ReactFlowCanvas({
     URL.revokeObjectURL(url);
   }, [nodes, edges, cardMetrics]);
 
+  const exportAsImage = useCallback(() => {
+    const nodesBounds = getNodesBounds(nodes);
+    const imageWidth = nodesBounds.width;
+    const imageHeight = nodesBounds.height;
+    const viewport = getViewportForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2, 0.2);
+
+    const viewportElement = document.querySelector(".react-flow__viewport") as HTMLElement;
+
+    if (!viewportElement) {
+      console.error("React Flow viewport not found");
+      return;
+    }
+
+    toPng(viewportElement, {
+      backgroundColor: "#f9fafb",
+      width: imageWidth,
+      height: imageHeight,
+      style: {
+        width: `${imageWidth}px`,
+        height: `${imageHeight}px`,
+        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+      },
+    })
+      .then((dataUrl) => {
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = `logic-model-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      })
+      .catch((error) => {
+        console.error("Failed to export image:", error);
+        alert("Failed to export image. Please try again.");
+      });
+  }, [nodes]);
+
   const clearAllData = useCallback(() => {
     if (
       window.confirm(
@@ -574,6 +614,7 @@ export function ReactFlowCanvas({
         onAddCard={addCard}
         onSaveLogicModel={openHypercertDialog}
         onExportStandardizedJSON={exportAsJSON}
+        onExportImage={exportAsImage}
         onClearAllData={clearAllData}
         onLoadGeneratedCanvas={loadGeneratedCanvas}
       />
