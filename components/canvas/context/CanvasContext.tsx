@@ -7,6 +7,7 @@ import {
   useMemo,
   useCallback,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -155,17 +156,37 @@ export function CanvasProvider({
     return () => clearTimeout(timeoutId);
   }, [nodes, edges, cardMetrics, disableLocalStorage]);
 
+  // 5.5. Refs to access current state without triggering re-renders
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  const cardMetricsRef = useRef(cardMetrics);
+  const disableLocalStorageRef = useRef(disableLocalStorage);
+
+  // Keep refs in sync with state (single effect to minimize effects)
+  useEffect(() => {
+    nodesRef.current = nodes;
+    edgesRef.current = edges;
+    cardMetricsRef.current = cardMetrics;
+    disableLocalStorageRef.current = disableLocalStorage;
+  }, [nodes, edges, cardMetrics, disableLocalStorage]);
+
   // 6. Callback factory (memoized with useCallback)
   const createNodeCallbacks = useCallback(
     (nodeId: string) => ({
       onContentChange: (title: string, description?: string) => {
-        setNodes((nds) =>
-          nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, title, description } } : n)),
+        setNodes((nds: Node<CardNodeData>[]) =>
+          nds.map((n: Node<CardNodeData>) =>
+            n.id === nodeId ? { ...n, data: { ...n.data, title, description } } : n,
+          ),
         );
       },
       onDeleteCard: () => {
-        setNodes((nds) => nds.filter((n) => n.id !== nodeId));
-        setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+        setNodes((nds: Node<CardNodeData>[]) =>
+          nds.filter((n: Node<CardNodeData>) => n.id !== nodeId),
+        );
+        setEdges((eds: Edge[]) =>
+          eds.filter((edge: Edge) => edge.source !== nodeId && edge.target !== nodeId),
+        );
         setCardMetrics((prev) => {
           const newMetrics = { ...prev };
           delete newMetrics[nodeId];
@@ -180,11 +201,11 @@ export function CanvasProvider({
     [setNodes, setEdges, setCardMetrics],
   );
 
-  // 7. State-reading callbacks (depend on current state values)
+  // 7. State-reading callbacks (use refs to avoid dependency on state)
   const saveLogicModel = useCallback(() => {
     try {
-      const cards = nodesToCards(nodes);
-      const arrows = edgesToArrows(edges);
+      const cards = nodesToCards(nodesRef.current);
+      const arrows = edgesToArrows(edgesRef.current);
 
       const id = `canvas-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
       const now = new Date().toISOString();
@@ -195,7 +216,7 @@ export function CanvasProvider({
         description: "Logic model created with Muse",
         cards,
         arrows,
-        cardMetrics,
+        cardMetrics: cardMetricsRef.current,
         metadata: {
           createdAt: now,
           version: "1.0.0",
@@ -203,7 +224,7 @@ export function CanvasProvider({
         },
       };
 
-      saveCanvasState({ cards, arrows, cardMetrics });
+      saveCanvasState({ cards, arrows, cardMetrics: cardMetricsRef.current });
       sessionStorage.setItem("currentCanvasData", JSON.stringify(canvasData));
 
       router.push("/canvas/mint-hypercert");
@@ -211,16 +232,16 @@ export function CanvasProvider({
       console.error("Failed to prepare canvas data:", error);
       alert("Failed to prepare canvas data. Please try again.");
     }
-  }, [nodes, edges, cardMetrics, address, router]);
+  }, [address, router]);
 
   const exportAsJSON = useCallback(() => {
-    const cards = nodesToCards(nodes);
-    const arrows = edgesToArrows(edges);
+    const cards = nodesToCards(nodesRef.current);
+    const arrows = edgesToArrows(edgesRef.current);
 
     const rawData = {
       cards,
       arrows,
-      cardMetrics,
+      cardMetrics: cardMetricsRef.current,
     };
 
     const jsonData = JSON.stringify(rawData, null, 2);
@@ -234,10 +255,10 @@ export function CanvasProvider({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [nodes, edges, cardMetrics]);
+  }, []);
 
   const exportAsImage = useCallback(() => {
-    const nodesBounds = getNodesBounds(nodes);
+    const nodesBounds = getNodesBounds(nodesRef.current);
     const imageWidth = nodesBounds.width;
     const imageHeight = nodesBounds.height;
     const viewport = getViewportForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2, 0.2);
@@ -271,7 +292,7 @@ export function CanvasProvider({
         console.error("Failed to export image:", error);
         alert("Failed to export image. Please try again.");
       });
-  }, [nodes]);
+  }, []);
 
   const clearAllData = useCallback(() => {
     if (
@@ -283,12 +304,12 @@ export function CanvasProvider({
       setEdges([]);
       setCardMetrics({});
 
-      if (!disableLocalStorage && typeof window !== "undefined") {
+      if (!disableLocalStorageRef.current && typeof window !== "undefined") {
         localStorage.removeItem("canvasState");
         sessionStorage.removeItem("currentCanvasData");
       }
     }
-  }, [setNodes, setEdges, setCardMetrics, disableLocalStorage]);
+  }, [setNodes, setEdges, setCardMetrics]);
 
   // 8. Create operations (memoized - now only depends on stable setters)
   const operations = useMemo(
@@ -300,15 +321,15 @@ export function CanvasProvider({
         setEditingNodeId,
         setEditSheetOpen,
         createNodeCallbacks,
-        disableLocalStorage,
+        disableLocalStorage: disableLocalStorageRef.current,
       }),
-    [setNodes, setEdges, setCardMetrics, createNodeCallbacks, disableLocalStorage],
+    [setNodes, setEdges, setCardMetrics, createNodeCallbacks],
   );
 
   // 8. Derived state: editingNodeData (memoized)
   const editingNodeData = useMemo(() => {
     if (!editingNodeId) return null;
-    const node = nodes.find((n) => n.id === editingNodeId);
+    const node = nodes.find((n: Node<CardNodeData>) => n.id === editingNodeId);
     if (!node) return null;
     return {
       type: node.data.type || getTypeFromColor(node.data.color),
