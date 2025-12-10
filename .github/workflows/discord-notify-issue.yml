@@ -4,15 +4,36 @@ on:
   issues:
     types: [opened]
 
+permissions:
+  issues: read
+
 jobs:
   notify_issue:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Send Issue Notification to Discord
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          curl -H "Content-Type: application/json" \
+          PAYLOAD=$(jq -n \
+            --arg title "$ISSUE_TITLE" \
+            --arg author "$ISSUE_AUTHOR" \
+            --arg url "$ISSUE_URL" \
+            '{content: "📝 **New Issue Created!**\n**Title:** \($title)\n**Author:** @\($author)\n**Link:** \($url)"}')
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Content-Type: application/json" \
             -X POST \
-            -d "{
-              \"content\": \"📝 **New Issue Created!**\n**Title:** ${{ github.event.issue.title }}\n**Author:** @${{ github.event.issue.user.login }}\n**Link:** ${{ github.event.issue.html_url }}\"
-            }" \
-            ${{ secrets.DISCORD_WEBHOOK_URL }}
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK_URL")
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Successfully sent notification to Discord (HTTP $HTTP_CODE)"
+          else
+            echo "❌ Failed to send notification to Discord (HTTP $HTTP_CODE)"
+            exit 1
+          fi
