@@ -108,22 +108,6 @@ export function getTypeFromColor(color: string): string {
   return colorMap[color] || "activities";
 }
 
-/**
- * Save canvas state to localStorage
- */
-export const saveCanvasState = (state: {
-  cards: Card[];
-  arrows: Arrow[];
-  cardMetrics: Record<string, CardMetrics[]>;
-}) => {
-  try {
-    if (typeof window === "undefined") return;
-    localStorage.setItem("canvasState", JSON.stringify(state));
-  } catch (error) {
-    console.error("Failed to save canvas state:", error);
-  }
-};
-
 // =============================================================================
 // CANVAS OPERATIONS FACTORY
 // =============================================================================
