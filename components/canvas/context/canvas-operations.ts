@@ -1,15 +1,8 @@
-import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { addEdge, getNodesBounds, getViewportForBounds } from "@xyflow/react";
-import { toPng } from "html-to-image";
+import { addEdge } from "@xyflow/react";
 import type { CardNodeData } from "@/components/canvas/CardNode";
 import type { Node, Edge, Connection } from "@xyflow/react";
-import {
-  cardsToNodes,
-  nodesToCards,
-  arrowsToEdges,
-  edgesToArrows,
-} from "@/lib/canvas/react-flow-utils";
-import { Card, Arrow, TYPE_COLOR_MAP, CardMetrics, CanvasData } from "@/types";
+import { cardsToNodes, arrowsToEdges } from "@/lib/canvas/react-flow-utils";
+import { Card, Arrow, TYPE_COLOR_MAP, CardMetrics } from "@/types";
 
 // =============================================================================
 // TYPES
@@ -27,13 +20,8 @@ export interface CreateOperationsParams {
   setCardMetrics: React.Dispatch<React.SetStateAction<Record<string, CardMetrics[]>>>;
   setEditingNodeId: React.Dispatch<React.SetStateAction<string | null>>;
   setEditSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  nodes: Node<CardNodeData>[];
-  edges: Edge[];
-  cardMetrics: Record<string, CardMetrics[]>;
   createNodeCallbacks: (nodeId: string) => NodeCallbacks;
   disableLocalStorage: boolean;
-  router: AppRouterInstance;
-  address: `0x${string}` | undefined;
 }
 
 export interface CardFormData {
@@ -147,13 +135,7 @@ export function createCanvasOperations(params: CreateOperationsParams) {
     setCardMetrics,
     setEditingNodeId,
     setEditSheetOpen,
-    nodes,
-    edges,
-    cardMetrics,
     createNodeCallbacks,
-    disableLocalStorage,
-    router,
-    address,
   } = params;
 
   /**
@@ -285,127 +267,6 @@ export function createCanvasOperations(params: CreateOperationsParams) {
   };
 
   /**
-   * Save logic model and navigate to mint hypercert page
-   */
-  const saveLogicModel = () => {
-    try {
-      const cards = nodesToCards(nodes);
-      const arrows = edgesToArrows(edges);
-
-      const id = `canvas-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-      const now = new Date().toISOString();
-
-      const canvasData: CanvasData = {
-        id,
-        title: `Logic Model ${new Date().toLocaleDateString()}`,
-        description: "Logic model created with Muse",
-        cards,
-        arrows,
-        cardMetrics,
-        metadata: {
-          createdAt: now,
-          version: "1.0.0",
-          author: address,
-        },
-      };
-
-      saveCanvasState({ cards, arrows, cardMetrics });
-      sessionStorage.setItem("currentCanvasData", JSON.stringify(canvasData));
-
-      router.push("/canvas/mint-hypercert");
-    } catch (error) {
-      console.error("Failed to prepare canvas data:", error);
-      alert("Failed to prepare canvas data. Please try again.");
-    }
-  };
-
-  /**
-   * Export canvas as JSON file
-   */
-  const exportAsJSON = () => {
-    const cards = nodesToCards(nodes);
-    const arrows = edgesToArrows(edges);
-
-    const rawData = {
-      cards,
-      arrows,
-      cardMetrics,
-    };
-
-    const jsonData = JSON.stringify(rawData, null, 2);
-    const blob = new Blob([jsonData], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `canvas-raw-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  /**
-   * Export canvas as PNG image
-   */
-  const exportAsImage = () => {
-    const nodesBounds = getNodesBounds(nodes);
-    const imageWidth = nodesBounds.width;
-    const imageHeight = nodesBounds.height;
-    const viewport = getViewportForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2, 0.2);
-
-    const viewportElement = document.querySelector(".react-flow__viewport") as HTMLElement;
-
-    if (!viewportElement) {
-      console.error("React Flow viewport not found");
-      return;
-    }
-
-    toPng(viewportElement, {
-      backgroundColor: "#f9fafb",
-      width: imageWidth,
-      height: imageHeight,
-      style: {
-        width: `${imageWidth}px`,
-        height: `${imageHeight}px`,
-        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
-      },
-    })
-      .then((dataUrl) => {
-        const a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = `logic-model-${Date.now()}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      })
-      .catch((error) => {
-        console.error("Failed to export image:", error);
-        alert("Failed to export image. Please try again.");
-      });
-  };
-
-  /**
-   * Clear all canvas data
-   */
-  const clearAllData = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to clear all canvas data? This action cannot be undone.",
-      )
-    ) {
-      setNodes([]);
-      setEdges([]);
-      setCardMetrics({});
-
-      if (!disableLocalStorage && typeof window !== "undefined") {
-        localStorage.removeItem("canvasState");
-        sessionStorage.removeItem("currentLogicModel");
-      }
-    }
-  };
-
-  /**
    * Load generated canvas data from agent
    */
   const loadGeneratedCanvas = (data: LoadCanvasData) => {
@@ -455,10 +316,6 @@ export function createCanvasOperations(params: CreateOperationsParams) {
     deleteCard,
     openEditSheet,
     closeEditSheet,
-    saveLogicModel,
-    exportAsJSON,
-    exportAsImage,
-    clearAllData,
     loadGeneratedCanvas,
     onConnect,
   };

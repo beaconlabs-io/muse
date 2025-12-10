@@ -10,7 +10,8 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { useNodesState, useEdgesState } from "@xyflow/react";
+import { useNodesState, useEdgesState, getNodesBounds, getViewportForBounds } from "@xyflow/react";
+import { toPng } from "html-to-image";
 import { useAccount } from "wagmi";
 import type { CardNodeData } from "@/components/canvas/CardNode";
 import {
@@ -18,7 +19,7 @@ import {
   getTypeFromColor,
   type CanvasOperations,
 } from "./canvas-operations";
-import type { Card, Arrow, CardMetrics } from "@/types";
+import type { Card, Arrow, CardMetrics, CanvasData } from "@/types";
 import type { OnNodesChange, OnEdgesChange, Node, Edge } from "@xyflow/react";
 import {
   cardsToNodes,
@@ -57,10 +58,20 @@ export interface CanvasStateContextValue {
 }
 
 /**
- * Operations context value (stable, never changes)
- * Includes all operations from createCanvasOperations + React Flow setters
+ * Operations that read current state
  */
-export interface CanvasOperationsContextValue extends CanvasOperations {
+export interface StateReadingOperations {
+  saveLogicModel: () => void;
+  exportAsJSON: () => void;
+  exportAsImage: () => void;
+  clearAllData: () => void;
+}
+
+/**
+ * Operations context value (stable, never changes)
+ * Includes all operations from createCanvasOperations + React Flow setters + state-reading operations
+ */
+export interface CanvasOperationsContextValue extends CanvasOperations, StateReadingOperations {
   setNodes: React.Dispatch<React.SetStateAction<Node<CardNodeData>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   onNodesChange: OnNodesChange<Node<CardNodeData>>;
@@ -172,7 +183,117 @@ export function CanvasProvider({
     [setNodes, setEdges, setCardMetrics],
   );
 
-  // 7. Create operations (memoized)
+  // 7. State-reading callbacks (depend on current state values)
+  const saveLogicModel = useCallback(() => {
+    try {
+      const cards = nodesToCards(nodes);
+      const arrows = edgesToArrows(edges);
+
+      const id = `canvas-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      const now = new Date().toISOString();
+
+      const canvasData: CanvasData = {
+        id,
+        title: `Logic Model ${new Date().toLocaleDateString()}`,
+        description: "Logic model created with Muse",
+        cards,
+        arrows,
+        cardMetrics,
+        metadata: {
+          createdAt: now,
+          version: "1.0.0",
+          author: address,
+        },
+      };
+
+      saveCanvasState({ cards, arrows, cardMetrics });
+      sessionStorage.setItem("currentCanvasData", JSON.stringify(canvasData));
+
+      router.push("/canvas/mint-hypercert");
+    } catch (error) {
+      console.error("Failed to prepare canvas data:", error);
+      alert("Failed to prepare canvas data. Please try again.");
+    }
+  }, [nodes, edges, cardMetrics, address, router]);
+
+  const exportAsJSON = useCallback(() => {
+    const cards = nodesToCards(nodes);
+    const arrows = edgesToArrows(edges);
+
+    const rawData = {
+      cards,
+      arrows,
+      cardMetrics,
+    };
+
+    const jsonData = JSON.stringify(rawData, null, 2);
+    const blob = new Blob([jsonData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `canvas-raw-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [nodes, edges, cardMetrics]);
+
+  const exportAsImage = useCallback(() => {
+    const nodesBounds = getNodesBounds(nodes);
+    const imageWidth = nodesBounds.width;
+    const imageHeight = nodesBounds.height;
+    const viewport = getViewportForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2, 0.2);
+
+    const viewportElement = document.querySelector(".react-flow__viewport") as HTMLElement;
+
+    if (!viewportElement) {
+      console.error("React Flow viewport not found");
+      return;
+    }
+
+    toPng(viewportElement, {
+      backgroundColor: "#f9fafb",
+      width: imageWidth,
+      height: imageHeight,
+      style: {
+        width: `${imageWidth}px`,
+        height: `${imageHeight}px`,
+        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+      },
+    })
+      .then((dataUrl) => {
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = `logic-model-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      })
+      .catch((error) => {
+        console.error("Failed to export image:", error);
+        alert("Failed to export image. Please try again.");
+      });
+  }, [nodes]);
+
+  const clearAllData = useCallback(() => {
+    if (
+      window.confirm(
+        "Are you sure you want to clear all canvas data? This action cannot be undone.",
+      )
+    ) {
+      setNodes([]);
+      setEdges([]);
+      setCardMetrics({});
+
+      if (!disableLocalStorage && typeof window !== "undefined") {
+        localStorage.removeItem("canvasState");
+        sessionStorage.removeItem("currentCanvasData");
+      }
+    }
+  }, [setNodes, setEdges, setCardMetrics, disableLocalStorage]);
+
+  // 8. Create operations (memoized - now only depends on stable setters)
   const operations = useMemo(
     () =>
       createCanvasOperations({
@@ -181,26 +302,10 @@ export function CanvasProvider({
         setCardMetrics,
         setEditingNodeId,
         setEditSheetOpen,
-        nodes,
-        edges,
-        cardMetrics,
         createNodeCallbacks,
         disableLocalStorage,
-        router,
-        address,
       }),
-    [
-      setNodes,
-      setEdges,
-      setCardMetrics,
-      nodes,
-      edges,
-      cardMetrics,
-      createNodeCallbacks,
-      disableLocalStorage,
-      router,
-      address,
-    ],
+    [setNodes, setEdges, setCardMetrics, createNodeCallbacks, disableLocalStorage],
   );
 
   // 8. Derived state: editingNodeData (memoized)
@@ -237,8 +342,22 @@ export function CanvasProvider({
       setEdges,
       onNodesChange,
       onEdgesChange,
+      saveLogicModel,
+      exportAsJSON,
+      exportAsImage,
+      clearAllData,
     }),
-    [operations, setNodes, setEdges, onNodesChange, onEdgesChange],
+    [
+      operations,
+      setNodes,
+      setEdges,
+      onNodesChange,
+      onEdgesChange,
+      saveLogicModel,
+      exportAsJSON,
+      exportAsImage,
+      clearAllData,
+    ],
   );
 
   return (
