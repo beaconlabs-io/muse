@@ -1,11 +1,7 @@
 import { addEdge } from "@xyflow/react";
 import type { CardNodeData } from "@/components/canvas/CardNode";
 import type { Node, Edge, Connection } from "@xyflow/react";
-import {
-  cardsToNodes,
-  arrowsToEdges,
-  calculateEvidenceCounts,
-} from "@/lib/canvas/react-flow-utils";
+import { cardsToNodes, arrowsToEdges } from "@/lib/canvas/react-flow-utils";
 import { Card, Arrow, TYPE_COLOR_MAP, CardMetrics } from "@/types";
 
 // =============================================================================
@@ -258,9 +254,7 @@ export function createCanvasOperations(params: CreateOperationsParams) {
    * Load generated canvas data from agent
    */
   const loadGeneratedCanvas = (data: LoadCanvasData) => {
-    // Calculate evidence counts before converting to nodes
-    const evidenceCounts = calculateEvidenceCounts(data.cards, data.arrows);
-    const newNodes = cardsToNodes(data.cards, evidenceCounts);
+    const newNodes = cardsToNodes(data.cards);
     const newEdges = arrowsToEdges(data.arrows);
 
     // Add callbacks to nodes

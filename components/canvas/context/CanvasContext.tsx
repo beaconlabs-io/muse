@@ -26,7 +26,6 @@ import {
   nodesToCards,
   arrowsToEdges,
   edgesToArrows,
-  calculateEvidenceCounts,
 } from "@/lib/canvas/react-flow-utils";
 import { saveCanvasState, loadCanvasState } from "@/lib/canvas/storage";
 
@@ -121,10 +120,8 @@ export function CanvasProvider({
   // 2. Initialize React Flow state
   const initialNodes = useMemo(() => {
     const cards = savedState?.cards || initialCards;
-    const arrows = savedState?.arrows || initialArrows;
-    const evidenceCounts = calculateEvidenceCounts(cards, arrows);
-    return cardsToNodes(cards, evidenceCounts);
-  }, [savedState, initialCards, initialArrows]);
+    return cardsToNodes(cards);
+  }, [savedState, initialCards]);
 
   const initialEdges = useMemo(() => {
     const arrows = savedState?.arrows || initialArrows;
