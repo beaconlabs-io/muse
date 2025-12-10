@@ -9,7 +9,6 @@ import { TableDropdown } from "@/components/table/TableDropdown";
 import { TooltipStrength } from "@/components/tooltip/tooltip-strength";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { TooltipEffects } from "../tooltip/tooltip-effects";
 import { Evidence } from "@/types";
 
