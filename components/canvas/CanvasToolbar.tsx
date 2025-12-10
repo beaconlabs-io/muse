@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Save, Download, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,43 +9,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AddLogicSheet } from "./AddLogicSheet";
+import { useCanvasOperations } from "./context";
 import { GenerateLogicModelDialog } from "./GenerateLogicModelDialog";
-import type { Card, Arrow, CardMetrics } from "@/types";
 
-interface AddLogicFormData {
-  type: string;
-  title: string;
-  description?: string;
-  metrics?: unknown[];
-}
-
-interface CanvasToolbarProps {
-  onAddCard: (data: AddLogicFormData) => void;
-  onSaveLogicModel?: () => void;
-  onExportStandardizedJSON?: () => void;
-  onExportImage?: () => void;
-  onClearAllData?: () => void;
-  onLoadGeneratedCanvas?: (data: {
-    cards: Card[];
-    arrows: Arrow[];
-    cardMetrics: Record<string, CardMetrics[]>;
-  }) => void;
-}
-
-export function CanvasToolbar({
-  onAddCard,
-  onSaveLogicModel,
-  onExportStandardizedJSON,
-  onExportImage,
-  onClearAllData,
-  onLoadGeneratedCanvas,
-}: CanvasToolbarProps) {
+export const CanvasToolbar = memo(() => {
+  const {
+    addCard,
+    saveLogicModel,
+    exportAsJSON,
+    exportAsImage,
+    clearAllData,
+    loadGeneratedCanvas,
+  } = useCanvasOperations();
   return (
     <div className="bg-background flex items-center justify-between border-b p-3 sm:p-4">
       {/* Left Side: Primary Actions */}
       <div className="flex items-center gap-3">
-        {onLoadGeneratedCanvas && <GenerateLogicModelDialog onGenerate={onLoadGeneratedCanvas} />}
-        <AddLogicSheet onSubmit={onAddCard} />
+        <GenerateLogicModelDialog onGenerate={loadGeneratedCanvas} />
+        <AddLogicSheet onSubmit={addCard} />
       </div>
 
       {/* Right Side: Secondary Actions */}
@@ -57,37 +39,33 @@ export function CanvasToolbar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {onSaveLogicModel && (
-              <DropdownMenuItem onClick={onSaveLogicModel} className="cursor-pointer">
-                <Save className="mr-2 h-4 w-4" />
-                Mint Hypercert
-              </DropdownMenuItem>
-            )}
-            {onExportImage && (
-              <DropdownMenuItem onClick={onExportImage} className="cursor-pointer">
-                <Download className="mr-2 h-4 w-4" />
-                Export Image
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem onClick={saveLogicModel} className="cursor-pointer">
+              <Save className="mr-2 h-4 w-4" />
+              Mint Hypercert
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={exportAsImage} className="cursor-pointer">
+              <Download className="mr-2 h-4 w-4" />
+              Export Image
+            </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={onExportStandardizedJSON} className="cursor-pointer">
+            <DropdownMenuItem onClick={exportAsJSON} className="cursor-pointer">
               <Download className="mr-2 h-4 w-4" />
               Export JSON
             </DropdownMenuItem>
 
-            {onClearAllData && <DropdownMenuSeparator />}
-            {onClearAllData && (
-              <DropdownMenuItem
-                onClick={onClearAllData}
-                className="text-destructive focus:text-destructive cursor-pointer"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Clear All
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={clearAllData}
+              className="text-destructive focus:text-destructive cursor-pointer"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear All
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </div>
   );
-}
+});
+
+CanvasToolbar.displayName = "CanvasToolbar";
