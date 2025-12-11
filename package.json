@@ -83,7 +83,7 @@
     "tw-animate-css": "^1.3.5",
     "viem": "^2.32.0",
     "wagmi": "^2.16.9",
-    "zod": "^3.25.76"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

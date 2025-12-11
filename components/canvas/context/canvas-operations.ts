@@ -2,7 +2,7 @@ import { addEdge } from "@xyflow/react";
 import type { CardNodeData } from "@/components/canvas/CardNode";
 import type { Node, Edge, Connection } from "@xyflow/react";
 import { cardsToNodes, arrowsToEdges } from "@/lib/canvas/react-flow-utils";
-import { Card, Arrow, TYPE_COLOR_MAP, CardMetrics } from "@/types";
+import { Card, Arrow, TYPE_COLOR_MAP, Metric, type MetricFormInput } from "@/types";
 
 // =============================================================================
 // TYPES
@@ -17,7 +17,7 @@ export interface NodeCallbacks {
 export interface CreateOperationsParams {
   setNodes: React.Dispatch<React.SetStateAction<Node<CardNodeData>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
-  setCardMetrics: React.Dispatch<React.SetStateAction<Record<string, CardMetrics[]>>>;
+  setCardMetrics: React.Dispatch<React.SetStateAction<Record<string, Metric[]>>>;
   setEditingNodeId: React.Dispatch<React.SetStateAction<string | null>>;
   setEditSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
   createNodeCallbacks: (nodeId: string) => NodeCallbacks;
@@ -28,13 +28,13 @@ export interface CardFormData {
   type: string;
   title: string;
   description?: string;
-  metrics?: unknown[];
+  metrics?: MetricFormInput[];
 }
 
 export interface LoadCanvasData {
   cards: Card[];
   arrows: Arrow[];
-  cardMetrics: Record<string, CardMetrics[]>;
+  cardMetrics: Record<string, Metric[]>;
 }
 
 // =============================================================================
@@ -131,6 +131,16 @@ export function createCanvasOperations(params: CreateOperationsParams) {
 
     const callbacks = createNodeCallbacks(nodeId);
 
+    // Generate metrics with IDs
+    const metricsWithIds = formData.metrics?.map((m, idx) => ({
+      id: `${nodeId}-metric-${idx}`,
+      name: m.name,
+      description: m.description,
+      measurementMethod: m.measurementMethod,
+      targetValue: m.targetValue,
+      frequency: m.frequency,
+    }));
+
     const newNode: Node<CardNodeData> = {
       id: nodeId,
       type: "cardNode",
@@ -141,7 +151,7 @@ export function createCanvasOperations(params: CreateOperationsParams) {
         description: formData.description,
         color: position.color,
         type: formData.type,
-        metrics: formData.metrics as any[] | undefined,
+        metrics: metricsWithIds,
         ...callbacks,
       },
     };
@@ -149,18 +159,10 @@ export function createCanvasOperations(params: CreateOperationsParams) {
     setNodes((nds) => [...nds, newNode]);
 
     // Update cardMetrics if metrics are provided
-    if (formData.metrics && formData.metrics.length > 0) {
-      const metrics = formData.metrics;
+    if (metricsWithIds && metricsWithIds.length > 0) {
       setCardMetrics((prev) => ({
         ...prev,
-        [nodeId]: metrics.map((m: any, idx: number) => ({
-          id: `${nodeId}-metric-${idx}`,
-          name: m.name,
-          description: m.description,
-          measurementMethod: m.measurementMethod,
-          targetValue: m.targetValue,
-          frequency: m.frequency,
-        })),
+        [nodeId]: metricsWithIds,
       }));
     }
   };
@@ -172,6 +174,16 @@ export function createCanvasOperations(params: CreateOperationsParams) {
     if (!editingNodeId) return;
 
     const position = getSectionPosition(formData.type, false);
+
+    // Generate metrics with IDs
+    const metricsWithIds = formData.metrics?.map((m, idx) => ({
+      id: `${editingNodeId}-metric-${idx}`,
+      name: m.name,
+      description: m.description,
+      measurementMethod: m.measurementMethod,
+      targetValue: m.targetValue,
+      frequency: m.frequency,
+    }));
 
     setNodes((nds) =>
       nds.map((node) => {
@@ -186,7 +198,7 @@ export function createCanvasOperations(params: CreateOperationsParams) {
               description: formData.description,
               color: position.color,
               type: formData.type,
-              metrics: formData.metrics as any[] | undefined,
+              metrics: metricsWithIds,
               ...callbacks,
             },
           };
@@ -196,18 +208,10 @@ export function createCanvasOperations(params: CreateOperationsParams) {
     );
 
     // Update cardMetrics
-    if (formData.metrics && formData.metrics.length > 0) {
-      const metrics = formData.metrics;
+    if (metricsWithIds && metricsWithIds.length > 0) {
       setCardMetrics((prev) => ({
         ...prev,
-        [editingNodeId]: metrics.map((m: any, idx: number) => ({
-          id: `${editingNodeId}-metric-${idx}`,
-          name: m.name,
-          description: m.description,
-          measurementMethod: m.measurementMethod,
-          targetValue: m.targetValue,
-          frequency: m.frequency,
-        })),
+        [editingNodeId]: metricsWithIds,
       }));
     } else {
       // Remove metrics if none provided

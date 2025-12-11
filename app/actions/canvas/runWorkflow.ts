@@ -1,8 +1,21 @@
 "use server";
 
 import { mastra } from "@/mastra";
+import { CanvasDataSchema, type CanvasData } from "@/types";
 
-export async function runLogicModelWorkflow(intent: string) {
+type WorkflowSuccessResult = {
+  success: true;
+  canvasData: CanvasData;
+};
+
+type WorkflowErrorResult = {
+  success: false;
+  error: string;
+};
+
+export async function runLogicModelWorkflow(
+  intent: string,
+): Promise<WorkflowSuccessResult | WorkflowErrorResult> {
   // Ensure PROJECT_ROOT is set for Mastra
   if (!process.env.PROJECT_ROOT) {
     process.env.PROJECT_ROOT = process.cwd();
@@ -13,18 +26,21 @@ export async function runLogicModelWorkflow(intent: string) {
   const result = await run.start({ inputData: { intent } });
 
   if (result.status === "success") {
+    // Validate workflow output with Zod
+    const validatedData = CanvasDataSchema.parse(result.result.canvasData);
+
     return {
-      success: true as const,
-      canvasData: result.result.canvasData,
+      success: true,
+      canvasData: validatedData,
     };
   } else if (result.status === "failed") {
     return {
-      success: false as const,
+      success: false,
       error: result.error.message || "Workflow failed",
     };
   } else {
     return {
-      success: false as const,
+      success: false,
       error: "Workflow was suspended",
     };
   }

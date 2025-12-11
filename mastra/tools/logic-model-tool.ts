@@ -423,11 +423,6 @@ const generateLogicModel = async (params: {
     cards,
     arrows,
     cardMetrics,
-    metadata: {
-      createdAt: new Date().toISOString(),
-      version: "1.0.0",
-      author: "Logic Model Agent",
-    },
   };
 
   return { canvasData };

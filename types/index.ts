@@ -109,6 +109,49 @@ export interface IPFSStorageResult {
   size: number;
   timestamp: string;
 }
+
+// =============================================================================
+// FREQUENCY CONSTANTS AND TYPES
+// =============================================================================
+
+/**
+ * Frequency enum for metric measurement intervals
+ * These values are stored in the database and used in API responses
+ */
+export enum Frequency {
+  DAILY = "daily",
+  WEEKLY = "weekly",
+  MONTHLY = "monthly",
+  QUARTERLY = "quarterly",
+  ANNUALLY = "annually",
+  OTHER = "other",
+}
+
+/**
+ * Human-readable labels for frequency values (used in UI)
+ */
+export const FREQUENCY_LABELS: Record<Frequency, string> = {
+  [Frequency.DAILY]: "Daily",
+  [Frequency.WEEKLY]: "Weekly",
+  [Frequency.MONTHLY]: "Monthly",
+  [Frequency.QUARTERLY]: "Quarterly",
+  [Frequency.ANNUALLY]: "Annually",
+  [Frequency.OTHER]: "Other",
+} as const;
+
+/**
+ * Frequency options array for Select components
+ */
+export const FREQUENCY_OPTIONS = Object.values(Frequency).map((value) => ({
+  value,
+  label: FREQUENCY_LABELS[value],
+}));
+
+/**
+ * Type for frequency option objects
+ */
+export type FrequencyOption = (typeof FREQUENCY_OPTIONS)[number];
+
 // ZOD SCHEMAS FOR VALIDATION
 // =============================================================================
 
@@ -127,7 +170,7 @@ export const MetricSchema = z.object({
   description: z.string().optional(),
   measurementMethod: z.string().optional(),
   targetValue: z.string().optional(),
-  frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]).optional(),
+  frequency: z.enum(Object.values(Frequency) as [Frequency, ...Frequency[]]).optional(),
 });
 
 /**
@@ -150,7 +193,7 @@ export const ToolMetricInputSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   measurementMethod: z.string(), // REQUIRED for LLM generation
-  frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]),
+  frequency: z.enum(Object.values(Frequency) as [Frequency, ...Frequency[]]),
 });
 
 // Reusable schema factory for logic model stages
@@ -243,8 +286,8 @@ export const CardSchema = z.object({
   id: z.string(),
   x: z.number(),
   y: z.number(),
-  title: z.string().min(1, "Title is required").max(30, "Title must be 30 characters or less"),
-  description: z.string().max(100, "Description must be 100 characters or less").optional(),
+  title: z.string().min(1, "Title is required").max(100, "Title must be 100 characters or less"),
+  description: z.string().max(200, "Description must be 200 characters or less").optional(),
   color: z.string(),
   type: z.string().optional(),
 });
@@ -261,22 +304,13 @@ export const ArrowSchema = z.object({
 
 export type Arrow = z.infer<typeof ArrowSchema>;
 
-export const CanvasMetadataSchema = z.object({
-  createdAt: z.string(),
-  version: z.string(),
-  author: z.string().optional(),
-});
-
-export type CanvasMetadata = z.infer<typeof CanvasMetadataSchema>;
-
 export const CanvasDataSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string().optional(),
   cards: z.array(CardSchema),
   arrows: z.array(ArrowSchema),
-  cardMetrics: z.record(z.array(MetricSchema)),
-  metadata: CanvasMetadataSchema,
+  cardMetrics: z.record(z.string(), z.array(MetricSchema)),
 });
 
 export type CanvasData = z.infer<typeof CanvasDataSchema>;
@@ -288,12 +322,6 @@ export interface LogicModel {
   cards: Card[];
   arrows: Arrow[];
   cardMetrics: Record<string, Metric[]>;
-  metadata: {
-    createdAt: string;
-    updatedAt: string;
-    version: string;
-    author?: string;
-  };
 }
 
 // =============================================================================
