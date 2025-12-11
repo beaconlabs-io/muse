@@ -11,7 +11,6 @@ export interface HypercertCardProps {
   workStartDate?: Date;
   workEndDate?: Date;
   badges?: string[];
-  displayOnly?: boolean;
   hypercertId?: string;
   contributors?: string[];
 }
@@ -25,7 +24,6 @@ const HypercertCard = forwardRef<HTMLDivElement, HypercertCardProps>(
       workStartDate,
       workEndDate,
       badges = [],
-      displayOnly = false,
     }: HypercertCardProps,
     ref,
   ) => {
