@@ -143,7 +143,7 @@ const searchEvidenceStep = createStep({
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
-    evidenceByArrow: z.record(z.array(EvidenceMatchSchema)),
+    evidenceByArrow: z.record(z.string(), z.array(EvidenceMatchSchema)),
   }),
   execute: async ({ inputData }) => {
     const { canvasData } = inputData;
@@ -255,7 +255,7 @@ const enrichCanvasStep = createStep({
   id: "enrich-canvas",
   inputSchema: z.object({
     canvasData: CanvasDataSchema,
-    evidenceByArrow: z.record(z.array(EvidenceMatchSchema)),
+    evidenceByArrow: z.record(z.string(), z.array(EvidenceMatchSchema)),
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
