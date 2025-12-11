@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation";
 import { useNodesState, useEdgesState, getNodesBounds, getViewportForBounds } from "@xyflow/react";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
-import { useAccount } from "wagmi";
 import type { CardNodeData } from "@/components/canvas/CardNode";
 import {
   AlertDialog,
@@ -152,9 +151,8 @@ export function CanvasProvider({
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
-  // 4. Get router and address for saveLogicModel
+  // 4. Get router for saveLogicModel
   const router = useRouter();
-  const { address } = useAccount();
 
   // 5. Auto-save effect (debounced 500ms)
   useEffect(() => {
@@ -220,6 +218,14 @@ export function CanvasProvider({
       const cards = nodesToCards(nodesRef.current);
       const arrows = edgesToArrows(edgesRef.current);
 
+      // Validate that canvas is not empty
+      if (cards.length === 0) {
+        toast.error("Cannot save an empty logic model. Please add at least one card.", {
+          duration: 5000,
+        });
+        return;
+      }
+
       const id = `canvas-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
       const canvasData: CanvasData = {
@@ -241,7 +247,7 @@ export function CanvasProvider({
         duration: 5000,
       });
     }
-  }, [address, router]);
+  }, [router]);
 
   const exportAsJSON = useCallback(() => {
     const cards = nodesToCards(nodesRef.current);
