@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ReactFlowCanvas } from "@/components/canvas/ReactFlowCanvas";
 import { Button } from "@/components/ui/button";
+import type { CanvasData } from "@/types";
 import { fetchFromIPFS } from "@/utils/ipfs";
 
 interface Props {
@@ -18,7 +19,7 @@ export default function LogicModelPage({ params }: Props) {
     data: canvasData,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<CanvasData>({
     queryKey: ["canvasData", id],
     queryFn: () => fetchFromIPFS(id),
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes

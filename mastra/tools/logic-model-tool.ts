@@ -1,6 +1,6 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import type { Card, Arrow, CardMetrics, CanvasData, StageInput, ConnectionInput } from "@/types";
+import type { Card, Arrow, Metric, CanvasData, StageInput, ConnectionInput } from "@/types";
 import { createLogger } from "@/lib/logger";
 import {
   CanvasDataSchema,
@@ -131,7 +131,7 @@ const generateLogicModel = async (params: {
 
   const cards: Card[] = [];
   const arrows: Arrow[] = [];
-  const cardMetrics: Record<string, CardMetrics[]> = {};
+  const cardMetrics: Record<string, Metric[]> = {};
 
   // Helper to calculate Y position for cards in same column
   const calculateY = (index: number, total: number): number => {
@@ -423,11 +423,6 @@ const generateLogicModel = async (params: {
     cards,
     arrows,
     cardMetrics,
-    metadata: {
-      createdAt: new Date().toISOString(),
-      version: "1.0.0",
-      author: "Logic Model Agent",
-    },
   };
 
   return { canvasData };

@@ -1,4 +1,4 @@
-import type { Card, Arrow, CardMetrics } from "@/types";
+import type { Card, Arrow, Metric } from "@/types";
 
 /**
  * Canvas state interface for localStorage persistence
@@ -6,7 +6,7 @@ import type { Card, Arrow, CardMetrics } from "@/types";
 export interface CanvasState {
   cards: Card[];
   arrows: Arrow[];
-  cardMetrics: Record<string, CardMetrics[]>;
+  cardMetrics: Record<string, Metric[]>;
 }
 
 /**

@@ -15,12 +15,13 @@ import { CanvasToolbar } from "./CanvasToolbar";
 import { CardNode } from "./CardNode";
 import { CanvasProvider, useCanvas } from "./context";
 import { EvidenceEdge } from "./EvidenceEdge";
-import type { Card, Arrow, CardMetrics } from "@/types";
+import type { CardFormData } from "./context/canvas-operations";
+import type { Card, Arrow, Metric } from "@/types";
 
 interface ReactFlowCanvasProps {
   initialCards?: Card[];
   initialArrows?: Arrow[];
-  initialCardMetrics?: Record<string, CardMetrics[]>;
+  initialCardMetrics?: Record<string, Metric[]>;
   disableLocalStorage?: boolean; // Don't use localStorage when viewing IPFS canvas
 }
 
@@ -56,12 +57,7 @@ function ReactFlowCanvasInner() {
   };
 
   // Wrapper to pass editingNodeId to updateCard
-  const handleUpdateCard = (formData: {
-    type: string;
-    title: string;
-    description?: string;
-    metrics?: unknown[];
-  }) => {
+  const handleUpdateCard = (formData: CardFormData) => {
     updateCard(formData, editingNodeId);
   };
 
@@ -124,7 +120,7 @@ function ReactFlowCanvasInner() {
       {editingNodeData && (
         <AddLogicSheet
           editMode
-          initialData={editingNodeData as any}
+          initialData={editingNodeData}
           open={editSheetOpen}
           onOpenChange={handleEditSheetOpenChange}
           onSubmit={handleUpdateCard}

@@ -4,15 +4,8 @@ import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Pencil, Zap, Package, Target, Sparkles } from "lucide-react";
 import { useCanvasOperations } from "./context";
+import type { Metric } from "@/types";
 import type { LucideIcon } from "lucide-react";
-
-interface MetricData {
-  name: string;
-  description?: string;
-  measurementMethod?: string;
-  targetValue?: string;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-}
 
 export interface CardNodeData extends Record<string, unknown> {
   id: string;
@@ -20,7 +13,7 @@ export interface CardNodeData extends Record<string, unknown> {
   description?: string;
   color: string;
   type?: string;
-  metrics?: MetricData[];
+  metrics?: Metric[];
 }
 
 // Map types to display labels and icons
