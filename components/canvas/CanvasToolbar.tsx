@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState, useCallback } from "react";
 import { Save, Download, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,7 @@ import { useCanvasOperations } from "./context";
 import { GenerateLogicModelDialog } from "./GenerateLogicModelDialog";
 
 export const CanvasToolbar = memo(() => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const {
     addCard,
     saveLogicModel,
@@ -21,6 +22,13 @@ export const CanvasToolbar = memo(() => {
     clearAllData,
     loadGeneratedCanvas,
   } = useCanvasOperations();
+
+  const handleClearAll = useCallback(() => {
+    // Close dropdown first to avoid modal stacking conflict
+    setDropdownOpen(false);
+    // Open alert dialog after dropdown closes
+    clearAllData();
+  }, [clearAllData]);
   return (
     <div className="bg-background flex items-center justify-between border-b p-3 sm:p-4">
       {/* Left Side: Primary Actions */}
@@ -31,7 +39,7 @@ export const CanvasToolbar = memo(() => {
 
       {/* Right Side: Secondary Actions */}
       <div className="flex items-center gap-2">
-        <DropdownMenu>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="cursor-pointer gap-2">
               <MoreVertical className="h-4 w-4" />
@@ -55,7 +63,7 @@ export const CanvasToolbar = memo(() => {
 
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={clearAllData}
+              onClick={handleClearAll}
               className="text-destructive focus:text-destructive cursor-pointer"
             >
               <Trash2 className="mr-2 h-4 w-4" />

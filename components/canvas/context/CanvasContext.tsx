@@ -13,14 +13,25 @@ import {
 import { useRouter } from "next/navigation";
 import { useNodesState, useEdgesState, getNodesBounds, getViewportForBounds } from "@xyflow/react";
 import { toPng } from "html-to-image";
+import { toast } from "sonner";
 import { useAccount } from "wagmi";
 import type { CardNodeData } from "@/components/canvas/CardNode";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   createCanvasOperations,
   getTypeFromColor,
   type CanvasOperations,
 } from "./canvas-operations";
-import type { Card, Arrow, CardMetrics, CanvasData } from "@/types";
+import type { MetricFormInput, Metric, Card, Arrow, CanvasData } from "@/types";
 import type { OnNodesChange, OnEdgesChange, Node, Edge } from "@xyflow/react";
 import {
   cardsToNodes,
@@ -41,7 +52,7 @@ export interface EditingNodeData {
   type: string;
   title: string;
   description?: string;
-  metrics?: unknown[];
+  metrics?: MetricFormInput[];
 }
 
 /**
@@ -50,11 +61,12 @@ export interface EditingNodeData {
 export interface CanvasStateContextValue {
   nodes: Node<CardNodeData>[];
   edges: Edge[];
-  cardMetrics: Record<string, CardMetrics[]>;
+  cardMetrics: Record<string, Metric[]>;
   editingNodeId: string | null;
   editSheetOpen: boolean;
   editingNodeData: EditingNodeData | null;
   disableLocalStorage: boolean;
+  clearConfirmOpen: boolean;
 }
 
 /**
@@ -100,7 +112,7 @@ const CanvasOperationsContext = createContext<CanvasOperationsContextValue | und
 export interface CanvasProviderProps {
   initialCards?: Card[];
   initialArrows?: Arrow[];
-  initialCardMetrics?: Record<string, CardMetrics[]>;
+  initialCardMetrics?: Record<string, Metric[]>;
   disableLocalStorage?: boolean;
   children: ReactNode;
 }
@@ -131,13 +143,14 @@ export function CanvasProvider({
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<CardNodeData>>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [cardMetrics, setCardMetrics] = useState<Record<string, CardMetrics[]>>(
+  const [cardMetrics, setCardMetrics] = useState<Record<string, Metric[]>>(
     savedState?.cardMetrics || initialCardMetrics,
   );
 
   // 3. Edit sheet state
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
   // 4. Get router and address for saveLogicModel
   const router = useRouter();
@@ -208,7 +221,6 @@ export function CanvasProvider({
       const arrows = edgesToArrows(edgesRef.current);
 
       const id = `canvas-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-      const now = new Date().toISOString();
 
       const canvasData: CanvasData = {
         id,
@@ -217,11 +229,6 @@ export function CanvasProvider({
         cards,
         arrows,
         cardMetrics: cardMetricsRef.current,
-        metadata: {
-          createdAt: now,
-          version: "1.0.0",
-          author: address,
-        },
       };
 
       saveCanvasState({ cards, arrows, cardMetrics: cardMetricsRef.current });
@@ -230,7 +237,9 @@ export function CanvasProvider({
       router.push("/canvas/mint-hypercert");
     } catch (error) {
       console.error("Failed to prepare canvas data:", error);
-      alert("Failed to prepare canvas data. Please try again.");
+      toast.error("Failed to prepare canvas data. Please try again.", {
+        duration: 5000,
+      });
     }
   }, [address, router]);
 
@@ -290,26 +299,31 @@ export function CanvasProvider({
       })
       .catch((error) => {
         console.error("Failed to export image:", error);
-        alert("Failed to export image. Please try again.");
+        toast.error("Failed to export image. Please try again.", {
+          duration: 5000,
+        });
       });
   }, []);
 
-  const clearAllData = useCallback(() => {
-    if (
-      window.confirm(
-        "Are you sure you want to clear all canvas data? This action cannot be undone.",
-      )
-    ) {
-      setNodes([]);
-      setEdges([]);
-      setCardMetrics({});
+  // Actual clear operation (called from AlertDialog)
+  const executeClearAllData = useCallback(() => {
+    setNodes([]);
+    setEdges([]);
+    setCardMetrics({});
 
-      if (!disableLocalStorageRef.current && typeof window !== "undefined") {
-        localStorage.removeItem("canvasState");
-        sessionStorage.removeItem("currentCanvasData");
-      }
+    if (!disableLocalStorageRef.current && typeof window !== "undefined") {
+      localStorage.removeItem("canvasState");
+      sessionStorage.removeItem("currentCanvasData");
     }
+
+    setClearConfirmOpen(false);
+    toast.success("Canvas cleared successfully", { duration: 3000 });
   }, [setNodes, setEdges, setCardMetrics]);
+
+  // Public API - opens confirmation dialog
+  const clearAllData = useCallback(() => {
+    setClearConfirmOpen(true);
+  }, []);
 
   // 8. Create operations (memoized - now only depends on stable setters)
   const operations = useMemo(
@@ -349,8 +363,18 @@ export function CanvasProvider({
       editSheetOpen,
       editingNodeData,
       disableLocalStorage,
+      clearConfirmOpen,
     }),
-    [nodes, edges, cardMetrics, editingNodeId, editSheetOpen, editingNodeData, disableLocalStorage],
+    [
+      nodes,
+      edges,
+      cardMetrics,
+      editingNodeId,
+      editSheetOpen,
+      editingNodeData,
+      disableLocalStorage,
+      clearConfirmOpen,
+    ],
   );
 
   const operationsValue = useMemo(
@@ -382,6 +406,23 @@ export function CanvasProvider({
     <CanvasStateContext.Provider value={stateValue}>
       <CanvasOperationsContext.Provider value={operationsValue}>
         {children}
+
+        {/* Clear All Data Confirmation Dialog */}
+        <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear All Canvas Data?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will remove all cards, connections, and metrics from the canvas. This action
+                cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={executeClearAllData}>Clear All Data</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CanvasOperationsContext.Provider>
     </CanvasStateContext.Provider>
   );
