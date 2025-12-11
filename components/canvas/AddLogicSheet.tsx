@@ -376,7 +376,16 @@ export function AddLogicSheet({
                             <label className="text-sm font-medium">Frequency (optional)</label>
                             <Select
                               onValueChange={(value) =>
-                                metricsForm.setValue("frequency", value as any)
+                                metricsForm.setValue(
+                                  "frequency",
+                                  value as
+                                    | "daily"
+                                    | "weekly"
+                                    | "monthly"
+                                    | "quarterly"
+                                    | "annually"
+                                    | "other",
+                                )
                               }
                               value={metricsForm.watch("frequency")}
                             >

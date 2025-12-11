@@ -114,7 +114,14 @@ export interface IPFSStorageResult {
 
 import { z } from "zod";
 
-export const LogicModelMetricSchema = z.object({
+// =============================================================================
+// UNIFIED METRIC SCHEMAS
+// =============================================================================
+
+/**
+ * Base metric schema with ID (for storage)
+ */
+export const MetricSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
@@ -122,6 +129,17 @@ export const LogicModelMetricSchema = z.object({
   targetValue: z.string().optional(),
   frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]).optional(),
 });
+
+/**
+ * Metric form input schema without ID (for forms)
+ */
+export const MetricFormInputSchema = MetricSchema.omit({ id: true });
+
+/**
+ * Export types
+ */
+export type Metric = z.infer<typeof MetricSchema>;
+export type MetricFormInput = z.infer<typeof MetricFormInputSchema>;
 
 // =============================================================================
 // TOOL INPUT SCHEMAS (for Mastra agents)
@@ -172,7 +190,7 @@ export const LogicModelNodeSchema = z.object({
   content: z.string(),
   from: z.array(z.string()),
   to: z.array(z.string()),
-  metrics: z.array(LogicModelMetricSchema).optional(),
+  metrics: z.array(MetricSchema).optional(),
 });
 
 export const LogicModelMetadataSchema = z.object({
@@ -233,17 +251,6 @@ export const CardSchema = z.object({
 
 export type Card = z.infer<typeof CardSchema>;
 
-export const CardMetricSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  measurementMethod: z.string().optional(),
-  targetValue: z.string().optional(),
-  frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]).optional(),
-});
-
-export type CardMetrics = z.infer<typeof CardMetricSchema>;
-
 export const ArrowSchema = z.object({
   id: z.string(),
   fromCardId: z.string(),
@@ -268,7 +275,7 @@ export const CanvasDataSchema = z.object({
   description: z.string().optional(),
   cards: z.array(CardSchema),
   arrows: z.array(ArrowSchema),
-  cardMetrics: z.record(z.array(CardMetricSchema)),
+  cardMetrics: z.record(z.array(MetricSchema)),
   metadata: CanvasMetadataSchema,
 });
 
@@ -280,7 +287,7 @@ export interface LogicModel {
   description?: string;
   cards: Card[];
   arrows: Arrow[];
-  cardMetrics: Record<string, CardMetrics[]>;
+  cardMetrics: Record<string, Metric[]>;
   metadata: {
     createdAt: string;
     updatedAt: string;
