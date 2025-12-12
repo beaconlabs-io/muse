@@ -230,8 +230,6 @@ export function CanvasProvider({
 
       const canvasData: CanvasData = {
         id,
-        title: `Logic Model ${new Date().toLocaleDateString()}`,
-        description: "Logic model created with Muse",
         cards,
         arrows,
         cardMetrics: cardMetricsRef.current,

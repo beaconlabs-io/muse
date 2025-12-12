@@ -124,8 +124,8 @@ export default function MintHypercertPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(hypercertFormSchema),
     defaultValues: {
-      title: storedCanvasData?.title || "Logic Model " + new Date().toLocaleDateString(),
-      description: storedCanvasData?.description || "Logic model created with Muse",
+      title: "",
+      description: "",
       impactScope: "",
       workDates: [new Date(), new Date()],
       contributors: "",
