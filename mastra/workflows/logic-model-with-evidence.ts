@@ -19,7 +19,7 @@ const logger = createLogger({ module: "workflow:logic-model-with-evidence" });
  *
  * This workflow generates a complete logic model with evidence validation:
  * 1. Generate logic model structure using AI agent
- * 2. Search evidence for all arrows in parallel
+ * 2. Batch evidence search for all arrows (single LLM call)
  * 3. Enrich canvas data with evidence metadata
  */
 
