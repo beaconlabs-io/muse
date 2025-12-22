@@ -1,5 +1,6 @@
 import type { EvidenceMatch } from "@/types";
 import type { Agent } from "@mastra/core/agent";
+import { EVIDENCE_MATCH_THRESHOLD, MAX_MATCHES_PER_EDGE } from "@/lib/constants";
 import { getAllEvidenceMeta } from "@/lib/evidence";
 
 export interface EdgeInput {
@@ -27,7 +28,7 @@ export async function searchEvidenceForAllEdges(
   edges: EdgeInput[],
   options: BatchSearchOptions = {},
 ): Promise<Record<string, EvidenceMatch[]>> {
-  const { maxMatchesPerEdge = 3, minScore = 70 } = options;
+  const { maxMatchesPerEdge = MAX_MATCHES_PER_EDGE, minScore = EVIDENCE_MATCH_THRESHOLD } = options;
 
   if (edges.length === 0) {
     return {};
@@ -74,6 +75,7 @@ Return JSON with this structure:
       {
         "evidenceId": "00",
         "score": 95,
+        "confidence": 90,
         "reasoning": "Direct match...",
         "interventionText": "...",
         "outcomeText": "..."
@@ -92,27 +94,69 @@ Include ALL arrow IDs in results, even if they have empty match arrays.`,
       `[Batch Evidence Search] Agent response received (${result.text?.length || 0} chars)`,
     );
 
-    // Parse the JSON response
+    // Parse the JSON response with multiple fallback strategies
     const responseText = result.text || "";
     let parsedResults: Record<string, any[]> = {};
 
     try {
-      const jsonMatch = responseText.match(/\{[\s\S]*"results"[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        parsedResults = parsed.results || {};
+      // Strategy 1: Try markdown code block extraction (most common LLM format)
+      const codeBlockMatch = responseText.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+
+      let jsonText: string;
+      if (codeBlockMatch) {
+        jsonText = codeBlockMatch[1];
+        console.log("[Batch Evidence Search] Extracted JSON from markdown code block");
+      } else {
+        // Strategy 2: Try direct parse (if response is pure JSON)
+        jsonText = responseText;
       }
-    } catch (parseError) {
-      console.error("[Batch Evidence Search] Failed to parse agent JSON response:", parseError);
-      console.log("[Batch Evidence Search] Response preview:", responseText.slice(0, 500));
-      // Return empty results for all edges
-      return edges.reduce(
-        (acc, edge) => {
-          acc[edge.arrowId] = [];
-          return acc;
-        },
-        {} as Record<string, EvidenceMatch[]>,
+
+      const parsed = JSON.parse(jsonText);
+
+      // Validate structure
+      if (!parsed.results || typeof parsed.results !== "object") {
+        throw new Error("Response missing 'results' object");
+      }
+
+      parsedResults = parsed.results;
+      console.log(
+        `[Batch Evidence Search] Successfully parsed results for ${Object.keys(parsedResults).length} edges`,
       );
+    } catch (parseError) {
+      // Strategy 3: Fallback to regex extraction
+      console.warn(
+        "[Batch Evidence Search] Direct parsing failed, trying regex extraction...",
+        parseError,
+      );
+
+      try {
+        const jsonMatch = responseText.match(/\{[\s\S]*"results"[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          parsedResults = parsed.results || {};
+          console.log("[Batch Evidence Search] Regex extraction succeeded");
+        } else {
+          throw new Error("No JSON found in response");
+        }
+      } catch (regexError) {
+        console.error("[Batch Evidence Search] All parsing strategies failed:", regexError);
+
+        // Log full response in development mode
+        if (process.env.NODE_ENV === "development") {
+          console.error("[Batch Evidence Search] Full response:", responseText);
+        } else {
+          console.error("[Batch Evidence Search] Response preview:", responseText.slice(0, 500));
+        }
+
+        // Return empty results for all edges
+        return edges.reduce(
+          (acc, edge) => {
+            acc[edge.arrowId] = [];
+            return acc;
+          },
+          {} as Record<string, EvidenceMatch[]>,
+        );
+      }
     }
 
     // Load evidence metadata for enrichment (cached, so fast)
@@ -133,7 +177,7 @@ Include ALL arrow IDs in results, even if they have empty match arrays.`,
           return {
             evidenceId: match.evidenceId,
             score: match.score,
-            confidence: match.confidence || 0,
+            confidence: match.confidence,
             reasoning: match.reasoning,
             strength: evidenceMeta?.strength,
             hasWarning: strength < 3,
