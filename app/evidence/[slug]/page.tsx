@@ -1,4 +1,5 @@
 import "highlight.js/styles/github-dark.css";
+import { notFound } from "next/navigation";
 import { extractEffectData } from "@/components/effect-icons";
 import {
   EvidenceHeader,
@@ -16,13 +17,15 @@ export default async function EvidencePage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const evidence = await getEvidenceBySlug(slug);
 
+  if (!evidence) notFound();
+
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <EvidenceHeader
-        title={evidence?.meta.title}
-        date={evidence?.meta.date}
-        author={evidence?.meta.author}
-        version={evidence?.meta.version}
+        title={evidence.meta.title}
+        date={evidence.meta.date}
+        author={evidence.meta.author}
+        version={evidence.meta.version}
       />
 
       <div className="prose max-w-none">
