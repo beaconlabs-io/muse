@@ -133,6 +133,7 @@ Include ALL arrow IDs in results, even if they have empty match arrays.`,
           return {
             evidenceId: match.evidenceId,
             score: match.score,
+            confidence: match.confidence || 0,
             reasoning: match.reasoning,
             strength: evidenceMeta?.strength,
             hasWarning: strength < 3,

@@ -48,6 +48,7 @@ export interface EvidenceResponse {
 export interface EvidenceMatch {
   evidenceId: string;
   score: number; // 0-100
+  confidence?: number; // 0-100, certainty about the match
   reasoning: string;
   strength?: string; // Maryland Scale (0-5)
   hasWarning: boolean; // true if strength < 3
@@ -259,6 +260,7 @@ export const StandardizedLogicModelSchema = z.object({
 export const EvidenceMatchSchema = z.object({
   evidenceId: z.string(),
   score: z.number().min(0).max(100),
+  confidence: z.number().min(0).max(100).optional(),
   reasoning: z.string(),
   strength: z.string().optional(),
   hasWarning: z.boolean(),
