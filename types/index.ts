@@ -44,19 +44,6 @@ export interface EvidenceResponse {
   content: React.ReactNode;
 }
 
-// Evidence matching for logic model edges
-export interface EvidenceMatch {
-  evidenceId: string;
-  score: number; // 0-100
-  confidence?: number; // 0-100, certainty about the match
-  reasoning: string;
-  strength?: string; // Maryland Scale (0-5)
-  hasWarning: boolean; // true if strength < 3
-  title?: string;
-  interventionText?: string;
-  outcomeText?: string;
-}
-
 // =============================================================================
 // ATTESTATION TYPES
 // =============================================================================
@@ -268,6 +255,8 @@ export const EvidenceMatchSchema = z.object({
   interventionText: z.string().optional(),
   outcomeText: z.string().optional(),
 });
+
+export type EvidenceMatch = z.infer<typeof EvidenceMatchSchema>;
 
 export const EvidenceResultSchema = z.object({
   intervention: z.string(),
