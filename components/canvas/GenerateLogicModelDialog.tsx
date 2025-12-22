@@ -91,8 +91,6 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
 
       const { canvasData } = result;
 
-      console.log("Generated canvas:", canvasData);
-
       await setDialogStep("structure", "completed");
 
       await setDialogStep("illustrate", "active");
