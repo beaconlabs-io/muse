@@ -2,6 +2,9 @@ import type { EvidenceMatch } from "@/types";
 import type { Agent } from "@mastra/core/agent";
 import { EVIDENCE_MATCH_THRESHOLD, MAX_MATCHES_PER_EDGE } from "@/lib/constants";
 import { getAllEvidenceMeta } from "@/lib/evidence";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger({ module: "lib:evidence-search-batch" });
 
 export interface EdgeInput {
   arrowId: string;
@@ -34,11 +37,11 @@ export async function searchEvidenceForAllEdges(
     return {};
   }
 
-  console.log(`\n[Batch Evidence Search] Processing ${edges.length} edges in single batch`);
+  logger.info({ edgesCount: edges.length }, "Processing edges in single batch");
 
   try {
     if (!agent) {
-      console.error("[Batch Evidence Search] No agent provided");
+      logger.error("No agent provided");
       return edges.reduce(
         (acc, edge) => {
           acc[edge.arrowId] = [];
@@ -90,9 +93,7 @@ Include ALL arrow IDs in results, even if they have empty match arrays.`,
       },
     ]);
 
-    console.log(
-      `[Batch Evidence Search] Agent response received (${result.text?.length || 0} chars)`,
-    );
+    logger.debug({ responseLength: result.text?.length || 0 }, "Agent response received");
 
     // Parse the JSON response with multiple fallback strategies
     const responseText = result.text || "";
@@ -105,7 +106,7 @@ Include ALL arrow IDs in results, even if they have empty match arrays.`,
       let jsonText: string;
       if (codeBlockMatch) {
         jsonText = codeBlockMatch[1];
-        console.log("[Batch Evidence Search] Extracted JSON from markdown code block");
+        logger.debug("Extracted JSON from markdown code block");
       } else {
         // Strategy 2: Try direct parse (if response is pure JSON)
         jsonText = responseText;
@@ -119,14 +120,15 @@ Include ALL arrow IDs in results, even if they have empty match arrays.`,
       }
 
       parsedResults = parsed.results;
-      console.log(
-        `[Batch Evidence Search] Successfully parsed results for ${Object.keys(parsedResults).length} edges`,
+      logger.debug(
+        { parsedEdgesCount: Object.keys(parsedResults).length },
+        "Successfully parsed results",
       );
     } catch (parseError) {
       // Strategy 3: Fallback to regex extraction
-      console.warn(
-        "[Batch Evidence Search] Direct parsing failed, trying regex extraction...",
-        parseError,
+      logger.warn(
+        { error: parseError instanceof Error ? parseError.message : String(parseError) },
+        "Direct parsing failed, trying regex extraction",
       );
 
       try {
@@ -134,19 +136,25 @@ Include ALL arrow IDs in results, even if they have empty match arrays.`,
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
           parsedResults = parsed.results || {};
-          console.log("[Batch Evidence Search] Regex extraction succeeded");
+          logger.debug("Regex extraction succeeded");
         } else {
           throw new Error("No JSON found in response");
         }
       } catch (regexError) {
-        console.error("[Batch Evidence Search] All parsing strategies failed:", regexError);
+        logger.error(
+          { error: regexError instanceof Error ? regexError.message : String(regexError) },
+          "All parsing strategies failed",
+        );
 
         // Log full response in development mode
-        if (process.env.NODE_ENV === "development") {
-          console.error("[Batch Evidence Search] Full response:", responseText);
-        } else {
-          console.error("[Batch Evidence Search] Response preview:", responseText.slice(0, 500));
-        }
+        logger.error(
+          {
+            responsePreview:
+              process.env.NODE_ENV === "development" ? responseText : responseText.slice(0, 500),
+            fullResponse: process.env.NODE_ENV === "development",
+          },
+          "Response content for debugging",
+        );
 
         // Return empty results for all edges
         return edges.reduce(
@@ -193,13 +201,14 @@ Include ALL arrow IDs in results, even if they have empty match arrays.`,
     }
 
     const totalMatches = Object.values(enrichedResults).reduce((sum, arr) => sum + arr.length, 0);
-    console.log(
-      `[Batch Evidence Search] Returning ${totalMatches} total matches across ${edges.length} edges`,
-    );
+    logger.info({ totalMatches, edgesCount: edges.length }, "Returning batch search results");
 
     return enrichedResults;
   } catch (error) {
-    console.error("[Batch Evidence Search] Error:", error);
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      "Batch evidence search failed",
+    );
     return edges.reduce(
       (acc, edge) => {
         acc[edge.arrowId] = [];
