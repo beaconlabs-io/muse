@@ -1,4 +1,4 @@
-import { CanvasData, IPFSStorageResult } from "@/types";
+import { CanvasData, CanvasDataSchema, IPFSStorageResult } from "@/types";
 
 export async function uploadToIPFS(canvasData: CanvasData): Promise<IPFSStorageResult> {
   try {
@@ -45,14 +45,12 @@ export async function fetchFromIPFS(hash: string): Promise<CanvasData> {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const canvasData = await response.json();
+    const data = await response.json();
 
-    // Validate the canvas data structure
-    if (!canvasData.id || !canvasData.cards || !canvasData.metadata) {
-      throw new Error("Invalid canvas data structure");
-    }
+    // Validate with Zod schema
+    const validatedData = CanvasDataSchema.parse(data);
 
-    return canvasData as CanvasData;
+    return validatedData;
   } catch (error) {
     console.error("IPFS fetch error:", error);
     throw error;

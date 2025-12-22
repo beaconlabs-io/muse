@@ -1,5 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { logicModelTool } from "../tools/logic-model-tool";
+import { Frequency } from "@/types";
 
 const MODEL = process.env.MODEL || "google/gemini-2.5-pro";
 
@@ -208,7 +209,9 @@ export const logicModelAgent = new Agent({
       }]
     }
 
-    **Valid frequency values:** "daily", "weekly", "monthly", "quarterly", "annually", "other"
+    **Valid frequency values:** ${Object.values(Frequency)
+      .map((f) => `"${f}"`)
+      .join(", ")}
   `,
   model: MODEL,
   tools: {

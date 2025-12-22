@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { effectData } from "@/components/effect-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

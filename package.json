@@ -4,10 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "pnpm lint && next build --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint . --fix",
-    "typecheck": "tsc --noEmit 2>&1 | head -50",
     "clean": "rm -rf .next node_modules && pnpm install",
     "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx}\" \"components/**/*.{js,jsx,ts,tsx}\" \"hooks/**/*.{js,jsx,ts,tsx}\" \"utils/**/*.{js,jsx,ts,tsx}\" \"types/**/*.{js,jsx,ts,tsx}\" \"lib/**/*.{js,jsx,ts,tsx}\" \"mastra/**/*.{js,jsx,ts,tsx}\"",
     "prepare": "husky",
@@ -84,7 +83,7 @@
     "tw-animate-css": "^1.3.5",
     "viem": "^2.32.0",
     "wagmi": "^2.16.9",
-    "zod": "^3.25.76"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

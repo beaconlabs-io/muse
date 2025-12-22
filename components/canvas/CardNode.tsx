@@ -3,15 +3,9 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Pencil, Zap, Package, Target, Sparkles } from "lucide-react";
+import { useCanvasOperations } from "./context";
+import type { Metric } from "@/types";
 import type { LucideIcon } from "lucide-react";
-
-interface MetricData {
-  name: string;
-  description?: string;
-  measurementMethod?: string;
-  targetValue?: string;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-}
 
 export interface CardNodeData extends Record<string, unknown> {
   id: string;
@@ -19,10 +13,7 @@ export interface CardNodeData extends Record<string, unknown> {
   description?: string;
   color: string;
   type?: string;
-  metrics?: MetricData[];
-  onContentChange?: (title: string, description?: string) => void;
-  onDeleteCard?: () => void;
-  onEdit?: () => void;
+  metrics?: Metric[];
 }
 
 // Map types to display labels and icons
@@ -35,6 +26,9 @@ const TYPE_CONFIG: Record<string, { label: string; icon: LucideIcon }> = {
 };
 
 export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeData }) => {
+  // Get operations from context
+  const { deleteCard, openEditSheet } = useCanvasOperations();
+
   // Get type config (label and icon)
   const typeConfig = data.type ? TYPE_CONFIG[data.type] : null;
   const typeLabel = typeConfig?.label || "Node";
@@ -42,12 +36,12 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
 
   const handleDoubleClick = () => {
     // Open edit dialog
-    data.onEdit?.();
+    openEditSheet(data.id);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Delete" || e.key === "Backspace") {
-      data.onDeleteCard?.();
+      deleteCard(data.id);
     }
   };
 
@@ -103,7 +97,7 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
       <button
         onClick={(e) => {
           e.stopPropagation();
-          data.onEdit?.();
+          openEditSheet(data.id);
         }}
         className="absolute -top-2 -right-2 hidden h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-gray-500 text-white group-hover:flex hover:bg-gray-600"
         title="Edit card"

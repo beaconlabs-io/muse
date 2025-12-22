@@ -3,58 +3,10 @@ import type { Node, Edge } from "@xyflow/react";
 import { Card, Arrow } from "@/types";
 
 /**
- * Evidence counts for a card (node)
- */
-export interface EvidenceCounts {
-  incoming: number; // Number of incoming edges with evidence
-  outgoing: number; // Number of outgoing edges with evidence
-  total: number; // Total edges with evidence connected to this card
-}
-
-/**
- * Calculate evidence counts for each card based on arrows
- */
-export function calculateEvidenceCounts(
-  cards: Card[],
-  arrows: Arrow[],
-): Record<string, EvidenceCounts> {
-  const counts: Record<string, EvidenceCounts> = {};
-
-  // Initialize counts for all cards
-  cards.forEach((card) => {
-    counts[card.id] = { incoming: 0, outgoing: 0, total: 0 };
-  });
-
-  // Count evidence on arrows
-  arrows.forEach((arrow) => {
-    const hasEvidence = arrow.evidenceIds && arrow.evidenceIds.length > 0;
-    if (!hasEvidence) return;
-
-    // Increment outgoing for source card
-    if (counts[arrow.fromCardId]) {
-      counts[arrow.fromCardId].outgoing++;
-      counts[arrow.fromCardId].total++;
-    }
-
-    // Increment incoming for target card
-    if (counts[arrow.toCardId]) {
-      counts[arrow.toCardId].incoming++;
-      counts[arrow.toCardId].total++;
-    }
-  });
-
-  return counts;
-}
-
-/**
  * Convert Card array to React Flow Node array
  * @param cards Array of cards to convert
- * @param evidenceCounts Optional evidence counts per card
  */
-export function cardsToNodes(
-  cards: Card[],
-  evidenceCounts?: Record<string, EvidenceCounts>,
-): Node<CardNodeData>[] {
+export function cardsToNodes(cards: Card[]): Node<CardNodeData>[] {
   return cards.map((card) => ({
     id: card.id,
     type: "cardNode",
@@ -65,7 +17,6 @@ export function cardsToNodes(
       description: card.description,
       color: card.color,
       type: card.type,
-      evidenceCounts: evidenceCounts?.[card.id],
     },
   }));
 }
