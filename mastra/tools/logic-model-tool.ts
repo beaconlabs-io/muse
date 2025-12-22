@@ -15,10 +15,10 @@ export const logicModelTool = createTool({
   id: "generate-logic-model",
   description:
     "Generate a logic model (Theory of Change) structure. " +
-    "CONSTRAINTS: Max 25 connections total, max 3 outgoing per card. " +
+    "CONSTRAINTS: Target 8-10 connections (recommended for readability), max 25 total, max 3 outgoing per card. " +
     "Each card needs title (max 100 chars), optional description (max 200 chars), and 1 metric object. " +
     "Metrics must be objects with {name, measurementMethod, frequency} - NOT strings. " +
-    "Connections should be 8-10 total with direct causal relationships only.",
+    "Connections should target 8-10 total with direct causal relationships only.",
   inputSchema: z.object({
     intervention: z.string().describe("The intervention or program being modeled"),
     targetContext: z
