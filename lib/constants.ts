@@ -1,4 +1,12 @@
 /**
+ * Base URL for the application (production or development)
+ */
+export const BASE_URL =
+  process.env.NEXT_PUBLIC_ENV === "production"
+    ? "https://muse.beaconlabs.io"
+    : "https://dev.muse.beaconlabs.io";
+
+/**
  * Evidence Search Configuration Constants
  * Centralized configuration for evidence matching thresholds and limits.
  */

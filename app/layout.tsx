@@ -4,7 +4,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { Toaster } from "sonner";
 import { Header } from "@/components/header";
 import Providers from "./providers";
-import { baseUrl } from "@/configs";
+import { BASE_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "MUSE by BeaconLabs",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     siteName: "MUSE",
     images: [
       {
-        url: `${baseUrl}/opengraph-image.png`,
+        url: `${BASE_URL}/opengraph-image.png`,
         width: 1200,
         height: 630,
         alt: "MUSE by BeaconLabs",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MUSE by BeaconLabs",
     description: "Create and edit interactive logic models with evidence",
-    images: [`${baseUrl}/opengraph-image.png`],
+    images: [`${BASE_URL}/opengraph-image.png`],
   },
 };
 
