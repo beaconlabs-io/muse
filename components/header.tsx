@@ -45,6 +45,15 @@ function ListItem({
   );
 }
 
+/**
+ * Render the top site header with logo, responsive navigation, and wallet connect control.
+ *
+ * The header displays the BeaconLabs logo linked to the homepage, a compact dropdown menu on small screens,
+ * a horizontal navigation bar on medium and larger screens, and a responsive wallet connect button whose
+ * presentation adapts to screen size.
+ *
+ * @returns The header JSX element containing the logo, navigation entries, and ConnectButton.
+ */
 export function Header() {
   return (
     <header className="w-full border-b">

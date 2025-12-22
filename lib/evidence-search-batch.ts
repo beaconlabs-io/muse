@@ -14,13 +14,12 @@ export interface BatchSearchOptions {
 }
 
 /**
- * Search for research evidence that supports multiple logic model edges in a single batch.
- * This eliminates the N+1 pattern by making one LLM call for all edges.
+ * Evaluates multiple logic-model edges in a single batch LLM call to find supporting evidence.
  *
- * @param agent - The evidence search agent to use
- * @param edges - Array of edges to evaluate
- * @param options - Optional configuration
- * @returns Map of arrowId to evidence matches
+ * @param agent - The evidence search agent used to generate batch evaluations
+ * @param edges - The edges to evaluate, each with `arrowId`, `fromContent`, and `toContent`
+ * @param options - Optional settings (`maxMatchesPerEdge`, `minScore`)
+ * @returns A record mapping each edge's `arrowId` to an array of enriched evidence matches
  */
 export async function searchEvidenceForAllEdges(
   agent: Agent,

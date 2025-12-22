@@ -116,6 +116,15 @@ export interface CanvasProviderProps {
   children: ReactNode;
 }
 
+/**
+ * Provides canvas state and operations to descendants and manages canvas lifecycle.
+ *
+ * Initializes React Flow nodes/edges from props or saved state, persists changes to storage
+ * (unless disabled), exposes stable operations for mutating and reading the canvas (save,
+ * export, clear), and renders the children along with the "Clear All Data" confirmation dialog.
+ *
+ * @returns The provider element that supplies CanvasStateContext and CanvasOperationsContext to its children.
+ */
 export function CanvasProvider({
   initialCards = [],
   initialArrows = [],

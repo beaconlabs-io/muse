@@ -77,6 +77,15 @@ const getStoredCanvasData = (): CanvasData | null => {
   return null;
 };
 
+/**
+ * Render the Mint Hypercert page, providing a form-driven UI for creating and minting a hypercert.
+ *
+ * The component displays inputs for title, description, impact scope, files, work dates, and contributors,
+ * a live preview of the hypercert card, and a controlled multi-step minting workflow that uploads the
+ * canvas to IPFS, generates a card image, and submits an on-chain mint transaction using the connected wallet.
+ *
+ * @returns The page's JSX element.
+ */
 export default function MintHypercertPage() {
   const router = useRouter();
   const storedCanvasData = getStoredCanvasData();
