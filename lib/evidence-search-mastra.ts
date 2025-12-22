@@ -1,16 +1,14 @@
 import type { EvidenceMatch } from "@/types";
+import {
+  MAX_MATCHES_PER_EDGE as DEFAULT_MAX_MATCHES,
+  EVIDENCE_MATCH_THRESHOLD as DEFAULT_MIN_EVIDENCE_SCORE,
+  EVIDENCE_QUALITY_THRESHOLD,
+} from "@/lib/constants";
 import { getAllEvidenceMeta } from "@/lib/evidence";
 import { createLogger } from "@/lib/logger";
 import { mastra } from "@/mastra";
 
 const logger = createLogger({ module: "evidence-search-mastra" });
-
-/**
- * Evidence search configuration constants
- */
-const DEFAULT_MAX_MATCHES = 3; // Maximum number of evidence matches to return
-const DEFAULT_MIN_EVIDENCE_SCORE = 70; // Minimum score (0-100) for evidence to be considered relevant
-const EVIDENCE_QUALITY_THRESHOLD = 3; // Maryland Scientific Method Scale minimum (0-5 scale)
 
 /**
  * Search for research evidence that supports a logic model edge relationship.

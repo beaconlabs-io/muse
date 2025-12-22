@@ -115,15 +115,15 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 **Logic Model Generation Workflow**:
 
 1. **Step 1**: Agent generates logic model structure (cards and arrows) from user intent
-2. **Step 2**: Evidence Search runs in parallel for all arrows, using LLM to semantically match evidence intervention→outcome pairs with logic model relationships
+2. **Step 2**: Batch evidence search using single LLM call for all arrows, semantically matching evidence intervention→outcome pairs with logic model relationships
 3. **Step 3**: Results are merged into canvas data with evidence metadata attached to arrows
 
 **Evidence Search**:
 
-- Uses LLM-based semantic matching (Claude) to evaluate if evidence supports logic model relationships
-- Searches all evidence files in parallel for each arrow
-- Returns match score (0-100), reasoning, and strength rating
-- Arrows with evidence (score > 70) display as green thick edges with interactive buttons
+- Uses LLM-based semantic matching (google/gemini-2.5-pro) to evaluate if evidence supports logic model relationships
+- **Batch processing**: Single LLM call evaluates all arrows together (not parallel execution - eliminates N+1 pattern)
+- Returns match score (0-100), confidence, reasoning, and strength rating with chain-of-thought analysis
+- Arrows with evidence (score ≥ 70) display as green thick edges with interactive buttons
 - Evidence details accessible via dialog showing ID, title, score, reasoning, strength, and clickable links to `/evidence/{id}` pages
 
 ### Import/Export Conventions
