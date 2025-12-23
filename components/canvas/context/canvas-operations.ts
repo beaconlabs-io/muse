@@ -21,7 +21,6 @@ export interface CreateOperationsParams {
   setEditingNodeId: React.Dispatch<React.SetStateAction<string | null>>;
   setEditSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
   createNodeCallbacks: (nodeId: string) => NodeCallbacks;
-  disableLocalStorage: boolean;
 }
 
 export interface CardFormData {

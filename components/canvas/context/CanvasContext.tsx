@@ -339,7 +339,6 @@ export function CanvasProvider({
         setEditingNodeId,
         setEditSheetOpen,
         createNodeCallbacks,
-        disableLocalStorage: disableLocalStorageRef.current,
       }),
     [setNodes, setEdges, setCardMetrics, createNodeCallbacks],
   );
