@@ -33,12 +33,14 @@ export function SearchPageClient({ evidence }: SearchPageClientProps) {
 
   return (
     <main>
-      <div className="container mx-auto p-4">
-        <div className="flex flex-row items-center gap-4 py-4">
-          <SearchFilter onSearchChange={setSearchQuery} />
-          <EffectFilter selectedEffects={selectedEffects} onEffectsChange={setSelectedEffects} />
+      <div className="container mx-auto max-w-[1600px] px-4 py-8 md:px-6 lg:px-8">
+        <div className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 -mx-4 mb-6 border-b px-4 py-6 backdrop-blur md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <SearchFilter onSearchChange={setSearchQuery} />
+            <EffectFilter selectedEffects={selectedEffects} onEffectsChange={setSelectedEffects} />
+          </div>
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredEvidence.map((item) => (
             <EvidenceCard key={item.evidence_id} evidence={item} />
           ))}
