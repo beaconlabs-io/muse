@@ -271,6 +271,11 @@ export function CanvasProvider({
   }, []);
 
   const exportAsImage = useCallback(() => {
+    if (nodesRef.current.length === 0) {
+      toast.error("Cannot export an empty canvas.", { duration: 3000 });
+      return;
+    }
+
     const nodesBounds = getNodesBounds(nodesRef.current);
     const imageWidth = nodesBounds.width;
     const imageHeight = nodesBounds.height;
