@@ -1,10 +1,11 @@
 import { HypercertClient, Environment } from "@hypercerts-org/sdk";
 import type { WalletClient } from "viem";
 
-const environment: Environment = process.env.NODE_ENV === "development" ? "test" : "production";
+const environment: Environment =
+  process.env.NEXT_PUBLIC_ENV === "development" ? "test" : "production";
 
 export const HYPERCERTS_URL =
-  process.env.NODE_ENV === "development"
+  process.env.NEXT_PUBLIC_ENV === "development"
     ? "https://testnet.hypercerts.org"
     : "https://app.hypercerts.org";
 
@@ -24,8 +25,8 @@ const productionREST = "https://api.hypercerts.org/v2";
 const developmentREST = "https://staging-api.hypercerts.org/v2";
 
 const HYPERCERTS_API_URL_REST =
-  process.env.NODE_ENV === "production" ? productionREST : developmentREST;
-const HYPERCERTS_API_URL = process.env.NODE_ENV === "production" ? prodGraphql : devGraphql;
+  process.env.NEXT_PUBLIC_ENV === "production" ? productionREST : developmentREST;
+const HYPERCERTS_API_URL = process.env.NEXT_PUBLIC_ENV === "production" ? prodGraphql : devGraphql;
 
 export const graphqlEndpoint = HYPERCERTS_API_URL;
 export const restEndpoint = HYPERCERTS_API_URL_REST;

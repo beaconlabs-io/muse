@@ -37,14 +37,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { Frequency, FREQUENCY_OPTIONS, MetricFormInputSchema } from "@/types";
 
-const metricsSchema = z.object({
-  name: z.string().min(1, "Metrics name is required"),
-  description: z.string().optional(),
-  measurementMethod: z.string().optional(),
-  targetValue: z.string().optional(),
-  frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]).optional(),
-});
+// Use centralized schema from types
+const metricsSchema = MetricFormInputSchema;
 
 const addLogicFormSchema = z.object({
   type: z.string().min(1, "Please select a type"),
@@ -74,15 +70,6 @@ const LOGIC_TYPES = [
   { value: "outcomes-short", label: "Outcomes - Short Term" },
   { value: "outcomes-intermediate", label: "Outcomes - Intermediate Term" },
   { value: "impact", label: "Impact" },
-] as const;
-
-const FREQUENCY_OPTIONS = [
-  { value: "daily", label: "Daily" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "quarterly", label: "Quarterly" },
-  { value: "annually", label: "Annually" },
-  { value: "other", label: "Other" },
 ] as const;
 
 export function AddLogicSheet({
@@ -116,7 +103,7 @@ export function AddLogicSheet({
       description: "",
       measurementMethod: "",
       targetValue: "",
-      frequency: "monthly",
+      frequency: Frequency.MONTHLY,
     },
   });
 
@@ -186,9 +173,9 @@ export function AddLogicSheet({
     <Sheet open={open} onOpenChange={setOpen}>
       {!editMode && (
         <SheetTrigger asChild>
-          <Button size="sm" className="flex cursor-pointer items-center gap-2">
+          <Button size="sm" variant="outline" className="flex cursor-pointer items-center gap-2">
             <Plus className="h-4 w-4" />
-            Add Node
+            <span className="hidden sm:inline">Add Node</span>
           </Button>
         </SheetTrigger>
       )}
@@ -376,7 +363,7 @@ export function AddLogicSheet({
                             <label className="text-sm font-medium">Frequency (optional)</label>
                             <Select
                               onValueChange={(value) =>
-                                metricsForm.setValue("frequency", value as any)
+                                metricsForm.setValue("frequency", value as Frequency)
                               }
                               value={metricsForm.watch("frequency")}
                             >

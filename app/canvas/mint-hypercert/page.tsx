@@ -3,18 +3,12 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Environment,
-  formatHypercertData,
-  HypercertClient,
-  TransferRestrictions,
-} from "@hypercerts-org/sdk";
+import { formatHypercertData, TransferRestrictions } from "@hypercerts-org/sdk";
 import { track } from "@vercel/analytics";
 import { format } from "date-fns";
 import { toPng } from "html-to-image";
 import { ArrowLeft, Loader2, CalendarIcon, Trash2 } from "lucide-react";
 import { waitForTransactionReceipt } from "viem/actions";
-import { baseSepolia, filecoinCalibration, sepolia } from "viem/chains";
 import { useAccount, useWalletClient } from "wagmi";
 import { z } from "zod";
 import { createExtraContent } from "@/components/extra-content";
@@ -34,7 +28,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-// import { getHypercertsClient } from "@/configs/hypercerts";
+import { getHypercertsClient } from "@/configs/hypercerts";
+import { createLogger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { CanvasData } from "@/types";
 import { generateHypercertIdFromReceipt } from "@/utils/generateHypercertIdFromReceipt";
@@ -43,6 +38,8 @@ import { uploadToIPFS } from "@/utils/ipfs";
 // TODO: fix validation
 // TODO: support markdown editor
 // TODO: add hypercerts fields
+
+const logger = createLogger({ module: "page:mint-hypercert" });
 
 // Zod schema for form validation
 const hypercertFormSchema = z.object({
@@ -76,7 +73,10 @@ const getStoredCanvasData = (): CanvasData | null => {
     try {
       return JSON.parse(storedCanvasData) as CanvasData;
     } catch (error) {
-      console.error("Failed to parse stored canvas data:", error);
+      logger.error(
+        { error: error instanceof Error ? error.message : String(error) },
+        "Failed to parse stored canvas data",
+      );
       return null;
     }
   }
@@ -122,7 +122,10 @@ export default function MintHypercertPage() {
         return dataUrl;
       }
     } catch (error) {
-      console.warn("Failed to generate hypercert image:", error);
+      logger.warn(
+        { error: error instanceof Error ? error.message : String(error) },
+        "Failed to generate hypercert image",
+      );
     }
     return "";
   };
@@ -130,8 +133,8 @@ export default function MintHypercertPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(hypercertFormSchema),
     defaultValues: {
-      title: storedCanvasData?.title || "Logic Model " + new Date().toLocaleDateString(),
-      description: storedCanvasData?.description || "Logic model created with Muse",
+      title: "",
+      description: "",
       impactScope: "",
       workDates: [new Date(), new Date()],
       contributors: "",
@@ -148,15 +151,8 @@ export default function MintHypercertPage() {
   // Generate preview URLs for files
   const logoPreviewUrl = watchedLogoFile ? URL.createObjectURL(watchedLogoFile) : null;
   const bannerPreviewUrl = watchedBannerFile ? URL.createObjectURL(watchedBannerFile) : null;
-  // TODO: separate testnet
-  const chainId = useAccount().chainId;
-  const environment: Environment =
-    chainId == baseSepolia.id || sepolia.id || filecoinCalibration.id ? "test" : "production";
-  const client = new HypercertClient({
-    environment,
-    walletClient,
-  });
-  // const client = getHypercertsClient(walletClient);
+
+  const client = getHypercertsClient(walletClient);
 
   // File handling functions
   const clearLogoFile = () => {
@@ -175,17 +171,17 @@ export default function MintHypercertPage() {
 
   const onSubmit = async (data: FormData) => {
     if (!isConnected || !address) {
-      console.error("Please connect your wallet");
+      logger.error("Please connect your wallet");
       return;
     }
 
     if (!canvasData) {
-      console.error("No logic model found");
+      logger.error("No logic model found");
       return;
     }
 
     if (!chain) {
-      console.error("No chain found");
+      logger.error("No chain found");
       return;
     }
 
@@ -284,7 +280,10 @@ export default function MintHypercertPage() {
           hash: txHash,
         });
       } catch (error: unknown) {
-        console.error("Error waiting for transaction receipt:", error);
+        logger.error(
+          { error: error instanceof Error ? error.message : String(error) },
+          "Error waiting for transaction receipt",
+        );
         await setDialogStep(
           "confirming",
           "error",
@@ -301,14 +300,15 @@ export default function MintHypercertPage() {
       let hypercertId;
       try {
         hypercertId = generateHypercertIdFromReceipt(receipt, chain.id);
-        console.log("Mint completed", {
-          hypercertId: hypercertId || "not found",
-        });
+        logger.info({ hypercertId: hypercertId || "not found" }, "Mint completed");
         track("Mint completed", {
           hypercertId: hypercertId || "not found",
         });
       } catch (error) {
-        console.error("Error generating hypercert ID:", error);
+        logger.error(
+          { error: error instanceof Error ? error.message : String(error) },
+          "Error generating hypercert ID",
+        );
         await setDialogStep(
           "route",
           "error",
@@ -327,7 +327,7 @@ export default function MintHypercertPage() {
 
       await setDialogStep("done", "completed");
     } catch (err) {
-      console.error("Minting failed:", err);
+      logger.error({ error: err instanceof Error ? err.message : String(err) }, "Minting failed");
       const errorMessage = err instanceof Error ? err.message : "Minting failed";
 
       // Mark the current step as error
@@ -346,15 +346,12 @@ export default function MintHypercertPage() {
   return (
     <div className="bg-background min-h-screen">
       {/* Header */}
-      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-b backdrop-blur">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => router.back()} className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Canvas
-            </Button>
-          </div>
-        </div>
+
+      <div className="container mx-auto px-4 py-4">
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="cursor-pointer">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Canvas
+        </Button>
       </div>
 
       {/* Main Content */}

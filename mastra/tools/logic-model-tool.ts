@@ -1,6 +1,7 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import type { Card, Arrow, CardMetrics, CanvasData, StageInput, ConnectionInput } from "@/types";
+import type { Card, Arrow, Metric, CanvasData, StageInput, ConnectionInput } from "@/types";
+import { createLogger } from "@/lib/logger";
 import {
   CanvasDataSchema,
   TYPE_COLOR_MAP,
@@ -8,16 +9,19 @@ import {
   ConnectionInputSchema,
 } from "@/types";
 
+const logger = createLogger({ module: "tool:logic-model" });
+
 export const logicModelTool = createTool({
   id: "generate-logic-model",
   description:
-    "Generate a logic model structure with activities, outputs, outcomes, and impact based on policy interventions and evidence. " +
-    "Accepts the generated content for each stage of the logic model (activities, outputs, outcomes, impact) with their metrics.",
+    "Generate a logic model (Theory of Change) structure. " +
+    "CONSTRAINTS: Target 8-10 connections (recommended for readability), max 25 total, max 3 outgoing per card. " +
+    "Each card needs title (max 100 chars), optional description (max 200 chars), and 1 metric object. " +
+    "Metrics must be objects with {name, measurementMethod, frequency} - NOT strings. " +
+    "Connections should target 8-10 total with direct causal relationships only.",
   inputSchema: z.object({
-    title: z.string().describe("Title of the logic model"),
-    description: z.string().optional().describe("Description of the logic model"),
-    intervention: z.string().describe("The policy intervention or program being modeled"),
-    context: z
+    intervention: z.string().describe("The intervention or program being modeled"),
+    targetContext: z
       .string()
       .optional()
       .describe("Additional context about the intervention, target population, or goals"),
@@ -63,10 +67,8 @@ export const logicModelTool = createTool({
   }),
   execute: async ({ context }) => {
     const {
-      title,
-      description,
       intervention,
-      context: additionalContext,
+      targetContext,
       evidenceIds,
       activities,
       outputs,
@@ -77,10 +79,8 @@ export const logicModelTool = createTool({
     } = context;
 
     return await generateLogicModel({
-      title,
-      description,
       intervention,
-      context: additionalContext,
+      context: targetContext,
       evidenceIds,
       activities,
       outputs,
@@ -93,8 +93,6 @@ export const logicModelTool = createTool({
 });
 
 const generateLogicModel = async (params: {
-  title: string;
-  description?: string;
   intervention: string;
   context?: string;
   evidenceIds?: string[];
@@ -105,17 +103,7 @@ const generateLogicModel = async (params: {
   impact: StageInput[];
   connections?: ConnectionInput[];
 }): Promise<{ canvasData: CanvasData }> => {
-  const {
-    title,
-    description,
-    intervention,
-    activities,
-    outputs,
-    outcomesShort,
-    outcomesIntermediate,
-    impact,
-    connections,
-  } = params;
+  const { activities, outputs, outcomesShort, outcomesIntermediate, impact, connections } = params;
 
   const timestamp = Date.now();
   const generateId = (type: string, index: number) => `${type}-${timestamp}-${index}`;
@@ -128,7 +116,7 @@ const generateLogicModel = async (params: {
 
   const cards: Card[] = [];
   const arrows: Arrow[] = [];
-  const cardMetrics: Record<string, CardMetrics[]> = {};
+  const cardMetrics: Record<string, Metric[]> = {};
 
   // Helper to calculate Y position for cards in same column
   const calculateY = (index: number, total: number): number => {
@@ -274,13 +262,18 @@ const generateLogicModel = async (params: {
   // Process connections
   if (connections && connections.length > 0) {
     // Agent-specified connections
-    console.log(`Creating ${connections.length} agent-specified connections...`);
+    logger.debug({ connectionsCount: connections.length }, "Creating agent-specified connections");
 
     // Validate total connection count
     let validatedConnections = connections;
     if (connections.length > MAX_CONNECTIONS) {
-      console.warn(
-        `Warning: Agent specified ${connections.length} connections, which exceeds the recommended maximum of ${MAX_CONNECTIONS}. Using first ${MAX_CONNECTIONS} connections.`,
+      logger.warn(
+        {
+          specifiedCount: connections.length,
+          maxAllowed: MAX_CONNECTIONS,
+          using: MAX_CONNECTIONS,
+        },
+        "Connection count exceeds maximum, truncating",
       );
       validatedConnections = connections.slice(0, MAX_CONNECTIONS);
     }
@@ -296,15 +289,25 @@ const generateLogicModel = async (params: {
       const toIds = cardIdsByType[toCardType];
 
       if (fromCardIndex < 0 || fromCardIndex >= fromIds.length) {
-        console.error(
-          `Invalid connection: ${fromCardType}[${fromCardIndex}] does not exist (only ${fromIds.length} cards)`,
+        logger.error(
+          {
+            fromCardType,
+            fromCardIndex,
+            availableCards: fromIds.length,
+          },
+          "Invalid connection: fromCard does not exist",
         );
         continue;
       }
 
       if (toCardIndex < 0 || toCardIndex >= toIds.length) {
-        console.error(
-          `Invalid connection: ${toCardType}[${toCardIndex}] does not exist (only ${toIds.length} cards)`,
+        logger.error(
+          {
+            toCardType,
+            toCardIndex,
+            availableCards: toIds.length,
+          },
+          "Invalid connection: toCard does not exist",
         );
         continue;
       }
@@ -315,8 +318,16 @@ const generateLogicModel = async (params: {
       // Check outgoing edge limit
       const currentOutgoing = outgoingCounts.get(fromCardId) || 0;
       if (currentOutgoing >= MAX_OUTGOING_PER_CARD) {
-        console.warn(
-          `Warning: ${fromCardType}[${fromCardIndex}] already has ${currentOutgoing} outgoing connections. Skipping connection to ${toCardType}[${toCardIndex}].`,
+        logger.warn(
+          {
+            fromCardType,
+            fromCardIndex,
+            currentOutgoing,
+            maxAllowed: MAX_OUTGOING_PER_CARD,
+            toCardType,
+            toCardIndex,
+          },
+          "Card already has maximum outgoing connections, skipping",
         );
         continue;
       }
@@ -331,16 +342,21 @@ const generateLogicModel = async (params: {
       outgoingCounts.set(fromCardId, currentOutgoing + 1);
 
       if (reasoning) {
-        console.log(
-          `  Connected ${fromCardType}[${fromCardIndex}] → ${toCardType}[${toCardIndex}]: ${reasoning}`,
+        logger.debug(
+          {
+            from: `${fromCardType}[${fromCardIndex}]`,
+            to: `${toCardType}[${toCardIndex}]`,
+            reasoning,
+          },
+          "Created connection",
         );
       }
     }
 
-    console.log(`Created ${arrows.length} validated connections.`);
+    logger.info({ connectionsCount: arrows.length }, "Created validated connections");
   } else {
     // Fallback: Simple sequential 1:1 connections
-    console.log("No connections specified by agent. Using fallback 1:1 sequential connections...");
+    logger.debug("Using fallback 1:1 sequential connections");
 
     // Activities → Outputs (1:1)
     const activityOutputPairs = Math.min(activityIds.length, outputIds.length);
@@ -382,21 +398,14 @@ const generateLogicModel = async (params: {
       });
     }
 
-    console.log(`Created ${arrows.length} fallback connections.`);
+    logger.info({ connectionsCount: arrows.length }, "Created fallback connections");
   }
 
   const canvasData: CanvasData = {
     id: `canvas-${timestamp}`,
-    title,
-    description: description || `Logic model for ${intervention}`,
     cards,
     arrows,
     cardMetrics,
-    metadata: {
-      createdAt: new Date().toISOString(),
-      version: "1.0.0",
-      author: "Logic Model Agent",
-    },
   };
 
   return { canvasData };
