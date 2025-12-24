@@ -1,8 +1,8 @@
-import { StandardizedLogicModel, IPFSStorageResult } from "@/types";
+import { CanvasData, CanvasDataSchema, IPFSStorageResult } from "@/types";
 
-export async function uploadToIPFS(logicModel: StandardizedLogicModel): Promise<IPFSStorageResult> {
+export async function uploadToIPFS(canvasData: CanvasData): Promise<IPFSStorageResult> {
   try {
-    const filename = `logic-model-${logicModel.metadata.id}.json`;
+    const filename = `canvas-${canvasData.id}.json`;
 
     const response = await fetch("/api/upload-to-ipfs", {
       method: "POST",
@@ -10,7 +10,7 @@ export async function uploadToIPFS(logicModel: StandardizedLogicModel): Promise<
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        data: logicModel,
+        data: canvasData,
         filename,
       }),
     });
@@ -37,7 +37,7 @@ export async function uploadToIPFS(logicModel: StandardizedLogicModel): Promise<
   }
 }
 
-export async function fetchFromIPFS(hash: string): Promise<StandardizedLogicModel> {
+export async function fetchFromIPFS(hash: string): Promise<CanvasData> {
   try {
     const response = await fetch(`https://ipfs.io/ipfs/${hash}`);
 
@@ -45,14 +45,12 @@ export async function fetchFromIPFS(hash: string): Promise<StandardizedLogicMode
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const logicModel = await response.json();
+    const data = await response.json();
 
-    // Validate the standardized structure
-    if (!logicModel.metadata?.id || !logicModel.nodes) {
-      throw new Error("Invalid standardized logic model structure");
-    }
+    // Validate with Zod schema
+    const validatedData = CanvasDataSchema.parse(data);
 
-    return logicModel as StandardizedLogicModel;
+    return validatedData;
   } catch (error) {
     console.error("IPFS fetch error:", error);
     throw error;

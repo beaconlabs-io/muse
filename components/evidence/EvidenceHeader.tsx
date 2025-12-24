@@ -1,5 +1,3 @@
-import React from "react";
-
 interface EvidenceHeaderProps {
   title: string;
   date: string;
@@ -10,14 +8,14 @@ interface EvidenceHeaderProps {
 export function EvidenceHeader({ title, date, author, version }: EvidenceHeaderProps) {
   return (
     <div className="mb-6">
-      <h1 className="mb-2 text-3xl font-bold text-gray-900">{title}</h1>
+      {title && <h1 className="mb-2 text-3xl font-bold text-gray-900">{title}</h1>}
       <div className="flex items-center space-x-4 text-sm text-gray-500">
-        <span>Created {date}</span>
-        <span>•</span>
-        <span>By {author}</span>
+        {date && <span>Created {date}</span>}
+        {date && author && <span>•</span>}
+        {author && <span>By {author}</span>}
         {version && (
           <>
-            <span>•</span>
+            {(date || author) && <span>•</span>}
             <span>Version {version}</span>
           </>
         )}
