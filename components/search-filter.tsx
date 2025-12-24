@@ -25,7 +25,7 @@ export function SearchFilter({
       placeholder={placeholder}
       value={searchValue}
       onChange={handleSearchChange}
-      className="max-w-sm"
+      className="h-10 flex-1 sm:max-w-md"
     />
   );
 }

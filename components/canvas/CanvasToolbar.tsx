@@ -1,5 +1,5 @@
 import { memo, useState, useCallback } from "react";
-import { Save, Download, Trash2, MoreVertical } from "lucide-react";
+import { Save, CloudCheck, Download, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { GenerateLogicModelDialog } from "./GenerateLogicModelDialog";
 
 export const CanvasToolbar = memo(() => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [uploadingToIPFS, setUploadingToIPFS] = useState(false);
   const {
     addCard,
     saveLogicModel,
@@ -21,6 +22,7 @@ export const CanvasToolbar = memo(() => {
     exportAsImage,
     clearAllData,
     loadGeneratedCanvas,
+    saveCanvasToIPFS,
   } = useCanvasOperations();
 
   const handleClearAll = useCallback(() => {
@@ -29,6 +31,14 @@ export const CanvasToolbar = memo(() => {
     // Open alert dialog after dropdown closes
     clearAllData();
   }, [clearAllData]);
+
+  const handleUploadToIPFS = useCallback(async () => {
+    setDropdownOpen(false); // Close dropdown immediately
+    setUploadingToIPFS(true);
+    await saveCanvasToIPFS();
+    setUploadingToIPFS(false);
+  }, [saveCanvasToIPFS]);
+
   return (
     <div className="bg-background flex items-center justify-between border-b p-3 sm:p-4">
       {/* Left Side: Primary Actions */}
@@ -50,6 +60,14 @@ export const CanvasToolbar = memo(() => {
             <DropdownMenuItem onClick={saveLogicModel} className="cursor-pointer">
               <Save className="mr-2 h-4 w-4" />
               Mint Hypercert
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleUploadToIPFS}
+              disabled={uploadingToIPFS}
+              className="cursor-pointer"
+            >
+              <CloudCheck className="mr-2 h-4 w-4" />
+              {uploadingToIPFS ? "Uploading..." : "Save to IPFS"}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={exportAsImage} className="cursor-pointer">
               <Download className="mr-2 h-4 w-4" />
