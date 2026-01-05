@@ -1,4 +1,5 @@
 import { CID } from "multiformats/cid";
+import { MAX_CANVAS_SIZE } from "@/lib/constants";
 import { CanvasData, CanvasDataSchema, IPFSStorageResult } from "@/types";
 
 /**
@@ -29,6 +30,14 @@ export function parseCID(hash: string): CID {
 }
 
 export async function uploadToIPFS(canvasData: CanvasData): Promise<IPFSStorageResult> {
+  // Validate size before sending to save bandwidth
+  const jsonSize = JSON.stringify(canvasData).length;
+  if (jsonSize > MAX_CANVAS_SIZE) {
+    throw new Error(
+      `Canvas data too large (${(jsonSize / 1024 / 1024).toFixed(2)}MB). Maximum size is ${MAX_CANVAS_SIZE / 1024 / 1024}MB`,
+    );
+  }
+
   try {
     const filename = `canvas-${canvasData.id}.json`;
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { MAX_CANVAS_SIZE } from "@/lib/constants";
 import { CanvasDataSchema } from "@/types";
 
@@ -18,29 +19,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No data provided" }, { status: 400 });
     }
 
-    // Validate canvas data structure with Zod
-    const validatedData = CanvasDataSchema.safeParse(data);
-    if (!validatedData.success) {
-      return NextResponse.json(
-        { error: "Invalid canvas data", details: validatedData.error.flatten() },
-        { status: 400 },
-      );
-    }
+    // Convert to JSON string once and reuse for size check and blob creation
+    const jsonString = JSON.stringify(data, null, 2);
 
-    // Check size limit to prevent DoS and control storage costs
-    const jsonSize = JSON.stringify(data).length;
-    if (jsonSize > MAX_CANVAS_SIZE) {
+    // Check size first (cheaper operation) to prevent DoS and control storage costs
+    if (jsonString.length > MAX_CANVAS_SIZE) {
       return NextResponse.json(
         { error: `Canvas data too large. Maximum size is ${MAX_CANVAS_SIZE / 1024 / 1024}MB` },
         { status: 413 },
       );
     }
 
+    // Validate canvas data structure with Zod
+    const validatedData = CanvasDataSchema.safeParse(data);
+    if (!validatedData.success) {
+      return NextResponse.json(
+        { error: "Invalid canvas data", details: z.flattenError(validatedData.error) },
+        { status: 400 },
+      );
+    }
+
     // Create FormData for Pinata API
     const formData = new FormData();
-
-    // Convert data to JSON string and create a blob
-    const jsonString = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
 
     formData.append("file", blob, filename || "logic-model.json");
