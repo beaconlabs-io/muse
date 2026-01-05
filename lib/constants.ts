@@ -19,3 +19,6 @@ export const MAX_MATCHES_PER_EDGE = 3;
 
 /** Maryland Scientific Method Scale minimum for quality (0-5) */
 export const EVIDENCE_QUALITY_THRESHOLD = 3;
+
+/** Maximum size of a canvas data in bytes (5MB) */
+export const MAX_CANVAS_SIZE = 5 * 1024 * 1024;
