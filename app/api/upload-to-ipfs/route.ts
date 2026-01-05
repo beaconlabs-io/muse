@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { MAX_CANVAS_SIZE } from "@/lib/constants";
+import { CanvasDataSchema } from "@/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +16,24 @@ export async function POST(request: NextRequest) {
 
     if (!data) {
       return NextResponse.json({ error: "No data provided" }, { status: 400 });
+    }
+
+    // Validate canvas data structure with Zod
+    const validatedData = CanvasDataSchema.safeParse(data);
+    if (!validatedData.success) {
+      return NextResponse.json(
+        { error: "Invalid canvas data", details: validatedData.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    // Check size limit to prevent DoS and control storage costs
+    const jsonSize = JSON.stringify(data).length;
+    if (jsonSize > MAX_CANVAS_SIZE) {
+      return NextResponse.json(
+        { error: `Canvas data too large. Maximum size is ${MAX_CANVAS_SIZE / 1024 / 1024}MB` },
+        { status: 413 },
+      );
     }
 
     // Create FormData for Pinata API
