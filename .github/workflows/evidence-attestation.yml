@@ -42,7 +42,7 @@ jobs:
           else
             echo "❌ User does not have write access"
             echo "should-run=false" >> $GITHUB_OUTPUT
-            gh pr comment ${{ github.event.issue.number }} --body "❌ **Permission Denied**: Only collaborators with write access can run \`/attest\`"
+            gh pr comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "❌ **Permission Denied**: Only collaborators with write access can run \`/attest\`"
           fi
 
       - name: Get PR information
@@ -51,7 +51,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_DATA=$(gh pr view ${{ github.event.issue.number }} --json headRefName,baseRefName,state)
+          PR_DATA=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} --json headRefName,baseRefName,state)
           PR_BRANCH=$(echo "$PR_DATA" | jq -r '.headRefName')
           BASE_BRANCH=$(echo "$PR_DATA" | jq -r '.baseRefName')
           PR_STATE=$(echo "$PR_DATA" | jq -r '.state')
@@ -63,7 +63,7 @@ jobs:
           # Skip if PR is not targeting dev
           if [ "$BASE_BRANCH" != "dev" ]; then
             echo "❌ PR is not targeting dev branch"
-            gh pr comment ${{ github.event.issue.number }} --body "❌ **Skipped**: Attestation only runs on PRs targeting \`dev\` branch"
+            gh pr comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "❌ **Skipped**: Attestation only runs on PRs targeting \`dev\` branch"
             echo "branch=" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -71,7 +71,7 @@ jobs:
           # Skip if PR is closed
           if [ "$PR_STATE" != "OPEN" ]; then
             echo "❌ PR is not open"
-            gh pr comment ${{ github.event.issue.number }} --body "❌ **Skipped**: PR is not open"
+            gh pr comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "❌ **Skipped**: PR is not open"
             echo "branch=" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -86,7 +86,7 @@ jobs:
           echo "🔍 Checking if Evidence Validation passed..."
 
           # Get check runs for the PR
-          CHECKS=$(gh pr checks ${{ github.event.issue.number }} --json name,state 2>/dev/null || echo "[]")
+          CHECKS=$(gh pr checks ${{ github.event.issue.number }} --repo ${{ github.repository }} --json name,state 2>/dev/null || echo "[]")
 
           # Look for validation check
           VALIDATION_STATE=$(echo "$CHECKS" | jq -r '.[] | select(.name | test("validate|validation"; "i")) | .state' | head -1)
@@ -95,7 +95,7 @@ jobs:
 
           if [ "$VALIDATION_STATE" != "SUCCESS" ] && [ "$VALIDATION_STATE" != "success" ]; then
             echo "❌ Evidence Validation has not passed"
-            gh pr comment ${{ github.event.issue.number }} --body "❌ **Blocked**: Evidence Validation must pass before \`/attest\` can run. Please ensure the validation check is green before trying again."
+            gh pr comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "❌ **Blocked**: Evidence Validation must pass before \`/attest\` can run. Please ensure the validation check is green before trying again."
             exit 1
           fi
 
@@ -154,7 +154,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr comment ${{ github.event.issue.number }} --body "🚀 **Attestation Started** - Processing ${{ steps.evidence.outputs.count }} evidence file(s)... IPFS upload in progress, EAS attestation pending. _Triggered by @${{ github.event.comment.user.login }}_"
+          gh pr comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "🚀 **Attestation Started** - Processing ${{ steps.evidence.outputs.count }} evidence file(s)... IPFS upload in progress, EAS attestation pending. _Triggered by @${{ github.event.comment.user.login }}_"
 
   upload-and-attest:
     name: Upload to IPFS and Create Attestation
