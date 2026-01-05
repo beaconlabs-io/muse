@@ -21,7 +21,6 @@ const withMDXConfig = withMDX({
       "rehype-pretty-code",
       "rehype-autolink-headings",
     ],
-    // providerImportSource: "@mdx-js/react",
   },
 });
 
