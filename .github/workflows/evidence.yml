@@ -21,6 +21,7 @@ permissions:
 jobs:
   detect-evidence-changes:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
 
     outputs:
       changed-evidence-paths: ${{ steps.evidence-paths.outputs.paths }}
