@@ -30,7 +30,7 @@ import {
   getTypeFromColor,
   type CanvasOperations,
 } from "./canvas-operations";
-import type { MetricFormInput, Metric, Card, Arrow, CanvasData } from "@/types";
+import type { MetricFormInput, Metric, Card, Arrow, CanvasData, IPFSStorageResult } from "@/types";
 import type { OnNodesChange, OnEdgesChange, Node, Edge } from "@xyflow/react";
 import {
   cardsToNodes,
@@ -39,6 +39,7 @@ import {
   edgesToArrows,
 } from "@/lib/canvas/react-flow-utils";
 import { saveCanvasState, loadCanvasState } from "@/lib/canvas/storage";
+import { uploadToIPFS, generateLogicModelId } from "@/utils/ipfs";
 
 // =============================================================================
 // TYPES
@@ -76,6 +77,7 @@ export interface StateReadingOperations {
   exportAsJSON: () => void;
   exportAsImage: () => void;
   clearAllData: () => void;
+  saveCanvasToIPFS: () => Promise<IPFSStorageResult | null>;
 }
 
 /**
@@ -247,6 +249,66 @@ export function CanvasProvider({
     }
   }, [router]);
 
+  const saveCanvasToIPFS = useCallback(async () => {
+    try {
+      const cards = nodesToCards(nodesRef.current);
+      const arrows = edgesToArrows(edgesRef.current);
+
+      // Validate that canvas is not empty
+      if (cards.length === 0) {
+        toast.error("Cannot upload an empty canvas to IPFS. Please add at least one card.", {
+          duration: 5000,
+        });
+        return null;
+      }
+
+      // Generate unique ID for the canvas
+      const id = generateLogicModelId();
+
+      const canvasData: CanvasData = {
+        id,
+        cards,
+        arrows,
+        cardMetrics: cardMetricsRef.current,
+      };
+
+      // Show loading toast with timeout
+      const loadingToastId = toast.loading("Uploading to IPFS...", {
+        duration: 30000, // 30 second timeout
+      });
+
+      // Call IPFS upload utility
+      const result = await uploadToIPFS(canvasData);
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToastId);
+
+      // Format hash for display (first 8 and last 4 characters)
+      const shortHash = `${result.hash.slice(0, 8)}...${result.hash.slice(-4)}`;
+
+      // Show success toast with action to view canvas
+      toast.success("Successfully uploaded to IPFS!", {
+        duration: 8000,
+        description: `IPFS Hash: ${shortHash}`,
+        action: {
+          label: "View Canvas",
+          onClick: () => {
+            router.push(`/canvas/${result.hash}`);
+          },
+        },
+      });
+
+      return result;
+    } catch (error) {
+      console.error("Failed to upload to IPFS:", error);
+      toast.error("Failed to upload to IPFS. Please try again.", {
+        duration: 5000,
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+      return null;
+    }
+  }, [router]);
+
   const exportAsJSON = useCallback(() => {
     const cards = nodesToCards(nodesRef.current);
     const arrows = edgesToArrows(edgesRef.current);
@@ -396,6 +458,7 @@ export function CanvasProvider({
       exportAsJSON,
       exportAsImage,
       clearAllData,
+      saveCanvasToIPFS,
     }),
     [
       operations,
@@ -407,6 +470,7 @@ export function CanvasProvider({
       exportAsJSON,
       exportAsImage,
       clearAllData,
+      saveCanvasToIPFS,
     ],
   );
 

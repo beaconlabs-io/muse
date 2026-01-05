@@ -35,7 +35,7 @@ export function EffectFilter({ selectedEffects, onEffectsChange }: EffectFilterP
     <div className="flex items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="cursor-pointer">
+          <Button variant="outline" size="sm" className="h-10 cursor-pointer">
             Effects
             {selectedEffects.length > 0 && (
               <Badge variant="secondary" className="ml-2 rounded-full">
@@ -80,12 +80,16 @@ export function EffectFilter({ selectedEffects, onEffectsChange }: EffectFilterP
         </DropdownMenuContent>
       </DropdownMenu>
       {selectedEffects.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-2">
           {selectedEffects.map((effectId) => {
             const effect = effectData.find((e) => e.id === effectId);
             if (!effect) return null;
             return (
-              <Badge key={effectId} variant="secondary" className="flex items-center gap-1">
+              <Badge
+                key={effectId}
+                variant="secondary"
+                className="flex items-center gap-1.5 px-2.5 py-1 transition-colors"
+              >
                 <div
                   className={`flex h-4 w-4 items-center justify-center rounded-full ${effect.bg}`}
                 >
