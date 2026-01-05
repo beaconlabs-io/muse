@@ -57,6 +57,67 @@ attestationUID: "0x..."
 
 ## Evidence Submission Workflow
 
+### Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Contributor
+    participant GH as GitHub
+    participant VA as Validation<br/>Workflow
+    participant R as Reviewer
+    participant AT as Attestation<br/>Workflow
+    participant IPFS as Pinata/IPFS
+    participant EAS as EAS<br/>(Blockchain)
+
+    rect rgb(240, 248, 255)
+        Note over C,GH: 1. Submission Phase
+        C->>GH: Fork repository
+        C->>C: Create evidence.mdx
+        C->>GH: Open PR to dev branch
+    end
+
+    rect rgb(255, 248, 240)
+        Note over GH,VA: 2. Auto Validation Phase
+        GH->>VA: Trigger on PR open
+        VA->>VA: Parse MDX frontmatter
+        VA->>VA: Validate with Zod schema
+        alt Validation Failed
+            VA-->>GH: ❌ Status check failed
+            VA-->>C: Error details in PR
+        else Validation Passed
+            VA-->>GH: ✅ Status check passed
+        end
+    end
+
+    rect rgb(240, 255, 240)
+        Note over R,AT: 3. Review & Attestation Phase
+        R->>GH: Review evidence content
+        R->>GH: Comment "/attest"
+        GH->>AT: Trigger attestation workflow
+        AT->>AT: Verify validation passed
+        AT->>AT: Check user permissions
+    end
+
+    rect rgb(255, 240, 255)
+        Note over AT,EAS: 4. Blockchain Attestation Phase
+        AT->>IPFS: Upload MDX content
+        IPFS-->>AT: Return IPFS hash (CID)
+        AT->>EAS: Create attestation
+        Note right of EAS: Schema: evidence_id,<br/>ipfs_hash, strength,<br/>methodology
+        EAS-->>AT: Return attestation UID
+    end
+
+    rect rgb(255, 255, 240)
+        Note over AT,GH: 5. Finalization Phase
+        AT->>AT: Generate deployment JSON
+        AT->>GH: Commit to PR branch:<br/>- contents/deployments/*.json<br/>- Update MDX attestationUID
+        AT-->>GH: ✅ Attestation complete
+        GH-->>C: PR ready to merge
+        R->>GH: Merge PR to dev
+    end
+```
+
 ### 1. Community Contribution
 
 Communities create MDX files in `contents/evidence/` following the format specified in `contents/README.md`:
@@ -65,19 +126,35 @@ Communities create MDX files in `contents/evidence/` following the format specif
 2. Create a new `.mdx` file in `contents/evidence/`
 3. Fill in the required frontmatter fields
 4. Write the evidence content in MDX format
-5. Submit a pull request to the main repository
+5. Submit a pull request to the `dev` branch
 
-### 2. Review Process
+### 2. Auto Validation (on PR open)
+
+The validation workflow (`.github/workflows/evidence-validation.yml`) automatically:
+
+- Parses MDX frontmatter using `gray-matter`
+- Validates against `EvidenceFrontmatterSchema` (Zod)
+- Checks required fields: `evidence_id`, `title`, `author`, `date`, `citation`, `results`, `strength`, `methodologies`
+- Validates strength levels (0-5 SMS scale)
+- Validates outcome effects (`N/A`, `+`, `-`, `+-`, `!`)
+
+### 3. Review & Approval
 
 - Repository maintainers review the evidence for:
   - Proper formatting and required fields
   - Academic rigor and citation quality
   - Appropriate strength rating
   - Accurate effect categorization
+- When approved, reviewer comments **`/attest`** to trigger attestation
 
-### 3. Automated Attestation (on PR merge)
+### 4. Blockchain Attestation (on /attest command)
 
-When a PR is merged to main with changes to `contents/evidence/*.mdx` files, the GitHub Actions workflow (`.github/workflows/evidence.yml`) automatically:
+The attestation workflow (`.github/workflows/evidence-attestation.yml`) is triggered when a reviewer comments `/attest`:
+
+**Pre-checks:**
+
+- Verifies commenter has write/admin permissions
+- Confirms validation workflow passed
 
 **Step 1: IPFS Upload**
 
@@ -102,12 +179,12 @@ When a PR is merged to main with changes to `contents/evidence/*.mdx` files, the
   - IPFS hash
   - Deployment timestamp
   - Evidence ID reference
-- Commits deployment file back to repository
 
-**Step 4: Frontmatter Update**
+**Step 4: Commit to PR Branch**
 
+- Commits deployment JSON to PR branch
 - Updates original MDX file with `attestationUID` field
-- Commits change back to main branch
+- PR is now ready to merge with all attestation data included
 
 ### Required Secrets
 
@@ -173,6 +250,9 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 - Evidence files: `contents/evidence/*.mdx`
 - Deployment metadata: `contents/deployments/*.json`
 - Format documentation: `contents/README.md`
-- GitHub Actions workflow: `.github/workflows/evidence.yml`
+- Validation workflow: `.github/workflows/evidence-validation.yml`
+- Attestation workflow: `.github/workflows/evidence-attestation.yml`
+- Validation script: `.github/scripts/validate-evidence.ts`
+- Type definitions: `types/index.ts` (Zod schemas)
 - Evidence parsing: `lib/evidence.ts`
 - Evidence search: `lib/evidence-search-mastra.ts`

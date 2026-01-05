@@ -1,44 +1,5 @@
-// =============================================================================
-// EVIDENCE TYPES
-// =============================================================================
-
-export interface EvidenceResult {
-  intervention: string;
-  outcome_variable: string;
-  outcome?: string;
-}
-
-export interface EvidenceCitation {
-  type?: string;
-  src?: string;
-  name: string;
-}
-
-export interface EvidenceAttestation {
-  ipfsHash: string;
-  attestationUID: `0x${string}`;
-  timestamp: string;
-  size: number;
-}
-
-export interface Evidence {
-  evidence_id: string;
-  results?: EvidenceResult[];
-  strength?: string;
-  version?: string;
-  methodologies?: string | string[];
-  datasets?: string[];
-  title: string;
-  tags?: string[];
-  citation: EvidenceCitation[];
-  author: string;
-  date: string; // Required for display
-  attestationUID?: `0x${string}`;
-  timestamp?: string;
-  history?: EvidenceAttestation[];
-}
-
 // Response type for evidence pages (from getEvidenceBySlug)
+// Cannot be Zod schema because it contains React.ReactNode
 export interface EvidenceResponse {
   meta: Evidence;
   content: React.ReactNode;
@@ -258,11 +219,26 @@ export const EvidenceMatchSchema = z.object({
 
 export type EvidenceMatch = z.infer<typeof EvidenceMatchSchema>;
 
+/**
+ * Valid outcome effect values from components/effect-icons.tsx
+ * N/A: Unclear - insufficient sample size or inadequate methods
+ * +: Positive - expected effect found (statistically significant)
+ * -: No - expected effect not observed
+ * +-: Mixed - heterogeneous effects depending on conditions
+ * !: Side - unintended effects observed
+ */
+export const OUTCOME_EFFECTS = ["N/A", "+", "-", "+-", "!"] as const;
+export type OutcomeEffect = (typeof OUTCOME_EFFECTS)[number];
+
 export const EvidenceResultSchema = z.object({
   intervention: z.string(),
   outcome_variable: z.string(),
-  outcome: z.string().optional(),
+  outcome: z.enum(OUTCOME_EFFECTS, {
+    message: "Outcome must be one of: N/A, +, -, +-, !",
+  }),
 });
+
+export type EvidenceResult = z.infer<typeof EvidenceResultSchema>;
 
 export const EvidenceSummarySchema = z.object({
   evidenceId: z.string(),
@@ -272,6 +248,65 @@ export const EvidenceSummarySchema = z.object({
 });
 
 export type EvidenceSummary = z.infer<typeof EvidenceSummarySchema>;
+
+// Evidence Frontmatter Schema (for MDX file validation)
+export const EvidenceCitationSchema = z.object({
+  name: z.string().min(1, "Citation name is required"),
+  type: z.string().optional(),
+  src: z.string().optional(),
+});
+
+export type EvidenceCitation = z.infer<typeof EvidenceCitationSchema>;
+
+/**
+ * Valid strength levels based on Maryland Scientific Method Scale (SMS)
+ * Level 0: Non-experimental analysis (mathematical models)
+ * Level 1-5: Increasing rigor of causal inference methodology
+ */
+export const STRENGTH_LEVELS = ["0", "1", "2", "3", "4", "5"] as const;
+export type StrengthLevel = (typeof STRENGTH_LEVELS)[number];
+
+export const EvidenceFrontmatterSchema = z.object({
+  evidence_id: z.string().min(1, "Evidence ID is required"),
+  title: z.string().min(1, "Title is required"),
+  author: z.string().min(1, "Author is required"),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+  citation: z.array(EvidenceCitationSchema).min(1, "At least one citation is required"),
+  results: z.array(EvidenceResultSchema).min(1, "At least one result is required"),
+  strength: z.enum(STRENGTH_LEVELS, {
+    message: "Strength must be a level from 0 to 5 (SMS scale)",
+  }),
+  methodologies: z.union([z.string(), z.array(z.string())]),
+  version: z
+    .string()
+    .regex(/^\d+\.\d+\.\d+$/, "Version must be in semver format")
+    .optional(),
+  datasets: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export type EvidenceFrontmatter = z.infer<typeof EvidenceFrontmatterSchema>;
+
+// Evidence Attestation Schema (for blockchain attestation metadata)
+export const EvidenceAttestationSchema = z.object({
+  ipfsHash: z.string(),
+  attestationUID: z.custom<`0x${string}`>((val) => typeof val === "string" && val.startsWith("0x")),
+  timestamp: z.string(),
+  size: z.number(),
+});
+
+export type EvidenceAttestation = z.infer<typeof EvidenceAttestationSchema>;
+
+// Full Evidence Schema (extends frontmatter with attestation fields)
+export const EvidenceSchema = EvidenceFrontmatterSchema.extend({
+  attestationUID: z
+    .custom<`0x${string}`>((val) => typeof val === "string" && val.startsWith("0x"))
+    .optional(),
+  timestamp: z.string().optional(),
+  history: z.array(EvidenceAttestationSchema).optional(),
+});
+
+export type Evidence = z.infer<typeof EvidenceSchema>;
 
 export const CardSchema = z.object({
   id: z.string(),
