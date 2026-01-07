@@ -176,14 +176,12 @@ jobs:
         with:
           node-version: "22.x"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: "10.x"
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
         run: |
-          pnpm install @ethereum-attestation-service/eas-sdk ethers dotenv gray-matter
+          bun install @ethereum-attestation-service/eas-sdk ethers dotenv gray-matter
 
       - name: Process and upload evidence files to IPFS
         env:

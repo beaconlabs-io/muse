@@ -545,7 +545,7 @@ Agents receive:
 **Start Mastra dev server**:
 
 ```bash
-pnpm dev:mastra
+bun dev:mastra
 ```
 
 - Sets `PROJECT_ROOT` environment variable automatically
@@ -554,7 +554,7 @@ pnpm dev:mastra
 **Build Mastra system**:
 
 ```bash
-pnpm build:mastra
+bun build:mastra
 ```
 
 - Compiles Mastra agent system
