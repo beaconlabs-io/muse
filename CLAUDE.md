@@ -4,17 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-- `pnpm dev` - Start development server with webpack (opens http://localhost:3000)
-- `pnpm build` - Build application for production
-- `pnpm start` - Start production server
-- `pnpm lint` - Run ESLint with auto-fix
-- `pnpm format` - Format code with Prettier (required before commits via husky pre-commit hook)
-- `pnpm clean` - Clean build artifacts and reinstall dependencies
+- `bun dev` - Start development server with webpack (opens http://localhost:3000)
+- `bun run build` - Build application for production
+- `bun start` - Start production server
+- `bun lint` - Run ESLint with auto-fix
+- `bun format` - Format code with Prettier (required before commits via husky pre-commit hook)
+- `bun clean` - Clean build artifacts and reinstall dependencies
 
 ### Mastra Development
 
-- `pnpm dev:mastra` - Start Mastra development server for agents/workflows (sets PROJECT_ROOT automatically)
-- `pnpm build:mastra` - Build Mastra agent system (sets PROJECT_ROOT automatically)
+- `bun dev:mastra` - Start Mastra development server for agents/workflows (sets PROJECT_ROOT automatically)
+- `bun build:mastra` - Build Mastra agent system (sets PROJECT_ROOT automatically)
 
 **Important**: The project uses husky for git hooks with lint-staged. Code is automatically linted and formatted on commit.
 
