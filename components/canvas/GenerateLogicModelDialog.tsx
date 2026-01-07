@@ -25,7 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import type { Card, Arrow, CardMetrics } from "@/types";
+import type { Card, Arrow, Metric } from "@/types";
 import { runLogicModelWorkflow } from "@/app/actions/canvas/runWorkflow";
 
 const generateLogicModelSchema = z.object({
@@ -41,7 +41,7 @@ interface GenerateLogicModelDialogProps {
   onGenerate: (data: {
     cards: Card[];
     arrows: Arrow[];
-    cardMetrics: Record<string, CardMetrics[]>;
+    cardMetrics: Record<string, Metric[]>;
   }) => void;
 }
 
@@ -90,8 +90,6 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
       }
 
       const { canvasData } = result;
-
-      console.log("Generated canvas:", canvasData);
 
       await setDialogStep("structure", "completed");
 

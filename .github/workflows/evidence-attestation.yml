@@ -1,0 +1,523 @@
+name: Evidence Attestation
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-command:
+    name: Check /attest Command
+    runs-on: ubuntu-latest
+    # Only run on PR comments containing /attest
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '/attest')
+    outputs:
+      should-run: ${{ steps.check.outputs.should-run }}
+      pr-number: ${{ github.event.issue.number }}
+      pr-branch: ${{ steps.pr-info.outputs.branch }}
+      evidence-paths: ${{ steps.evidence.outputs.paths }}
+      evidence-count: ${{ steps.evidence.outputs.count }}
+
+    steps:
+      - name: Check user permissions
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔐 Checking permissions for @${{ github.event.comment.user.login }}..."
+
+          # Check if commenter has write/admin permission
+          PERMISSION=$(gh api repos/${{ github.repository }}/collaborators/${{ github.event.comment.user.login }}/permission --jq '.permission' 2>/dev/null || echo "none")
+
+          echo "Permission level: $PERMISSION"
+
+          if [[ "$PERMISSION" == "admin" || "$PERMISSION" == "write" || "$PERMISSION" == "maintain" ]]; then
+            echo "✅ User has sufficient permissions"
+            echo "should-run=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ User does not have write access"
+            echo "should-run=false" >> $GITHUB_OUTPUT
+            gh pr comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "❌ **Permission Denied**: Only collaborators with write access can run \`/attest\`"
+          fi
+
+      - name: Get PR information
+        id: pr-info
+        if: steps.check.outputs.should-run == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_DATA=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} --json headRefName,baseRefName,state)
+          PR_BRANCH=$(echo "$PR_DATA" | jq -r '.headRefName')
+          BASE_BRANCH=$(echo "$PR_DATA" | jq -r '.baseRefName')
+          PR_STATE=$(echo "$PR_DATA" | jq -r '.state')
+
+          echo "PR Branch: $PR_BRANCH"
+          echo "Base Branch: $BASE_BRANCH"
+          echo "PR State: $PR_STATE"
+
+          # Skip if PR is not targeting dev
+          if [ "$BASE_BRANCH" != "dev" ]; then
+            echo "❌ PR is not targeting dev branch"
+            gh pr comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "❌ **Skipped**: Attestation only runs on PRs targeting \`dev\` branch"
+            echo "branch=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Skip if PR is closed
+          if [ "$PR_STATE" != "OPEN" ]; then
+            echo "❌ PR is not open"
+            gh pr comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "❌ **Skipped**: PR is not open"
+            echo "branch=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "branch=$PR_BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Check validation status
+        if: steps.check.outputs.should-run == 'true' && steps.pr-info.outputs.branch != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 Checking if Evidence Validation passed..."
+
+          # Get check runs for the PR
+          CHECKS=$(gh pr checks ${{ github.event.issue.number }} --repo ${{ github.repository }} --json name,state 2>/dev/null || echo "[]")
+
+          # Look for validation check
+          VALIDATION_STATE=$(echo "$CHECKS" | jq -r '.[] | select(.name | test("validate|validation"; "i")) | .state' | head -1)
+
+          echo "Validation status: $VALIDATION_STATE"
+
+          if [ "$VALIDATION_STATE" != "SUCCESS" ] && [ "$VALIDATION_STATE" != "success" ]; then
+            echo "❌ Evidence Validation has not passed"
+            gh pr comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "❌ **Blocked**: Evidence Validation must pass before \`/attest\` can run. Please ensure the validation check is green before trying again."
+            exit 1
+          fi
+
+          echo "✅ Evidence Validation passed"
+
+      - name: Checkout repository
+        if: steps.check.outputs.should-run == 'true' && steps.pr-info.outputs.branch != ''
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+          fetch-depth: 0
+
+      - name: Detect evidence files
+        id: evidence
+        if: steps.check.outputs.should-run == 'true' && steps.pr-info.outputs.branch != ''
+        run: |
+          echo "🔍 Detecting evidence files in PR..."
+
+          # Fetch dev branch for comparison
+          git fetch origin dev
+
+          # Get changed evidence files
+          CHANGED_FILES=$(git diff --name-only origin/dev | grep "^contents/evidence/[^/]*\.mdx$" || true)
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "❌ No evidence files found in PR"
+            echo "paths=" >> $GITHUB_OUTPUT
+            echo "count=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Convert to comma-separated relative paths
+          EVIDENCE_PATHS=""
+          COUNT=0
+          while IFS= read -r file; do
+            if [ -n "$file" ]; then
+              RELATIVE_PATH=$(echo "$file" | sed 's|^contents/evidence/||')
+              if [ -n "$EVIDENCE_PATHS" ]; then
+                EVIDENCE_PATHS="$EVIDENCE_PATHS,$RELATIVE_PATH"
+              else
+                EVIDENCE_PATHS="$RELATIVE_PATH"
+              fi
+              COUNT=$((COUNT + 1))
+              echo "Found: $RELATIVE_PATH"
+            fi
+          done <<< "$CHANGED_FILES"
+
+          echo "Evidence files: $EVIDENCE_PATHS"
+          echo "Count: $COUNT"
+
+          echo "paths=$EVIDENCE_PATHS" >> $GITHUB_OUTPUT
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+      - name: Post starting comment
+        if: steps.check.outputs.should-run == 'true' && steps.pr-info.outputs.branch != '' && steps.evidence.outputs.count > 0
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "🚀 **Attestation Started** - Processing ${{ steps.evidence.outputs.count }} evidence file(s)... IPFS upload in progress, EAS attestation pending. _Triggered by @${{ github.event.comment.user.login }}_"
+
+  upload-and-attest:
+    name: Upload to IPFS and Create Attestation
+    needs: check-command
+    if: |
+      needs.check-command.outputs.should-run == 'true' &&
+      needs.check-command.outputs.pr-branch != '' &&
+      needs.check-command.outputs.evidence-count > 0
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ needs.check-command.outputs.pr-number }}/head
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10.x"
+
+      - name: Install dependencies
+        run: |
+          pnpm install @ethereum-attestation-service/eas-sdk ethers dotenv gray-matter
+
+      - name: Process and upload evidence files to IPFS
+        env:
+          PINATA_JWT: ${{ secrets.PINATA_JWT }}
+        run: |
+          echo "📤 Processing and uploading evidence files to IPFS"
+          echo "[]" > ipfs-results.json
+
+          EVIDENCE_PATHS="${{ needs.check-command.outputs.evidence-paths }}"
+
+          if [ -n "$EVIDENCE_PATHS" ]; then
+            IFS=',' read -ra PATHS <<< "$EVIDENCE_PATHS"
+            for relative_path in "${PATHS[@]}"; do
+              if [ -n "$relative_path" ]; then
+                full_path="contents/evidence/$relative_path"
+                echo ""
+                echo "🔄 Processing: $relative_path"
+
+                if [ -f "$full_path" ]; then
+                  # Extract content using Node.js script
+                  node -e "
+                    const fs = require('fs');
+                    const matter = require('gray-matter');
+                    const path = require('path');
+
+                    const filePath = '$full_path';
+                    const relativePath = '$relative_path';
+
+                    try {
+                      const fileContent = fs.readFileSync(filePath, 'utf8');
+                      const { data: frontmatter, content } = matter(fileContent);
+
+                      console.log(\`📄 File: \${relativePath}\`);
+                      console.log(\`📊 Content length: \${content.length} characters\`);
+
+                      const tempFileName = path.basename(relativePath, '.mdx') + '_content.md';
+                      fs.writeFileSync(\`temp_\${tempFileName}\`, content);
+
+                      console.log(\`✅ Content extracted to temp_\${tempFileName}\`);
+                    } catch (error) {
+                      console.error(\`❌ Error processing \${filePath}:\`, error.message);
+                      process.exit(1);
+                    }
+                  "
+
+                  if [ $? -eq 0 ]; then
+                    temp_file="temp_$(basename "$relative_path" .mdx)_content.md"
+
+                    if [ -f "$temp_file" ]; then
+                      echo "🌐 Uploading to IPFS via Pinata..."
+
+                      PINATA_JWT="$PINATA_JWT" node -e "
+                        const fs = require('fs');
+                        const pinataUpload = require('./.github/scripts/pinata.js');
+
+                        const relativePath = '$relative_path';
+                        const tempFile = '$temp_file';
+
+                        async function uploadFile() {
+                          try {
+                            if (!process.env.PINATA_JWT) {
+                              throw new Error('PINATA_JWT environment variable is not available');
+                            }
+
+                            const content = fs.readFileSync(tempFile, 'utf8');
+                            const filename = 'evidence.md';
+
+                            console.log(\`📤 Uploading \${filename} to IPFS...\`);
+                            console.log(\`📊 Content size: \${content.length} characters\`);
+
+                            const result = await pinataUpload({
+                              text: content,
+                              filename: filename
+                            });
+
+                            console.log(\`✅ Upload successful!\`);
+                            console.log(\`📍 IPFS Hash: \${result.hash}\`);
+                            console.log(\`📏 Size: \${result.size} bytes\`);
+
+                            const resultData = {
+                              relativePath: relativePath,
+                              filename: filename,
+                              ipfsHash: result.hash,
+                              size: result.size,
+                              timestamp: result.timestamp,
+                              uploadedAt: new Date().toISOString()
+                            };
+
+                            let results = [];
+                            try {
+                              results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                            } catch (e) {
+                              results = [];
+                            }
+
+                            results.push(resultData);
+                            fs.writeFileSync('ipfs-results.json', JSON.stringify(results, null, 2));
+
+                            console.log(\`💾 Result saved to ipfs-results.json\`);
+                          } catch (error) {
+                            console.error(\`❌ Upload failed for \${relativePath}:\`, error.message);
+                            process.exit(1);
+                          }
+                        }
+
+                        uploadFile().catch(error => {
+                          console.error(\`❌ Unexpected error:\`, error.message);
+                          process.exit(1);
+                        });
+                      "
+
+                      rm -f "$temp_file"
+                    else
+                      echo "❌ Temp file not found: $temp_file"
+                    fi
+                  else
+                    echo "❌ Content extraction failed for: $relative_path"
+                  fi
+                else
+                  echo "❌ File not found: $full_path"
+                fi
+              fi
+            done
+          fi
+
+      - name: Create EAS attestation
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        run: |
+          echo "📝 Creating EAS attestation for IPFS content"
+
+          if [ -f "ipfs-results.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const eas = require('./.github/scripts/eas.js');
+              const path = require('path');
+              const matter = require('gray-matter');
+
+              async function createAttestations() {
+                try {
+                  const results = JSON.parse(fs.readFileSync('ipfs-results.json', 'utf8'));
+                  const attestationResults = [];
+
+                  for (let i = 0; i < results.length; i++) {
+                    const result = results[i];
+                    console.log(\`Processing attestation \${i + 1}/\${results.length} for \${result.relativePath}\`);
+
+                    const mdxPath = \`contents/evidence/\${result.relativePath}\`;
+                    const mdxContent = fs.readFileSync(mdxPath, 'utf8');
+                    const { data: frontmatter } = matter(mdxContent);
+
+                    const evidenceId = path.basename(result.relativePath, '.mdx');
+                    const deploymentPath = \`contents/deployments/\${evidenceId}.json\`;
+                    let refUID = '';
+
+                    if (fs.existsSync(deploymentPath)) {
+                      try {
+                        const deploymentData = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
+                        if (deploymentData.attestationUID) {
+                          refUID = deploymentData.attestationUID;
+                          console.log(\`📎 Found previous attestation UID: \${refUID}\`);
+                        }
+                      } catch (error) {
+                        console.warn(\`⚠️ Error reading deployment file: \${error.message}\`);
+                      }
+                    }
+
+                    const data = {
+                      meta: frontmatter,
+                      content: result.ipfsHash,
+                      refUID: refUID
+                    };
+
+                    console.log(\`⏳ Creating attestation \${i + 1}/\${results.length}...\`);
+                    const attestationUID = await eas({ data });
+                    console.log(\`✅ Attestation \${i + 1}/\${results.length} created with UID: \${attestationUID}\`);
+
+                    attestationResults.push({
+                      ...result,
+                      attestationUID,
+                      timestamp: new Date().toISOString()
+                    });
+
+                    if (i < results.length - 1) {
+                      console.log(\`⏱️ Waiting 2 seconds before next attestation...\`);
+                      await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                  }
+
+                  fs.writeFileSync('attestation-results.json', JSON.stringify(attestationResults, null, 2));
+                } catch (error) {
+                  console.error('Error creating attestations:', error);
+                  process.exit(1);
+                }
+              }
+
+              createAttestations().catch(console.error);
+            "
+          else
+            echo "❌ No IPFS results found"
+            exit 1
+          fi
+
+      - name: Create deployment files
+        run: |
+          echo "📝 Creating deployment files for attestations"
+
+          if [ -f "attestation-results.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const path = require('path');
+
+              try {
+                const results = JSON.parse(fs.readFileSync('attestation-results.json', 'utf8'));
+
+                for (const result of results) {
+                  const evidenceId = path.basename(result.relativePath, '.mdx');
+                  const deploymentPath = \`contents/deployments/\${evidenceId}.json\`;
+
+                  let existingData = {};
+                  if (fs.existsSync(deploymentPath)) {
+                    try {
+                      existingData = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
+                      console.log(\`📄 Found existing deployment file: \${deploymentPath}\`);
+                    } catch (error) {
+                      console.warn(\`⚠️ Error reading existing deployment file: \${error.message}\`);
+                    }
+                  }
+
+                  const history = existingData.history || [];
+                  if (existingData.attestationUID) {
+                    history.push({
+                      ipfsHash: existingData.ipfsHash,
+                      attestationUID: existingData.attestationUID,
+                      timestamp: existingData.timestamp,
+                      size: existingData.size
+                    });
+                  }
+
+                  const deploymentData = {
+                    ...existingData,
+                    evidenceId,
+                    ipfsHash: result.ipfsHash,
+                    attestationUID: result.attestationUID,
+                    timestamp: result.timestamp,
+                    size: result.size,
+                    updatedAt: new Date().toISOString(),
+                    history: history
+                  };
+
+                  const deploymentsDir = path.dirname(deploymentPath);
+                  if (!fs.existsSync(deploymentsDir)) {
+                    fs.mkdirSync(deploymentsDir, { recursive: true });
+                  }
+
+                  fs.writeFileSync(deploymentPath, JSON.stringify(deploymentData, null, 2));
+                  console.log(\`✅ Updated deployment file: \${deploymentPath}\`);
+                }
+              } catch (error) {
+                console.error('Error creating deployment files:', error);
+                process.exit(1);
+              }
+            "
+          else
+            echo "❌ No attestation results found"
+            exit 1
+          fi
+
+      - name: Commit deployment files to PR branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_BRANCH="${{ needs.check-command.outputs.pr-branch }}"
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
+
+          # Fetch and checkout the PR branch
+          git fetch origin "$PR_BRANCH"
+          git checkout "$PR_BRANCH"
+
+          # Check if there are changes
+          if git diff --quiet contents/deployments/; then
+            echo "No changes to deployment files"
+            exit 0
+          fi
+
+          git add contents/deployments/
+          git commit -m "chore(actions): add deployment files for evidence attestations"
+          git push origin "$PR_BRANCH"
+
+          echo "✅ Deployment files committed to $PR_BRANCH"
+
+      - name: Post success comment
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Build comment body from attestation results
+          echo "## ✅ Evidence Attestation Complete" > comment_body.txt
+          echo "" >> comment_body.txt
+
+          if [ -f "attestation-results.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const results = JSON.parse(fs.readFileSync('attestation-results.json', 'utf8'));
+
+              let comment = '';
+              results.forEach((result, index) => {
+                comment += \`### 📄 \${result.relativePath}\n\n\`;
+                comment += \`| Field | Value |\n\`;
+                comment += \`|-------|-------|\n\`;
+                comment += \`| **IPFS Hash** | \\\`\${result.ipfsHash}\\\` |\n\`;
+                comment += \`| **Attestation UID** | \\\`\${result.attestationUID}\\\` |\n\`;
+                comment += \`| **Size** | \${result.size} bytes |\n\`;
+                comment += \`| **Gateway** | [View on IPFS](https://gateway.pinata.cloud/ipfs/\${result.ipfsHash}) |\n\n\`;
+              });
+
+              console.log(comment);
+            " >> comment_body.txt
+          fi
+
+          echo "" >> comment_body.txt
+          echo "---" >> comment_body.txt
+          echo "_Deployment files have been committed to this PR. You can now merge._" >> comment_body.txt
+          echo "" >> comment_body.txt
+          echo "_Triggered by @${{ github.event.comment.user.login }}_" >> comment_body.txt
+
+          gh pr comment ${{ needs.check-command.outputs.pr-number }} --body-file comment_body.txt
+
+      - name: Post failure comment
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ needs.check-command.outputs.pr-number }} --body "## ❌ Evidence Attestation Failed - An error occurred during the attestation process. Please check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details. _Triggered by @${{ github.event.comment.user.login }}_"

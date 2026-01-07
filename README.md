@@ -4,10 +4,10 @@
 
 ## Deployments
 
-|         | NEXT_PUBLIC_ENV | Location                                                         |
-| ------- | --------------- | ---------------------------------------------------------------- |
-| Testnet | `development`   | [https://dev.muse.beaconlabs.io](https://dev.muse.beaconlabs.io) |
-| Mainnet | `production`    | [https://muse.beaconlabs.io](https://muse.beaconlabs.io)         |
+|             | NEXT_PUBLIC_ENV | Location                                                         |
+| ----------- | --------------- | ---------------------------------------------------------------- |
+| Production  | `production`    | [https://muse.beaconlabs.io](https://muse.beaconlabs.io)         |
+| Development | `development`   | [https://dev.muse.beaconlabs.io](https://dev.muse.beaconlabs.io) |
 
 ## Getting Started
 

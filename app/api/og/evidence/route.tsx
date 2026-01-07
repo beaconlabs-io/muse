@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { baseUrl } from "@/configs";
+import { BASE_URL } from "@/lib/constants";
 import { getEvidenceBySlug } from "@/lib/evidence";
 
 export async function GET(request: Request) {
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
     const { meta } = evidence;
 
-    const logoUrl = `${baseUrl}/beaconlabs.png`;
+    const logoUrl = `${BASE_URL}/beaconlabs.png`;
 
     return new ImageResponse(
       <div

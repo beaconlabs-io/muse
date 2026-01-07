@@ -1,35 +1,26 @@
 import withMDX from "@next/mdx";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
-import rehypeHighlight from "rehype-highlight";
-import rehypeKatex from "rehype-katex";
-import rehypePrettyCode from "rehype-pretty-code";
-import rehypeSlug from "rehype-slug";
-import rehypeToc from "rehype-toc";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
   serverExternalPackages: ["@mastra/*"],
   experimental: {
-    mdxRs: false,
+    mdxRs: true,
   },
 };
 
 const withMDXConfig = withMDX({
   extension: /\.mdx?$/,
   options: {
-    remarkPlugins: [remarkGfm, remarkMath],
+    remarkPlugins: ["remark-gfm", "remark-math"],
     rehypePlugins: [
-      rehypeHighlight,
-      rehypeToc,
-      rehypeKatex,
-      rehypeSlug,
-      rehypePrettyCode,
-      rehypeAutolinkHeadings,
+      "rehype-highlight",
+      "rehype-toc",
+      "rehype-katex",
+      "rehype-slug",
+      "rehype-pretty-code",
+      "rehype-autolink-headings",
     ],
-    providerImportSource: "@mdx-js/react",
   },
 });
 

@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ReactFlowCanvas } from "@/components/canvas/ReactFlowCanvas";
 import { Button } from "@/components/ui/button";
-import { fetchFromIPFS } from "@/utils/ipfs";
+import type { CanvasData } from "@/types";
+import { fetchFromIPFS, isValidCID } from "@/utils/ipfs";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -18,13 +19,31 @@ export default function LogicModelPage({ params }: Props) {
     data: canvasData,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<CanvasData>({
     queryKey: ["canvasData", id],
     queryFn: () => fetchFromIPFS(id),
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
     retry: 2,
+    enabled: !!isValidCID(id),
   });
+
+  // Show specific error for invalid CID before checking loading state
+  if (!isValidCID(id)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="mb-4 text-2xl font-bold text-gray-900">Invalid Canvas ID</h1>
+          <p className="mb-4 text-gray-600">
+            The provided ID is not a valid IPFS content identifier (CID).
+          </p>
+          <Button asChild>
+            <Link href="/canvas">Create New Canvas</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

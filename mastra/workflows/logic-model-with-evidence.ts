@@ -1,7 +1,8 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
+import { evidenceSearchAgent } from "../agents/evidence-search-agent";
 import { logicModelAgent } from "../agents/logic-model-agent";
-import { searchEvidenceForEdge } from "@/lib/evidence-search-mastra";
+import { searchEvidenceForAllEdges, type EdgeInput } from "@/lib/evidence-search-batch";
 import { createLogger } from "@/lib/logger";
 import {
   CanvasDataSchema,
@@ -18,7 +19,7 @@ const logger = createLogger({ module: "workflow:logic-model-with-evidence" });
  *
  * This workflow generates a complete logic model with evidence validation:
  * 1. Generate logic model structure using AI agent
- * 2. Search evidence for all arrows in parallel
+ * 2. Batch evidence search for all arrows (single LLM call)
  * 3. Enrich canvas data with evidence metadata
  */
 
@@ -135,7 +136,7 @@ Example metric: { "name": "Number of participants", "measurementMethod": "Survey
   },
 });
 
-// Step 2: Parallel evidence search for all arrows
+// Step 2: Batch evidence search for all arrows (single LLM call)
 const searchEvidenceStep = createStep({
   id: "search-evidence",
   inputSchema: z.object({
@@ -143,7 +144,7 @@ const searchEvidenceStep = createStep({
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
-    evidenceByArrow: z.record(z.array(EvidenceMatchSchema)),
+    evidenceByArrow: z.record(z.string(), z.array(EvidenceMatchSchema)),
   }),
   execute: async ({ inputData }) => {
     const { canvasData } = inputData;
@@ -152,7 +153,7 @@ const searchEvidenceStep = createStep({
       {
         arrowsCount: canvasData.arrows.length,
       },
-      "Step 2: Searching evidence in parallel",
+      "Step 2: Searching evidence in batch",
     );
 
     // Create a map of card IDs to card content for quick lookup
@@ -161,80 +162,61 @@ const searchEvidenceStep = createStep({
       cardMap.set(card.id, card);
     });
 
-    // Search evidence for all arrows in parallel
-    const evidenceSearchPromises = canvasData.arrows.map(async (arrow: Arrow) => {
-      const fromCard = cardMap.get(arrow.fromCardId);
-      const toCard = cardMap.get(arrow.toCardId);
+    // Prepare edges for batch processing
+    const edges: EdgeInput[] = canvasData.arrows
+      .map((arrow: Arrow) => {
+        const fromCard = cardMap.get(arrow.fromCardId);
+        const toCard = cardMap.get(arrow.toCardId);
 
-      if (!fromCard || !toCard) {
-        logger.warn(
-          {
-            arrowId: arrow.id,
-            hasFromCard: !!fromCard,
-            hasToCard: !!toCard,
-          },
-          "Arrow missing cards",
-        );
-        return {
-          arrowId: arrow.id,
-          matches: [] as EvidenceMatch[],
-        };
-      }
+        if (!fromCard || !toCard) {
+          logger.warn(
+            {
+              arrowId: arrow.id,
+              hasFromCard: !!fromCard,
+              hasToCard: !!toCard,
+            },
+            "Arrow missing cards",
+          );
+          return null;
+        }
 
-      try {
         const fromContent = fromCard.description
           ? `${fromCard.title}. ${fromCard.description}`
           : fromCard.title;
         const toContent = toCard.description
           ? `${toCard.title}. ${toCard.description}`
           : toCard.title;
-        logger.debug(
-          {
-            arrowId: arrow.id.substring(0, 20),
-            fromPreview: fromContent.substring(0, 40),
-            toPreview: toContent.substring(0, 40),
-          },
-          "Searching evidence for arrow",
-        );
-        const matches = await searchEvidenceForEdge(fromContent, toContent);
-        logger.debug(
-          {
-            arrowId: arrow.id.substring(0, 20),
-            matchesCount: matches.length,
-          },
-          "Evidence search completed for arrow",
-        );
+
         return {
           arrowId: arrow.id,
-          matches,
+          fromContent,
+          toContent,
         };
-      } catch (error) {
-        logger.error(
-          {
-            arrowId: arrow.id,
-            error: error instanceof Error ? error.message : String(error),
-          },
-          "Evidence search failed for arrow",
-        );
-        return {
-          arrowId: arrow.id,
-          matches: [] as EvidenceMatch[],
-        };
-      }
-    });
+      })
+      .filter((edge): edge is EdgeInput => edge !== null);
 
-    const evidenceResults = await Promise.all(evidenceSearchPromises);
-
-    const evidenceByArrow = evidenceResults.reduce(
-      (acc: Record<string, EvidenceMatch[]>, result) => {
-        acc[result.arrowId] = result.matches;
-        return acc;
+    logger.debug(
+      {
+        validEdges: edges.length,
       },
-      {} as Record<string, EvidenceMatch[]>,
+      "Prepared edges for batch search",
     );
 
+    // Single batch call for all edges
+    const evidenceByArrow = await searchEvidenceForAllEdges(evidenceSearchAgent, edges);
+
+    // Ensure all arrows have entries (even if empty)
+    for (const arrow of canvasData.arrows) {
+      if (!(arrow.id in evidenceByArrow)) {
+        evidenceByArrow[arrow.id] = [];
+      }
+    }
+
     // Calculate summary stats for logging
-    const totalEvidenceMatches = evidenceResults.reduce((sum, r) => sum + r.matches.length, 0);
+    const totalEvidenceMatches = Object.values(evidenceByArrow).reduce(
+      (sum, matches) => sum + matches.length,
+      0,
+    );
     logger.info(
       {
         totalMatches: totalEvidenceMatches,
@@ -255,7 +237,7 @@ const enrichCanvasStep = createStep({
   id: "enrich-canvas",
   inputSchema: z.object({
     canvasData: CanvasDataSchema,
-    evidenceByArrow: z.record(z.array(EvidenceMatchSchema)),
+    evidenceByArrow: z.record(z.string(), z.array(EvidenceMatchSchema)),
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
