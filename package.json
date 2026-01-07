@@ -111,5 +111,6 @@
     "*.{json,md,mdx}": [
       "prettier --write"
     ]
-  }
+  },
+  "packageManager": "bun@1.x.x"
 }
