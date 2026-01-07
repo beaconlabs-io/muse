@@ -9,7 +9,7 @@ MUSE uses the Next.js App Router. Key directories: `app/` holds route segments, 
 - `bun install` installs workspace dependencies (use bun ≥1.1).
 - `bun dev` runs the dev server on `http://localhost:3000` with hot reload for MDX and wallet integrations.
 - `bun lint` applies ESLint + Next core web vitals rules with autofix; this must be clean before committing.
-- `bun build` executes lint then builds the production bundle into `.next/`.
+- `bun run build` builds the production bundle into `.next/`.
 - `bun start` runs the compiled app to verify deployment parity.
 - `bun clean` clears `.next` and reinstalls when dependencies drift.
 
