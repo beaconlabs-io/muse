@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-MUSE uses the Next.js App Router. Key directories: `app/` holds route segments, layouts, and API routes; colocate page-specific helpers here. `components/` hosts reusable UI while `components/ui/` contains shadcn-derived primitives—regenerate rather than editing by hand. Shared services live in `lib/`, client utilities in `utils/`, and reusable hooks in `hooks/`. Evidence content sits under `contents/`; follow `contents/README.md` for MDX frontmatter and note that merged PRs emit JSON into `contents/deployments/`. Static files stay in `public/`, and cross-cutting types in `types/`.
+MUSE uses the Next.js App Router. Key directories: `app/` holds route segments, layouts, and API routes; colocate page-specific helpers here. `components/` hosts reusable UI while `components/ui/` contains shadcn-derived primitives—regenerate rather than editing by hand. Shared services live in `lib/`, client utilities in `utils/`, and reusable hooks in `hooks/`. Evidence content is managed as a git submodule under `evidence-repo/`; follow `evidence-repo/README.md` for MDX frontmatter and note that merged PRs emit JSON into `evidence-repo/deployments/`. Static files stay in `public/`, and cross-cutting types in `types/`.
 
 ## Build, Test, and Development Commands
 
