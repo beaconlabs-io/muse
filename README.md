@@ -4,10 +4,10 @@
 
 ## Deployments
 
-|         | NEXT_PUBLIC_ENV | Location                                                         |
-| ------- | --------------- | ---------------------------------------------------------------- |
-| Testnet | `development`   | [https://dev.muse.beaconlabs.io](https://dev.muse.beaconlabs.io) |
-| Mainnet | `production`    | [https://muse.beaconlabs.io](https://muse.beaconlabs.io)         |
+|             | NEXT_PUBLIC_ENV | Location                                                         |
+| ----------- | --------------- | ---------------------------------------------------------------- |
+| Production  | `production`    | [https://muse.beaconlabs.io](https://muse.beaconlabs.io)         |
+| Development | `development`   | [https://dev.muse.beaconlabs.io](https://dev.muse.beaconlabs.io) |
 
 ## Getting Started
 
@@ -23,13 +23,13 @@ cd muse
 2. Install dependencies:
 
 ```bash
-pnpm install
+bun install
 ```
 
 3. Run the development server:
 
 ```bash
-pnpm dev
+bun run dev
 ```
 
 4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -41,7 +41,7 @@ pnpm dev
 Run Prettier before committing to keep the codebase consistent.
 
 ```bash
-pnpm format
+bun run format
 ```
 
 ### Adding New Evidence

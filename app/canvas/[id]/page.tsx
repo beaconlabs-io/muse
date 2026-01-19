@@ -3,9 +3,10 @@
 import React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { LogicModelViewer } from "@/components/canvas/LogicModelViewer";
+import { ReactFlowCanvas } from "@/components/canvas/ReactFlowCanvas";
 import { Button } from "@/components/ui/button";
-import { fetchFromIPFS } from "@/utils/ipfs";
+import type { CanvasData } from "@/types";
+import { fetchFromIPFS, isValidCID } from "@/utils/ipfs";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -15,37 +16,55 @@ export default function LogicModelPage({ params }: Props) {
   const { id } = React.use(params);
 
   const {
-    data: logicModel,
+    data: canvasData,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ["logicModel", id],
+  } = useQuery<CanvasData>({
+    queryKey: ["canvasData", id],
     queryFn: () => fetchFromIPFS(id),
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
     retry: 2,
+    enabled: !!isValidCID(id),
   });
+
+  // Show specific error for invalid CID before checking loading state
+  if (!isValidCID(id)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="mb-4 text-2xl font-bold text-gray-900">Invalid Canvas ID</h1>
+          <p className="mb-4 text-gray-600">
+            The provided ID is not a valid IPFS content identifier (CID).
+          </p>
+          <Button asChild>
+            <Link href="/canvas">Create New Canvas</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600"></div>
-          <p className="text-gray-600">Loading logic model...</p>
+          <p className="text-gray-600">Loading canvas...</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
-    const errorMessage = error instanceof Error ? error.message : "Failed to load logic model";
+  if (error || !canvasData) {
+    const errorMessage = error instanceof Error ? error.message : "Failed to load canvas";
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-gray-900">Logic Model Not Found</h1>
+          <h1 className="mb-4 text-2xl font-bold text-gray-900">Canvas Not Found</h1>
           <p className="mb-4 text-gray-600">{errorMessage}</p>
           <Button asChild>
-            <Link href="/canvas">Create New Logic Model</Link>
+            <Link href="/canvas">Create New Canvas</Link>
           </Button>
         </div>
       </div>
@@ -53,8 +72,13 @@ export default function LogicModelPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen">
-      <LogicModelViewer logicModel={logicModel!} />
+    <div className="h-screen w-full">
+      <ReactFlowCanvas
+        initialCards={canvasData.cards}
+        initialArrows={canvasData.arrows}
+        initialCardMetrics={canvasData.cardMetrics}
+        disableLocalStorage={true}
+      />
     </div>
   );
 }

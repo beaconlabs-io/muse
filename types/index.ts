@@ -1,44 +1,5 @@
-// =============================================================================
-// EVIDENCE TYPES
-// =============================================================================
-
-export interface EvidenceResult {
-  intervention: string;
-  outcome_variable: string;
-  outcome?: string;
-}
-
-export interface EvidenceCitation {
-  type?: string;
-  src?: string;
-  name: string;
-}
-
-export interface EvidenceAttestation {
-  ipfsHash: string;
-  attestationUID: `0x${string}`;
-  timestamp: string;
-  size: number;
-}
-
-export interface Evidence {
-  evidence_id: string;
-  results?: EvidenceResult[];
-  strength?: string;
-  version?: string;
-  methodologies?: string | string[];
-  datasets?: string[];
-  title: string;
-  tags?: string[];
-  citation: EvidenceCitation[];
-  author: string;
-  date: string; // Required for display
-  attestationUID?: `0x${string}`;
-  timestamp?: string;
-  history?: EvidenceAttestation[];
-}
-
 // Response type for evidence pages (from getEvidenceBySlug)
+// Cannot be Zod schema because it contains React.ReactNode
 export interface EvidenceResponse {
   meta: Evidence;
   content: React.ReactNode;
@@ -99,80 +60,121 @@ export interface IPFSStorageResult {
 }
 
 // =============================================================================
-// GRAPH VISUALIZATION TYPES
+// FREQUENCY CONSTANTS AND TYPES
 // =============================================================================
 
-export type Node = {
-  [key: string]: unknown;
-  id: string;
-  value?: number;
-  color?: string;
-  size?: number;
-};
-
-export type Link = {
-  source: string;
-  target: string;
-  time?: string;
-  width?: number;
-  color?: string;
-};
-
-// =============================================================================
-// LOGIC MODEL TYPES
-// =============================================================================
-
-export interface LogicModelNode {
-  id: string;
-  type: "impact" | "outcome" | "output" | "activities";
-  content: string;
-  from: string[];
-  to: string[];
-  metrics?: LogicModelMetric[];
+/**
+ * Frequency enum for metric measurement intervals
+ * These values are stored in the database and used in API responses
+ */
+export enum Frequency {
+  DAILY = "daily",
+  WEEKLY = "weekly",
+  MONTHLY = "monthly",
+  QUARTERLY = "quarterly",
+  ANNUALLY = "annually",
+  OTHER = "other",
 }
 
-export interface LogicModelMetric {
-  id: string;
-  name: string;
-  description?: string;
-  measurementMethod?: string;
-  targetValue?: string;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-}
+/**
+ * Human-readable labels for frequency values (used in UI)
+ */
+export const FREQUENCY_LABELS: Record<Frequency, string> = {
+  [Frequency.DAILY]: "Daily",
+  [Frequency.WEEKLY]: "Weekly",
+  [Frequency.MONTHLY]: "Monthly",
+  [Frequency.QUARTERLY]: "Quarterly",
+  [Frequency.ANNUALLY]: "Annually",
+  [Frequency.OTHER]: "Other",
+} as const;
 
-export interface LogicModelMetadata {
-  id: string;
-  title: string;
-  description: string;
-  createdAt: string;
-  version: string;
-  author?: string;
-}
+/**
+ * Frequency options array for Select components
+ */
+export const FREQUENCY_OPTIONS = Object.values(Frequency).map((value) => ({
+  value,
+  label: FREQUENCY_LABELS[value],
+}));
 
-export interface StandardizedLogicModel {
-  nodes: {
-    impact: LogicModelNode[];
-    outcome: LogicModelNode[];
-    output: LogicModelNode[];
-    activities: LogicModelNode[];
-  };
-  metadata: LogicModelMetadata;
-}
+/**
+ * Type for frequency option objects
+ */
+export type FrequencyOption = (typeof FREQUENCY_OPTIONS)[number];
 
-// =============================================================================
 // ZOD SCHEMAS FOR VALIDATION
 // =============================================================================
 
 import { z } from "zod";
 
-export const LogicModelMetricSchema = z.object({
+// =============================================================================
+// UNIFIED METRIC SCHEMAS
+// =============================================================================
+
+/**
+ * Base metric schema with ID (for storage)
+ */
+export const MetricSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
   measurementMethod: z.string().optional(),
   targetValue: z.string().optional(),
-  frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "annually", "other"]).optional(),
+  frequency: z.enum(Object.values(Frequency) as [Frequency, ...Frequency[]]).optional(),
 });
+
+/**
+ * Metric form input schema without ID (for forms)
+ */
+export const MetricFormInputSchema = MetricSchema.omit({ id: true });
+
+/**
+ * Export types
+ */
+export type Metric = z.infer<typeof MetricSchema>;
+export type MetricFormInput = z.infer<typeof MetricFormInputSchema>;
+
+// =============================================================================
+// TOOL INPUT SCHEMAS (for Mastra agents)
+// =============================================================================
+
+// Metric schema for tool input validation (stricter than storage)
+export const ToolMetricInputSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  measurementMethod: z.string(), // REQUIRED for LLM generation
+  frequency: z.enum(Object.values(Frequency) as [Frequency, ...Frequency[]]),
+});
+
+// Reusable schema factory for logic model stages
+export const createStageInputSchema = () =>
+  z.object({
+    title: z.string().min(1).max(100),
+    description: z.string().max(200).optional(),
+    metrics: z.array(ToolMetricInputSchema),
+  });
+
+// Connection schema for tool input
+export const ConnectionInputSchema = z.object({
+  fromCardIndex: z.number().min(0).describe("Index of the source card in its type array (0-based)"),
+  fromCardType: z
+    .enum(["activities", "outputs", "outcomesShort", "outcomesIntermediate", "impact"])
+    .describe("Type of the source card"),
+  toCardIndex: z.number().min(0).describe("Index of the target card in its type array (0-based)"),
+  toCardType: z
+    .enum(["activities", "outputs", "outcomesShort", "outcomesIntermediate", "impact"])
+    .describe("Type of the target card"),
+  reasoning: z
+    .string()
+    .optional()
+    .describe(
+      "Brief explanation of why this connection represents a plausible causal relationship",
+    ),
+});
+
+// Infer TypeScript types
+export type ToolMetricInput = z.infer<typeof ToolMetricInputSchema>;
+export type StageInput = z.infer<ReturnType<typeof createStageInputSchema>>;
+export type ConnectionInput = z.infer<typeof ConnectionInputSchema>;
 
 export const LogicModelNodeSchema = z.object({
   id: z.string(),
@@ -180,7 +182,7 @@ export const LogicModelNodeSchema = z.object({
   content: z.string(),
   from: z.array(z.string()),
   to: z.array(z.string()),
-  metrics: z.array(LogicModelMetricSchema).optional(),
+  metrics: z.array(MetricSchema).optional(),
 });
 
 export const LogicModelMetadataSchema = z.object({
@@ -202,209 +204,146 @@ export const StandardizedLogicModelSchema = z.object({
   metadata: LogicModelMetadataSchema,
 });
 
-// Legacy types for backward compatibility
-export interface PostItCard {
-  id: string;
-  x: number;
-  y: number;
-  content: string;
-  color: string;
-}
+// Evidence Match Schema
+export const EvidenceMatchSchema = z.object({
+  evidenceId: z.string(),
+  score: z.number().min(0).max(100),
+  confidence: z.number().min(0).max(100).optional(),
+  reasoning: z.string(),
+  strength: z.string().optional(),
+  hasWarning: z.boolean(),
+  title: z.string().optional(),
+  interventionText: z.string().optional(),
+  outcomeText: z.string().optional(),
+});
 
-export interface Arrow {
-  id: string;
-  fromCardId: string;
-  toCardId: string;
-}
+export type EvidenceMatch = z.infer<typeof EvidenceMatchSchema>;
 
-export interface CardMetrics {
-  id: string;
-  name: string;
-  description?: string;
-  measurementMethod?: string;
-  targetValue?: string;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
-}
+/**
+ * Valid outcome effect values from components/effect-icons.tsx
+ * N/A: Unclear - insufficient sample size or inadequate methods
+ * +: Positive - expected effect found (statistically significant)
+ * -: No - expected effect not observed
+ * +-: Mixed - heterogeneous effects depending on conditions
+ * !: Side - unintended effects observed
+ */
+export const OUTCOME_EFFECTS = ["N/A", "+", "-", "+-", "!"] as const;
+export type OutcomeEffect = (typeof OUTCOME_EFFECTS)[number];
+
+export const EvidenceResultSchema = z.object({
+  intervention: z.string(),
+  outcome_variable: z.string(),
+  outcome: z.enum(OUTCOME_EFFECTS, {
+    message: "Outcome must be one of: N/A, +, -, +-, !",
+  }),
+});
+
+export type EvidenceResult = z.infer<typeof EvidenceResultSchema>;
+
+export const EvidenceSummarySchema = z.object({
+  evidenceId: z.string(),
+  title: z.string(),
+  strength: z.string().optional(),
+  results: z.array(EvidenceResultSchema),
+});
+
+export type EvidenceSummary = z.infer<typeof EvidenceSummarySchema>;
+
+// Evidence Frontmatter Schema (for MDX file validation)
+export const EvidenceCitationSchema = z.object({
+  name: z.string().min(1, "Citation name is required"),
+  type: z.string().optional(),
+  src: z.string().optional(),
+});
+
+export type EvidenceCitation = z.infer<typeof EvidenceCitationSchema>;
+
+/**
+ * Valid strength levels based on Maryland Scientific Method Scale (SMS)
+ * Level 0: Non-experimental analysis (mathematical models)
+ * Level 1-5: Increasing rigor of causal inference methodology
+ */
+export const STRENGTH_LEVELS = ["0", "1", "2", "3", "4", "5"] as const;
+export type StrengthLevel = (typeof STRENGTH_LEVELS)[number];
+
+export const EvidenceFrontmatterSchema = z.object({
+  evidence_id: z.string().min(1, "Evidence ID is required"),
+  title: z.string().min(1, "Title is required"),
+  author: z.string().min(1, "Author is required"),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+  citation: z.array(EvidenceCitationSchema).min(1, "At least one citation is required"),
+  results: z.array(EvidenceResultSchema).min(1, "At least one result is required"),
+  strength: z.enum(STRENGTH_LEVELS, {
+    message: "Strength must be a level from 0 to 5 (SMS scale)",
+  }),
+  methodologies: z.union([z.string(), z.array(z.string())]),
+  version: z
+    .string()
+    .regex(/^\d+\.\d+\.\d+$/, "Version must be in semver format")
+    .optional(),
+  datasets: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export type EvidenceFrontmatter = z.infer<typeof EvidenceFrontmatterSchema>;
+
+// Evidence Attestation Schema (for blockchain attestation metadata)
+export const EvidenceAttestationSchema = z.object({
+  ipfsHash: z.string(),
+  attestationUID: z.custom<`0x${string}`>((val) => typeof val === "string" && val.startsWith("0x")),
+  timestamp: z.string(),
+  size: z.number(),
+});
+
+export type EvidenceAttestation = z.infer<typeof EvidenceAttestationSchema>;
+
+// Full Evidence Schema (extends frontmatter with attestation fields)
+export const EvidenceSchema = EvidenceFrontmatterSchema.extend({
+  attestationUID: z
+    .custom<`0x${string}`>((val) => typeof val === "string" && val.startsWith("0x"))
+    .optional(),
+  timestamp: z.string().optional(),
+  history: z.array(EvidenceAttestationSchema).optional(),
+});
+
+export type Evidence = z.infer<typeof EvidenceSchema>;
+
+export const CardSchema = z.object({
+  id: z.string(),
+  x: z.number(),
+  y: z.number(),
+  title: z.string().min(1, "Title is required").max(100, "Title must be 100 characters or less"),
+  description: z.string().max(200, "Description must be 200 characters or less").optional(),
+  color: z.string(),
+  type: z.string().optional(),
+});
+
+export type Card = z.infer<typeof CardSchema>;
+
+export const ArrowSchema = z.object({
+  id: z.string(),
+  fromCardId: z.string(),
+  toCardId: z.string(),
+  evidenceIds: z.array(z.string()).optional(),
+  evidenceMetadata: z.array(EvidenceMatchSchema).optional(),
+});
+
+export type Arrow = z.infer<typeof ArrowSchema>;
+
+export const CanvasDataSchema = z.object({
+  id: z.string(),
+  cards: z.array(CardSchema),
+  arrows: z.array(ArrowSchema),
+  cardMetrics: z.record(z.string(), z.array(MetricSchema)),
+});
+
+export type CanvasData = z.infer<typeof CanvasDataSchema>;
 
 export interface LogicModel {
   id: string;
-  title: string;
-  description?: string;
-  cards: PostItCard[];
+  cards: Card[];
   arrows: Arrow[];
-  cardMetrics: Record<string, CardMetrics[]>;
-  metadata: {
-    createdAt: string;
-    updatedAt: string;
-    version: string;
-    author?: string;
-  };
-}
-
-// =============================================================================
-// CONVERSION UTILITIES
-// =============================================================================
-
-export function toStandardizedFormat(legacy: LogicModel): StandardizedLogicModel {
-  const nodes: {
-    impact: LogicModelNode[];
-    outcome: LogicModelNode[];
-    output: LogicModelNode[];
-    activities: LogicModelNode[];
-  } = {
-    impact: [],
-    outcome: [],
-    output: [],
-    activities: [],
-  };
-
-  legacy.cards.forEach((card) => {
-    // Determine type based on color
-    let type: LogicModelNode["type"] = "activities";
-    if (card.color === "#d1fae5") type = "output";
-    else if (card.color === "#fef08a") type = "outcome";
-    else if (card.color === "#e9d5ff") type = "impact";
-    else if (card.color === "#c7d2fe") type = "activities";
-
-    // Find connections
-    const from = legacy.arrows
-      .filter((arrow) => arrow.toCardId === card.id)
-      .map((arrow) => arrow.fromCardId);
-    const to = legacy.arrows
-      .filter((arrow) => arrow.fromCardId === card.id)
-      .map((arrow) => arrow.toCardId);
-
-    // Convert metrics
-    const metrics = legacy.cardMetrics[card.id]?.map((metric) => ({
-      id: metric.id,
-      name: metric.name,
-      description: metric.description,
-      measurementMethod: metric.measurementMethod,
-      targetValue: metric.targetValue,
-      frequency: metric.frequency,
-    }));
-
-    const node: LogicModelNode = {
-      id: card.id,
-      type,
-      content: card.content,
-      from,
-      to,
-      metrics: metrics?.length ? metrics : undefined,
-    };
-
-    // Add node to appropriate type array
-    nodes[type].push(node);
-  });
-
-  return {
-    nodes,
-    metadata: {
-      id: legacy.id,
-      title: legacy.title,
-      description: legacy.description || "",
-      createdAt: legacy.metadata.createdAt,
-      version: legacy.metadata.version,
-      author: legacy.metadata.author,
-    },
-  };
-}
-
-export function toDisplayFormat(standardized: StandardizedLogicModel): LogicModel {
-  const cards: PostItCard[] = [];
-
-  // Activities column (left)
-  standardized.nodes.activities.forEach((node, index) => {
-    cards.push({
-      id: node.id,
-      x: 100,
-      y: 150 + index * 150,
-      content: node.content,
-      color: "#c7d2fe",
-    });
-  });
-
-  // Output column (center-left)
-  standardized.nodes.output.forEach((node, index) => {
-    cards.push({
-      id: node.id,
-      x: 350,
-      y: 150 + index * 150,
-      content: node.content,
-      color: "#d1fae5",
-    });
-  });
-
-  // Outcome column (center-right)
-  standardized.nodes.outcome.forEach((node, index) => {
-    cards.push({
-      id: node.id,
-      x: 600,
-      y: 150 + index * 150,
-      content: node.content,
-      color: "#fef08a",
-    });
-  });
-
-  // Impact column (right)
-  standardized.nodes.impact.forEach((node, index) => {
-    cards.push({
-      id: node.id,
-      x: 850,
-      y: 150 + index * 150,
-      content: node.content,
-      color: "#e9d5ff",
-    });
-  });
-
-  const arrows: Arrow[] = [];
-  const cardMetrics: Record<string, CardMetrics[]> = {};
-
-  // Process all node types
-  const allNodes = [
-    ...standardized.nodes.impact,
-    ...standardized.nodes.outcome,
-    ...standardized.nodes.output,
-    ...standardized.nodes.activities,
-  ];
-
-  allNodes.forEach((node) => {
-    // Create arrows from connections
-    node.to.forEach((toId) => {
-      arrows.push({
-        id: `${node.id}-to-${toId}`,
-        fromCardId: node.id,
-        toCardId: toId,
-      });
-    });
-
-    // Convert metrics
-    if (node.metrics?.length) {
-      cardMetrics[node.id] = node.metrics.map((metric) => ({
-        id: metric.id,
-        name: metric.name,
-        description: metric.description,
-        measurementMethod: metric.measurementMethod,
-        targetValue: metric.targetValue,
-        frequency: metric.frequency,
-      }));
-    }
-  });
-
-  return {
-    id: standardized.metadata.id,
-    title: standardized.metadata.title,
-    description: standardized.metadata.description,
-    cards,
-    arrows,
-    cardMetrics,
-    metadata: {
-      createdAt: standardized.metadata.createdAt,
-      updatedAt: standardized.metadata.createdAt, // Use createdAt since updatedAt is removed
-      version: standardized.metadata.version,
-      author: standardized.metadata.author,
-    },
-  };
+  cardMetrics: Record<string, Metric[]>;
 }
 
 // =============================================================================
@@ -422,3 +361,14 @@ export const CARD_COLORS = [
 ] as const;
 
 export type CardColor = (typeof CARD_COLORS)[number];
+
+// Type-to-color mapping for logic model components
+export const TYPE_COLOR_MAP = {
+  activities: "#c7d2fe", // blue
+  outputs: "#d1fae5", // green
+  "outcomes-short": "#fef08a", // yellow
+  "outcomes-intermediate": "#fef08a", // yellow
+  impact: "#e9d5ff", // purple
+} as const;
+
+export type NodeType = keyof typeof TYPE_COLOR_MAP;

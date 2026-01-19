@@ -1,41 +1,58 @@
 import "highlight.js/styles/github-dark.css";
-import React from "react";
-import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import { notFound } from "next/navigation";
 import { extractEffectData } from "@/components/effect-icons";
-import { EvidencePageClient } from "@/components/evidence/EvidencePageClient";
+import {
+  EvidenceHeader,
+  EvidenceResults,
+  EvidenceMethodologies,
+  EvidenceDataSources,
+  EvidenceCitation,
+  EvidenceTags,
+  AttestationHistory,
+} from "@/components/evidence";
+import { Separator } from "@/components/ui/separator";
 import { getEvidenceBySlug } from "@/lib/evidence";
 
 export default async function EvidencePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const evidence = await getEvidenceBySlug(slug);
 
-  // Setup React Query client for server-side prefetching
-  const queryClient = new QueryClient();
-
-  try {
-    // Prefetch evidence data on the server
-    await queryClient.prefetchQuery({
-      queryKey: ["evidence", slug],
-      queryFn: async () => {
-        return await getEvidenceBySlug(slug);
-      },
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
-    });
-  } catch (error) {
-    console.error("Error prefetching evidence data:", error);
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-xl text-gray-600">Evidence not found</div>
-      </div>
-    );
-  }
-
-  const dehydratedState = dehydrate(queryClient);
+  if (!evidence) notFound();
 
   return (
-    <HydrationBoundary state={dehydratedState}>
-      <EvidencePageClient slug={slug} />
-    </HydrationBoundary>
+    <div className="container mx-auto max-w-4xl px-4 py-8">
+      <EvidenceHeader
+        title={evidence.meta.title}
+        date={evidence.meta.date}
+        author={evidence.meta.author}
+        version={evidence.meta.version}
+      />
+
+      <div className="prose max-w-none">
+        <article>{evidence?.content}</article>
+
+        <Separator className="my-2" />
+
+        <EvidenceResults results={evidence?.meta.results || []} />
+
+        <EvidenceMethodologies
+          methodologies={evidence?.meta.methodologies}
+          datasets={evidence?.meta.datasets}
+        />
+
+        <EvidenceDataSources datasets={evidence?.meta.datasets} />
+
+        <EvidenceCitation citations={evidence?.meta.citation} />
+
+        <EvidenceTags tags={evidence?.meta.tags} />
+
+        <AttestationHistory
+          currentAttestationUID={evidence?.meta.attestationUID}
+          currentTimestamp={evidence?.meta.timestamp}
+          history={evidence?.meta.history}
+        />
+      </div>
+    </div>
   );
 }
 

@@ -4,82 +4,74 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-- `pnpm dev` - Start development server with Turbopack
-- `pnpm build` - Build application (runs lint first, then builds)
-- `pnpm start` - Start production server
-- `pnpm lint` - Run ESLint with auto-fix
-- `pnpm clean` - Clean build artifacts and reinstall dependencies
+- `bun dev` - Start development server with webpack (opens http://localhost:3000)
+- `bun run build` - Build application for production
+- `bun start` - Start production server
+- `bun lint` - Run ESLint with auto-fix
+- `bun format` - Format code with Prettier (required before commits via husky pre-commit hook)
+- `bun clean` - Clean build artifacts and reinstall dependencies
 
-**Note**: There are no test scripts configured. The build process automatically runs linting before building.
+### Mastra Development
+
+- `bun dev:mastra` - Start Mastra development server for agents/workflows (sets PROJECT_ROOT automatically)
+- `bun build:mastra` - Build Mastra agent system (sets PROJECT_ROOT automatically)
+
+**Important**: The project uses husky for git hooks with lint-staged. Code is automatically linted and formatted on commit.
+
+**Note**: There are no test scripts configured.
 
 ## Architecture Overview
 
-Muse is a Next.js 15 application that facilitates evidence-based policy making through a workflow connecting communities, policy makers, and blockchain attestations.
+Muse is a Next.js 16 application for evidence-based impact planning using Theory of Change methodology.
 
-### Core Workflow
-1. **Evidence Collection**: Communities submit research evidence via pull requests to `contents/evidence/`
-2. **Evidence Attestation**: GitHub Actions automatically create attestations when PRs are merged
-3. **Logic Model Creation**: Policy makers build logic models using the evidence in the frontend
-4. **Impact Claims**: Logic models generate hypercerts for impact tracking
+**Core Workflow**:
 
-### Key Directories
+1. **Evidence Collection**: Communities submit research via PRs to `contents/evidence/`
+2. **Evidence Attestation**: GitHub Actions create blockchain attestations (EAS) on PR merge
+3. **Logic Model Creation**: AI-powered agents generate logic models with evidence validation
+4. **Impact Tracking**: Logic models generate hypercerts for measuring social impact
 
-- `app/` - Next.js App Router pages with main application routes
-- `components/` - React components including UI library (Radix UI + shadcn/ui)
-- `contents/` - MDX evidence files and deployment attestation metadata
-  - `contents/evidence/` - Evidence files in MDX format with frontmatter metadata
-  - `contents/deployments/` - Generated JSON files with attestation UIDs
-- `hooks/` - Custom React hooks including blockchain integration (EAS, viem)
-- `types/` - TypeScript definitions for Evidence, Attestation, and graph data structures
+## Key Directories
+
+- `app/` - Next.js App Router pages and API routes
+- `app/canvas/` - Interactive logic model builder with React Flow
+- `app/evidence/` - Evidence browsing and detail pages
+- `app/api/` - Server-side API endpoints
+- `components/canvas/` - React Flow canvas components (nodes, edges, controls)
+- `components/evidence/` - Evidence-specific UI components
+- `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
+- `contents/evidence/` - MDX evidence files with frontmatter metadata
+- `contents/deployments/` - Generated attestation metadata (JSON)
+- `hooks/` - Custom React hooks including blockchain integration
+- `lib/` - Shared utilities and configuration
+- `mastra/` - AI agent system (agents, workflows, tools)
+- `types/` - TypeScript definitions for Evidence, Attestation, graph structures
 - `utils/` - Configuration and helper functions
+- `docs/` - Detailed technical documentation (see Additional Documentation section)
 
-### Technology Stack
+## Technology Stack
 
-- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
-- **UI Components**: Radix UI primitives with shadcn/ui styling
-- **Data Visualization**: Recharts, Victory, Cosmograph (for graph visualization)
+- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS 4, Radix UI + shadcn/ui
+- **Canvas & Graphs**: React Flow (@xyflow/react) for interactive logic model visualization
+- **AI & Agents**: Mastra framework, Vercel AI SDK, OpenAI/Claude APIs
+- **Blockchain**: viem, EAS (Ethereum Attestation Service), Hypercerts SDK, RainbowKit
 - **State Management**: TanStack Query for server state
-- **Content**: MDX with extensive rehype/remark plugins for math, syntax highlighting
-- **Blockchain**: viem for Ethereum interaction, EAS (Ethereum Attestation Service)
-- **Data Processing**: danfojs for DataFrame operations
+- **Content**: MDX with rehype/remark plugins (math, syntax highlighting, TOC)
+- **Forms**: React Hook Form with Zod validation
 
-### Evidence Structure
+## Development Notes
 
-Evidence files use MDX format with YAML frontmatter containing:
-- `evidence_id` - Unique identifier
-- `results` - Array of intervention/outcome data with effect categories (0-4):
-  - 0: Unclear, 1: Effect Present, 2: No Effect, 3: Mixed, 4: Side Effects
-- `strength` - Evidence strength rating using Maryland Scientific Method Scale (0-5)
-- `methodologies` - Research methodologies used (e.g., "RCT")
-- `citation` - Academic paper references with type and source
-- `attestationUID` - Blockchain attestation reference (populated via GitHub Actions)
-- Additional fields: `title`, `date`, `tags`, `author`, `version`, `datasets`
-
-**Evidence Workflow**: Communities create MDX files in `contents/evidence/`, submit PRs, and GitHub Actions automatically generate attestation metadata in `contents/deployments/`.
-
-### Import/Export Conventions
-
-The project uses strict import ordering enforced by ESLint:
-1. React/Next.js imports first
-2. External dependencies
-3. Internal components (`@/components/**`)
-4. UI components last (`@/components/ui/**`)
-5. CSS imports at the end
-
-### MDX Configuration
-
-Next.js is configured with extensive MDX processing including:
-- Math rendering (KaTeX)
-- Syntax highlighting (Shiki/highlight.js)
-- Table of contents generation (rehype-toc)
-- Auto-linking headings (rehype-autolink-headings)
-- GitHub Flavored Markdown support (remark-gfm)
-- Pretty code formatting (rehype-pretty-code)
-
-### Development Notes
-
-- Uses TypeScript with strict mode enabled
+- TypeScript with strict mode enabled
 - Path alias `@/*` maps to project root
-- ESLint ignores `components/ui/**` (shadcn/ui generated components)
-- No custom Cursor rules or Copilot instructions configured
-- Project includes both English and Japanese documentation (see `DEV.md` for workflow diagrams)
+- ESLint ignores `components/ui/**` (shadcn/ui auto-generated components)
+- Git pre-commit hooks via husky automatically lint and format code
+- Project includes English and Japanese documentation
+
+## Additional Documentation
+
+For detailed technical information, see:
+
+- `docs/mastra-agents.md` - AI agent architecture, workflows, diagrams, quality controls
+- `docs/evidence-workflow.md` - Evidence submission, attestation, search philosophy
+- `docs/react-flow-architecture.md` - Canvas implementation, UI flow, custom components
+- `contents/README.md` - MDX evidence file format and effect categories
