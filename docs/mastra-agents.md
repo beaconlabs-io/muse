@@ -413,7 +413,7 @@ Tool for generating logic model structure:
 **Why Needed**:
 
 - When Mastra bundles and runs code, `process.cwd()` points to `.mastra/output/` instead of project root
-- This causes `ENOENT` errors when loading evidence files from `contents/evidence/`
+- This causes `ENOENT` errors when loading evidence files from `evidence-repo/evidence/`
 
 **Solution**:
 
@@ -485,7 +485,7 @@ Custom Mastra tool that agents can invoke to search evidence library.
 
 **Implementation**:
 
-- Loads all evidence from `contents/evidence/*.mdx`
+- Loads all evidence from `evidence-repo/evidence/*.mdx`
 - Parses MDX frontmatter for metadata
 - Formats for LLM consumption
 - Handles batch processing logic
