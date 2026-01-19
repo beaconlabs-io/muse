@@ -14,16 +14,12 @@ jobs:
     steps:
       - name: Send Issue Notification to Discord
         env:
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
           ISSUE_URL: ${{ github.event.issue.html_url }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           PAYLOAD=$(jq -n \
-            --arg title "$ISSUE_TITLE" \
-            --arg author "$ISSUE_AUTHOR" \
             --arg url "$ISSUE_URL" \
-            '{content: "📝 **New Issue Created!**\n**Title:** \($title)\n**Author:** @\($author)\n**Link:** \($url)"}')
+            '{content: "📝 **New Issue Created!**\n\($url)"}')
 
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Content-Type: application/json" \
