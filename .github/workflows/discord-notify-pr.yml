@@ -1,0 +1,35 @@
+name: PR notification on discord
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  notify_pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Send PR Notification to Discord
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg url "$PR_URL" \
+            '{content: "🔄 **New Pull Request Opened!**\n\($url)"}')
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK_URL")
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Successfully sent notification to Discord (HTTP $HTTP_CODE)"
+          else
+            echo "❌ Failed to send notification to Discord (HTTP $HTTP_CODE)"
+            exit 1
+          fi
