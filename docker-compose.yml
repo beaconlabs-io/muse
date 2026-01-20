@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
+        - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-production}
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PINATA_JWT=${PINATA_JWT}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY}
+      - MODEL=${MODEL:-google/gemini-2.5-pro}
+    env_file:
+      - .env.local
+    restart: unless-stopped
