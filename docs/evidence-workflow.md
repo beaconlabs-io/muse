@@ -111,7 +111,7 @@ sequenceDiagram
     rect rgb(255, 255, 240)
         Note over AT,GH: 5. Finalization Phase
         AT->>AT: Generate deployment JSON
-        AT->>GH: Commit to PR branch:<br/>- contents/deployments/*.json<br/>- Update MDX attestationUID
+        AT->>GH: Commit to PR branch:<br/>- evidence-repo/deployments/*.json<br/>- Update MDX attestationUID
         AT-->>GH: ✅ Attestation complete
         GH-->>C: PR ready to merge
         R->>GH: Merge PR to dev
@@ -120,10 +120,10 @@ sequenceDiagram
 
 ### 1. Community Contribution
 
-Communities create MDX files in `contents/evidence/` following the format specified in `contents/README.md`:
+Communities create MDX files in `evidence-repo/evidence/` following the format specified in `evidence-repo/README.md`:
 
 1. Fork the repository
-2. Create a new `.mdx` file in `contents/evidence/`
+2. Create a new `.mdx` file in `evidence-repo/evidence/`
 3. Fill in the required frontmatter fields
 4. Write the evidence content in MDX format
 5. Submit a pull request to the `dev` branch
@@ -173,7 +173,7 @@ The attestation workflow (`.github/workflows/evidence-attestation.yml`) is trigg
 
 **Step 3: Deployment Metadata**
 
-- Generates JSON file in `contents/deployments/`
+- Generates JSON file in `evidence-repo/deployments/`
 - File includes:
   - Attestation UID
   - IPFS hash
@@ -247,12 +247,12 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 
 ## File Locations
 
-- Evidence files: `contents/evidence/*.mdx`
-- Deployment metadata: `contents/deployments/*.json`
-- Format documentation: `contents/README.md`
-- Validation workflow: `.github/workflows/evidence-validation.yml`
-- Attestation workflow: `.github/workflows/evidence-attestation.yml`
-- Validation script: `.github/scripts/validate-evidence.ts`
+- Evidence files: `evidence-repo/evidence/*.mdx`
+- Deployment metadata: `evidence-repo/deployments/*.json`
+- Format documentation: `evidence-repo/README.md`
+- Validation workflow: `evidence-repo/.github/workflows/evidence-validation.yml` (in evidence repository)
+- Attestation workflow: `evidence-repo/.github/workflows/evidence-attestation.yml` (in evidence repository)
+- Validation script: `evidence-repo/.github/scripts/validate-evidence.ts` (in evidence repository)
 - Type definitions: `types/index.ts` (Zod schemas)
 - Evidence parsing: `lib/evidence.ts`
 - Evidence search: `lib/evidence-search-mastra.ts`

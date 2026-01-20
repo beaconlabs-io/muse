@@ -13,11 +13,17 @@
 
 ### Installation
 
-1. Clone the repository:
+1. Clone the repository with submodules:
 
 ```bash
-git clone https://github.com/beaconlabs-io/muse.git
+git clone --recurse-submodules https://github.com/beaconlabs-io/muse.git
 cd muse
+```
+
+Or if already cloned:
+
+```bash
+git submodule update --init --recursive
 ```
 
 2. Install dependencies:
@@ -46,6 +52,8 @@ bun run format
 
 ### Adding New Evidence
 
-1. Create a new page in `contents/evidence/`
-2. Add a `evidenceId.mdx` file with evidence. see [README.md](/contents/README.md)
-3. Github actions will create corresponding JSON file in `contents/deployments/[evidenceId].json` when PR is merged including attestation UID and metadata
+Evidence files are managed in a separate repository: [beaconlabs-io/evidence](https://github.com/beaconlabs-io/evidence)
+
+1. Create a new page in `evidence/` directory of the evidence repository
+2. Add a `evidenceId.mdx` file with evidence. See the [README.md](https://github.com/beaconlabs-io/evidence/blob/main/README.md) for format details
+3. Github actions will create corresponding JSON file in `deployments/[evidenceId].json` when PR is merged including attestation UID and metadata
