@@ -26,7 +26,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 
 **Core Workflow**:
 
-1. **Evidence Collection**: Communities submit research via PRs to `contents/evidence/`
+1. **Evidence Collection**: Communities submit research via PRs to the [evidence repository](https://github.com/beaconlabs-io/evidence) (included as git submodule at `evidence-repo/`)
 2. **Evidence Attestation**: GitHub Actions create blockchain attestations (EAS) on PR merge
 3. **Logic Model Creation**: AI-powered agents generate logic models with evidence validation
 4. **Impact Tracking**: Logic models generate hypercerts for measuring social impact
@@ -40,8 +40,9 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `components/canvas/` - React Flow canvas components (nodes, edges, controls)
 - `components/evidence/` - Evidence-specific UI components
 - `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
-- `contents/evidence/` - MDX evidence files with frontmatter metadata
-- `contents/deployments/` - Generated attestation metadata (JSON)
+- `evidence-repo/` - Git submodule containing evidence data ([external repo](https://github.com/beaconlabs-io/evidence))
+  - `evidence/` - MDX evidence files with frontmatter metadata
+  - `deployments/` - Generated attestation metadata (JSON)
 - `hooks/` - Custom React hooks including blockchain integration
 - `lib/` - Shared utilities and configuration
 - `mastra/` - AI agent system (agents, workflows, tools)
@@ -74,4 +75,4 @@ For detailed technical information, see:
 - `docs/mastra-agents.md` - AI agent architecture, workflows, diagrams, quality controls
 - `docs/evidence-workflow.md` - Evidence submission, attestation, search philosophy
 - `docs/react-flow-architecture.md` - Canvas implementation, UI flow, custom components
-- `contents/README.md` - MDX evidence file format and effect categories
+- `evidence-repo/README.md` - MDX evidence file format and effect categories

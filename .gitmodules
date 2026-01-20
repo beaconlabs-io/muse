@@ -1,0 +1,3 @@
+[submodule "evidence-repo"]
+	path = evidence-repo
+	url = https://github.com/beaconlabs-io/evidence.git

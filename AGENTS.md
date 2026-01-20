@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-MUSE uses the Next.js App Router. Key directories: `app/` holds route segments, layouts, and API routes; colocate page-specific helpers here. `components/` hosts reusable UI while `components/ui/` contains shadcn-derived primitives—regenerate rather than editing by hand. Shared services live in `lib/`, client utilities in `utils/`, and reusable hooks in `hooks/`. Evidence content sits under `contents/`; follow `contents/README.md` for MDX frontmatter and note that merged PRs emit JSON into `contents/deployments/`. Static files stay in `public/`, and cross-cutting types in `types/`.
+MUSE uses the Next.js App Router. Key directories: `app/` holds route segments, layouts, and API routes; colocate page-specific helpers here. `components/` hosts reusable UI while `components/ui/` contains shadcn-derived primitives—regenerate rather than editing by hand. Shared services live in `lib/`, client utilities in `utils/`, and reusable hooks in `hooks/`. Evidence content is managed as a git submodule under `evidence-repo/`; follow `evidence-repo/README.md` for MDX frontmatter and note that merged PRs emit JSON into `evidence-repo/deployments/`. Static files stay in `public/`, and cross-cutting types in `types/`.
 
 ## Build, Test, and Development Commands
 
@@ -15,11 +15,11 @@ MUSE uses the Next.js App Router. Key directories: `app/` holds route segments, 
 
 ## Coding Style & Naming Conventions
 
-TypeScript is strict; prefer explicit types over `any`. Formatting is Prettier-compatible: two-space indentation, trailing commas, and no semicolons. Keep imports sorted via the enforced `import-x/order` rule and use the `@/` alias for internal modules. React components are PascalCase, hooks camelCase with a `use` prefix, and MDX evidence slugs stay kebab-case (e.g., `contents/evidence/new-program.mdx`). Tailwind utility strings are fine inline; promote repeated patterns to `components/ui`.
+TypeScript is strict; prefer explicit types over `any`. Formatting is Prettier-compatible: two-space indentation, trailing commas, and no semicolons. Keep imports sorted via the enforced `import-x/order` rule and use the `@/` alias for internal modules. React components are PascalCase, hooks camelCase with a `use` prefix, and MDX evidence slugs stay kebab-case (e.g., `evidence-repo/evidence/new-program.mdx`). Tailwind utility strings are fine inline; promote repeated patterns to `components/ui`.
 
 ## Testing Guidelines
 
-Automated tests are not yet provisioned, so rely on `bun lint` and focused manual QA. Document reproduction steps for wallet flows, data loads from `contents`, and any API route changes. When adding risky logic, supply temporary scripts or Storybook-like snippets and note follow-up tasks to formalize tests. If you introduce a harness, colocate specs with the feature directory and add the invocation command here.
+Automated tests are not yet provisioned, so rely on `bun lint` and focused manual QA. Document reproduction steps for wallet flows, data loads from `evidence-repo/`, and any API route changes. When adding risky logic, supply temporary scripts or Storybook-like snippets and note follow-up tasks to formalize tests. If you introduce a harness, colocate specs with the feature directory and add the invocation command here.
 
 ## Commit & Pull Request Guidelines
 

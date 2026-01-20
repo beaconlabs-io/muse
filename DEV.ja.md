@@ -370,7 +370,7 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 - サーバーアクション（`app/actions/canvas/runWorkflow.ts`）のフォールバックにより、Next.jsコンテキストで動作することを保証
 - **必要な理由**: Mastraがコードをバンドルして実行する際、`process.cwd()`はプロジェクトルートではなく`.mastra/output/`を指す
 - **解決策**: `lib/evidence.ts`はパス解決に`process.env.PROJECT_ROOT || process.cwd()`を使用
-- `contents/evidence/`からエビデンスファイルを読み込む際の`ENOENT`エラーを解決
+- `evidence-repo/evidence/`からエビデンスファイルを読み込む際の`ENOENT`エラーを解決
 
 **UIフロー（4ステップ）:**
 
