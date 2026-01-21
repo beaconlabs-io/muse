@@ -29,27 +29,27 @@ export default async function EvidencePage({ params }: { params: Promise<{ slug:
       />
 
       <div className="prose max-w-none">
-        <article>{evidence?.content}</article>
+        <article>{evidence.content}</article>
 
         <Separator className="my-2" />
 
-        <EvidenceResults results={evidence?.meta.results || []} />
+        <EvidenceResults results={evidence.meta.results || []} />
 
         <EvidenceMethodologies
-          methodologies={evidence?.meta.methodologies}
-          datasets={evidence?.meta.datasets}
+          methodologies={evidence.meta.methodologies}
+          datasets={evidence.meta.datasets}
         />
 
-        <EvidenceDataSources datasets={evidence?.meta.datasets} />
+        <EvidenceDataSources datasets={evidence.meta.datasets} />
 
-        <EvidenceCitationList citations={evidence?.meta.citation} />
+        <EvidenceCitationList citations={evidence.meta.citation} />
 
-        <EvidenceTags tags={evidence?.meta.tags} />
+        <EvidenceTags tags={evidence.meta.tags} />
 
         <AttestationHistory
-          currentAttestationUID={evidence?.meta.attestationUID}
-          currentTimestamp={evidence?.meta.timestamp}
-          history={evidence?.meta.history}
+          currentAttestationUID={evidence.meta.attestationUID}
+          currentTimestamp={evidence.meta.timestamp}
+          history={evidence.meta.history}
         />
       </div>
     </div>

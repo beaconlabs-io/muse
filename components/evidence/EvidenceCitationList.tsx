@@ -1,4 +1,3 @@
-import React from "react";
 import { AttachedLinks } from "@/components/AttachedLinks";
 import type { EvidenceCitation } from "@beaconlabs-io/evidence";
 
@@ -9,7 +8,7 @@ interface EvidenceCitationListProps {
 export function EvidenceCitationList({ citations }: EvidenceCitationListProps) {
   if (!citations || citations.length === 0) return null;
 
-  const linkCitations = citations.filter((d) => d.type === "link");
+  const linkCitations = citations.filter((d) => d.type === "link" && d.src);
   const nonLinkCitations = citations.filter((d) => d.type !== "link");
 
   return (
@@ -20,15 +19,15 @@ export function EvidenceCitationList({ citations }: EvidenceCitationListProps) {
         <AttachedLinks
           links={linkCitations.map((d) => ({
             name: d.name,
-            src: d.src!,
+            src: d.src as string,
           }))}
         />
       )}
 
       {nonLinkCitations.length > 0 && (
         <ul className="mt-3 list-inside list-disc text-gray-700">
-          {nonLinkCitations.map((data, index) => (
-            <li key={index}>{data.name}</li>
+          {nonLinkCitations.map((data) => (
+            <li key={data.name}>{data.name}</li>
           ))}
         </ul>
       )}
