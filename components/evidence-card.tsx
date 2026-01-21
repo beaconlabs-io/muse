@@ -2,7 +2,7 @@ import Link from "next/link";
 import { EffectIcons } from "@/components/effect-icons";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import type { Evidence } from "@/types";
+import type { Evidence } from "@beaconlabs-io/evidence";
 
 interface EvidenceCardProps {
   evidence: Evidence;

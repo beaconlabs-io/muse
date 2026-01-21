@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import { EffectFilter } from "@/components/effect-filter";
 import { EvidenceCard } from "@/components/evidence-card";
 import { SearchFilter } from "@/components/search-filter";
-import type { Evidence } from "@/types";
+import type { Evidence } from "@beaconlabs-io/evidence";
 
 interface SearchPageClientProps {
   evidence: Evidence[];

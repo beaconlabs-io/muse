@@ -413,12 +413,13 @@ Tool for generating logic model structure:
 **Why Needed**:
 
 - When Mastra bundles and runs code, `process.cwd()` points to `.mastra/output/` instead of project root
-- This causes `ENOENT` errors when loading evidence files from `evidence-repo/evidence/`
+- This previously caused `ENOENT` errors when loading evidence files from the filesystem
 
 **Solution**:
 
-- `lib/evidence.ts` uses `process.env.PROJECT_ROOT || process.cwd()` for path resolution
-- Resolves path issues in all contexts (development, build, Next.js runtime)
+- Evidence content is now bundled in the `@beaconlabs-io/evidence` npm package
+- `lib/evidence.ts` uses package content functions instead of filesystem reads
+- No path resolution issues in any context
 
 ## UI Flow (4 Steps)
 
@@ -485,8 +486,8 @@ Custom Mastra tool that agents can invoke to search evidence library.
 
 **Implementation**:
 
-- Loads all evidence from `evidence-repo/evidence/*.mdx`
-- Parses MDX frontmatter for metadata
+- Loads all evidence from `@beaconlabs-io/evidence/content`
+- Pre-parsed frontmatter metadata from bundled content
 - Formats for LLM consumption
 - Handles batch processing logic
 
