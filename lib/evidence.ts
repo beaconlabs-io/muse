@@ -86,6 +86,6 @@ export const getAllEvidenceWithContent = async () => {
  * Get all evidence metadata (for lists, no MDX compilation)
  * Returns Evidence[] with deployment data merged
  */
-export const getAllEvidenceMeta = async (): Promise<Evidence[]> => {
+export function getAllEvidenceMeta(): Evidence[] {
   return getAllEvidence();
-};
+}
