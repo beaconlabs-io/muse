@@ -1,12 +1,12 @@
 import React from "react";
 import { AttachedLinks } from "@/components/AttachedLinks";
-import type { EvidenceCitation } from "@/types";
+import type { EvidenceCitation } from "@beaconlabs-io/evidence";
 
-interface EvidenceCitationProps {
+interface EvidenceCitationListProps {
   citations: EvidenceCitation[] | undefined;
 }
 
-export function EvidenceCitation({ citations }: EvidenceCitationProps) {
+export function EvidenceCitationList({ citations }: EvidenceCitationListProps) {
   if (!citations || citations.length === 0) return null;
 
   const linkCitations = citations.filter((d) => d.type === "link");

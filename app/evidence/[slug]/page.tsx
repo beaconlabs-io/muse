@@ -6,7 +6,7 @@ import {
   EvidenceResults,
   EvidenceMethodologies,
   EvidenceDataSources,
-  EvidenceCitation,
+  EvidenceCitationList,
   EvidenceTags,
   AttestationHistory,
 } from "@/components/evidence";
@@ -42,7 +42,7 @@ export default async function EvidencePage({ params }: { params: Promise<{ slug:
 
         <EvidenceDataSources datasets={evidence?.meta.datasets} />
 
-        <EvidenceCitation citations={evidence?.meta.citation} />
+        <EvidenceCitationList citations={evidence?.meta.citation} />
 
         <EvidenceTags tags={evidence?.meta.tags} />
 
