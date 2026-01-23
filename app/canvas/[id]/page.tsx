@@ -1,6 +1,5 @@
 import { LogicModelPageClient } from "./LogicModelPageClient";
 import type { Metadata } from "next";
-import { getCanvasMetadata } from "@/lib/canvas-metadata";
 import { BASE_URL } from "@/lib/constants";
 import { isValidCID } from "@/utils/ipfs";
 
