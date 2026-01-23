@@ -2,8 +2,6 @@ import { ImageResponse } from "next/og";
 import { BASE_URL } from "@/lib/constants";
 import { getEvidenceBySlug } from "@/lib/evidence";
 
-export const runtime = "edge";
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
