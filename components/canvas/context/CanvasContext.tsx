@@ -75,7 +75,7 @@ export interface StateReadingOperations {
   saveLogicModel: () => void;
   exportAsJSON: () => void;
   clearAllData: () => void;
-  saveCanvasToIPFS: () => Promise<IPFSStorageResult | null>;
+  saveCanvasToIPFS: (ogImageCID?: string) => Promise<IPFSStorageResult | null>;
 }
 
 /**
@@ -247,7 +247,7 @@ export function CanvasProvider({
     }
   }, [router]);
 
-  const saveCanvasToIPFS = useCallback(async () => {
+  const saveCanvasToIPFS = useCallback(async (ogImageCID?: string) => {
     try {
       const cards = nodesToCards(nodesRef.current);
       const arrows = edgesToArrows(edgesRef.current);
@@ -268,6 +268,7 @@ export function CanvasProvider({
         cards,
         arrows,
         cardMetrics: cardMetricsRef.current,
+        ...(ogImageCID && { ogImageCID }),
       };
 
       const result = await uploadToIPFS(canvasData);
@@ -406,7 +407,6 @@ export function CanvasProvider({
       <CanvasOperationsContext.Provider value={operationsValue}>
         {children}
 
-        {/* Clear All Data Confirmation Dialog */}
         <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

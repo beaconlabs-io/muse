@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ImagePreview } from "./ImagePreview";
+import type { CanvasImageResult } from "@/lib/generate-canvas-image";
 import type { Node } from "@xyflow/react";
 import { useCanvasImage } from "@/hooks/useCanvasImage";
 import { BASE_URL } from "@/lib/constants";
@@ -25,6 +26,8 @@ interface IPFSSaveDialogProps {
   ipfsHash: string | null;
   /** Whether upload is in progress */
   isUploading: boolean;
+  /** Pre-generated image to avoid regeneration */
+  preGeneratedImage?: CanvasImageResult | null;
 }
 
 /**
@@ -36,18 +39,25 @@ export function IPFSSaveDialog({
   nodes,
   ipfsHash,
   isUploading,
+  preGeneratedImage,
 }: IPFSSaveDialogProps) {
-  const { status, result, error, generate, reset } = useCanvasImage();
+  const { status, result, error, generate, reset, setResult } = useCanvasImage();
   // Use ref to track if generation has been triggered for this dialog session
   const hasTriggeredRef = useRef(false);
 
-  // Generate image when dialog opens (only once per session)
+  // Use pre-generated image if available, otherwise generate when dialog opens
   useEffect(() => {
-    if (open && status === "idle" && !hasTriggeredRef.current) {
+    if (open && !hasTriggeredRef.current) {
       hasTriggeredRef.current = true;
-      generate(nodes);
+      if (preGeneratedImage) {
+        // Use pre-generated image directly
+        setResult(preGeneratedImage);
+      } else if (status === "idle") {
+        // Fallback: generate if no pre-generated image
+        generate(nodes);
+      }
     }
-  }, [open, status, nodes, generate]);
+  }, [open, status, nodes, generate, preGeneratedImage, setResult]);
 
   // Reset state and ref when dialog closes
   useEffect(() => {
@@ -102,7 +112,6 @@ export function IPFSSaveDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* IPFS Info */}
         <div className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-700">
           <div className="flex items-center gap-2">
             <span className="font-medium">IPFS Hash:</span>
@@ -130,7 +139,6 @@ export function IPFSSaveDialog({
           </div>
         </div>
 
-        {/* Image Preview Area */}
         <ImagePreview
           status={status}
           result={result}
@@ -138,7 +146,6 @@ export function IPFSSaveDialog({
           loadingMessage="Generating preview..."
         />
 
-        {/* Action Buttons */}
         <div className="flex justify-between gap-3">
           <Button
             variant="outline"

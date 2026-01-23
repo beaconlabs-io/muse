@@ -12,6 +12,7 @@ export interface UseCanvasImageResult {
   error: string | null;
   generate: (nodes: Node[]) => Promise<CanvasImageResult | null>;
   reset: () => void;
+  setResult: (result: CanvasImageResult) => void;
 }
 
 /**
@@ -78,11 +79,18 @@ export function useCanvasImage(): UseCanvasImageResult {
     setError(null);
   }, []);
 
+  const setResultWithStatus = useCallback((newResult: CanvasImageResult) => {
+    setResult(newResult);
+    setStatus("ready");
+    setError(null);
+  }, []);
+
   return {
     status,
     result,
     error,
     generate,
     reset,
+    setResult: setResultWithStatus,
   };
 }

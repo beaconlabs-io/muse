@@ -14,6 +14,9 @@ import { useCanvasOperations, useCanvasState } from "./context";
 import { ExportImageDialog } from "./ExportImageDialog";
 import { GenerateLogicModelDialog } from "./GenerateLogicModelDialog";
 import { IPFSSaveDialog } from "./IPFSSaveDialog";
+import type { CanvasImageResult } from "@/lib/generate-canvas-image";
+import { useCanvasImage } from "@/hooks/useCanvasImage";
+import { uploadImageToIPFS } from "@/utils/ipfs";
 
 export const CanvasToolbar = memo(() => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -21,6 +24,7 @@ export const CanvasToolbar = memo(() => {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [ipfsDialogOpen, setIpfsDialogOpen] = useState(false);
   const [ipfsHash, setIpfsHash] = useState<string | null>(null);
+  const [preGeneratedImage, setPreGeneratedImage] = useState<CanvasImageResult | null>(null);
 
   const { nodes } = useCanvasState();
   const {
@@ -31,6 +35,7 @@ export const CanvasToolbar = memo(() => {
     loadGeneratedCanvas,
     saveCanvasToIPFS,
   } = useCanvasOperations();
+  const { generate: generateImage } = useCanvasImage();
 
   const handleClearAll = useCallback(() => {
     // Close dropdown first to avoid modal stacking conflict
@@ -56,30 +61,56 @@ export const CanvasToolbar = memo(() => {
 
     setDropdownOpen(false);
     setIpfsHash(null);
+    setPreGeneratedImage(null);
     setIpfsDialogOpen(true);
     setUploadingToIPFS(true);
 
-    const result = await saveCanvasToIPFS();
-    setUploadingToIPFS(false);
+    try {
+      // Step 1: Generate the OG image
+      const imageResult = await generateImage(nodes);
 
-    if (result?.hash) {
-      setIpfsHash(result.hash);
-    } else {
-      // Close dialog on failure (error toast shown by context)
+      // Store pre-generated image for dialog display
+      if (imageResult) {
+        setPreGeneratedImage(imageResult);
+      }
+
+      // Step 2: Upload image to IPFS (non-blocking - continue even if this fails)
+      let ogImageCID: string | undefined;
+      if (imageResult?.blob) {
+        try {
+          ogImageCID = await uploadImageToIPFS(imageResult.blob, `canvas-og-${Date.now()}.png`);
+        } catch (imageUploadError) {
+          // Log but don't fail the entire operation
+          console.warn("Failed to upload OG image to IPFS:", imageUploadError);
+        }
+      }
+
+      // Step 3: Save canvas data with ogImageCID (if available)
+      const result = await saveCanvasToIPFS(ogImageCID);
+      setUploadingToIPFS(false);
+
+      if (result?.hash) {
+        setIpfsHash(result.hash);
+      } else {
+        // Close dialog on failure (error toast shown by context)
+        setIpfsDialogOpen(false);
+      }
+    } catch (error) {
+      console.error("Failed to upload to IPFS:", error);
+      setUploadingToIPFS(false);
       setIpfsDialogOpen(false);
+      toast.error("Failed to upload to IPFS. Please try again.", { duration: 3000 });
     }
-  }, [nodes.length, saveCanvasToIPFS]);
+  }, [nodes, saveCanvasToIPFS, generateImage]);
 
   return (
     <>
       <div className="bg-background flex items-center justify-between border-b p-3 sm:p-4">
-        {/* Left Side: Primary Actions */}
         <div className="flex items-center gap-3">
           <GenerateLogicModelDialog onGenerate={loadGeneratedCanvas} />
           <AddLogicSheet onSubmit={addCard} />
         </div>
 
-        {/* Right Side: Secondary Actions */}
         <div className="flex items-center gap-2">
           <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
@@ -124,16 +155,15 @@ export const CanvasToolbar = memo(() => {
         </div>
       </div>
 
-      {/* Export Image Dialog */}
       <ExportImageDialog open={exportDialogOpen} onOpenChange={setExportDialogOpen} nodes={nodes} />
 
-      {/* IPFS Save Dialog */}
       <IPFSSaveDialog
         open={ipfsDialogOpen}
         onOpenChange={setIpfsDialogOpen}
         nodes={nodes}
         ipfsHash={ipfsHash}
         isUploading={uploadingToIPFS}
+        preGeneratedImage={preGeneratedImage}
       />
     </>
   );

@@ -1,9 +1,70 @@
-import { ImageResponse } from "next/og";
-import { getCanvasMetadata } from "@/lib/canvas-metadata";
 import { BASE_URL } from "@/lib/constants";
-import { isValidCID } from "@/utils/ipfs";
+import { CanvasDataSchema } from "@/types";
+import { isValidCID, parseCID } from "@/utils/ipfs";
 
 export const runtime = "edge";
+
+const IPFS_GATEWAY_TIMEOUT = 5000; // 5 seconds
+
+/**
+ * Fetch canvas data from IPFS with timeout
+ */
+async function fetchCanvasData(cid: string): Promise<{ ogImageCID?: string } | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), IPFS_GATEWAY_TIMEOUT);
+
+    const response = await fetch(`https://ipfs.io/ipfs/${cid}`, {
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.error(`IPFS fetch failed: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    const validated = CanvasDataSchema.safeParse(data);
+
+    if (!validated.success) {
+      console.error("Invalid canvas data:", validated.error);
+      return null;
+    }
+
+    return { ogImageCID: validated.data.ogImageCID };
+  } catch (error) {
+    console.error("Failed to fetch canvas data:", error);
+    return null;
+  }
+}
+
+/**
+ * Fetch image from IPFS with timeout
+ */
+async function fetchImageFromIPFS(cid: string): Promise<ArrayBuffer | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), IPFS_GATEWAY_TIMEOUT);
+
+    const response = await fetch(`https://ipfs.io/ipfs/${cid}`, {
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.error(`IPFS image fetch failed: ${response.status}`);
+      return null;
+    }
+
+    return await response.arrayBuffer();
+  } catch (error) {
+    console.error("Failed to fetch image from IPFS:", error);
+    return null;
+  }
+}
 
 export async function GET(request: Request) {
   try {
@@ -18,206 +79,31 @@ export async function GET(request: Request) {
       return new Response("Invalid IPFS CID", { status: 400 });
     }
 
-    // Fetch canvas metadata using shared utility
-    const { title, cardCount } = await getCanvasMetadata(id);
+    // Parse the CID to ensure it's valid
+    const cid = parseCID(id);
 
-    const logoUrl = `${BASE_URL}/beaconlabs.png`;
-    const shortHash = `${id.slice(0, 8)}...${id.slice(-4)}`;
+    // Fetch canvas metadata to check for ogImageCID
+    const canvasData = await fetchCanvasData(cid.toString());
 
-    return new ImageResponse(
-      <div
-        style={{
-          height: "100%",
-          width: "100%",
-          display: "flex",
-          position: "relative",
-          backgroundColor: "white",
-        }}
-      >
-        {/* Background gradient */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            opacity: 0.05,
-          }}
-        />
+    if (canvasData?.ogImageCID && isValidCID(canvasData.ogImageCID)) {
+      // Fetch the OG image from IPFS
+      const imageBuffer = await fetchImageFromIPFS(canvasData.ogImageCID);
 
-        {/* Border */}
-        <div
-          style={{
-            position: "absolute",
-            top: "20px",
-            left: "20px",
-            right: "20px",
-            bottom: "20px",
-            border: "3px solid #e2e8f0",
-            borderRadius: "20px",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          }}
-        />
+      if (imageBuffer) {
+        return new Response(imageBuffer, {
+          headers: {
+            "Content-Type": "image/png",
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
+        });
+      }
+    }
 
-        {/* Content Container */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            padding: "60px",
-            width: "100%",
-            height: "100%",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {/* Badge */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              marginBottom: "24px",
-            }}
-          >
-            <div
-              style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                color: "white",
-                padding: "8px 16px",
-                borderRadius: "9999px",
-                fontSize: "18px",
-                fontWeight: "600",
-                display: "flex",
-              }}
-            >
-              Logic Model
-            </div>
-            {cardCount > 0 && (
-              <div
-                style={{
-                  marginLeft: "12px",
-                  color: "#64748b",
-                  fontSize: "18px",
-                  display: "flex",
-                }}
-              >
-                {cardCount} cards
-              </div>
-            )}
-          </div>
-
-          {/* Main Title */}
-          <div
-            style={{
-              fontSize: "56px",
-              fontWeight: "800",
-              color: "#0f172a",
-              lineHeight: "1.1",
-              marginBottom: "auto",
-              maxWidth: "1000px",
-              display: "flex",
-            }}
-          >
-            {title}
-          </div>
-
-          {/* Bottom section */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-end",
-              marginTop: "auto",
-            }}
-          >
-            {/* Left: IPFS Hash */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "14px",
-                  color: "#94a3b8",
-                  marginBottom: "4px",
-                  display: "flex",
-                }}
-              >
-                IPFS
-              </div>
-              <div
-                style={{
-                  fontSize: "20px",
-                  color: "#475569",
-                  fontFamily: "monospace",
-                  display: "flex",
-                }}
-              >
-                {shortHash}
-              </div>
-            </div>
-
-            {/* Right: MUSE Logo */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <img
-                src={logoUrl}
-                alt="Beacon Labs Logo"
-                width="60"
-                height="60"
-                style={{
-                  borderRadius: "12px",
-                  marginRight: "20px",
-                }}
-              />
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "28px",
-                    fontWeight: "700",
-                    color: "#1e293b",
-                    lineHeight: "1",
-                    display: "flex",
-                  }}
-                >
-                  MUSE
-                </div>
-                <div
-                  style={{
-                    fontSize: "14px",
-                    color: "#64748b",
-                    lineHeight: "1",
-                    marginTop: "2px",
-                    display: "flex",
-                  }}
-                >
-                  by Beaconlabs
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>,
-      {
-        width: 1200,
-        height: 630,
-      },
-    );
+    // Fallback: redirect to static OG image
+    return Response.redirect(`${BASE_URL}/canvas-og.png`, 302);
   } catch (error) {
     console.error("Failed to generate OG image:", error);
-    return new Response("Failed to generate image", { status: 500 });
+    // Fallback to static image on any error
+    return Response.redirect(`${BASE_URL}/canvas-og.png`, 302);
   }
 }
