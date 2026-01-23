@@ -27,9 +27,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     selectedStrengths,
   );
 
-  const activeFilterCount = [selectedEffects.length > 0, selectedStrengths.length > 0].filter(
-    Boolean,
-  ).length;
+  const activeFilterCount =
+    (selectedEffects.length > 0 ? 1 : 0) + (selectedStrengths.length > 0 ? 1 : 0);
 
   return (
     <main>
