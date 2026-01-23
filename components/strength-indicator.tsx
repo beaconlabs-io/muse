@@ -1,17 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { StarRating } from "@/components/star-rating";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
-const STRENGTH_LABELS: Record<string, string> = {
-  "0": "Mathematical Model",
-  "1": "Basic Comparison",
-  "2": "Controlled Comparison",
-  "3": "Quasi-experimental",
-  "4": "Randomized Design",
-  "5": "RCT",
-};
+import { STRENGTH_LABELS } from "@/lib/constants";
 
 interface StrengthIndicatorProps {
   level: string;
@@ -24,19 +16,7 @@ export function StrengthIndicator({ level, size = "sm", asLink = false }: Streng
   const numLevel = parseInt(level, 10) || 0;
   const starSize = size === "sm" ? 12 : 16;
 
-  const stars = (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }, (_, i) => (
-        <Star
-          key={i}
-          size={starSize}
-          className={`transition-colors ${
-            i < numLevel ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
-          }`}
-        />
-      ))}
-    </div>
-  );
+  const stars = <StarRating level={numLevel} size={starSize} />;
 
   // Link mode: no tooltip
   if (asLink) {

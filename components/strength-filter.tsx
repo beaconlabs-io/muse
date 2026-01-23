@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, Star } from "lucide-react";
+import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,15 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const STRENGTH_OPTIONS = [
-  { value: "5", label: "Level 5 - RCT" },
-  { value: "4", label: "Level 4 - Randomized" },
-  { value: "3", label: "Level 3 - Quasi-exp" },
-  { value: "2", label: "Level 2 - Controlled" },
-  { value: "1", label: "Level 1 - Basic" },
-  { value: "0", label: "Level 0 - Model" },
-];
+import { STRENGTH_LEVELS } from "@/lib/constants";
 
 interface StrengthFilterProps {
   selectedStrengths: string[];
@@ -56,7 +49,7 @@ export function StrengthFilter({ selectedStrengths, onStrengthsChange }: Strengt
       <DropdownMenuContent className="w-56">
         <DropdownMenuLabel>Filter by evidence level</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {STRENGTH_OPTIONS.map((option) => {
+        {STRENGTH_LEVELS.map((option) => {
           const level = parseInt(option.value, 10);
           return (
             <DropdownMenuCheckboxItem
@@ -65,18 +58,8 @@ export function StrengthFilter({ selectedStrengths, onStrengthsChange }: Strengt
               onCheckedChange={() => handleToggle(option.value)}
             >
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-0.5">
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <Star
-                      key={i}
-                      size={10}
-                      className={`transition-colors ${
-                        i < level ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-xs">{option.label}</span>
+                <StarRating level={level} size={10} />
+                <span className="text-xs">{option.fullLabel}</span>
               </div>
             </DropdownMenuCheckboxItem>
           );
