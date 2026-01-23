@@ -58,7 +58,7 @@ export const getEvidenceBySlug = cache(
  * Get all evidence with raw content (for search, AI tools)
  * Returns evidence metadata + raw markdown content
  */
-export const getAllEvidenceWithContent = async () => {
+export function getAllEvidenceWithContent() {
   const slugs = getAllEvidenceSlugs();
 
   return slugs
@@ -80,7 +80,7 @@ export const getAllEvidenceWithContent = async () => {
       if (isNaN(idA) || isNaN(idB)) return 0;
       return idA - idB;
     });
-};
+}
 
 /** Get all evidence metadata (for lists, no MDX compilation) */
 export const getAllEvidenceMeta = (): Evidence[] => {
