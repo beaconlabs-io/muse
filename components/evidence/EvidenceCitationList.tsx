@@ -26,8 +26,8 @@ export function EvidenceCitationList({ citations }: EvidenceCitationListProps) {
 
       {nonLinkCitations.length > 0 && (
         <ul className="mt-3 list-inside list-disc text-gray-700">
-          {nonLinkCitations.map((data) => (
-            <li key={data.name}>{data.name}</li>
+          {nonLinkCitations.map((data, index) => (
+            <li key={index}>{data.name}</li>
           ))}
         </ul>
       )}
