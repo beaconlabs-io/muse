@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { ImagePreview } from "./ImagePreview";
 import type { Node } from "@xyflow/react";
-import { useBrandedImage } from "@/hooks/useBrandedImage";
+import { useCanvasImage } from "@/hooks/useCanvasImage";
 import { BASE_URL } from "@/lib/constants";
 
 interface IPFSSaveDialogProps {
@@ -29,11 +29,6 @@ interface IPFSSaveDialogProps {
 
 /**
  * Dialog shown after successful IPFS save
- *
- * Features:
- * - Auto-generates branded image preview
- * - Copy canvas URL to clipboard
- * - Share to X (Twitter) with Web Intent
  */
 export function IPFSSaveDialog({
   open,
@@ -42,7 +37,7 @@ export function IPFSSaveDialog({
   ipfsHash,
   isUploading,
 }: IPFSSaveDialogProps) {
-  const { status, result, error, generate, reset } = useBrandedImage();
+  const { status, result, error, generate, reset } = useCanvasImage();
   // Use ref to track if generation has been triggered for this dialog session
   const hasTriggeredRef = useRef(false);
 

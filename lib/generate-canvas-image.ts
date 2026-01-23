@@ -1,14 +1,14 @@
 /**
- * Canvas 2D API utility for generating branded images
+ * Canvas 2D API utility for generating shareable canvas images
  * Creates OGP-optimized images (1200×630) with MUSE branding
  */
 
-export interface BrandedImageOptions {
+export interface CanvasImageOptions {
   /** Source image data URL from html-to-image */
   sourceDataUrl: string;
 }
 
-export interface BrandedImageResult {
+export interface CanvasImageResult {
   /** Data URL for download */
   dataUrl: string;
   /** Blob for clipboard API */
@@ -46,7 +46,7 @@ function loadImage(dataUrl: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Generate a branded image with MUSE branding overlay
+ * Generate a shareable canvas image with MUSE branding overlay
  *
  * Layout (1200×630):
  * ┌─────────────────────────────────────────────┐
@@ -60,9 +60,9 @@ function loadImage(dataUrl: string): Promise<HTMLImageElement> {
  * │            muse.beaconlabs.io              │  ← Footer
  * └─────────────────────────────────────────────┘
  */
-export async function generateBrandedImage({
+export async function generateCanvasImage({
   sourceDataUrl,
-}: BrandedImageOptions): Promise<BrandedImageResult> {
+}: CanvasImageOptions): Promise<CanvasImageResult> {
   // Create canvas
   const canvas = document.createElement("canvas");
   canvas.width = OG_WIDTH;

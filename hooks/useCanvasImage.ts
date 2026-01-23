@@ -1,32 +1,28 @@
 import { useState, useCallback } from "react";
 import { getNodesBounds, getViewportForBounds, type Node } from "@xyflow/react";
 import { toPng } from "html-to-image";
-import type { BrandedImageResult } from "@/lib/generate-branded-image";
-import { generateBrandedImage } from "@/lib/generate-branded-image";
+import type { CanvasImageResult } from "@/lib/generate-canvas-image";
+import { generateCanvasImage } from "@/lib/generate-canvas-image";
 
-export type BrandedImageStatus = "idle" | "generating" | "ready" | "error";
+export type CanvasImageStatus = "idle" | "generating" | "ready" | "error";
 
-export interface UseBrandedImageResult {
-  status: BrandedImageStatus;
-  result: BrandedImageResult | null;
+export interface UseCanvasImageResult {
+  status: CanvasImageStatus;
+  result: CanvasImageResult | null;
   error: string | null;
-  generate: (nodes: Node[]) => Promise<BrandedImageResult | null>;
+  generate: (nodes: Node[]) => Promise<CanvasImageResult | null>;
   reset: () => void;
 }
 
 /**
- * Hook for generating branded images from React Flow canvas
- *
- * Two-stage image generation:
- * 1. html-to-image captures the React Flow viewport
- * 2. Canvas 2D API composites branding overlay
+ * Hook for generating shareable images from React Flow canvas
  */
-export function useBrandedImage(): UseBrandedImageResult {
-  const [status, setStatus] = useState<BrandedImageStatus>("idle");
-  const [result, setResult] = useState<BrandedImageResult | null>(null);
+export function useCanvasImage(): UseCanvasImageResult {
+  const [status, setStatus] = useState<CanvasImageStatus>("idle");
+  const [result, setResult] = useState<CanvasImageResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const generate = useCallback(async (nodes: Node[]): Promise<BrandedImageResult | null> => {
+  const generate = useCallback(async (nodes: Node[]): Promise<CanvasImageResult | null> => {
     if (nodes.length === 0) {
       setError("Cannot generate image from empty canvas");
       setStatus("error");
@@ -50,7 +46,6 @@ export function useBrandedImage(): UseBrandedImageResult {
       const imageHeight = Math.max(nodesBounds.height, 100);
       const viewport = getViewportForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2, 0.2);
 
-      // Stage 1: Capture the canvas using html-to-image
       const sourceDataUrl = await toPng(viewportElement, {
         backgroundColor: "#f9fafb",
         width: imageWidth,
@@ -63,19 +58,16 @@ export function useBrandedImage(): UseBrandedImageResult {
         },
       });
 
-      // Stage 2: Generate branded image with overlay
-      const brandedResult = await generateBrandedImage({
-        sourceDataUrl,
-      });
+      const canvasImageResult = await generateCanvasImage({ sourceDataUrl });
 
-      setResult(brandedResult);
+      setResult(canvasImageResult);
       setStatus("ready");
-      return brandedResult;
+      return canvasImageResult;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to generate image";
       setError(errorMessage);
       setStatus("error");
-      console.error("Failed to generate branded image:", err);
+      console.error("Failed to generate canvas image:", err);
       return null;
     }
   }, []);

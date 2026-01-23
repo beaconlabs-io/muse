@@ -2,12 +2,12 @@
 
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { BrandedImageStatus } from "@/hooks/useBrandedImage";
-import type { BrandedImageResult } from "@/lib/generate-branded-image";
+import type { CanvasImageStatus } from "@/hooks/useCanvasImage";
+import type { CanvasImageResult } from "@/lib/generate-canvas-image";
 
 interface ImagePreviewProps {
-  status: BrandedImageStatus;
-  result: BrandedImageResult | null;
+  status: CanvasImageStatus;
+  result: CanvasImageResult | null;
   error: string | null;
   /** Optional retry callback for error state */
   onRetry?: () => void;

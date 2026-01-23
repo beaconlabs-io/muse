@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { ImagePreview } from "./ImagePreview";
 import type { Node } from "@xyflow/react";
-import { useBrandedImage } from "@/hooks/useBrandedImage";
-import { copyImageToClipboard, downloadImage } from "@/lib/generate-branded-image";
+import { useCanvasImage } from "@/hooks/useCanvasImage";
+import { copyImageToClipboard, downloadImage } from "@/lib/generate-canvas-image";
 
 interface ExportImageDialogProps {
   open: boolean;
@@ -23,15 +23,10 @@ interface ExportImageDialogProps {
 }
 
 /**
- * Dialog for exporting canvas as a branded image
- *
- * Features:
- * - Auto-generates branded image on open
- * - Copy to clipboard (with fallback for unsupported browsers)
- * - Download as PNG
+ * Dialog for exporting canvas as an image
  */
 export function ExportImageDialog({ open, onOpenChange, nodes }: ExportImageDialogProps) {
-  const { status, result, error, generate, reset } = useBrandedImage();
+  const { status, result, error, generate, reset } = useCanvasImage();
   // Use ref to track if generation has been triggered for this dialog session
   const hasTriggeredRef = useRef(false);
 
@@ -79,9 +74,7 @@ export function ExportImageDialog({ open, onOpenChange, nodes }: ExportImageDial
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Export Image</DialogTitle>
-          <DialogDescription>
-            Download or copy your logic model as a branded image
-          </DialogDescription>
+          <DialogDescription>Download or copy your logic model as an image</DialogDescription>
         </DialogHeader>
 
         {/* Image Preview Area */}
