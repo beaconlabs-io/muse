@@ -272,32 +272,7 @@ export function CanvasProvider({
         cardMetrics: cardMetricsRef.current,
       };
 
-      // Show loading toast with timeout
-      const loadingToastId = toast.loading("Uploading to IPFS...", {
-        duration: 30000, // 30 second timeout
-      });
-
-      // Call IPFS upload utility
       const result = await uploadToIPFS(canvasData);
-
-      // Dismiss loading toast
-      toast.dismiss(loadingToastId);
-
-      // Format hash for display (first 8 and last 4 characters)
-      const shortHash = `${result.hash.slice(0, 8)}...${result.hash.slice(-4)}`;
-
-      // Show success toast with action to view canvas
-      toast.success("Successfully uploaded to IPFS!", {
-        duration: 8000,
-        description: `IPFS Hash: ${shortHash}`,
-        action: {
-          label: "View Canvas",
-          onClick: () => {
-            router.push(`/canvas/${result.hash}`);
-          },
-        },
-      });
-
       return result;
     } catch (error) {
       console.error("Failed to upload to IPFS:", error);
