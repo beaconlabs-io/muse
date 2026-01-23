@@ -1,7 +1,6 @@
 import { LogicModelPageClient } from "./LogicModelPageClient";
 import type { Metadata } from "next";
 import { getCanvasMetadata } from "@/lib/canvas-metadata";
-import { BASE_URL } from "@/lib/constants";
 import { isValidCID } from "@/utils/ipfs";
 
 export interface PageProps {
@@ -35,7 +34,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // Fetch canvas metadata using shared utility
   const { title, description } = await getCanvasMetadata(id);
   const fullTitle = `${title} - MUSE by BeaconLabs`;
-  const ogImageUrl = `${BASE_URL}/api/og/canvas?id=${encodeURIComponent(id)}`;
+  // Use relative URL - Next.js resolves based on deployment URL
+  const ogImageUrl = `/api/og/canvas?id=${encodeURIComponent(id)}`;
 
   return {
     title: fullTitle,

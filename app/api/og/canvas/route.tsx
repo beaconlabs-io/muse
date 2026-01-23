@@ -1,13 +1,12 @@
 import { ImageResponse } from "next/og";
 import { getCanvasMetadata } from "@/lib/canvas-metadata";
-import { BASE_URL } from "@/lib/constants";
 import { isValidCID } from "@/utils/ipfs";
 
 export const runtime = "edge";
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams, origin } = new URL(request.url);
     const id = searchParams.get("id");
 
     if (!id) {
@@ -21,7 +20,8 @@ export async function GET(request: Request) {
     // Fetch canvas metadata using shared utility
     const { title, cardCount } = await getCanvasMetadata(id);
 
-    const logoUrl = `${BASE_URL}/beaconlabs.png`;
+    // Use request origin for logo URL - works on preview deployments
+    const logoUrl = `${origin}/beaconlabs.png`;
     const shortHash = `${id.slice(0, 8)}...${id.slice(-4)}`;
 
     return new ImageResponse(

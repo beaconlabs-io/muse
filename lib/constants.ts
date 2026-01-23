@@ -1,5 +1,9 @@
 /**
- * Base URL for the application (production or development)
+ * Base URL for shareable links (production or development).
+ * Used for generating stable URLs that persist beyond preview deployments.
+ *
+ * Note: For OG images and page metadata, use relative URLs or request.url origin
+ * instead - this ensures compatibility with Vercel preview deployments.
  */
 export const BASE_URL =
   process.env.NEXT_PUBLIC_ENV === "production"
