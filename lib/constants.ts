@@ -22,3 +22,54 @@ export const EVIDENCE_QUALITY_THRESHOLD = 3;
 
 /** Maximum size of a canvas data in bytes (5MB) */
 export const MAX_CANVAS_SIZE = 5 * 1024 * 1024;
+
+/**
+ * Evidence Strength Levels (Maryland Scientific Methods Scale)
+ * Single source of truth for strength-related constants.
+ */
+export const STRENGTH_LEVELS = [
+  {
+    value: "5",
+    label: "RCT",
+    fullLabel: "Level 5 - RCT",
+    description: "Randomized Controlled Trial",
+  },
+  {
+    value: "4",
+    label: "Randomized Design",
+    fullLabel: "Level 4 - Randomized",
+    description: "Randomized Design",
+  },
+  {
+    value: "3",
+    label: "Quasi-experimental",
+    fullLabel: "Level 3 - Quasi-exp",
+    description: "Quasi-experimental",
+  },
+  {
+    value: "2",
+    label: "Controlled Comparison",
+    fullLabel: "Level 2 - Controlled",
+    description: "Controlled Comparison",
+  },
+  {
+    value: "1",
+    label: "Basic Comparison",
+    fullLabel: "Level 1 - Basic",
+    description: "Basic Comparison",
+  },
+  {
+    value: "0",
+    label: "Mathematical Model",
+    fullLabel: "Level 0 - Model",
+    description: "Mathematical Model",
+  },
+] as const;
+
+/** Record mapping level value to short label (for tooltips, etc.) */
+export const STRENGTH_LABELS: Record<string, string> = Object.fromEntries(
+  STRENGTH_LEVELS.map(({ value, label }) => [value, label]),
+);
+
+/** Type for strength level values */
+export type StrengthLevelValue = (typeof STRENGTH_LEVELS)[number]["value"];

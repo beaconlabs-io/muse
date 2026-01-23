@@ -26,7 +26,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 
 **Core Workflow**:
 
-1. **Evidence Collection**: Communities submit research via PRs to the [evidence repository](https://github.com/beaconlabs-io/evidence) (included as git submodule at `evidence-repo/`)
+1. **Evidence Collection**: Communities submit research via PRs to the [evidence repository](https://github.com/beaconlabs-io/evidence)
 2. **Evidence Attestation**: GitHub Actions create blockchain attestations (EAS) on PR merge
 3. **Logic Model Creation**: AI-powered agents generate logic models with evidence validation
 4. **Impact Tracking**: Logic models generate hypercerts for measuring social impact
@@ -40,15 +40,20 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `components/canvas/` - React Flow canvas components (nodes, edges, controls)
 - `components/evidence/` - Evidence-specific UI components
 - `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
-- `evidence-repo/` - Git submodule containing evidence data ([external repo](https://github.com/beaconlabs-io/evidence))
-  - `evidence/` - MDX evidence files with frontmatter metadata
-  - `deployments/` - Generated attestation metadata (JSON)
 - `hooks/` - Custom React hooks including blockchain integration
 - `lib/` - Shared utilities and configuration
 - `mastra/` - AI agent system (agents, workflows, tools)
 - `types/` - TypeScript definitions for Evidence, Attestation, graph structures
 - `utils/` - Configuration and helper functions
 - `docs/` - Detailed technical documentation (see Additional Documentation section)
+
+## Evidence Data
+
+Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
+
+- **Types**: Import from `@beaconlabs-io/evidence` or `@/types` (re-exports)
+- **Content**: Import from `@beaconlabs-io/evidence/content` for `getEvidence()`, `getAllEvidence()`, etc.
+- **Source**: [beaconlabs-io/evidence](https://github.com/beaconlabs-io/evidence) repository
 
 ## Technology Stack
 
@@ -75,4 +80,3 @@ For detailed technical information, see:
 - `docs/mastra-agents.md` - AI agent architecture, workflows, diagrams, quality controls
 - `docs/evidence-workflow.md` - Evidence submission, attestation, search philosophy
 - `docs/react-flow-architecture.md` - Canvas implementation, UI flow, custom components
-- `evidence-repo/README.md` - MDX evidence file format and effect categories

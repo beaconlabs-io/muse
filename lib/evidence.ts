@@ -1,6 +1,10 @@
 import { cache } from "react";
-import fs from "fs";
-import path from "path";
+import {
+  getEvidence,
+  getEvidenceWithDeployment,
+  getAllEvidence,
+  getAllEvidenceSlugs,
+} from "@beaconlabs-io/evidence/content";
 import { compileMDX } from "next-mdx-remote/rsc";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeKatex from "rehype-katex";
@@ -9,38 +13,22 @@ import rehypeSlug from "rehype-slug";
 import rehypeToc from "rehype-toc";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
-import { Evidence } from "@/types";
+import type { Evidence } from "@beaconlabs-io/evidence";
 
-const evidenceContentDirectory = path.join(process.cwd(), "evidence-repo", "evidence");
-
+/**
+ * Get evidence by slug with compiled MDX content
+ * Uses pre-bundled content from npm package, compiles MDX at runtime for rich rendering
+ */
 export const getEvidenceBySlug = cache(
   async (slug: string): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
     const realSlug = slug.replace(/\.mdx$/, "");
-    const filePath = path.join(evidenceContentDirectory, `${realSlug}.mdx`);
-    const deploymentPath = path.join(
-      process.cwd(),
-      "evidence-repo",
-      "deployments",
-      `${realSlug}.json`,
-    );
-    let fileContent;
-    let deploymentData = {};
+    const bundled = getEvidence(realSlug);
 
-    try {
-      fileContent = fs.readFileSync(filePath, { encoding: "utf8" });
+    if (!bundled) return undefined;
 
-      // Try to read deployment file
-      try {
-        deploymentData = JSON.parse(fs.readFileSync(deploymentPath, { encoding: "utf8" }));
-      } catch {
-        deploymentData = {};
-      }
-    } catch {
-      return undefined;
-    }
-
-    const { frontmatter, content } = await compileMDX({
-      source: fileContent,
+    // Compile raw MDX content with plugins for rich rendering
+    const { content } = await compileMDX({
+      source: bundled.raw, // full MDX source including frontmatter
       options: {
         parseFrontmatter: true,
         mdxOptions: {
@@ -56,86 +44,45 @@ export const getEvidenceBySlug = cache(
       },
     });
 
+    // Get deployment metadata merged with frontmatter
+    const evidenceWithDeployment = getEvidenceWithDeployment(realSlug);
+
     return {
-      meta: {
-        evidence_id: realSlug,
-        ...frontmatter,
-        ...deploymentData,
-        attestationUID:
-          deploymentData && typeof deploymentData === "object"
-            ? (deploymentData as any).attestationUID
-            : undefined,
-      } as Evidence,
-      content: content,
+      meta: evidenceWithDeployment ?? (bundled.frontmatter as Evidence),
+      content,
     };
   },
 );
 
-export const getAllEvidence = async () => {
-  const files = fs.readdirSync(evidenceContentDirectory).filter((file) => file.endsWith(".mdx"));
+/**
+ * Get all evidence with raw content (for search, AI tools)
+ * Returns evidence metadata + raw markdown content
+ */
+export function getAllEvidenceWithContent() {
+  const slugs = getAllEvidenceSlugs();
 
-  const evidence: Array<{ meta: Evidence; content: string }> = [];
+  return slugs
+    .map((slug) => {
+      const bundled = getEvidence(slug);
+      const evidenceWithDeployment = getEvidenceWithDeployment(slug);
 
-  for (const file of files) {
-    const realSlug = file.replace(/\.mdx$/, "");
-    const filePath = path.join(evidenceContentDirectory, file);
+      if (!bundled) return null;
 
-    let fileContent;
+      return {
+        meta: evidenceWithDeployment ?? (bundled.frontmatter as Evidence),
+        content: bundled.content, // raw markdown without frontmatter
+      };
+    })
+    .filter((e): e is NonNullable<typeof e> => e !== null)
+    .sort((a, b) => {
+      const idA = parseInt(a.meta.evidence_id, 10);
+      const idB = parseInt(b.meta.evidence_id, 10);
+      if (isNaN(idA) || isNaN(idB)) return 0;
+      return idA - idB;
+    });
+}
 
-    try {
-      // Read raw markdown content
-      fileContent = fs.readFileSync(filePath, { encoding: "utf8" });
-
-      // Parse frontmatter to get metadata
-      const { frontmatter } = await compileMDX({
-        source: fileContent,
-        options: {
-          parseFrontmatter: true,
-        },
-      });
-
-      evidence.push({
-        meta: {
-          evidence_id: realSlug,
-          ...frontmatter,
-        } as Evidence,
-        content: fileContent, // Raw markdown content
-      });
-    } catch (error) {
-      console.error(`Error processing ${file}:`, error);
-      continue;
-    }
-  }
-
-  // Sort by evidence_id
-  evidence.sort((a, b) => {
-    const idA = parseInt(a.meta.evidence_id, 10);
-    const idB = parseInt(b.meta.evidence_id, 10);
-    if (isNaN(idA) || isNaN(idB)) return 0;
-    return idA - idB;
-  });
-
-  return evidence;
-};
-
-export const getAllEvidenceMeta = async (): Promise<Evidence[]> => {
-  const files = fs.readdirSync(evidenceContentDirectory).filter((file) => file.endsWith(".mdx"));
-
-  const evidence: Evidence[] = [];
-
-  for (const file of files) {
-    const data = await getEvidenceBySlug(file);
-    if (data?.meta) {
-      evidence.push(data.meta as Evidence);
-    }
-  }
-
-  evidence.sort((a, b) => {
-    const idA = parseInt(a.evidence_id, 10);
-    const idB = parseInt(b.evidence_id, 10);
-    if (isNaN(idA) || isNaN(idB)) return 0;
-    return idA - idB;
-  });
-
-  return evidence;
+/** Get all evidence metadata (for lists, no MDX compilation) */
+export const getAllEvidenceMeta = (): Evidence[] => {
+  return getAllEvidence();
 };

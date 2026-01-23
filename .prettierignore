@@ -2,5 +2,4 @@
 node_modules
 bun.lock
 public
-evidence-repo/deployments
 **/*.log
