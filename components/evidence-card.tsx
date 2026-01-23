@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EffectIcons } from "@/components/effect-icons";
+import { StrengthIndicator } from "@/components/strength-indicator";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { Evidence } from "@beaconlabs-io/evidence";
@@ -14,54 +15,71 @@ export function EvidenceCard({ evidence }: EvidenceCardProps) {
 
   return (
     <Link href={`/evidence/${evidence.evidence_id}`} className="group block">
-      <Card className="border-border/50 hover:bg-accent/5 h-full transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20">
-        <CardHeader className="space-y-2">
-          <CardTitle className="group-hover:text-primary text-lg leading-snug font-semibold transition-colors">
+      <Card className="border-border/50 hover:border-primary/20 hover:bg-accent/5 relative h-full overflow-hidden transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20">
+        {/* Subtle gradient overlay on hover */}
+        <div className="from-primary/[0.02] pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+
+        <CardHeader className="relative space-y-3">
+          {/* Title */}
+          <CardTitle className="group-hover:text-primary text-base leading-snug font-semibold transition-colors">
             {evidence.title}
           </CardTitle>
-          <CardDescription className="flex flex-col gap-1 text-sm sm:flex-row sm:gap-2">
-            <span className="font-medium">{evidence.author}</span>
-            <span className="text-muted-foreground hidden sm:inline">•</span>
-            <span className="text-muted-foreground">{evidence.date}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {validTags.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {validTags.slice(0, 4).map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="secondary"
-                  className="hover:bg-secondary/80 rounded-full px-2.5 py-1 text-xs transition-colors"
-                >
-                  {tag}
-                </Badge>
-              ))}
-              {validTags.length > 4 && (
-                <Badge
-                  variant="outline"
-                  className="hover:bg-secondary/80 rounded-full px-2.5 py-1 text-xs transition-colors"
-                >
-                  +{validTags.length - 4}
-                </Badge>
-              )}
+
+          {/* Author, Date, Strength - vertical layout */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium">{evidence.author}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-muted-foreground text-xs">{evidence.date}</span>
+              {evidence.strength && <StrengthIndicator level={evidence.strength} size="sm" />}
             </div>
-          ) : null}
-          <div className="mt-4 space-y-3">
-            {results.map((result, index) => (
-              <div key={index} className="flex items-start gap-2.5">
-                <div className="text-muted-foreground mt-0.5 shrink-0">
+          </div>
+        </CardHeader>
+
+        <CardContent className="relative pt-0">
+          {/* Results - more compact */}
+          <div className="space-y-2">
+            {results.slice(0, 2).map((result, index) => (
+              <div key={index} className="flex items-start gap-2">
+                <div className="text-muted-foreground mt-0.5 shrink-0 scale-90">
                   {result.outcome && <EffectIcons effectId={result.outcome} isShowTitle={false} />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm leading-tight font-medium">{result.intervention}</div>
-                  <div className="text-muted-foreground mt-1 text-xs leading-relaxed">
-                    → {result.outcome_variable}
+                  <div className="text-muted-foreground text-xs leading-relaxed">
+                    &rarr; {result.outcome_variable}
                   </div>
                 </div>
               </div>
             ))}
+            {results.length > 2 && (
+              <div className="text-muted-foreground pl-8 text-xs">
+                +{results.length - 2} more results
+              </div>
+            )}
           </div>
+
+          {/* Tags at bottom */}
+          {validTags.length > 0 && (
+            <div className="border-border/50 mt-4 flex flex-wrap gap-1.5 border-t pt-3">
+              {validTags.slice(0, 3).map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className="hover:bg-secondary/80 rounded-full px-2 py-0 text-[10px] font-normal transition-colors"
+                >
+                  {tag}
+                </Badge>
+              ))}
+              {validTags.length > 3 && (
+                <Badge
+                  variant="outline"
+                  className="rounded-full px-2 py-0 text-[10px] font-normal transition-colors"
+                >
+                  +{validTags.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </Link>
