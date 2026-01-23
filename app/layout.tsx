@@ -4,6 +4,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { Toaster } from "sonner";
 import { Header } from "@/components/header";
 import Providers from "./providers";
+import { BASE_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "MUSE by BeaconLabs",
@@ -13,10 +14,9 @@ export const metadata: Metadata = {
     description: "Create and edit interactive logic models with evidence",
     type: "website",
     siteName: "MUSE",
-    // Relative URL - Next.js resolves based on deployment URL
     images: [
       {
-        url: `/opengraph-image.png`,
+        url: `${BASE_URL}/opengraph-image.png`,
         width: 1200,
         height: 630,
         alt: "MUSE by BeaconLabs",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MUSE by BeaconLabs",
     description: "Create and edit interactive logic models with evidence",
-    images: [`/opengraph-image.png`],
+    images: [`${BASE_URL}/opengraph-image.png`],
   },
 };
 

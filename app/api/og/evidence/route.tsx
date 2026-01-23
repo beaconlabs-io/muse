@@ -1,9 +1,10 @@
 import { ImageResponse } from "next/og";
+import { BASE_URL } from "@/lib/constants";
 import { getEvidenceBySlug } from "@/lib/evidence";
 
 export async function GET(request: Request) {
   try {
-    const { searchParams, origin } = new URL(request.url);
+    const { searchParams } = new URL(request.url);
     const slug = searchParams.get("slug");
 
     if (!slug) {
@@ -18,8 +19,7 @@ export async function GET(request: Request) {
 
     const { meta } = evidence;
 
-    // Use request origin for logo URL - works on preview deployments
-    const logoUrl = `${origin}/beaconlabs.png`;
+    const logoUrl = `${BASE_URL}/beaconlabs.png`;
 
     return new ImageResponse(
       <div
