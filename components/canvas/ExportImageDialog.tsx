@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Copy, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -32,30 +32,25 @@ interface ExportImageDialogProps {
  */
 export function ExportImageDialog({ open, onOpenChange, nodes }: ExportImageDialogProps) {
   const { status, result, error, generate, reset } = useBrandedImage();
+  // Use ref to track if generation has been triggered for this dialog session
+  const hasTriggeredRef = useRef(false);
 
-  // Generate image when dialog opens
+  // Generate image when dialog opens (only once per session)
   useEffect(() => {
-    if (open && status === "idle") {
-      let isCancelled = false;
-
-      generate(nodes).then(() => {
-        // If dialog was closed during generation, reset to avoid stale state
-        if (isCancelled) {
-          reset();
-        }
-      });
-
-      return () => {
-        isCancelled = true;
-      };
+    if (open && status === "idle" && !hasTriggeredRef.current) {
+      hasTriggeredRef.current = true;
+      generate(nodes);
     }
-  }, [open, status, nodes, generate, reset]);
+  }, [open, status, nodes, generate]);
 
-  // Reset state when dialog closes
+  // Reset state and ref when dialog closes
   useEffect(() => {
     if (!open) {
       // Small delay to avoid visual flash during close animation
-      const timeout = setTimeout(reset, 200);
+      const timeout = setTimeout(() => {
+        reset();
+        hasTriggeredRef.current = false;
+      }, 200);
       return () => clearTimeout(timeout);
     }
   }, [open, reset]);
