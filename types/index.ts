@@ -254,6 +254,7 @@ export const CanvasDataSchema = z.object({
   cards: z.array(CardSchema),
   arrows: z.array(ArrowSchema),
   cardMetrics: z.record(z.string(), z.array(MetricSchema)),
+  ogImageCID: z.string().optional(),
 });
 
 export type CanvasData = z.infer<typeof CanvasDataSchema>;
