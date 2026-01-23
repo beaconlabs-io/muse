@@ -10,7 +10,7 @@ import { TooltipStrength } from "@/components/tooltip/tooltip-strength";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TooltipEffects } from "../tooltip/tooltip-effects";
-import { Evidence } from "@/types";
+import type { Evidence } from "@beaconlabs-io/evidence";
 
 const columnHelper = createColumnHelper<Evidence>();
 

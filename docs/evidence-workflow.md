@@ -111,7 +111,7 @@ sequenceDiagram
     rect rgb(255, 255, 240)
         Note over AT,GH: 5. Finalization Phase
         AT->>AT: Generate deployment JSON
-        AT->>GH: Commit to PR branch:<br/>- evidence-repo/deployments/*.json<br/>- Update MDX attestationUID
+        AT->>GH: Commit to PR branch:<br/>- deployments/*.json<br/>- Update MDX attestationUID
         AT-->>GH: ✅ Attestation complete
         GH-->>C: PR ready to merge
         R->>GH: Merge PR to dev
@@ -120,10 +120,10 @@ sequenceDiagram
 
 ### 1. Community Contribution
 
-Communities create MDX files in `evidence-repo/evidence/` following the format specified in `evidence-repo/README.md`:
+Communities create MDX files in the [evidence repository](https://github.com/beaconlabs-io/evidence) following the format specified in its README:
 
-1. Fork the repository
-2. Create a new `.mdx` file in `evidence-repo/evidence/`
+1. Fork the [evidence repository](https://github.com/beaconlabs-io/evidence)
+2. Create a new `.mdx` file in `evidence/`
 3. Fill in the required frontmatter fields
 4. Write the evidence content in MDX format
 5. Submit a pull request to the `dev` branch
@@ -173,7 +173,7 @@ The attestation workflow (`.github/workflows/evidence-attestation.yml`) is trigg
 
 **Step 3: Deployment Metadata**
 
-- Generates JSON file in `evidence-repo/deployments/`
+- Generates JSON file in `deployments/`
 - File includes:
   - Attestation UID
   - IPFS hash
@@ -248,7 +248,7 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 ## File Locations
 
 - Evidence files: `evidence-repo/evidence/*.mdx`
-- Deployment metadata: `evidence-repo/deployments/*.json`
+- Deployment metadata: `deployments/*.json`
 - Format documentation: `evidence-repo/README.md`
 - Validation workflow: `evidence-repo/.github/workflows/evidence-validation.yml` (in evidence repository)
 - Attestation workflow: `evidence-repo/.github/workflows/evidence-attestation.yml` (in evidence repository)
