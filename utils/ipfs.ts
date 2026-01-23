@@ -100,3 +100,31 @@ export async function fetchFromIPFS(hash: string): Promise<CanvasData> {
 export function generateLogicModelId(): string {
   return `lm-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
+
+/**
+ * Upload an image blob to IPFS via Pinata
+ * Used for OG images that accompany canvas data
+ */
+export async function uploadImageToIPFS(blob: Blob, filename: string): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", blob, filename);
+  formData.append("filename", filename);
+
+  const response = await fetch("/api/upload-image-to-ipfs", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  if (!result.hash) {
+    throw new Error("No IPFS hash returned for image");
+  }
+
+  return result.hash;
+}
