@@ -56,30 +56,31 @@ export function StrengthFilter({ selectedStrengths, onStrengthsChange }: Strengt
       <DropdownMenuContent className="w-56">
         <DropdownMenuLabel>Filter by evidence level</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {STRENGTH_OPTIONS.map((option) => (
-          <DropdownMenuCheckboxItem
-            key={option.value}
-            checked={selectedStrengths.includes(option.value)}
-            onCheckedChange={() => handleToggle(option.value)}
-          >
-            <div className="flex items-center gap-2">
-              <div className="flex">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <Star
-                    key={i}
-                    size={10}
-                    className={
-                      i < parseInt(option.value)
-                        ? "fill-amber-400 text-amber-400"
-                        : "text-muted-foreground/30"
-                    }
-                  />
-                ))}
+        {STRENGTH_OPTIONS.map((option) => {
+          const level = parseInt(option.value, 10);
+          return (
+            <DropdownMenuCheckboxItem
+              key={option.value}
+              checked={selectedStrengths.includes(option.value)}
+              onCheckedChange={() => handleToggle(option.value)}
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Star
+                      key={i}
+                      size={10}
+                      className={`transition-colors ${
+                        i < level ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs">{option.label}</span>
               </div>
-              <span className="text-xs">{option.label}</span>
-            </div>
-          </DropdownMenuCheckboxItem>
-        ))}
+            </DropdownMenuCheckboxItem>
+          );
+        })}
         {selectedStrengths.length > 0 && (
           <>
             <DropdownMenuSeparator />

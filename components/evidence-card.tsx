@@ -2,7 +2,7 @@ import Link from "next/link";
 import { EffectIcons } from "@/components/effect-icons";
 import { StrengthIndicator } from "@/components/strength-indicator";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Evidence } from "@beaconlabs-io/evidence";
 
 interface EvidenceCardProps {
@@ -10,22 +10,24 @@ interface EvidenceCardProps {
 }
 
 export function EvidenceCard({ evidence }: EvidenceCardProps) {
-  const results = evidence.results ?? [];
   const validTags = evidence.tags?.filter((tag) => tag && tag.trim().length > 0) ?? [];
+  const displayedTags = validTags.slice(0, 3);
+  const extraTagCount = Math.max(0, validTags.length - 3);
+
+  const results = evidence.results ?? [];
+  const displayedResults = results.slice(0, 2);
+  const extraResultCount = Math.max(0, results.length - 2);
 
   return (
     <Link href={`/evidence/${evidence.evidence_id}`} className="group block">
-      <Card className="border-border/50 hover:border-primary/20 hover:bg-accent/5 relative h-full overflow-hidden transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20">
-        {/* Subtle gradient overlay on hover */}
-        <div className="from-primary/[0.02] pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+      <Card className="border-border/50 hover:border-primary/20 hover:bg-accent/5 relative h-full overflow-hidden transition-[transform,border-color,background-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
         <CardHeader className="relative space-y-3">
-          {/* Title */}
           <CardTitle className="group-hover:text-primary text-base leading-snug font-semibold transition-colors">
             {evidence.title}
           </CardTitle>
 
-          {/* Author, Date, Strength - vertical layout */}
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-medium">{evidence.author}</span>
             <div className="flex items-center gap-3">
@@ -36,9 +38,8 @@ export function EvidenceCard({ evidence }: EvidenceCardProps) {
         </CardHeader>
 
         <CardContent className="relative pt-0">
-          {/* Results - more compact */}
           <div className="space-y-2">
-            {results.slice(0, 2).map((result, index) => (
+            {displayedResults.map((result, index) => (
               <div key={index} className="flex items-start gap-2">
                 <div className="text-muted-foreground mt-0.5 shrink-0 scale-90">
                   {result.outcome && <EffectIcons effectId={result.outcome} isShowTitle={false} />}
@@ -51,17 +52,16 @@ export function EvidenceCard({ evidence }: EvidenceCardProps) {
                 </div>
               </div>
             ))}
-            {results.length > 2 && (
+            {extraResultCount > 0 && (
               <div className="text-muted-foreground pl-8 text-xs">
-                +{results.length - 2} more results
+                +{extraResultCount} more results
               </div>
             )}
           </div>
 
-          {/* Tags at bottom */}
           {validTags.length > 0 && (
             <div className="border-border/50 mt-4 flex flex-wrap gap-1.5 border-t pt-3">
-              {validTags.slice(0, 3).map((tag) => (
+              {displayedTags.map((tag) => (
                 <Badge
                   key={tag}
                   variant="secondary"
@@ -70,12 +70,12 @@ export function EvidenceCard({ evidence }: EvidenceCardProps) {
                   {tag}
                 </Badge>
               ))}
-              {validTags.length > 3 && (
+              {extraTagCount > 0 && (
                 <Badge
                   variant="outline"
                   className="rounded-full px-2 py-0 text-[10px] font-normal transition-colors"
                 >
-                  +{validTags.length - 3}
+                  +{extraTagCount}
                 </Badge>
               )}
             </div>
