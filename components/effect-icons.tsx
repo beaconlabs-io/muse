@@ -42,16 +42,19 @@ export const effectData = [
     icon: <AlertTriangle size={20} className="text-white" />,
   },
 ];
+
+const effectMap = new Map(effectData.map((e) => [e.id, e]));
+
 export function extractEffectData(effectId: string) {
-  return effectData.find((e) => e.id === effectId);
+  return effectMap.get(effectId);
 }
-export function EffectIcons({
-  effectId,
-  isShowTitle = true,
-}: {
+
+interface EffectIconsProps {
   effectId: string;
   isShowTitle?: boolean;
-}) {
+}
+
+export function EffectIcons({ effectId, isShowTitle = true }: EffectIconsProps) {
   const effect = extractEffectData(effectId);
 
   if (!effect) {

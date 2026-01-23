@@ -82,10 +82,7 @@ export const getAllEvidenceWithContent = async () => {
     });
 };
 
-/**
- * Get all evidence metadata (for lists, no MDX compilation)
- * Returns Evidence[] with deployment data merged
- */
-export function getAllEvidenceMeta(): Evidence[] {
+/** Get all evidence metadata (for lists, no MDX compilation) */
+export const getAllEvidenceMeta = (): Evidence[] => {
   return getAllEvidence();
-}
+};

@@ -26,6 +26,7 @@ export default async function EvidencePage({ params }: { params: Promise<{ slug:
         date={evidence.meta.date}
         author={evidence.meta.author}
         version={evidence.meta.version}
+        strength={evidence.meta.strength}
       />
 
       <div className="prose max-w-none">
