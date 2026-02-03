@@ -292,3 +292,62 @@ export const TYPE_COLOR_MAP = {
 } as const;
 
 export type NodeType = keyof typeof TYPE_COLOR_MAP;
+
+// =============================================================================
+// CHAT API TYPES (for Telegram bot and other clients)
+// =============================================================================
+
+/**
+ * Evidence search request schema
+ */
+export const EvidenceSearchRequestSchema = z.object({
+  query: z.string().min(1, "Query is required").max(500, "Query too long"),
+  limit: z.number().min(1).max(20).optional().default(5),
+});
+
+export type EvidenceSearchRequest = z.infer<typeof EvidenceSearchRequestSchema>;
+
+/**
+ * Evidence search response schema
+ */
+export const EvidenceSearchResponseSchema = z.object({
+  response: z.string(),
+  query: z.string(),
+});
+
+export type EvidenceSearchResponse = z.infer<typeof EvidenceSearchResponseSchema>;
+
+/**
+ * Chat message schema (for conversation history)
+ */
+export const ChatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string(),
+});
+
+export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
+/**
+ * Compact request schema (for Logic Model generation from chat history)
+ */
+export const CompactRequestSchema = z.object({
+  chatHistory: z.array(ChatMessageSchema).min(1, "Chat history is required"),
+  language: z.enum(["ja", "en"]).optional().default("ja"),
+});
+
+export type CompactRequest = z.infer<typeof CompactRequestSchema>;
+
+/**
+ * Compact response schema
+ */
+export const CompactResponseSchema = z.object({
+  canvasUrl: z.string().url(),
+  canvasId: z.string(),
+  summary: z.object({
+    extractedIssues: z.array(z.string()),
+    intervention: z.string(),
+    targetContext: z.string(),
+  }),
+});
+
+export type CompactResponse = z.infer<typeof CompactResponseSchema>;

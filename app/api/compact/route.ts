@@ -1,0 +1,165 @@
+import { NextRequest, NextResponse } from "next/server";
+import { validateApiKey, unauthorizedResponse, isAuthEnabled } from "@/lib/api-auth";
+import { uploadToIPFS } from "@/lib/ipfs";
+import { mastra } from "@/mastra";
+import {
+  CompactRequestSchema,
+  CanvasDataSchema,
+  type CompactResponse,
+  type CanvasData,
+  type Card,
+} from "@/types";
+
+const WORKFLOW_TIMEOUT = 120000; // 2 minutes
+
+/**
+ * POST /api/compact
+ *
+ * Create a Logic Model from chat history.
+ * 1. Extract intent from conversation
+ * 2. Run Logic Model workflow
+ * 3. Upload to IPFS
+ * 4. Return canvas URL
+ *
+ * Request body:
+ * - chatHistory: Array<{ role: "user" | "assistant", content: string }>
+ *
+ * Response:
+ * - canvasUrl: string
+ * - canvasId: string
+ * - summary: { extractedIssues, intervention, targetContext }
+ */
+export async function POST(request: NextRequest) {
+  try {
+    // 1. Check authentication (skip if BOT_API_KEY not configured)
+    if (isAuthEnabled() && !validateApiKey(request)) {
+      return unauthorizedResponse();
+    }
+
+    const body = await request.json();
+
+    // 2. Validate request
+    const validationResult = CompactRequestSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: validationResult.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const { chatHistory } = validationResult.data;
+
+    // 3. Extract intent from chat history
+    const intent = extractIntentFromHistory(chatHistory);
+
+    // 4. Ensure PROJECT_ROOT is set for Mastra
+    if (!process.env.PROJECT_ROOT) {
+      process.env.PROJECT_ROOT = process.cwd();
+    }
+
+    // 5. Run Logic Model workflow with timeout
+    const workflow = mastra.getWorkflow("logicModelWithEvidenceWorkflow");
+    const run = await workflow.createRunAsync();
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Workflow timeout")), WORKFLOW_TIMEOUT),
+    );
+
+    const result = await Promise.race([run.start({ inputData: { intent } }), timeoutPromise]);
+
+    if (result.status !== "success") {
+      const errorMessage =
+        result.status === "failed"
+          ? result.error?.message || "Workflow failed"
+          : "Workflow was suspended";
+      console.error("Workflow error:", errorMessage);
+      return NextResponse.json(
+        { error: "Failed to create Logic Model. Please try again." },
+        { status: 500 },
+      );
+    }
+
+    // 6. Validate and extract canvas data
+    const canvasData = CanvasDataSchema.parse(result.result.canvasData);
+
+    // 7. Upload to IPFS using shared utility
+    const ipfsResult = await uploadToIPFS(canvasData, {
+      filename: `canvas-${canvasData.id}.json`,
+      type: "logic-model",
+      source: "telegram-bot",
+    });
+
+    // 8. Extract summary from canvas data
+    const summary = extractSummaryFromCanvas(canvasData);
+
+    // 9. Build response
+    const response: CompactResponse = {
+      canvasUrl: `https://muse.beaconlabs.io/canvas/${ipfsResult.hash}`,
+      canvasId: canvasData.id,
+      summary,
+    };
+
+    return NextResponse.json(response);
+  } catch (error) {
+    console.error("Compact error:", error);
+    return NextResponse.json(
+      { error: "Failed to create Logic Model. Please try again." },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * Extract intent from chat history.
+ * Creates a unified English prompt that asks AI to respond in the user's language.
+ */
+function extractIntentFromHistory(chatHistory: Array<{ role: string; content: string }>): string {
+  const conversationText = chatHistory
+    .filter((m) => m.role === "user")
+    .map((m) => m.content)
+    .join("\n");
+
+  return `Create a Logic Model based on the following conversation about issues and interventions.
+
+Conversation:
+${conversationText}
+
+Extract the main issues, proposed interventions, and expected outcomes from this conversation and organize them into a Logic Model. Respond in the same language as the conversation.`;
+}
+
+/**
+ * Extract summary from canvas data.
+ * Returns extracted issues, intervention, and target context.
+ */
+function extractSummaryFromCanvas(canvasData: CanvasData): {
+  extractedIssues: string[];
+  intervention: string;
+  targetContext: string;
+} {
+  const cards = canvasData.cards;
+
+  // Group cards by type using reduce
+  const cardsByType = cards.reduce<Record<string, Card[]>>((acc, card) => {
+    const type = card.type || "unknown";
+    (acc[type] ||= []).push(card);
+    return acc;
+  }, {});
+
+  // Extract issues from short-term outcomes or outputs
+  const issueCards = cardsByType["outcomes-short"] || cardsByType["outputs"] || [];
+  const extractedIssues = issueCards.slice(0, 3).map((c) => c.title);
+
+  // Extract intervention from activities
+  const activityCards = cardsByType["activities"] || [];
+  const intervention = activityCards.length > 0 ? activityCards[0].title : "Not specified";
+
+  // Extract target context from impact
+  const impactCards = cardsByType["impact"] || [];
+  const targetContext = impactCards.length > 0 ? impactCards[0].title : "Not specified";
+
+  return {
+    extractedIssues,
+    intervention,
+    targetContext,
+  };
+}
