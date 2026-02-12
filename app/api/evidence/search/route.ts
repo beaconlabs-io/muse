@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey, unauthorizedResponse, isAuthEnabled } from "@/lib/api-auth";
-import { EVIDENCE_SEARCH_MAX_STEPS } from "@/lib/constants";
+import { BASE_URL, EVIDENCE_SEARCH_MAX_STEPS } from "@/lib/constants";
 import { mastra } from "@/mastra";
 import { EvidenceSearchRequestSchema, type EvidenceSearchResponse } from "@/types";
 
@@ -61,7 +61,7 @@ Please:
 4. Provide a brief summary of findings
 
 Format each result with a clickable link using evidenceId:
-Example: [View details](https://muse.beaconlabs.io/evidence/08) for evidenceId "08"
+Example: [View details](${BASE_URL}/evidence/08) for evidenceId "08"
 
 Respond in the same language as the query.`,
         },

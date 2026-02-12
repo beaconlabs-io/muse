@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey, unauthorizedResponse, isAuthEnabled } from "@/lib/api-auth";
-import { WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
+import { BASE_URL, WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
 import { uploadToIPFS } from "@/lib/ipfs";
 import { createLogger } from "@/lib/logger";
 import { mastra } from "@/mastra";
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     const ipfsResult = await uploadToIPFS(canvasData, {
       filename: `canvas-${canvasData.id}.json`,
       type: "logic-model",
-      source: "telegram-bot",
+      source: "api",
     });
 
     // 8. Extract summary from canvas data
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 
     // 9. Build response
     const response: CompactResponse = {
-      canvasUrl: `https://muse.beaconlabs.io/canvas/${ipfsResult.hash}`,
+      canvasUrl: `${BASE_URL}/canvas/${ipfsResult.hash}`,
       canvasId: canvasData.id,
       summary,
     };

@@ -1,5 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { getAllEvidenceTool } from "../tools/get-all-evidence-tool";
+import { BASE_URL } from "@/lib/constants";
 
 const MODEL = process.env.MODEL || "google/gemini-2.5-pro";
 
@@ -72,7 +73,7 @@ When responding to search queries, structure your response as:
 **Relevant Evidence:**
 
 1. **[Title]** (Strength: [strength]/5)
-   [View details](https://muse.beaconlabs.io/evidence/[evidenceId])
+   [View details](${BASE_URL}/evidence/[evidenceId])
    - Intervention: [intervention text]
    - Outcome: [outcome text]
 
@@ -80,7 +81,7 @@ When responding to search queries, structure your response as:
 \`\`\`
 
 **IMPORTANT**: Always include the clickable link using the evidenceId.
-For example, if evidenceId is "08", the link is: https://muse.beaconlabs.io/evidence/08
+For example, if evidenceId is "08", the link is: ${BASE_URL}/evidence/08
 
 ## Guidelines
 
