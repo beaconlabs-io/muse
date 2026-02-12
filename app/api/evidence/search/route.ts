@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey, unauthorizedResponse, isAuthEnabled } from "@/lib/api-auth";
+import { EVIDENCE_SEARCH_MAX_STEPS } from "@/lib/constants";
 import { mastra } from "@/mastra";
 import { EvidenceSearchRequestSchema, type EvidenceSearchResponse } from "@/types";
 
@@ -40,7 +41,10 @@ export async function POST(request: NextRequest) {
     // Get the conversation bot agent
     const agent = mastra.getAgent("conversationBotAgent");
     if (!agent) {
-      return NextResponse.json({ error: "Conversation bot agent not configured" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Evidence search is temporarily unavailable. Please try again later." },
+        { status: 503 },
+      );
     }
 
     // Generate response using the agent
@@ -62,7 +66,7 @@ Example: [View details](https://muse.beaconlabs.io/evidence/08) for evidenceId "
 Respond in the same language as the query.`,
         },
       ],
-      { maxSteps: 2 },
+      { maxSteps: EVIDENCE_SEARCH_MAX_STEPS },
     );
 
     const response: EvidenceSearchResponse = {
@@ -73,6 +77,9 @@ Respond in the same language as the query.`,
     return NextResponse.json(response);
   } catch (error) {
     console.error("Evidence search error:", error);
-    return NextResponse.json({ error: "Failed to search evidence" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to search evidence. Please try again." },
+      { status: 500 },
+    );
   }
 }

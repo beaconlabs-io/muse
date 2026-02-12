@@ -13,6 +13,16 @@ import {
   type EvidenceMatch,
 } from "@/types";
 
+/** Expected structure of the logic model tool result from Mastra */
+interface LogicModelToolResult {
+  toolName: string;
+  payload: {
+    result: {
+      canvasData: CanvasData;
+    };
+  };
+}
+
 const logger = createLogger({ module: "workflow:logic-model-with-evidence" });
 /**
  * Workflow: Generate Logic Model with Evidence Search
@@ -92,7 +102,7 @@ Example metric: { "name": "Number of participants", "measurementMethod": "Survey
       "Extracting canvas data from tool results",
     );
 
-    const toolResult = result.toolResults[0] as any;
+    const toolResult = result.toolResults[0] as unknown as LogicModelToolResult;
     logger.debug(
       {
         toolName: toolResult.toolName,

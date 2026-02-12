@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey, unauthorizedResponse, isAuthEnabled } from "@/lib/api-auth";
+import { WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
 import { uploadToIPFS } from "@/lib/ipfs";
+import { createLogger } from "@/lib/logger";
 import { mastra } from "@/mastra";
 import {
   CompactRequestSchema,
@@ -10,7 +12,7 @@ import {
   type Card,
 } from "@/types";
 
-const WORKFLOW_TIMEOUT = 120000; // 2 minutes
+const logger = createLogger({ module: "api:compact" });
 
 /**
  * POST /api/compact
@@ -61,11 +63,17 @@ export async function POST(request: NextRequest) {
     const workflow = mastra.getWorkflow("logicModelWithEvidenceWorkflow");
     const run = await workflow.createRunAsync();
 
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Workflow timeout")), WORKFLOW_TIMEOUT),
-    );
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error("Workflow timeout")), WORKFLOW_TIMEOUT_MS);
+    });
 
-    const result = await Promise.race([run.start({ inputData: { intent } }), timeoutPromise]);
+    let result;
+    try {
+      result = await Promise.race([run.start({ inputData: { intent } }), timeoutPromise]);
+    } finally {
+      clearTimeout(timeoutId!);
+    }
 
     if (result.status !== "success") {
       const errorMessage =
@@ -111,7 +119,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * Extract intent from chat history.
- * Creates a unified English prompt that asks AI to respond in the user's language.
+ * Creates a unified prompt that asks AI to respond in the conversation's language.
  */
 function extractIntentFromHistory(chatHistory: Array<{ role: string; content: string }>): string {
   const conversationText = chatHistory
@@ -138,7 +146,6 @@ function extractSummaryFromCanvas(canvasData: CanvasData): {
 } {
   const cards = canvasData.cards;
 
-  // Group cards by type using reduce
   const cardsByType = cards.reduce<Record<string, Card[]>>((acc, card) => {
     const type = card.type || "unknown";
     (acc[type] ||= []).push(card);
@@ -147,14 +154,26 @@ function extractSummaryFromCanvas(canvasData: CanvasData): {
 
   // Extract issues from short-term outcomes or outputs
   const issueCards = cardsByType["outcomes-short"] || cardsByType["outputs"] || [];
+  if (!cardsByType["outcomes-short"] && !cardsByType["outputs"]) {
+    logger.warn(
+      { availableTypes: Object.keys(cardsByType) },
+      "No outcomes-short or outputs cards found for issue extraction",
+    );
+  }
   const extractedIssues = issueCards.slice(0, 3).map((c) => c.title);
 
   // Extract intervention from activities
   const activityCards = cardsByType["activities"] || [];
+  if (activityCards.length === 0) {
+    logger.warn("No activity cards found for intervention extraction");
+  }
   const intervention = activityCards.length > 0 ? activityCards[0].title : "Not specified";
 
   // Extract target context from impact
   const impactCards = cardsByType["impact"] || [];
+  if (impactCards.length === 0) {
+    logger.warn("No impact cards found for target context extraction");
+  }
   const targetContext = impactCards.length > 0 ? impactCards[0].title : "Not specified";
 
   return {

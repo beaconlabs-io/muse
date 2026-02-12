@@ -23,6 +23,12 @@ export const EVIDENCE_QUALITY_THRESHOLD = 3;
 /** Maximum size of a canvas data in bytes (5MB) */
 export const MAX_CANVAS_SIZE = 5 * 1024 * 1024;
 
+/** Timeout for workflow execution in milliseconds (2 minutes) */
+export const WORKFLOW_TIMEOUT_MS = 120_000;
+
+/** Maximum number of agent reasoning steps for evidence search */
+export const EVIDENCE_SEARCH_MAX_STEPS = 2;
+
 /**
  * Evidence Strength Levels (Maryland Scientific Methods Scale)
  * Single source of truth for strength-related constants.

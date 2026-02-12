@@ -332,7 +332,6 @@ export type ChatMessage = z.infer<typeof ChatMessageSchema>;
  */
 export const CompactRequestSchema = z.object({
   chatHistory: z.array(ChatMessageSchema).min(1, "Chat history is required"),
-  language: z.enum(["ja", "en"]).optional().default("ja"),
 });
 
 export type CompactRequest = z.infer<typeof CompactRequestSchema>;
