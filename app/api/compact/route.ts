@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { validateApiKey, unauthorizedResponse, isAuthEnabled } from "@/lib/api-auth";
 import { BASE_URL, WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
 import { uploadToIPFS } from "@/lib/ipfs";
@@ -7,6 +8,7 @@ import { mastra } from "@/mastra";
 import {
   CompactRequestSchema,
   CanvasDataSchema,
+  type ChatMessage,
   type CompactResponse,
   type CanvasData,
   type Card,
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
     const workflow = mastra.getWorkflow("logicModelWithEvidenceWorkflow");
     const run = await workflow.createRunAsync();
 
-    let timeoutId: ReturnType<typeof setTimeout>;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutId = setTimeout(() => reject(new Error("Workflow timeout")), WORKFLOW_TIMEOUT_MS);
     });
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
         result.status === "failed"
           ? result.error?.message || "Workflow failed"
           : "Workflow was suspended";
-      console.error("Workflow error:", errorMessage);
+      logger.error({ error: errorMessage }, "Workflow failed");
       return NextResponse.json(
         { error: "Failed to create Logic Model. Please try again." },
         { status: 500 },
@@ -109,9 +111,32 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("Compact error:", error);
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      "Compact endpoint error",
+    );
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid canvas data structure", code: "VALIDATION_ERROR" },
+        { status: 500 },
+      );
+    }
+    if (error instanceof Error && error.message === "Workflow timeout") {
+      return NextResponse.json(
+        { error: "Logic Model generation timed out. Please try again.", code: "TIMEOUT" },
+        { status: 504 },
+      );
+    }
+    if (error instanceof Error && error.message.includes("too large")) {
+      return NextResponse.json(
+        { error: error.message, code: "PAYLOAD_TOO_LARGE" },
+        { status: 413 },
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to create Logic Model. Please try again." },
+      { error: "Failed to create Logic Model. Please try again.", code: "INTERNAL_ERROR" },
       { status: 500 },
     );
   }
@@ -121,7 +146,7 @@ export async function POST(request: NextRequest) {
  * Extract intent from chat history.
  * Creates a unified prompt that asks AI to respond in the conversation's language.
  */
-function extractIntentFromHistory(chatHistory: Array<{ role: string; content: string }>): string {
+function extractIntentFromHistory(chatHistory: ChatMessage[]): string {
   const conversationText = chatHistory
     .filter((m) => m.role === "user")
     .map((m) => m.content)

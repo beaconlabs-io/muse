@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey, unauthorizedResponse, isAuthEnabled } from "@/lib/api-auth";
 import { BASE_URL, EVIDENCE_SEARCH_MAX_STEPS } from "@/lib/constants";
+import { createLogger } from "@/lib/logger";
 import { mastra } from "@/mastra";
 import { EvidenceSearchRequestSchema, type EvidenceSearchResponse } from "@/types";
+
+const logger = createLogger({ module: "api:evidence-search" });
 
 /**
  * POST /api/evidence/search
@@ -76,7 +79,10 @@ Respond in the same language as the query.`,
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("Evidence search error:", error);
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      "Evidence search error",
+    );
     return NextResponse.json(
       { error: "Failed to search evidence. Please try again." },
       { status: 500 },

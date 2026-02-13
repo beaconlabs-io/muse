@@ -4,6 +4,7 @@
 
 import { EvidenceResultSchema } from "@beaconlabs-io/evidence";
 import { z } from "zod";
+import { MAX_CHAT_HISTORY_LENGTH } from "@/lib/constants";
 
 export interface ReturnedAttestation {
   id: string;
@@ -331,7 +332,10 @@ export type ChatMessage = z.infer<typeof ChatMessageSchema>;
  * Compact request schema (for Logic Model generation from chat history)
  */
 export const CompactRequestSchema = z.object({
-  chatHistory: z.array(ChatMessageSchema).min(1, "Chat history is required"),
+  chatHistory: z
+    .array(ChatMessageSchema)
+    .min(1, "Chat history is required")
+    .max(MAX_CHAT_HISTORY_LENGTH, "Chat history too long"),
 });
 
 export type CompactRequest = z.infer<typeof CompactRequestSchema>;

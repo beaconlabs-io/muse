@@ -102,7 +102,16 @@ Example metric: { "name": "Number of participants", "measurementMethod": "Survey
       "Extracting canvas data from tool results",
     );
 
-    const toolResult = result.toolResults[0] as unknown as LogicModelToolResult;
+    const rawToolResult = result.toolResults[0];
+    if (
+      !rawToolResult ||
+      typeof rawToolResult !== "object" ||
+      !("toolName" in rawToolResult) ||
+      !("payload" in rawToolResult)
+    ) {
+      throw new Error("Unexpected tool result structure");
+    }
+    const toolResult = rawToolResult as LogicModelToolResult;
     logger.debug(
       {
         toolName: toolResult.toolName,

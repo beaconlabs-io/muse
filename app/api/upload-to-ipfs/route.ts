@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { uploadToIPFS } from "@/lib/ipfs";
+import { createLogger } from "@/lib/logger";
 import { CanvasDataSchema } from "@/types";
+
+const logger = createLogger({ module: "api:upload-to-ipfs" });
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +33,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Upload to IPFS error:", error);
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      "Upload to IPFS error",
+    );
     const message = error instanceof Error ? error.message : "Failed to upload to IPFS";
 
     // Check for size error

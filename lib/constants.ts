@@ -26,6 +26,9 @@ export const MAX_CANVAS_SIZE = 5 * 1024 * 1024;
 /** Timeout for workflow execution in milliseconds (2 minutes) */
 export const WORKFLOW_TIMEOUT_MS = 120_000;
 
+/** Maximum number of chat messages accepted in a compact request */
+export const MAX_CHAT_HISTORY_LENGTH = 500;
+
 /** Maximum number of agent reasoning steps for evidence search */
 export const EVIDENCE_SEARCH_MAX_STEPS = 2;
 

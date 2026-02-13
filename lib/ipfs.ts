@@ -1,4 +1,7 @@
 import { MAX_CANVAS_SIZE } from "@/lib/constants";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger({ module: "lib:ipfs" });
 
 export interface IPFSUploadResult {
   hash: string;
@@ -71,7 +74,7 @@ export async function uploadToIPFS(
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("Pinata API error:", response.status, errorText);
+    logger.error({ status: response.status, body: errorText }, "Pinata API error");
     throw new Error(`Failed to upload to IPFS: ${response.statusText}`);
   }
 
