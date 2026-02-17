@@ -120,7 +120,7 @@ export const CanvasToolbar = memo(() => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={saveLogicModel} className="cursor-pointer">
+              <DropdownMenuItem disabled={true} onClick={saveLogicModel} className="cursor-pointer">
                 <Save className="mr-2 h-4 w-4" />
                 Mint Hypercert
               </DropdownMenuItem>
