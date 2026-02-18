@@ -18,11 +18,11 @@ export function getHypercertsClient(walletClient?: WalletClient): HypercertClien
   return client;
 }
 
-const prodGraphql = "https://api.hypercerts.org/v2/graphql";
-const devGraphql = "https://staging-api.hypercerts.org/v2/graphql";
+const prodGraphql = "https://api.hypercerts.org/v1/graphql";
+const devGraphql = "https://staging-api.hypercerts.org/v1/graphql";
 
-const productionREST = "https://api.hypercerts.org/v2";
-const developmentREST = "https://staging-api.hypercerts.org/v2";
+const productionREST = "https://api.hypercerts.org/v1";
+const developmentREST = "https://staging-api.hypercerts.org/v1";
 
 const HYPERCERTS_API_URL_REST =
   process.env.NEXT_PUBLIC_ENV === "production" ? productionREST : developmentREST;

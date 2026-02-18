@@ -570,7 +570,8 @@ export default function MintHypercertPage() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={!isConnected || !form.formState.isValid}
+                  // disabled={!isConnected || !form.formState.isValid}
+                  disabled={true}
                   size="lg"
                 >
                   Mint Hypercert
