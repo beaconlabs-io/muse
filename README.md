@@ -13,17 +13,11 @@
 
 ### Installation
 
-1. Clone the repository with submodules:
+1. Clone the repository:
 
 ```bash
-git clone --recurse-submodules https://github.com/beaconlabs-io/muse.git
+git clone https://github.com/beaconlabs-io/muse.git
 cd muse
-```
-
-Or if already cloned:
-
-```bash
-git submodule update --init --recursive
 ```
 
 2. Install dependencies:
