@@ -13,8 +13,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Mastra Development
 
-- `bun dev:mastra` - Start Mastra development server for agents/workflows (sets PROJECT_ROOT automatically)
-- `bun build:mastra` - Build Mastra agent system (sets PROJECT_ROOT automatically)
+- `bun dev:mastra` - Start Mastra development server for agents/workflows
+- `bun build:mastra` - Build Mastra agent system
 
 **Important**: The project uses husky for git hooks with lint-staged. Code is automatically linted and formatted on commit.
 

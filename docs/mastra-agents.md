@@ -321,7 +321,6 @@ Main UI component with 4-step process:
 Server action wrapper for workflow execution:
 
 - `runLogicModelWorkflow(intent)`: Executes Mastra workflow, returns simplified result (canvasData only)
-- Sets PROJECT_ROOT environment variable for correct path resolution
 - Validates output with CanvasDataSchema
 - Returns `{ success: true, canvasData }` on success or `{ success: false, error }` on failure
 
@@ -393,33 +392,11 @@ Tool for generating logic model structure:
 - **Chain-of-Thought Reasoning**: Evidence search uses structured analysis for transparent decision-making
 - **Retry Logic**: Automatic retry with stricter prompt if tool validation fails on first attempt
 - **Simplified API**: Returns just CanvasData, consumers calculate stats as needed (no duplicate tracking)
-- **Environment-aware**: PROJECT_ROOT handling ensures correct file paths in all contexts (dev, build, Next.js)
 - **Production-ready Logging**: Detailed progress logs with module prefix and comprehensive debug info
 - **Schema Reuse**: 100% reuse of types from `types/index.ts` (CanvasDataSchema, EvidenceMatchSchema, etc.)
 - **Transparent Evidence Search**: Evidence search happens invisibly during structure step, no separate UI loading state
 - **Better Error Recovery**: Retry logic catches format errors, detailed logging aids debugging
 - **Observability**: Comprehensive logging with structured reasoning makes agent decisions explainable
-
-## Environment Configuration
-
-**PROJECT_ROOT Environment Variable**
-
-- Ensures correct file paths when Mastra bundles code
-- Set automatically in `package.json` scripts:
-  - `"dev:mastra": "PROJECT_ROOT=$(pwd) mastra dev --dir mastra"`
-  - `"build:mastra": "PROJECT_ROOT=$(pwd) mastra build --dir mastra"`
-- Fallback in server action (`app/actions/canvas/runWorkflow.ts`) ensures it works from Next.js context
-
-**Why Needed**:
-
-- When Mastra bundles and runs code, `process.cwd()` points to `.mastra/output/` instead of project root
-- This previously caused `ENOENT` errors when loading evidence files from the filesystem
-
-**Solution**:
-
-- Evidence content is now bundled in the `@beaconlabs-io/evidence` npm package
-- `lib/evidence.ts` uses package content functions instead of filesystem reads
-- No path resolution issues in any context
 
 ## UI Flow (4 Steps)
 
@@ -549,7 +526,6 @@ Agents receive:
 bun dev:mastra
 ```
 
-- Sets `PROJECT_ROOT` environment variable automatically
 - Starts Mastra development server for testing agents/workflows
 
 **Build Mastra system**:
@@ -588,7 +564,7 @@ bun build:mastra
 
 - `mastra/index.ts` - Mastra framework initialization
 - `mastra/config.ts` - Agent and LLM configuration
-- `lib/evidence.ts` - Evidence loading with PROJECT_ROOT support
+- `lib/evidence.ts` - Evidence loading with MDX compilation
 
 ### Types
 

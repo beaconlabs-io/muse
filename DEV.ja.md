@@ -302,7 +302,6 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 
 - `app/actions/canvas/runWorkflow.ts`: ワークフロー実行のためのサーバーアクションラッパー
   - `runLogicModelWorkflow(intent)`: Mastraワークフローを実行、簡略化された結果（canvasDataのみ）を返す
-  - 正しいパス解決のためにPROJECT_ROOT環境変数を設定
   - CanvasDataSchemaで出力を検証
   - 成功時は`{ success: true, canvasData }`、失敗時は`{ success: false, error }`を返す
 
@@ -354,23 +353,11 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 - **Chain-of-Thought推論**: エビデンス検索は透明な意思決定のために構造化分析を使用
 - **リトライロジック**: 最初の試行でツール検証が失敗した場合、より厳格なプロンプトで自動的に再試行
 - **簡素化されたAPI**: CanvasDataのみを返し、消費者は必要に応じて統計を計算（重複追跡なし）
-- **環境認識**: PROJECT_ROOT処理により、すべてのコンテキスト（dev、build、Next.js）で正しいファイルパスを保証
 - **プロダクション対応ロギング**: モジュールプレフィックスと包括的なデバッグ情報を含む詳細な進捗ログ
 - **スキーマ再利用**: `types/index.ts`から100%の型再利用（CanvasDataSchema、EvidenceMatchSchemaなど）
 - **透明なエビデンス検索**: エビデンス検索は構造ステップ中に見えない形で実行、別のUI読み込み状態なし
 - **より良いエラー回復**: リトライロジックがフォーマットエラーをキャッチ、詳細なロギングがデバッグを支援
 - **可観測性**: 構造化推論を含む包括的なロギングにより、エージェントの決定を説明可能に
-
-**環境設定:**
-
-- `PROJECT_ROOT`環境変数により、Mastraがコードをバンドルする際に正しいファイルパスを保証
-- `package.json`スクリプトで自動的に設定:
-  - `"dev:mastra": "PROJECT_ROOT=$(pwd) mastra dev --dir mastra"`
-  - `"build:mastra": "PROJECT_ROOT=$(pwd) mastra build --dir mastra"`
-- サーバーアクション（`app/actions/canvas/runWorkflow.ts`）のフォールバックにより、Next.jsコンテキストで動作することを保証
-- **必要な理由**: Mastraがコードをバンドルして実行する際、`process.cwd()`はプロジェクトルートではなく`.mastra/output/`を指す
-- **解決策**: `lib/evidence.ts`はパス解決に`process.env.PROJECT_ROOT || process.cwd()`を使用
-- `evidence-repo/evidence/`からエビデンスファイルを読み込む際の`ENOENT`エラーを解決
 
 **UIフロー（4ステップ）:**
 

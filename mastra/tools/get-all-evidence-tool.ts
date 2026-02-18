@@ -1,6 +1,6 @@
+import { getAllEvidenceMeta } from "@beaconlabs-io/evidence/content";
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { getAllEvidenceMeta } from "@/lib/evidence";
 import { EvidenceSummarySchema, type EvidenceSummary } from "@/types";
 
 /**

@@ -1,7 +1,7 @@
+import { getAllEvidenceMeta } from "@beaconlabs-io/evidence/content";
 import type { EvidenceMatch } from "@/types";
 import type { Agent } from "@mastra/core/agent";
 import { EVIDENCE_MATCH_THRESHOLD, MAX_MATCHES_PER_EDGE } from "@/lib/constants";
-import { getAllEvidenceMeta } from "@/lib/evidence";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger({ module: "lib:evidence-search-batch" });
