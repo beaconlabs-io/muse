@@ -17,8 +17,4 @@ export const mastra = new Mastra({
   agents: { logicModelAgent, evidenceSearchAgent },
   workflows: { logicModelWithEvidenceWorkflow },
   // vectors: { libSqlVector },
-  telemetry: {
-    serviceName: "Muse",
-    enabled: false,
-  },
 });

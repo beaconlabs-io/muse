@@ -23,7 +23,7 @@ export async function runLogicModelWorkflow(
     }
 
     const workflow = mastra.getWorkflow("logicModelWithEvidenceWorkflow");
-    const run = await workflow.createRunAsync();
+    const run = await workflow.createRun();
     const result = await run.start({ inputData: { intent } });
 
     if (result.status === "success") {

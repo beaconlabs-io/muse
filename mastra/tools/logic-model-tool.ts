@@ -65,7 +65,7 @@ export const logicModelTool = createTool({
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
   }),
-  execute: async ({ context }) => {
+  execute: async (inputData) => {
     const {
       intervention,
       targetContext,
@@ -76,7 +76,7 @@ export const logicModelTool = createTool({
       outcomesIntermediate,
       impact,
       connections,
-    } = context;
+    } = inputData;
 
     return await generateLogicModel({
       intervention,

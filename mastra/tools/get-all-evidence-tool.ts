@@ -20,7 +20,7 @@ export const getAllEvidenceTool = createTool({
     evidence: z.array(EvidenceSummarySchema),
     totalEvidence: z.number(),
   }),
-  execute: async () => {
+  execute: async (_inputData) => {
     // Load all evidence metadata (no LLM call - pure data retrieval)
     const allEvidenceMeta = await getAllEvidenceMeta();
 

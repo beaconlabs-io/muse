@@ -4,6 +4,7 @@ import { logicModelTool } from "../tools/logic-model-tool";
 const MODEL = process.env.MODEL || "google/gemini-2.5-pro";
 
 export const logicModelAgent = new Agent({
+  id: "logic-model-agent",
   name: "Logic Model Agent",
   instructions: `You are a Theory of Change specialist creating logic models that link interventions to outcomes.
 

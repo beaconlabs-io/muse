@@ -13,6 +13,7 @@ const MODEL = process.env.MODEL || "google/gemini-2.5-pro";
  * to reduce token usage and API calls.
  */
 export const evidenceSearchAgent = new Agent({
+  id: "evidence-search-agent",
   name: "Evidence Search Agent",
   instructions: `You are an evidence matching specialist that validates causal relationships in logic models **in BATCH MODE**.
 
