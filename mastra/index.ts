@@ -1,4 +1,3 @@
-import { resolve } from "node:path";
 import { Mastra } from "@mastra/core/mastra";
 import { Workspace, LocalFilesystem } from "@mastra/core/workspace";
 import { evidenceSearchAgent } from "./agents/evidence-search-agent";
@@ -17,7 +16,7 @@ import { logicModelWithEvidenceWorkflow } from "./workflows/logic-model-with-evi
 
 const workspace = new Workspace({
   filesystem: new LocalFilesystem({
-    basePath: resolve(import.meta.dirname, ".."),
+    basePath: ".",
   }),
   skills: ["/mastra/skills"],
 });
