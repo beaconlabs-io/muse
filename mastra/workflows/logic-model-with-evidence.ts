@@ -2,15 +2,19 @@ import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { evidenceSearchAgent } from "../agents/evidence-search-agent";
 import { logicModelAgent } from "../agents/logic-model-agent";
+import { EXTERNAL_SEARCH_ENABLED, MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL } from "@/lib/constants";
 import { searchEvidenceForAllEdges, type EdgeInput } from "@/lib/evidence-search-batch";
+import { searchExternalPapersForEdge } from "@/lib/external-paper-search";
 import { createLogger } from "@/lib/logger";
 import {
   CanvasDataSchema,
   EvidenceMatchSchema,
+  ExternalPaperSchema,
   type CanvasData,
   type Card,
   type Arrow,
   type EvidenceMatch,
+  type ExternalPaper,
 } from "@/types";
 
 const logger = createLogger({ module: "workflow:logic-model-with-evidence" });
@@ -20,7 +24,8 @@ const logger = createLogger({ module: "workflow:logic-model-with-evidence" });
  * This workflow generates a complete logic model with evidence validation:
  * 1. Generate logic model structure using AI agent
  * 2. Batch evidence search for all arrows (single LLM call)
- * 3. Enrich canvas data with evidence metadata
+ * 2.5. External academic paper search for under-matched edges (paper-search-mcp)
+ * 3. Enrich canvas data with evidence metadata + external papers
  */
 
 // Step 1: Generate logic model structure
@@ -232,29 +237,104 @@ const searchEvidenceStep = createStep({
   },
 });
 
-// Step 3: Enrich canvas data with evidence
-const enrichCanvasStep = createStep({
-  id: "enrich-canvas",
+// Step 2.5: Search external academic papers for under-matched edges
+const searchExternalPapersStep = createStep({
+  id: "search-external-papers",
   inputSchema: z.object({
     canvasData: CanvasDataSchema,
     evidenceByArrow: z.record(z.string(), z.array(EvidenceMatchSchema)),
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
+    evidenceByArrow: z.record(z.string(), z.array(EvidenceMatchSchema)),
+    externalPapersByArrow: z.record(z.string(), z.array(ExternalPaperSchema)),
   }),
   execute: async ({ inputData }) => {
     const { canvasData, evidenceByArrow } = inputData;
 
-    logger.info("Step 3: Enriching canvas data with evidence");
+    if (!EXTERNAL_SEARCH_ENABLED) {
+      logger.debug("External search disabled, skipping step 2.5");
+      return { canvasData, evidenceByArrow, externalPapersByArrow: {} };
+    }
 
-    // Create enriched arrows with evidence metadata
+    logger.info("Step 2.5: Searching external academic papers");
+
+    const cardMap = new Map<string, Card>();
+    canvasData.cards.forEach((card: Card) => {
+      cardMap.set(card.id, card);
+    });
+
+    const externalPapersByArrow: Record<string, ExternalPaper[]> = {};
+
+    for (const arrow of canvasData.arrows) {
+      const internalMatches = evidenceByArrow[arrow.id] || [];
+
+      if (internalMatches.length >= MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL) {
+        externalPapersByArrow[arrow.id] = [];
+        continue;
+      }
+
+      const fromCard = cardMap.get(arrow.fromCardId);
+      const toCard = cardMap.get(arrow.toCardId);
+      if (!fromCard || !toCard) {
+        externalPapersByArrow[arrow.id] = [];
+        continue;
+      }
+
+      const fromContent = fromCard.description
+        ? `${fromCard.title}. ${fromCard.description}`
+        : fromCard.title;
+      const toContent = toCard.description
+        ? `${toCard.title}. ${toCard.description}`
+        : toCard.title;
+
+      try {
+        externalPapersByArrow[arrow.id] = await searchExternalPapersForEdge(fromContent, toContent);
+      } catch (e) {
+        logger.warn({ arrowId: arrow.id, error: e }, "External search failed for edge");
+        externalPapersByArrow[arrow.id] = [];
+      }
+    }
+
+    const totalExternalPapers = Object.values(externalPapersByArrow).reduce(
+      (sum, papers) => sum + papers.length,
+      0,
+    );
+    logger.info(
+      { totalExternalPapers, arrowsSearched: canvasData.arrows.length },
+      "External paper search completed",
+    );
+
+    return { canvasData, evidenceByArrow, externalPapersByArrow };
+  },
+});
+
+// Step 3: Enrich canvas data with evidence and external papers
+const enrichCanvasStep = createStep({
+  id: "enrich-canvas",
+  inputSchema: z.object({
+    canvasData: CanvasDataSchema,
+    evidenceByArrow: z.record(z.string(), z.array(EvidenceMatchSchema)),
+    externalPapersByArrow: z.record(z.string(), z.array(ExternalPaperSchema)),
+  }),
+  outputSchema: z.object({
+    canvasData: CanvasDataSchema,
+  }),
+  execute: async ({ inputData }) => {
+    const { canvasData, evidenceByArrow, externalPapersByArrow } = inputData;
+
+    logger.info("Step 3: Enriching canvas data with evidence and external papers");
+
+    // Create enriched arrows with evidence metadata and external papers
     const enrichedArrows: Arrow[] = canvasData.arrows.map((arrow: Arrow) => {
       const evidenceMatches = evidenceByArrow[arrow.id] || [];
+      const externalPapers = externalPapersByArrow[arrow.id] || [];
 
       return {
         ...arrow,
         evidenceIds: evidenceMatches.map((match: EvidenceMatch) => match.evidenceId),
         evidenceMetadata: evidenceMatches,
+        externalPapers,
       };
     });
 
@@ -284,5 +364,6 @@ export const logicModelWithEvidenceWorkflow = createWorkflow({
 })
   .then(generateLogicModelStep)
   .then(searchEvidenceStep)
+  .then(searchExternalPapersStep)
   .then(enrichCanvasStep)
   .commit();

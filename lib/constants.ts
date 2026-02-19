@@ -73,3 +73,19 @@ export const STRENGTH_LABELS: Record<string, string> = Object.fromEntries(
 
 /** Type for strength level values */
 export type StrengthLevelValue = (typeof STRENGTH_LEVELS)[number]["value"];
+
+// =============================================================================
+// EXTERNAL PAPER SEARCH CONFIGURATION (paper-search-mcp)
+// =============================================================================
+
+/** Whether external academic search is enabled (development only) */
+export const EXTERNAL_SEARCH_ENABLED = process.env.EXTERNAL_SEARCH_ENABLED === "true";
+
+/** Maximum external papers to return per edge */
+export const MAX_EXTERNAL_PAPERS_PER_EDGE = 3;
+
+/** Cache TTL for external search results (24 hours) */
+export const EXTERNAL_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** Minimum internal evidence matches before skipping external search for an edge */
+export const MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL = 1;

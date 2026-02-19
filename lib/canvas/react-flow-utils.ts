@@ -42,20 +42,23 @@ export function nodesToCards(nodes: Node<CardNodeData>[]): Card[] {
 export function arrowsToEdges(arrows: Arrow[]): Edge[] {
   return arrows.map((arrow) => {
     const hasEvidence = arrow.evidenceIds && arrow.evidenceIds.length > 0;
+    const hasExternalPapers = arrow.externalPapers && arrow.externalPapers.length > 0;
+    const hasAnyContent = hasEvidence || hasExternalPapers;
 
     return {
       id: arrow.id,
       source: arrow.fromCardId,
       target: arrow.toCardId,
-      type: hasEvidence ? "evidence" : "default",
+      type: hasAnyContent ? "evidence" : "default",
       animated: false,
       style: {
-        stroke: hasEvidence ? "#10b981" : "#6b7280", // Green if evidence, gray otherwise
-        strokeWidth: hasEvidence ? 3 : 2, // Thicker if evidence
+        stroke: hasAnyContent ? "#10b981" : "#6b7280",
+        strokeWidth: hasAnyContent ? 3 : 2,
       },
       data: {
         evidenceIds: arrow.evidenceIds,
         evidenceMetadata: arrow.evidenceMetadata,
+        externalPapers: arrow.externalPapers,
       },
     };
   });
@@ -78,6 +81,9 @@ export function edgesToArrows(edges: Edge[]): Arrow[] {
     }
     if (edge.data?.evidenceMetadata && Array.isArray(edge.data.evidenceMetadata)) {
       arrow.evidenceMetadata = edge.data.evidenceMetadata as any[];
+    }
+    if (edge.data?.externalPapers && Array.isArray(edge.data.externalPapers)) {
+      arrow.externalPapers = edge.data.externalPapers as any[];
     }
 
     return arrow;

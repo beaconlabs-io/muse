@@ -224,6 +224,27 @@ export const EvidenceSummarySchema = z.object({
 export type EvidenceSummary = z.infer<typeof EvidenceSummarySchema>;
 
 // =============================================================================
+// EXTERNAL PAPER SCHEMAS (for paper-search-mcp integration)
+// =============================================================================
+
+/**
+ * External academic paper from paper-search-mcp (PubMed, Semantic Scholar, etc.)
+ * Displayed as reference material only - no LLM scoring applied.
+ */
+export const ExternalPaperSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  authors: z.array(z.string()).optional(),
+  year: z.number().optional(),
+  doi: z.string().optional(),
+  url: z.string().optional(),
+  abstract: z.string().optional(),
+  source: z.string(),
+});
+
+export type ExternalPaper = z.infer<typeof ExternalPaperSchema>;
+
+// =============================================================================
 // CANVAS / LOGIC MODEL SCHEMAS
 // =============================================================================
 
@@ -245,6 +266,7 @@ export const ArrowSchema = z.object({
   toCardId: z.string(),
   evidenceIds: z.array(z.string()).optional(),
   evidenceMetadata: z.array(EvidenceMatchSchema).optional(),
+  externalPapers: z.array(ExternalPaperSchema).optional(),
 });
 
 export type Arrow = z.infer<typeof ArrowSchema>;
