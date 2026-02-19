@@ -52,9 +52,10 @@ export const logicModelTool = createTool({
       .array(ConnectionInputSchema)
       .optional()
       .describe(
-        "Array of explicit connections between cards. Only specify connections where there is a clear, " +
-          "direct causal relationship. Avoid creating a full mesh - most logic models should have 8-15 " +
-          "total connections. If omitted, a simple sequential 1:1 connection pattern will be used as fallback.",
+        "Array of causal connections between cards. Each connection should represent " +
+          "a defensible causal contribution with an articulated mechanism. Include a " +
+          "reasoning field explaining why the source contributes to the target. " +
+          "If omitted, a simple sequential 1:1 connection pattern will be used as fallback.",
       ),
   }),
   outputSchema: z.object({

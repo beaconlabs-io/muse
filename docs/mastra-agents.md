@@ -118,7 +118,7 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 - **`mastra/workflows/`** - Multi-step workflows that coordinate agent execution
 - **`mastra/agents/`** - LLM-powered agents (e.g., Logic Model Agent)
 - **`mastra/tools/`** - Custom tools agents can use (e.g., Evidence Search Tool)
-- **`mastra/skills/`** - Agent Skills ([spec](https://agentskills.io/specification)) providing structured instructions loaded into agent prompts
+- **`mastra/skills/`** - Agent Skills ([spec](https://agentskills.io/specification)) providing structured instructions dynamically activated by agents via Workspace Skills API
 
 ## Logic Model Generation Workflow
 
@@ -510,23 +510,32 @@ Each evidence item has dedicated page at `/evidence/{id}`:
 3. **Unambiguous outputs**: Structured JSON, not prose
 4. **Minimal functional overlap**: Each tool has clear, distinct purpose
 
-### Agent Skills
+### Agent Skills (Workspace Skills API)
 
 **Location**: `mastra/skills/`
 
-Agents load structured instructions from SKILL.md files via the `loadSkillInstructions()` helper (`mastra/skills/load-skill.ts`). Skills follow the [Agent Skills specification](https://agentskills.io/specification) with YAML frontmatter (`name`, `description`, `metadata`) and Markdown body.
+Skills follow the [Agent Skills specification](https://agentskills.io/specification) with YAML frontmatter (`name`, `description`, `version`, `tags`) and Markdown body. Skills are managed through Mastra's Workspace Skills API:
 
-- **`logic-model-generation/SKILL.md`** - 5-stage workflow, 4-test connection evaluation, format validation, common mistake prevention
-- Skills are registered in `mastra/index.ts` via `Workspace({ skills: ["/mastra/skills"] })`
+1. **Workspace Configuration** (`mastra/index.ts`): `Workspace({ skills: ["/mastra/skills"] })` registers skill directories
+2. **SkillsProcessor**: Mastra automatically creates a processor that injects available skills into agent system messages
+3. **Dynamic Activation**: Agents activate skills during conversation via the `skill-activate` tool provided by SkillsProcessor
+4. **Reference Access**: Agents read supporting docs via `skill-read-reference` tool from `references/` directory
+
+**Skills**:
+
+- **`logic-model-generation/SKILL.md`** - 5-stage workflow, 4-test connection evaluation, format validation
+  - `references/format-requirements.md` - Detailed format rules, connection patterns, field limits
+  - `references/common-mistakes.md` - Top 5 error patterns and fixes
 
 ### Agent Instructions
 
 Agents receive:
 
-- **Skill instructions**: Loaded from SKILL.md files (e.g., `loadSkillInstructions("logic-model-generation")`)
+- **Base instructions**: Role description and skill activation guidance (in agent constructor)
+- **Skill instructions**: Dynamically injected when agent activates a skill via `skill-activate` tool
+- **Skill references**: On-demand access to detailed docs via `skill-read-reference` tool
 - **Available tools**: Tools they can invoke
 - **Output format**: Expected structure of response
-- **Examples**: Few-shot examples for guidance (diverse, canonical cases)
 
 ## Development Commands
 
@@ -572,8 +581,9 @@ bun build:mastra
 
 ### Skills
 
-- `mastra/skills/load-skill.ts` - Skill instruction loader (strips YAML frontmatter)
 - `mastra/skills/logic-model-generation/SKILL.md` - Logic model generation skill (Agent Skills spec)
+- `mastra/skills/logic-model-generation/references/format-requirements.md` - Format rules and connection patterns
+- `mastra/skills/logic-model-generation/references/common-mistakes.md` - Top 5 error patterns
 
 ### Configuration
 
