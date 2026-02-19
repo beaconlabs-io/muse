@@ -118,6 +118,7 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 - **`mastra/workflows/`** - Multi-step workflows that coordinate agent execution
 - **`mastra/agents/`** - LLM-powered agents (e.g., Logic Model Agent)
 - **`mastra/tools/`** - Custom tools agents can use (e.g., Evidence Search Tool)
+- **`mastra/skills/`** - Agent Skills ([spec](https://agentskills.io/specification)) providing structured instructions loaded into agent prompts
 
 ## Logic Model Generation Workflow
 
@@ -509,11 +510,20 @@ Each evidence item has dedicated page at `/evidence/{id}`:
 3. **Unambiguous outputs**: Structured JSON, not prose
 4. **Minimal functional overlap**: Each tool has clear, distinct purpose
 
+### Agent Skills
+
+**Location**: `mastra/skills/`
+
+Agents load structured instructions from SKILL.md files via the `loadSkillInstructions()` helper (`mastra/skills/load-skill.ts`). Skills follow the [Agent Skills specification](https://agentskills.io/specification) with YAML frontmatter (`name`, `description`, `metadata`) and Markdown body.
+
+- **`logic-model-generation/SKILL.md`** - 5-stage workflow, 4-test connection evaluation, format validation, common mistake prevention
+- Skills are registered in `mastra/index.ts` via `Workspace({ skills: ["/mastra/skills"] })`
+
 ### Agent Instructions
 
 Agents receive:
 
-- **Task description**: What to accomplish
+- **Skill instructions**: Loaded from SKILL.md files (e.g., `loadSkillInstructions("logic-model-generation")`)
 - **Available tools**: Tools they can invoke
 - **Output format**: Expected structure of response
 - **Examples**: Few-shot examples for guidance (diverse, canonical cases)
@@ -560,9 +570,14 @@ bun build:mastra
 - `components/canvas/GenerateLogicModelDialog.tsx` - UI with 4-step process
 - `app/actions/canvas/runWorkflow.ts` - Server action wrapper
 
+### Skills
+
+- `mastra/skills/load-skill.ts` - Skill instruction loader (strips YAML frontmatter)
+- `mastra/skills/logic-model-generation/SKILL.md` - Logic model generation skill (Agent Skills spec)
+
 ### Configuration
 
-- `mastra/index.ts` - Mastra framework initialization
+- `mastra/index.ts` - Mastra framework initialization (includes workspace with skills)
 - `mastra/config.ts` - Agent and LLM configuration
 - `lib/evidence.ts` - Evidence loading with MDX compilation
 
