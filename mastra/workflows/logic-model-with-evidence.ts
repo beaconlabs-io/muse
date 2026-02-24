@@ -37,7 +37,7 @@ const generateLogicModelStep = createStep({
 
     logger.info({ intent }, "Step 1: Generating logic model structure");
 
-    // Helper function with retry logic for tool validation errors
+    // Generate logic model structure from user intent
     const generateWithIntent = async () => {
       const userContent = `Create a logic model for: ${intent}`;
 
@@ -47,13 +47,13 @@ const generateLogicModelStep = createStep({
         });
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        logger.warn("Tool validation failed, retrying with stricter prompt", errorMessage);
+        logger.warn({ error: errorMessage }, "Logic model generation failed");
 
         throw error;
       }
     };
 
-    // Use the logic model agent to generate the structure (with retry)
+    // Use the logic model agent to generate the structure
     const result = await generateWithIntent();
 
     // Debug logging

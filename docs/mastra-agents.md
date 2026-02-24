@@ -235,7 +235,7 @@ Theory of Change specialist with structured 5-stage workflow:
 #### Stage 5: Call Tool
 
 - Generates canvas with validated structure
-- Tool must be called exactly once (maxSteps: 1)
+- Tool must be called (maxSteps: 5, allowing skill activation steps)
 
 ### Common Mistakes Prevention
 
@@ -333,7 +333,7 @@ Production workflow with 3 steps:
 
 **Step 1: Generate Logic Model Structure**
 
-- Includes retry logic for tool validation errors (automatically retries with stricter prompt if metrics format fails)
+- Validates agent called logicModelTool and returned valid canvas data with detailed logging
 - Validates agent called logicModelTool and returned valid canvas data
 - Extracts canvasData from tool results with detailed logging
 
@@ -391,12 +391,11 @@ Tool for generating logic model structure:
 - **Structured Agent Instructions**: 5-stage workflow with validation checklists and metacognitive questions for quality assurance
 - **Connection Quality Framework**: 4-Test validation (Directness, Expert, Timeframe, Mechanism) ensures only strong causal links
 - **Chain-of-Thought Reasoning**: Evidence search uses structured analysis for transparent decision-making
-- **Retry Logic**: Automatic retry with stricter prompt if tool validation fails on first attempt
 - **Simplified API**: Returns just CanvasData, consumers calculate stats as needed (no duplicate tracking)
 - **Production-ready Logging**: Detailed progress logs with module prefix and comprehensive debug info
 - **Schema Reuse**: 100% reuse of types from `types/index.ts` (CanvasDataSchema, EvidenceMatchSchema, etc.)
 - **Transparent Evidence Search**: Evidence search happens invisibly during structure step, no separate UI loading state
-- **Better Error Recovery**: Retry logic catches format errors, detailed logging aids debugging
+- **Better Error Recovery**: Explicit validation of tool call results with detailed logging aids debugging
 - **Observability**: Comprehensive logging with structured reasoning makes agent decisions explainable
 
 ## UI Flow (4 Steps)
@@ -523,8 +522,10 @@ Skills follow the [Agent Skills specification](https://agentskills.io/specificat
 
 **Skills**:
 
-- **`logic-model-generation/SKILL.md`** - 5-stage workflow, 4-test connection evaluation, format validation
-  - `references/format-requirements.md` - Detailed format rules, connection patterns, field limits
+- **`logic-model-generation/SKILL.md`** - Causal reasoning methodology, Sphere of Control/Influence/Interest
+  - `references/causal-reasoning.md` - Connection evaluation, mechanism test, failure patterns
+  - `references/stage-definitions.md` - Stage definitions, boundary tests, examples
+  - `references/format-requirements.md` - Format rules, connection patterns, field limits
   - `references/common-mistakes.md` - Top 5 error patterns and fixes
 
 ### Agent Instructions
@@ -582,6 +583,8 @@ bun build:mastra
 ### Skills
 
 - `mastra/skills/logic-model-generation/SKILL.md` - Logic model generation skill (Agent Skills spec)
+- `mastra/skills/logic-model-generation/references/causal-reasoning.md` - Connection evaluation and failure patterns
+- `mastra/skills/logic-model-generation/references/stage-definitions.md` - Stage definitions and boundary tests
 - `mastra/skills/logic-model-generation/references/format-requirements.md` - Format rules and connection patterns
 - `mastra/skills/logic-model-generation/references/common-mistakes.md` - Top 5 error patterns
 
