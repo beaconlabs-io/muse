@@ -109,6 +109,10 @@ Review the complete model:
 
 ### Step 5: Generate with logicModelTool
 
+Before calling the tool, read `references/format-requirements.md` to ensure all fields
+match the exact format the tool expects. Read `references/common-mistakes.md` to avoid
+the most frequent validation errors.
+
 Call logicModelTool with all generated data.
 
 **Provide a reasoning field for every connection.** Use the format:

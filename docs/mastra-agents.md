@@ -334,7 +334,6 @@ Production workflow with 3 steps:
 **Step 1: Generate Logic Model Structure**
 
 - Validates agent called logicModelTool and returned valid canvas data with detailed logging
-- Validates agent called logicModelTool and returned valid canvas data
 - Extracts canvasData from tool results with detailed logging
 
 **Step 2: Batch Evidence Search**
