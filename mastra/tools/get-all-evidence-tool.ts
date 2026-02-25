@@ -1,6 +1,6 @@
+import { getAllEvidenceMeta } from "@beaconlabs-io/evidence/content";
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { getAllEvidenceMeta } from "@/lib/evidence";
 import { EvidenceSummarySchema, type EvidenceSummary } from "@/types";
 
 /**
@@ -20,7 +20,7 @@ export const getAllEvidenceTool = createTool({
     evidence: z.array(EvidenceSummarySchema),
     totalEvidence: z.number(),
   }),
-  execute: async () => {
+  execute: async (_inputData) => {
     // Load all evidence metadata (no LLM call - pure data retrieval)
     const allEvidenceMeta = await getAllEvidenceMeta();
 

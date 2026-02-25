@@ -10,7 +10,6 @@ export type GetAllHypercertsParams = {
   offset: number;
   orderBy?: ClaimsOrderBy;
   chainId?: number;
-  burned?: boolean;
 };
 
 export type ClaimsOrderBy =
@@ -23,12 +22,12 @@ export type ClaimsFilter = "all" | "evaluated";
 const query = graphql(
   `
     query AllHypercerts(
-      $where: HypercertWhereInput
-      $sortBy: HypercertSortOptions
+      $where: HypercertsWhereArgs
+      $sort: HypercertFetchInput
       $first: Int
       $offset: Int
     ) {
-      hypercerts(where: $where, first: $first, offset: $offset, sortBy: $sortBy) {
+      hypercerts(where: $where, sort: $sort, first: $first, offset: $offset) {
         count
         data {
           ...HypercertListFragment
@@ -40,15 +39,9 @@ const query = graphql(
 );
 type VariableTypes = VariablesOf<typeof query>;
 
-function createFilter({
-  chainId,
-  burned,
-}: {
-  chainId?: number;
-  burned?: boolean;
-}): VariableTypes["where"] {
+function createFilter({ chainId }: { chainId?: number }): VariableTypes["where"] {
   const where: VariableTypes["where"] = {};
-  where.metadata = { work_scope: { arrayOverlaps: ["Logic Model", "Logic Model Implementation"] } };
+  where.metadata = { work_scope: { overlaps: ["Logic Model", "Logic Model Implementation"] } };
 
   if (chainId) {
     where.contract = {
@@ -57,30 +50,33 @@ function createFilter({
       },
     };
   }
-  where.burned = {
-    eq: burned,
-  };
 
   return where;
 }
-function createOrderBy({ orderBy }: { orderBy?: ClaimsOrderBy }): VariableTypes["sortBy"] {
+function createSort({ orderBy }: { orderBy?: ClaimsOrderBy }): VariableTypes["sort"] {
   if (orderBy) {
     const directionDivider = orderBy.lastIndexOf("_");
     const orderByAttribute = orderBy.substring(0, directionDivider);
     const orderByDirection = orderBy.substring(directionDivider + 1);
     if (orderByAttribute === "created") {
       return {
-        creation_block_timestamp: orderByDirection === "asc" ? "ascending" : "descending",
+        by: {
+          creation_block_timestamp: orderByDirection === "asc" ? "ascending" : "descending",
+        },
       };
     }
     if (orderByAttribute === "attestations_count") {
       return {
-        attestations_count: orderByDirection === "asc" ? "ascending" : "descending",
+        by: {
+          attestations_count: orderByDirection === "asc" ? "ascending" : "descending",
+        },
       };
     }
   }
   return {
-    creation_block_timestamp: "descending",
+    by: {
+      creation_block_timestamp: "descending",
+    },
   };
 }
 
@@ -89,13 +85,12 @@ export async function getAllHypercerts({
   offset,
   orderBy,
   chainId,
-  burned,
 }: GetAllHypercertsParams) {
   const res = await request(graphqlEndpoint, query, {
     first,
     offset,
-    sort: createOrderBy({ orderBy }),
-    where: createFilter({ chainId, burned }),
+    sort: createSort({ orderBy }),
+    where: createFilter({ chainId }),
   });
 
   if (!res.hypercerts?.data) {

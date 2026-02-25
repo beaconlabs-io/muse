@@ -13,8 +13,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Mastra Development
 
-- `bun dev:mastra` - Start Mastra development server for agents/workflows (sets PROJECT_ROOT automatically)
-- `bun build:mastra` - Build Mastra agent system (sets PROJECT_ROOT automatically)
+- `bun dev:mastra` - Start Mastra development server for agents/workflows
+- `bun build:mastra` - Build Mastra agent system
 
 **Important**: The project uses husky for git hooks with lint-staged. Code is automatically linted and formatted on commit.
 
@@ -42,7 +42,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
 - `hooks/` - Custom React hooks including blockchain integration
 - `lib/` - Shared utilities and configuration
-- `mastra/` - AI agent system (agents, workflows, tools)
+- `mastra/` - AI agent system (agents, workflows, tools, skills)
 - `types/` - TypeScript definitions for Evidence, Attestation, graph structures
 - `utils/` - Configuration and helper functions
 - `docs/` - Detailed technical documentation (see Additional Documentation section)
@@ -67,6 +67,7 @@ Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
 
 ## Development Notes
 
+- `AGENTS.md` is a symlink to `CLAUDE.md` — edit `CLAUDE.md` only to keep both in sync
 - TypeScript with strict mode enabled
 - Path alias `@/*` maps to project root
 - ESLint ignores `components/ui/**` (shadcn/ui auto-generated components)
