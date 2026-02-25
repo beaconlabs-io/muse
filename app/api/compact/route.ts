@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     // 5. Run Logic Model workflow with timeout
     const workflow = mastra.getWorkflow("logicModelWithEvidenceWorkflow");
-    const run = await workflow.createRunAsync();
+    const run = await workflow.createRun();
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {

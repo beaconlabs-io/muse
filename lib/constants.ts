@@ -30,7 +30,7 @@ export const WORKFLOW_TIMEOUT_MS = 120_000;
 export const MAX_CHAT_HISTORY_LENGTH = 500;
 
 /** Maximum number of agent reasoning steps for evidence search */
-export const EVIDENCE_SEARCH_MAX_STEPS = 2;
+export const EVIDENCE_SEARCH_MAX_STEPS = 5;
 
 /**
  * Evidence Strength Levels (Maryland Scientific Methods Scale)

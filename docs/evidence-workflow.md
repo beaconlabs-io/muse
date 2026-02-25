@@ -247,12 +247,11 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 
 ## File Locations
 
-- Evidence files: `evidence-repo/evidence/*.mdx`
-- Deployment metadata: `deployments/*.json`
-- Format documentation: `evidence-repo/README.md`
-- Validation workflow: `evidence-repo/.github/workflows/evidence-validation.yml` (in evidence repository)
-- Attestation workflow: `evidence-repo/.github/workflows/evidence-attestation.yml` (in evidence repository)
-- Validation script: `evidence-repo/.github/scripts/validate-evidence.ts` (in evidence repository)
+- Evidence content: `@beaconlabs-io/evidence` npm package
+- Format documentation: [evidence repository README](https://github.com/beaconlabs-io/evidence/blob/main/README.md)
+- Validation workflow: `.github/workflows/evidence-validation.yml` (in evidence repository)
+- Attestation workflow: `.github/workflows/evidence-attestation.yml` (in evidence repository)
+- Validation script: `.github/scripts/validate-evidence.ts` (in evidence repository)
 - Type definitions: `types/index.ts` (Zod schemas)
 - Evidence parsing: `lib/evidence.ts`
-- Evidence search: `lib/evidence-search-mastra.ts`
+- Evidence search: `lib/evidence-search-batch.ts`

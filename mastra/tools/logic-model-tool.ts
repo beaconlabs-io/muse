@@ -13,12 +13,7 @@ const logger = createLogger({ module: "tool:logic-model" });
 
 export const logicModelTool = createTool({
   id: "generate-logic-model",
-  description:
-    "Generate a logic model (Theory of Change) structure. " +
-    "CONSTRAINTS: Target 8-10 connections (recommended for readability), max 25 total, max 3 outgoing per card. " +
-    "Each card needs title (max 100 chars), optional description (max 200 chars), and 1 metric object. " +
-    "Metrics must be objects with {name, measurementMethod, frequency} - NOT strings. " +
-    "Connections should target 8-10 total with direct causal relationships only.",
+  description: "Generate a logic model (Theory of Change) structure.",
   inputSchema: z.object({
     intervention: z.string().describe("The intervention or program being modeled"),
     targetContext: z
@@ -57,15 +52,16 @@ export const logicModelTool = createTool({
       .array(ConnectionInputSchema)
       .optional()
       .describe(
-        "Array of explicit connections between cards. Only specify connections where there is a clear, " +
-          "direct causal relationship. Avoid creating a full mesh - most logic models should have 8-15 " +
-          "total connections. If omitted, a simple sequential 1:1 connection pattern will be used as fallback.",
+        "Array of causal connections between cards. Each connection should represent " +
+          "a defensible causal contribution with an articulated mechanism. Include a " +
+          "reasoning field explaining why the source contributes to the target. " +
+          "If omitted, a simple sequential 1:1 connection pattern will be used as fallback.",
       ),
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
   }),
-  execute: async ({ context }) => {
+  execute: async (inputData) => {
     const {
       intervention,
       targetContext,
@@ -76,7 +72,7 @@ export const logicModelTool = createTool({
       outcomesIntermediate,
       impact,
       connections,
-    } = context;
+    } = inputData;
 
     return await generateLogicModel({
       intervention,
