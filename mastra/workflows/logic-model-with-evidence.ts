@@ -15,8 +15,8 @@ import {
 
 /** Expected structure of the logic model tool result from Mastra */
 interface LogicModelToolResult {
-  toolName: string;
   payload: {
+    toolName: string;
     result: {
       canvasData: CanvasData;
     };
@@ -53,7 +53,7 @@ const generateLogicModelStep = createStep({
 
       try {
         return await logicModelAgent.generate([{ role: "user", content: userContent }], {
-          maxSteps: 5,
+          maxSteps: 12,
         });
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -94,19 +94,19 @@ const generateLogicModelStep = createStep({
       "Extracting canvas data from tool results",
     );
 
+    const toolResults = result.toolResults as LogicModelToolResult[];
+
     logger.debug(
       {
-        allToolNames: result.toolResults.map((tr: any) => tr.payload?.toolName),
+        allToolNames: toolResults.map((tr) => tr.payload?.toolName),
       },
       "All tool results received",
     );
 
-    const logicModelResult = result.toolResults.find(
-      (tr: any) => tr.payload?.toolName === "logicModelTool",
-    ) as any;
+    const logicModelResult = toolResults.find((tr) => tr.payload?.toolName === "logicModelTool");
 
     if (!logicModelResult) {
-      const toolNames = result.toolResults.map((tr: any) => tr.payload?.toolName);
+      const toolNames = toolResults.map((tr) => tr.payload?.toolName);
       logger.error(
         { toolNames, responseTextPreview: result.text?.slice(0, 500) },
         "Agent did not call logicModelTool",

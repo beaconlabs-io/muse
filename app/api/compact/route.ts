@@ -56,12 +56,7 @@ export async function POST(request: NextRequest) {
     // 3. Extract intent from chat history
     const intent = extractIntentFromHistory(chatHistory);
 
-    // 4. Ensure PROJECT_ROOT is set for Mastra
-    if (!process.env.PROJECT_ROOT) {
-      process.env.PROJECT_ROOT = process.cwd();
-    }
-
-    // 5. Run Logic Model workflow with timeout
+    // 4. Run Logic Model workflow with timeout
     const workflow = mastra.getWorkflow("logicModelWithEvidenceWorkflow");
     const run = await workflow.createRun();
 
