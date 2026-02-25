@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { getHypercertsClient } from "@/configs/hypercerts";
+import { BASE_URL } from "@/lib/constants";
 import { createLogger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { CanvasData } from "@/types";
@@ -233,7 +234,7 @@ export default function MintHypercertPage() {
       } = formatHypercertData({
         name: data.title,
         description: data.description,
-        external_url: `https://muse.beaconlabs.io/canvas/${ipfsResult.hash}`,
+        external_url: `${BASE_URL}/canvas/${ipfsResult.hash}`,
         image: imageToUse,
         version: "1.0.0",
         workScope: ["Logic Model"],
@@ -570,7 +571,8 @@ export default function MintHypercertPage() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={!isConnected || !form.formState.isValid}
+                  // disabled={!isConnected || !form.formState.isValid}
+                  disabled={true}
                   size="lg"
                 >
                   Mint Hypercert
