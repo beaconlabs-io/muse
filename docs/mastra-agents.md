@@ -118,6 +118,7 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 - **`mastra/workflows/`** - Multi-step workflows that coordinate agent execution
 - **`mastra/agents/`** - LLM-powered agents (e.g., Logic Model Agent)
 - **`mastra/tools/`** - Custom tools agents can use (e.g., Evidence Search Tool)
+- **`mastra/skills/`** - Agent Skills ([spec](https://agentskills.io/specification)) providing structured instructions dynamically activated by agents via Workspace Skills API
 
 ## Logic Model Generation Workflow
 
@@ -234,7 +235,7 @@ Theory of Change specialist with structured 5-stage workflow:
 #### Stage 5: Call Tool
 
 - Generates canvas with validated structure
-- Tool must be called exactly once (maxSteps: 1)
+- Tool must be called (maxSteps: 5, allowing skill activation steps)
 
 ### Common Mistakes Prevention
 
@@ -332,8 +333,7 @@ Production workflow with 3 steps:
 
 **Step 1: Generate Logic Model Structure**
 
-- Includes retry logic for tool validation errors (automatically retries with stricter prompt if metrics format fails)
-- Validates agent called logicModelTool and returned valid canvas data
+- Validates agent called logicModelTool and returned valid canvas data with detailed logging
 - Extracts canvasData from tool results with detailed logging
 
 **Step 2: Batch Evidence Search**
@@ -390,12 +390,11 @@ Tool for generating logic model structure:
 - **Structured Agent Instructions**: 5-stage workflow with validation checklists and metacognitive questions for quality assurance
 - **Connection Quality Framework**: 4-Test validation (Directness, Expert, Timeframe, Mechanism) ensures only strong causal links
 - **Chain-of-Thought Reasoning**: Evidence search uses structured analysis for transparent decision-making
-- **Retry Logic**: Automatic retry with stricter prompt if tool validation fails on first attempt
 - **Simplified API**: Returns just CanvasData, consumers calculate stats as needed (no duplicate tracking)
 - **Production-ready Logging**: Detailed progress logs with module prefix and comprehensive debug info
 - **Schema Reuse**: 100% reuse of types from `types/index.ts` (CanvasDataSchema, EvidenceMatchSchema, etc.)
 - **Transparent Evidence Search**: Evidence search happens invisibly during structure step, no separate UI loading state
-- **Better Error Recovery**: Retry logic catches format errors, detailed logging aids debugging
+- **Better Error Recovery**: Explicit validation of tool call results with detailed logging aids debugging
 - **Observability**: Comprehensive logging with structured reasoning makes agent decisions explainable
 
 ## UI Flow (4 Steps)
@@ -509,14 +508,34 @@ Each evidence item has dedicated page at `/evidence/{id}`:
 3. **Unambiguous outputs**: Structured JSON, not prose
 4. **Minimal functional overlap**: Each tool has clear, distinct purpose
 
+### Agent Skills (Workspace Skills API)
+
+**Location**: `mastra/skills/`
+
+Skills follow the [Agent Skills specification](https://agentskills.io/specification) with YAML frontmatter (`name`, `description`, `version`, `tags`) and Markdown body. Skills are managed through Mastra's Workspace Skills API:
+
+1. **Workspace Configuration** (`mastra/index.ts`): `Workspace({ skills: ["/mastra/skills"] })` registers skill directories
+2. **SkillsProcessor**: Mastra automatically creates a processor that injects available skills into agent system messages
+3. **Dynamic Activation**: Agents activate skills during conversation via the `skill-activate` tool provided by SkillsProcessor
+4. **Reference Access**: Agents read supporting docs via `skill-read-reference` tool from `references/` directory
+
+**Skills**:
+
+- **`logic-model-generation/SKILL.md`** - Causal reasoning methodology, Sphere of Control/Influence/Interest
+  - `references/causal-reasoning.md` - Connection evaluation, mechanism test, failure patterns
+  - `references/stage-definitions.md` - Stage definitions, boundary tests, examples
+  - `references/format-requirements.md` - Format rules, connection patterns, field limits
+  - `references/common-mistakes.md` - Top 5 error patterns and fixes
+
 ### Agent Instructions
 
 Agents receive:
 
-- **Task description**: What to accomplish
+- **Base instructions**: Role description and skill activation guidance (in agent constructor)
+- **Skill instructions**: Dynamically injected when agent activates a skill via `skill-activate` tool
+- **Skill references**: On-demand access to detailed docs via `skill-read-reference` tool
 - **Available tools**: Tools they can invoke
 - **Output format**: Expected structure of response
-- **Examples**: Few-shot examples for guidance (diverse, canonical cases)
 
 ## Development Commands
 
@@ -560,9 +579,17 @@ bun build:mastra
 - `components/canvas/GenerateLogicModelDialog.tsx` - UI with 4-step process
 - `app/actions/canvas/runWorkflow.ts` - Server action wrapper
 
+### Skills
+
+- `mastra/skills/logic-model-generation/SKILL.md` - Logic model generation skill (Agent Skills spec)
+- `mastra/skills/logic-model-generation/references/causal-reasoning.md` - Connection evaluation and failure patterns
+- `mastra/skills/logic-model-generation/references/stage-definitions.md` - Stage definitions and boundary tests
+- `mastra/skills/logic-model-generation/references/format-requirements.md` - Format rules and connection patterns
+- `mastra/skills/logic-model-generation/references/common-mistakes.md` - Top 5 error patterns
+
 ### Configuration
 
-- `mastra/index.ts` - Mastra framework initialization
+- `mastra/index.ts` - Mastra framework initialization (includes workspace with skills)
 - `mastra/config.ts` - Agent and LLM configuration
 - `lib/evidence.ts` - Evidence loading with MDX compilation
 

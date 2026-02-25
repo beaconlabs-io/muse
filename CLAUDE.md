@@ -42,7 +42,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
 - `hooks/` - Custom React hooks including blockchain integration
 - `lib/` - Shared utilities and configuration
-- `mastra/` - AI agent system (agents, workflows, tools)
+- `mastra/` - AI agent system (agents, workflows, tools, skills)
 - `types/` - TypeScript definitions for Evidence, Attestation, graph structures
 - `utils/` - Configuration and helper functions
 - `docs/` - Detailed technical documentation (see Additional Documentation section)
@@ -67,6 +67,7 @@ Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
 
 ## Development Notes
 
+- `AGENTS.md` is a symlink to `CLAUDE.md` — edit `CLAUDE.md` only to keep both in sync
 - TypeScript with strict mode enabled
 - Path alias `@/*` maps to project root
 - ESLint ignores `components/ui/**` (shadcn/ui auto-generated components)
