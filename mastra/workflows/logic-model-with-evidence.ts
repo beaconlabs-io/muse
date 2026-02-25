@@ -37,32 +37,24 @@ const generateLogicModelStep = createStep({
 
     logger.info({ intent }, "Step 1: Generating logic model structure");
 
-    // Helper function with retry logic for tool validation errors
-    const generateWithRetry = async (isRetry = false) => {
-      const userContent = isRetry
-        ? `Create a logic model for: ${intent}
-
-IMPORTANT: Previous attempt failed due to JSON format error.
-Ensure ALL metrics are objects with { name, measurementMethod, frequency }, NOT strings.
-Example metric: { "name": "Number of participants", "measurementMethod": "Survey", "frequency": "monthly" }`
-        : `Create a logic model for: ${intent}`;
+    // Generate logic model structure from user intent
+    const generateWithIntent = async () => {
+      const userContent = `Create a logic model for: ${intent}`;
 
       try {
         return await logicModelAgent.generate([{ role: "user", content: userContent }], {
-          maxSteps: 1,
+          maxSteps: 5,
         });
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        if (!isRetry && errorMessage.includes("Tool input validation failed")) {
-          logger.warn("Tool validation failed, retrying with stricter prompt");
-          return generateWithRetry(true);
-        }
+        logger.warn({ error: errorMessage }, "Logic model generation failed");
+
         throw error;
       }
     };
 
-    // Use the logic model agent to generate the structure (with retry)
-    const result = await generateWithRetry();
+    // Use the logic model agent to generate the structure
+    const result = await generateWithIntent();
 
     // Debug logging
     logger.debug(
@@ -92,19 +84,34 @@ Example metric: { "name": "Number of participants", "measurementMethod": "Survey
       "Extracting canvas data from tool results",
     );
 
-    const toolResult = result.toolResults[0] as any;
     logger.debug(
       {
-        toolName: toolResult.toolName,
-        hasPayload: !!toolResult.payload,
-        hasResult: !!toolResult.payload?.result,
-        hasCanvasData: !!toolResult.payload?.result?.canvasData,
+        allToolNames: result.toolResults.map((tr: any) => tr.payload?.toolName),
       },
-      "Tool result structure",
+      "All tool results received",
     );
 
-    const toolReturnValue = toolResult.payload?.result;
-    logger.debug({ toolReturnValue }, "Tool return value");
+    const logicModelResult = result.toolResults.find(
+      (tr: any) => tr.payload?.toolName === "logicModelTool",
+    ) as any;
+
+    if (!logicModelResult) {
+      const toolNames = result.toolResults.map((tr: any) => tr.payload?.toolName);
+      logger.error(
+        { toolNames, responseTextPreview: result.text?.slice(0, 500) },
+        "Agent did not call logicModelTool",
+      );
+      throw new Error(`Agent did not call logicModelTool. Tools called: ${toolNames.join(", ")}`);
+    }
+
+    const toolReturnValue = logicModelResult.payload?.result;
+    logger.debug(
+      {
+        toolName: logicModelResult.payload?.toolName,
+        hasCanvasData: !!toolReturnValue?.canvasData,
+      },
+      "Logic model tool result found",
+    );
     const canvasData: CanvasData = toolReturnValue?.canvasData;
 
     if (!canvasData || !canvasData.cards || !canvasData.arrows) {
@@ -113,7 +120,7 @@ Example metric: { "name": "Number of participants", "measurementMethod": "Survey
           canvasDataExists: !!canvasData,
           hasCards: !!canvasData?.cards,
           hasArrows: !!canvasData?.arrows,
-          toolResult,
+          logicModelResult,
         },
         "Failed to generate logic model structure",
       );
