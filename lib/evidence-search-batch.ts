@@ -60,10 +60,11 @@ export async function searchEvidenceForAllEdges(
       .join("\n\n");
 
     // Single agent call with all edges
-    const result = await agent.generate([
-      {
-        role: "user",
-        content: `Evaluate evidence for MULTIPLE edges in a single batch.
+    const result = await agent.generate(
+      [
+        {
+          role: "user",
+          content: `Evaluate evidence for MULTIPLE edges in a single batch.
 
 ${edgesText}
 
@@ -90,8 +91,10 @@ Return JSON with this structure:
 \`\`\`
 
 Include ALL arrow IDs in results, even if they have empty match arrays.`,
-      },
-    ]);
+        },
+      ],
+      { maxSteps: 5 },
+    );
 
     logger.debug({ responseLength: result.text?.length || 0 }, "Agent response received");
 
