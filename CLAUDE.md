@@ -67,6 +67,7 @@ Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
 
 ## Development Notes
 
+- `AGENTS.md` is a symlink to `CLAUDE.md` — edit `CLAUDE.md` only to keep both in sync
 - TypeScript with strict mode enabled
 - Path alias `@/*` maps to project root
 - ESLint ignores `components/ui/**` (shadcn/ui auto-generated components)
