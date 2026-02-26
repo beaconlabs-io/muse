@@ -61,12 +61,12 @@ export function EvidenceEdge(props: EdgeProps) {
               <button
                 onClick={() => setDialogOpen(true)}
                 className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg transition-colors hover:bg-emerald-700"
-                title="View evidence"
+                title={hasExternalPapers ? "View evidence & academic papers" : "View evidence"}
               >
                 <FileText className="h-3 w-3" />
               </button>
             )}
-            {hasExternalPapers && (
+            {hasExternalPapers && !hasEvidence && (
               <button
                 onClick={() => setDialogOpen(true)}
                 className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-colors hover:bg-blue-700"

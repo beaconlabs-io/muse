@@ -1,6 +1,6 @@
 import { CardNodeData } from "@/components/canvas/CardNode";
 import type { Node, Edge } from "@xyflow/react";
-import { Card, Arrow } from "@/types";
+import { Card, Arrow, EvidenceMatch, ExternalPaper } from "@/types";
 
 /**
  * Convert Card array to React Flow Node array
@@ -52,7 +52,7 @@ export function arrowsToEdges(arrows: Arrow[]): Edge[] {
       type: hasAnyContent ? "evidence" : "default",
       animated: false,
       style: {
-        stroke: hasAnyContent ? "#10b981" : "#6b7280",
+        stroke: hasEvidence ? "#10b981" : hasExternalPapers ? "#3b82f6" : "#6b7280",
         strokeWidth: hasAnyContent ? 3 : 2,
       },
       data: {
@@ -80,10 +80,10 @@ export function edgesToArrows(edges: Edge[]): Arrow[] {
       arrow.evidenceIds = edge.data.evidenceIds as string[];
     }
     if (edge.data?.evidenceMetadata && Array.isArray(edge.data.evidenceMetadata)) {
-      arrow.evidenceMetadata = edge.data.evidenceMetadata as any[];
+      arrow.evidenceMetadata = edge.data.evidenceMetadata as EvidenceMatch[];
     }
     if (edge.data?.externalPapers && Array.isArray(edge.data.externalPapers)) {
-      arrow.externalPapers = edge.data.externalPapers as any[];
+      arrow.externalPapers = edge.data.externalPapers as ExternalPaper[];
     }
 
     return arrow;

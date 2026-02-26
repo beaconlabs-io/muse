@@ -225,11 +225,11 @@ export const EvidenceSummarySchema = z.object({
 export type EvidenceSummary = z.infer<typeof EvidenceSummarySchema>;
 
 // =============================================================================
-// EXTERNAL PAPER SCHEMAS (for paper-search-mcp integration)
+// EXTERNAL PAPER SCHEMAS (Semantic Scholar API integration)
 // =============================================================================
 
 /**
- * External academic paper from paper-search-mcp (PubMed, arXiv, Google Scholar, bioRxiv, medRxiv)
+ * External academic paper from Semantic Scholar API
  * Displayed as reference material only - no LLM scoring applied.
  */
 export const ExternalPaperSchema = z.object({

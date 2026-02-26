@@ -88,7 +88,7 @@ export type StrengthLevelValue = (typeof STRENGTH_LEVELS)[number]["value"];
 // =============================================================================
 
 /** Whether external academic search is enabled (academic paper search via Semantic Scholar) */
-export const EXTERNAL_SEARCH_ENABLED = process.env.EXTERNAL_SEARCH_ENABLED !== "false";
+export const EXTERNAL_SEARCH_ENABLED = process.env.EXTERNAL_SEARCH_ENABLED === "true";
 
 /** Maximum external papers to return per edge */
 export const MAX_EXTERNAL_PAPERS_PER_EDGE = 3;

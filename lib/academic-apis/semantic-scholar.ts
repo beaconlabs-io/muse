@@ -42,12 +42,16 @@ function normalizePaper(raw: SemanticScholarPaper): ExternalPaper {
     id,
     title: raw.title || "Untitled",
     authors: raw.authors?.map((a) => a.name),
-    year: raw.year ?? undefined,
+    year: raw.year,
     doi: doi || undefined,
     url: raw.url || undefined,
-    abstract: raw.abstract ? raw.abstract.slice(0, 500) : undefined,
+    abstract: raw.abstract
+      ? raw.abstract.length > 500
+        ? raw.abstract.slice(0, 500) + "..."
+        : raw.abstract
+      : undefined,
     source: "semantic_scholar",
-    citationCount: raw.citationCount ?? undefined,
+    citationCount: raw.citationCount,
   };
 }
 

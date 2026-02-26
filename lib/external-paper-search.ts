@@ -119,12 +119,12 @@ export async function searchExternalPapersForEdge(
 ): Promise<ExternalPaper[]> {
   if (!EXTERNAL_SEARCH_ENABLED) return [];
 
-  const rawQuery = buildSearchQuery(fromContent, toContent);
-  if (!rawQuery) return [];
-
-  // Extract English academic keywords via LLM (falls back to raw titles on failure)
   const fromTitle = fromContent.split(".")[0].trim();
   const toTitle = toContent.split(".")[0].trim();
+  const fallbackQuery = `${fromTitle} ${toTitle}`.trim();
+  if (!fallbackQuery) return [];
+
+  // Extract English academic keywords via LLM (falls back to raw titles on failure)
   const query = await extractSearchKeywords(fromTitle, toTitle);
   if (!query) return [];
 
@@ -145,6 +145,7 @@ export async function searchExternalPapers(
   const trimmed = query.trim();
   if (!trimmed) return [];
 
-  const searchQuery = trimmed.length > 200 ? trimmed.slice(0, 200) : trimmed;
+  const searchQuery =
+    trimmed.length > 200 ? trimmed.slice(0, trimmed.lastIndexOf(" ", 200) || 200) : trimmed;
   return searchExternalPapersCore(searchQuery, maxResults);
 }
