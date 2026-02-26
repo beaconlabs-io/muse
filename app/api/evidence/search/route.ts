@@ -13,7 +13,7 @@ const logger = createLogger({ module: "api:evidence-search" });
  *
  * Search evidence repository using natural language query.
  * Uses Mastra agent for intelligent matching and summarization.
- * Optionally searches external academic databases via paper-search-mcp.
+ * Optionally searches external academic databases via Semantic Scholar API.
  *
  * Request body:
  * - query: string - Natural language query
@@ -96,11 +96,10 @@ Respond in the same language as the query.`,
       query,
     };
 
-    // Attach external papers if requested
+    // Attach external papers if requested (always set array, even if empty)
     if (includeExternalPapers) {
-      if (externalResult.status === "fulfilled" && externalResult.value.length > 0) {
-        response.externalPapers = externalResult.value;
-      } else if (externalResult.status === "rejected") {
+      response.externalPapers = externalResult.status === "fulfilled" ? externalResult.value : [];
+      if (externalResult.status === "rejected") {
         logger.warn(
           { error: externalResult.reason },
           "External paper search failed, returning internal results only",

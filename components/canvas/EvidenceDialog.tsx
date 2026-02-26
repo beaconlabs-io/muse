@@ -113,13 +113,11 @@ export function EvidenceDialog({
           {/* External academic papers */}
           {hasExternalPapers && (
             <>
-              {hasEvidence && (
-                <div className="border-t pt-4">
-                  <h3 className="mb-3 text-sm font-semibold text-gray-500">
-                    Academic Papers (Reference)
-                  </h3>
-                </div>
-              )}
+              <div className={hasEvidence ? "border-t pt-4" : ""}>
+                <h3 className="mb-3 text-sm font-semibold text-gray-500">
+                  Academic Papers (Reference)
+                </h3>
+              </div>
               {externalPapers.map((paper) => (
                 <div
                   key={paper.id}
