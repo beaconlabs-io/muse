@@ -61,8 +61,14 @@ export async function searchSemanticScholar(
   query: string,
   maxResults: number,
 ): Promise<ExternalPaper[]> {
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.length < 3) {
+    logger.debug({ query }, "Query too short, skipping Semantic Scholar search");
+    return [];
+  }
+
   const params = new URLSearchParams({
-    query,
+    query: trimmed,
     limit: String(Math.min(maxResults, 100)),
     fields: FIELDS,
   });

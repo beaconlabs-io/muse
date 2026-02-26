@@ -1,4 +1,5 @@
 import type { ExternalPaper } from "@/types";
+import { extractSearchKeywords } from "@/lib/academic-apis/extract-search-keywords";
 import { searchSemanticScholar } from "@/lib/academic-apis/semantic-scholar";
 import {
   EXTERNAL_CACHE_TTL_MS,
@@ -50,11 +51,14 @@ function setCachedResult(query: string, papers: ExternalPaper[]): void {
 
 /**
  * Build a search query from edge source/target content.
- * Keeps the query concise for API effectiveness.
+ *
+ * The workflow passes "title. description" format, so we extract only the
+ * title (before the first ".") to produce a focused keyword query.
  */
 export function buildSearchQuery(fromContent: string, toContent: string): string {
-  const combined = `${fromContent} ${toContent}`.trim();
-  return combined.length > 100 ? combined.slice(0, 100) : combined;
+  const fromTitle = fromContent.split(".")[0].trim();
+  const toTitle = toContent.split(".")[0].trim();
+  return `${fromTitle} ${toTitle}`.trim();
 }
 
 // ---------------------------------------------------------------------------
@@ -115,7 +119,13 @@ export async function searchExternalPapersForEdge(
 ): Promise<ExternalPaper[]> {
   if (!EXTERNAL_SEARCH_ENABLED) return [];
 
-  const query = buildSearchQuery(fromContent, toContent);
+  const rawQuery = buildSearchQuery(fromContent, toContent);
+  if (!rawQuery) return [];
+
+  // Extract English academic keywords via LLM (falls back to raw titles on failure)
+  const fromTitle = fromContent.split(".")[0].trim();
+  const toTitle = toContent.split(".")[0].trim();
+  const query = await extractSearchKeywords(fromTitle, toTitle);
   if (!query) return [];
 
   return searchExternalPapersCore(query, MAX_EXTERNAL_PAPERS_PER_EDGE);
