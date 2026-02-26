@@ -12,6 +12,10 @@ const logger = createLogger({ module: "lib:external-paper-search" });
 
 // ---------------------------------------------------------------------------
 // Cache
+//
+// NOTE: This is an in-memory cache that resets on every cold start in
+// serverless environments (Vercel, Lambda). The TTL is only meaningful for
+// long-lived server processes. Eviction is FIFO (oldest-inserted first).
 // ---------------------------------------------------------------------------
 
 interface CacheEntry {
@@ -39,6 +43,7 @@ const MAX_CACHE_SIZE = 500;
 
 function setCachedResult(query: string, papers: ExternalPaper[]): void {
   if (searchCache.size >= MAX_CACHE_SIZE) {
+    // FIFO eviction: remove the oldest-inserted entry
     const oldestKey = searchCache.keys().next().value;
     if (oldestKey) searchCache.delete(oldestKey);
   }
@@ -50,12 +55,13 @@ function setCachedResult(query: string, papers: ExternalPaper[]): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Build a search query from edge source/target content.
+ * Build a deterministic search query from edge source/target content.
  *
  * The workflow passes "title. description" format, so we extract only the
  * title (before the first ".") to produce a focused keyword query.
+ * Also used as a stable cache key for edge-based searches.
  */
-export function buildSearchQuery(fromContent: string, toContent: string): string {
+function buildSearchQuery(fromContent: string, toContent: string): string {
   const fromTitle = fromContent.split(".")[0].trim();
   const toTitle = toContent.split(".")[0].trim();
   return `${fromTitle} ${toTitle}`.trim();
@@ -111,7 +117,9 @@ async function searchExternalPapersCore(
 
 /**
  * Search external academic databases for papers related to an edge.
- * Deterministic (no LLM calls). Results are cached for 24 hours.
+ * Uses LLM (Gemini) to extract English academic keywords from edge content,
+ * falling back to raw titles on LLM failure.
+ * Results are cached using a deterministic key derived from edge content.
  */
 export async function searchExternalPapersForEdge(
   fromContent: string,
@@ -119,16 +127,29 @@ export async function searchExternalPapersForEdge(
 ): Promise<ExternalPaper[]> {
   if (!EXTERNAL_SEARCH_ENABLED) return [];
 
-  const fromTitle = fromContent.split(".")[0].trim();
-  const toTitle = toContent.split(".")[0].trim();
-  const fallbackQuery = `${fromTitle} ${toTitle}`.trim();
-  if (!fallbackQuery) return [];
+  // Use deterministic query as both guard check and cache key
+  const stableKey = buildSearchQuery(fromContent, toContent);
+  if (!stableKey) return [];
+
+  // Check cache with stable key before invoking LLM
+  const cached = getCachedResult(stableKey);
+  if (cached) {
+    logger.debug({ stableKey, cachedCount: cached.length }, "Cache hit for edge search");
+    return cached.slice(0, MAX_EXTERNAL_PAPERS_PER_EDGE);
+  }
 
   // Extract English academic keywords via LLM (falls back to raw titles on failure)
+  const fromTitle = fromContent.split(".")[0].trim();
+  const toTitle = toContent.split(".")[0].trim();
   const query = await extractSearchKeywords(fromTitle, toTitle);
   if (!query) return [];
 
-  return searchExternalPapersCore(query, MAX_EXTERNAL_PAPERS_PER_EDGE);
+  const papers = await searchExternalPapersCore(query, MAX_EXTERNAL_PAPERS_PER_EDGE);
+
+  // Cache under stable key so repeated calls for the same edge hit cache
+  setCachedResult(stableKey, papers);
+
+  return papers;
 }
 
 /**
@@ -145,7 +166,8 @@ export async function searchExternalPapers(
   const trimmed = query.trim();
   if (!trimmed) return [];
 
+  const lastSpace = trimmed.lastIndexOf(" ", 200);
   const searchQuery =
-    trimmed.length > 200 ? trimmed.slice(0, trimmed.lastIndexOf(" ", 200) || 200) : trimmed;
+    trimmed.length > 200 ? trimmed.slice(0, lastSpace > 0 ? lastSpace : 200) : trimmed;
   return searchExternalPapersCore(searchQuery, maxResults);
 }
