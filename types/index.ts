@@ -241,6 +241,7 @@ export const ExternalPaperSchema = z.object({
   url: z.string().optional(),
   abstract: z.string().optional(),
   source: z.string(),
+  citationCount: z.number().optional(),
 });
 
 export type ExternalPaper = z.infer<typeof ExternalPaperSchema>;

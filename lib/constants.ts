@@ -84,11 +84,11 @@ export const STRENGTH_LABELS: Record<string, string> = Object.fromEntries(
 export type StrengthLevelValue = (typeof STRENGTH_LEVELS)[number]["value"];
 
 // =============================================================================
-// EXTERNAL PAPER SEARCH CONFIGURATION (paper-search-mcp)
+// EXTERNAL PAPER SEARCH CONFIGURATION (Semantic Scholar API)
 // =============================================================================
 
-/** Whether external academic search is enabled (development only) */
-export const EXTERNAL_SEARCH_ENABLED = process.env.EXTERNAL_SEARCH_ENABLED === "true";
+/** Whether external academic search is enabled (academic paper search via Semantic Scholar) */
+export const EXTERNAL_SEARCH_ENABLED = process.env.EXTERNAL_SEARCH_ENABLED !== "false";
 
 /** Maximum external papers to return per edge */
 export const MAX_EXTERNAL_PAPERS_PER_EDGE = 3;

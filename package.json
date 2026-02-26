@@ -20,7 +20,6 @@
     "@hypercerts-org/contracts": "2.0.0-alpha.0",
     "@hypercerts-org/sdk": "^2.9.1",
     "@mastra/core": "^1.4.0",
-    "@mastra/mcp": "^1.0.1",
     "@mastra/rag": "^2.1.0",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.0",
