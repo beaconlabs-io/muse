@@ -52,7 +52,13 @@ function getCachedResult(query: string): ExternalPaper[] | null {
   return null;
 }
 
+const MAX_CACHE_SIZE = 500;
+
 function setCachedResult(query: string, papers: ExternalPaper[]): void {
+  if (searchCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = searchCache.keys().next().value;
+    if (oldestKey) searchCache.delete(oldestKey);
+  }
   searchCache.set(getCacheKey(query), { papers, timestamp: Date.now() });
 }
 
@@ -81,7 +87,7 @@ function generateExternalPaperId(source: string, identifier: string): string {
 function normalizeRawPaper(raw: Record<string, unknown>, source: string): ExternalPaper {
   const title = String(raw.title || "Untitled");
   const doi = raw.doi ? String(raw.doi) : undefined;
-  const id = generateExternalPaperId(source, doi || raw.paper_id ? String(raw.paper_id) : title);
+  const id = generateExternalPaperId(source, doi || (raw.paper_id ? String(raw.paper_id) : title));
 
   // Extract year from published_date (e.g. "2023-01-01T00:00:00") or year field
   let year: number | undefined;
@@ -122,11 +128,40 @@ function normalizeRawPaper(raw: Record<string, unknown>, source: string): Extern
 function deduplicateByDoi(papers: ExternalPaper[]): ExternalPaper[] {
   const seen = new Set<string>();
   return papers.filter((p) => {
-    const key = p.doi || p.title;
+    const key = p.doi || p.title.toLowerCase().trim();
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+}
+
+/**
+ * Interleave papers from different sources round-robin style.
+ * Ensures result diversity when limiting to maxResults.
+ */
+function interleaveBySource(papers: ExternalPaper[]): ExternalPaper[] {
+  const bySource = new Map<string, ExternalPaper[]>();
+  for (const paper of papers) {
+    const list = bySource.get(paper.source) || [];
+    list.push(paper);
+    bySource.set(paper.source, list);
+  }
+
+  const result: ExternalPaper[] = [];
+  const sources = [...bySource.values()];
+  let index = 0;
+  while (result.length < papers.length) {
+    let added = false;
+    for (const sourcePapers of sources) {
+      if (index < sourcePapers.length) {
+        result.push(sourcePapers[index]);
+        added = true;
+      }
+    }
+    if (!added) break;
+    index++;
+  }
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -177,48 +212,42 @@ async function callSearchTool(
 // ---------------------------------------------------------------------------
 
 /**
- * Search external academic databases for papers related to an edge.
- * Deterministic (no LLM calls). Results are cached for 24 hours.
+ * Core search logic: query external academic databases, deduplicate, and cache.
+ * Shared by both edge-based and free-text query search functions.
  */
-export async function searchExternalPapersForEdge(
-  fromContent: string,
-  toContent: string,
+async function searchExternalPapersCore(
+  query: string,
+  maxResults: number,
 ): Promise<ExternalPaper[]> {
-  if (!EXTERNAL_SEARCH_ENABLED) return [];
-
-  const query = buildSearchQuery(fromContent, toContent);
-  if (!query) return [];
-
   const cached = getCachedResult(query);
   if (cached) {
     logger.debug({ query, cachedCount: cached.length }, "Cache hit for external search");
-    return cached;
+    return cached.slice(0, maxResults);
   }
 
   logger.info({ query }, "Searching external academic databases");
 
   const tools = await getTools();
 
-  const [pubmedResult, arxivResult, scholarResult] = await Promise.allSettled([
-    callSearchTool(tools, "search_pubmed", query, 5, "pubmed"),
-    callSearchTool(tools, "search_arxiv", query, 5, "arxiv"),
-    callSearchTool(tools, "search_google_scholar", query, 5, "google_scholar"),
+  const perSource = Math.max(3, maxResults);
+  const results = await Promise.allSettled([
+    callSearchTool(tools, "search_pubmed", query, perSource, "pubmed"),
+    callSearchTool(tools, "search_arxiv", query, perSource, "arxiv"),
+    callSearchTool(tools, "search_google_scholar", query, perSource, "google_scholar"),
+    callSearchTool(tools, "search_biorxiv", query, perSource, "biorxiv"),
+    callSearchTool(tools, "search_medrxiv", query, perSource, "medrxiv"),
   ]);
 
   const allPapers: ExternalPaper[] = [];
-
-  if (pubmedResult.status === "fulfilled") {
-    allPapers.push(...pubmedResult.value);
-  }
-  if (arxivResult.status === "fulfilled") {
-    allPapers.push(...arxivResult.value);
-  }
-  if (scholarResult.status === "fulfilled") {
-    allPapers.push(...scholarResult.value);
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      allPapers.push(...result.value);
+    }
   }
 
   const deduplicated = deduplicateByDoi(allPapers);
-  const limited = deduplicated.slice(0, MAX_EXTERNAL_PAPERS_PER_EDGE);
+  const interleaved = interleaveBySource(deduplicated);
+  const limited = interleaved.slice(0, maxResults);
 
   setCachedResult(query, limited);
 
@@ -233,4 +262,38 @@ export async function searchExternalPapersForEdge(
   );
 
   return limited;
+}
+
+/**
+ * Search external academic databases for papers related to an edge.
+ * Deterministic (no LLM calls). Results are cached for 24 hours.
+ */
+export async function searchExternalPapersForEdge(
+  fromContent: string,
+  toContent: string,
+): Promise<ExternalPaper[]> {
+  if (!EXTERNAL_SEARCH_ENABLED) return [];
+
+  const query = buildSearchQuery(fromContent, toContent);
+  if (!query) return [];
+
+  return searchExternalPapersCore(query, MAX_EXTERNAL_PAPERS_PER_EDGE);
+}
+
+/**
+ * Search external academic databases using a free-text query.
+ * Used by the evidence search API for user-facing queries.
+ * Deterministic (no LLM calls). Results are cached for 24 hours.
+ */
+export async function searchExternalPapers(
+  query: string,
+  maxResults: number = MAX_EXTERNAL_PAPERS_PER_EDGE,
+): Promise<ExternalPaper[]> {
+  if (!EXTERNAL_SEARCH_ENABLED) return [];
+
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  const searchQuery = trimmed.length > 200 ? trimmed.slice(0, 200) : trimmed;
+  return searchExternalPapersCore(searchQuery, maxResults);
 }

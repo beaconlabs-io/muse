@@ -229,7 +229,7 @@ export type EvidenceSummary = z.infer<typeof EvidenceSummarySchema>;
 // =============================================================================
 
 /**
- * External academic paper from paper-search-mcp (PubMed, Semantic Scholar, etc.)
+ * External academic paper from paper-search-mcp (PubMed, arXiv, Google Scholar, bioRxiv, medRxiv)
  * Displayed as reference material only - no LLM scoring applied.
  */
 export const ExternalPaperSchema = z.object({
@@ -326,6 +326,7 @@ export type NodeType = keyof typeof TYPE_COLOR_MAP;
 export const EvidenceSearchRequestSchema = z.object({
   query: z.string().min(1, "Query is required").max(500, "Query too long"),
   limit: z.number().min(1).max(20).optional().default(5),
+  includeExternalPapers: z.boolean().optional().default(false),
 });
 
 export type EvidenceSearchRequest = z.infer<typeof EvidenceSearchRequestSchema>;
@@ -336,6 +337,7 @@ export type EvidenceSearchRequest = z.infer<typeof EvidenceSearchRequestSchema>;
 export const EvidenceSearchResponseSchema = z.object({
   response: z.string(),
   query: z.string(),
+  externalPapers: z.array(ExternalPaperSchema).optional(),
 });
 
 export type EvidenceSearchResponse = z.infer<typeof EvidenceSearchResponseSchema>;

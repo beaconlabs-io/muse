@@ -4,7 +4,7 @@ import { MCPClient } from "@mastra/mcp";
  * MCPClient for paper-search-mcp (https://github.com/openags/paper-search-mcp)
  *
  * Connects via stdio transport to the Python MCP server using `uv run`.
- * Provides tools: search_pubmed, search_semantic, search_arxiv, etc.
+ * Provides tools: search_pubmed, search_arxiv, search_google_scholar, search_biorxiv, search_medrxiv
  *
  * Prerequisites (development only):
  * - Python 3.10+ installed
@@ -18,9 +18,7 @@ export const paperSearchClient = new MCPClient({
     paperSearch: {
       command: "uv",
       args: ["run", "--with", "paper-search-mcp", "-m", "paper_search_mcp.server"],
-      env: {
-        SEMANTIC_SCHOLAR_API_KEY: process.env.SEMANTIC_SCHOLAR_API_KEY || "",
-      },
+      env: {},
     },
   },
   timeout: 30000,
