@@ -34,7 +34,7 @@ const logger = createLogger({ module: "workflow:logic-model-with-evidence" });
  * This workflow generates a complete logic model with evidence validation:
  * 1. Generate logic model structure using AI agent
  * 2. Batch evidence search for all arrows (single LLM call)
- * 2.5. External academic paper search for under-matched edges (paper-search-mcp)
+ * 2.5. External academic paper search for under-matched edges (Semantic Scholar API)
  * 3. Enrich canvas data with evidence metadata + external papers
  */
 
@@ -283,33 +283,37 @@ const searchExternalPapersStep = createStep({
 
     const externalPapersByArrow: Record<string, ExternalPaper[]> = {};
 
-    for (const arrow of canvasData.arrows) {
-      const internalMatches = evidenceByArrow[arrow.id] || [];
+    const results = await Promise.allSettled(
+      canvasData.arrows.map(async (arrow) => {
+        const internalMatches = evidenceByArrow[arrow.id] || [];
 
-      if (internalMatches.length >= MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL) {
-        externalPapersByArrow[arrow.id] = [];
-        continue;
-      }
+        if (internalMatches.length >= MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL) {
+          return { arrowId: arrow.id, papers: [] as ExternalPaper[] };
+        }
 
-      const fromCard = cardMap.get(arrow.fromCardId);
-      const toCard = cardMap.get(arrow.toCardId);
-      if (!fromCard || !toCard) {
-        externalPapersByArrow[arrow.id] = [];
-        continue;
-      }
+        const fromCard = cardMap.get(arrow.fromCardId);
+        const toCard = cardMap.get(arrow.toCardId);
+        if (!fromCard || !toCard) {
+          return { arrowId: arrow.id, papers: [] as ExternalPaper[] };
+        }
 
-      const fromContent = fromCard.description
-        ? `${fromCard.title}. ${fromCard.description}`
-        : fromCard.title;
-      const toContent = toCard.description
-        ? `${toCard.title}. ${toCard.description}`
-        : toCard.title;
+        const fromContent = fromCard.description
+          ? `${fromCard.title}. ${fromCard.description}`
+          : fromCard.title;
+        const toContent = toCard.description
+          ? `${toCard.title}. ${toCard.description}`
+          : toCard.title;
 
-      try {
-        externalPapersByArrow[arrow.id] = await searchExternalPapersForEdge(fromContent, toContent);
-      } catch (e) {
-        logger.warn({ arrowId: arrow.id, error: e }, "External search failed for edge");
-        externalPapersByArrow[arrow.id] = [];
+        const papers = await searchExternalPapersForEdge(fromContent, toContent);
+        return { arrowId: arrow.id, papers };
+      }),
+    );
+
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        externalPapersByArrow[result.value.arrowId] = result.value.papers;
+      } else {
+        logger.warn({ error: result.reason }, "External search failed for edge");
       }
     }
 
