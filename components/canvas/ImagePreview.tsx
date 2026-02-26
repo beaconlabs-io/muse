@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { CanvasImageStatus } from "@/hooks/useCanvasImage";
@@ -49,10 +50,14 @@ export function ImagePreview({
       )}
 
       {status === "ready" && result && (
-        <img
+        <Image
           src={result.dataUrl}
           alt="Logic model preview"
+          width={1200}
+          height={630}
+          unoptimized
           className="max-h-[350px] max-w-full rounded-md shadow-sm"
+          style={{ width: "auto", height: "auto" }}
         />
       )}
     </div>
