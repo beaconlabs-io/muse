@@ -1,4 +1,5 @@
 import pluginNext from "@next/eslint-plugin-next";
+import tseslintPlugin from "@typescript-eslint/eslint-plugin";
 import parser from "@typescript-eslint/parser";
 import * as importX from "eslint-plugin-import-x";
 
@@ -18,6 +19,7 @@ export default [
     name: "ESLint Config - nextjs",
     plugins: {
       "@next/next": pluginNext,
+      "@typescript-eslint": tseslintPlugin,
       "import-x": importX,
     },
     languageOptions: {
@@ -27,7 +29,15 @@ export default [
     rules: {
       ...pluginNext.configs.recommended.rules,
       ...pluginNext.configs["core-web-vitals"].rules,
-      "no-unused-vars": "warn",
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
       "import-x/no-duplicates": "error",
       "import-x/order": [
         "warn",

@@ -113,6 +113,7 @@ export async function GET(request: Request) {
                 alignItems: "center",
               }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element -- Satori/OG image generation requires native <img> */}
               <img
                 src={logoUrl}
                 alt="Beacon Labs Logo"
