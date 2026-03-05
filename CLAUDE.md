@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Mastra Development
 
-- `bun dev:mastra` - Start Mastra development server for agents/workflows
+- `bun dev:mastra` - Start Mastra development server (includes Mastra Studio for viewing traces at http://localhost:4111)
 - `bun build:mastra` - Build Mastra agent system
 
 **Important**: The project uses husky for git hooks with lint-staged. Code is automatically linted and formatted on commit.
@@ -60,6 +60,7 @@ Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS 4, Radix UI + shadcn/ui
 - **Canvas & Graphs**: React Flow (@xyflow/react) for interactive logic model visualization
 - **AI & Agents**: Mastra framework, Vercel AI SDK, OpenAI/Claude APIs
+- **Observability**: Mastra Observability with DefaultExporter + SigNoz Cloud (OtelExporter)
 - **Blockchain**: viem, EAS (Ethereum Attestation Service), Hypercerts SDK, RainbowKit
 - **State Management**: TanStack Query for server state
 - **Content**: MDX with rehype/remark plugins (math, syntax highlighting, TOC)
@@ -78,6 +79,6 @@ Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
 
 For detailed technical information, see:
 
-- `docs/mastra-agents.md` - AI agent architecture, workflows, diagrams, quality controls
+- `docs/mastra-agents.md` - AI agent architecture, workflows, diagrams, quality controls, observability
 - `docs/evidence-workflow.md` - Evidence submission, attestation, search philosophy
 - `docs/react-flow-architecture.md` - Canvas implementation, UI flow, custom components
