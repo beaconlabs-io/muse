@@ -117,5 +117,8 @@
       "prettier --write"
     ]
   },
-  "packageManager": "bun@1.3.5"
+  "packageManager": "bun@1.3.5",
+  "patchedDependencies": {
+    "@beaconlabs-io/evidence@1.1.3": "patches/@beaconlabs-io%2Fevidence@1.1.3.patch"
+  }
 }
