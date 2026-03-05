@@ -33,18 +33,20 @@ const edgeTypes = {
 
 Custom edge component for evidence-backed relationships between logic model cards.
 
-**Visual Styling**:
+**Visual Styling** (three-tier color system):
 
-- **Color**: `#10b981` (green-500)
-- **Stroke width**: `3px`
-- **Edge type**: Bezier curve (smooth, animated)
+- **Green**: `#10b981` (emerald-600) - Has internal attested evidence
+- **Blue**: `#3b82f6` (blue-600) - Has external papers only
+- **Gray**: `#6b7280` - No evidence or external papers (default edge, no button)
+- **Stroke width**: `3px` for evidence/external, `2px` for default
+- **Edge type**: Bezier curve (smooth)
 - **Marker**: Arrowhead at target
 
 **Interactive Features**:
 
-- Button at edge midpoint for accessing evidence
-- Hover effects for discoverability
-- Click handler opens evidence dialog
+- Green button (FileText icon) at edge midpoint when internal evidence present
+- Blue button (BookOpen icon) at edge midpoint when only external papers present
+- Click handler opens EvidenceDialog with both internal and external content
 - Manages dialog state locally
 
 **Data Structure**:
@@ -57,7 +59,8 @@ Custom edge component for evidence-backed relationships between logic model card
   type: "evidence",
   data: {
     evidenceIds: string[],
-    // ... other arrow metadata
+    evidenceMetadata: EvidenceMatch[],
+    externalPapers: ExternalPaper[],
   }
 }
 ```
@@ -68,14 +71,23 @@ Custom edge component for evidence-backed relationships between logic model card
 
 Modal component for displaying evidence details when user clicks evidence button on edge.
 
-**Displays**:
+**Displays** two sections:
 
-- Evidence ID
-- Title
-- Match score (0-100)
-- Reasoning for match
-- Strength rating (0-5 scale)
-- Clickable link to `/evidence/{id}` detail page
+1. **Internal Evidence** (green theme):
+   - Evidence ID (clickable link to `/evidence/{id}`)
+   - Title
+   - Match score (0-100) with emerald badge
+   - Reasoning for match
+   - Strength rating (0-5 scale)
+   - Intervention and outcome text
+   - Warning indicator for strength < 3
+
+2. **Academic Papers (Reference)** (blue theme, separated by border):
+   - Paper title (clickable link to DOI or Semantic Scholar URL)
+   - Source badge (e.g., "Semantic Scholar")
+   - Authors (up to 3, with "et al.") and year
+   - Abstract (truncated to 3 lines)
+   - DOI identifier
 
 ## Data Flow
 
@@ -122,14 +134,20 @@ interface CanvasData {
 
 ### Type Detection and Styling
 
-**Evidence Edge Detection**:
+**Evidence Edge Detection** (three-tier logic):
 
 ```typescript
 const hasEvidence = arrow.evidenceIds && arrow.evidenceIds.length > 0;
+const hasExternalPapers = arrow.externalPapers && arrow.externalPapers.length > 0;
+const hasAnyContent = hasEvidence || hasExternalPapers;
 
 const edge = {
   ...baseEdge,
-  type: hasEvidence ? "evidence" : "default",
+  type: hasAnyContent ? "evidence" : "default",
+  style: {
+    stroke: hasEvidence ? "#10b981" : hasExternalPapers ? "#3b82f6" : "#6b7280",
+    strokeWidth: hasAnyContent ? 3 : 2,
+  },
 };
 ```
 
@@ -141,21 +159,24 @@ React Flow automatically uses the registered `EvidenceEdge` component when `type
 
 1. **User generates logic model** via Mastra-powered AI agent
 2. **Batch evidence search** executes single LLM call (see `docs/mastra-agents.md`)
-3. **Evidence matching results** are merged into arrow data:
+3. **Evidence matching results** are merged into arrow data, **external papers** attached to under-matched arrows:
    ```typescript
    arrow.evidenceIds = [matchingEvidenceId];
    arrow.evidenceScore = 85;
    arrow.evidenceReasoning = "Strong alignment between...";
+   arrow.externalPapers = [{ id: "ext-...", title: "...", source: "semantic_scholar", ... }];
    ```
 4. **Canvas re-renders** with updated arrows
-5. **`arrowsToEdges()`** converts arrows to edges with `type: "evidence"`
-6. **EvidenceEdge component** renders green thick edge with button
+5. **`arrowsToEdges()`** converts arrows to edges with `type: "evidence"` for any content
+6. **EvidenceEdge component** renders green (internal evidence) or blue (external only) edge with button
 
 ### Display Criteria
 
-- **Match score threshold**: ≥ 70
-- Arrows below threshold display as regular edges (gray, thin)
-- Only arrows with `evidenceIds.length > 0` render as evidence edges
+- **Internal evidence threshold**: Match score ≥ 70
+- Arrows with `evidenceIds.length > 0` render as green evidence edges
+- Arrows with `externalPapers.length > 0` but no internal evidence render as blue evidence edges
+- Arrows with neither display as default gray edges
+- Edge `type` is set to `"evidence"` whenever any content (internal or external) is present
 
 ## Frontend Components Detail
 
@@ -168,15 +189,21 @@ Custom React Flow edge with button toolbar for evidence access:
 **Technical Details**:
 
 - Uses `getBezierPath()` from React Flow to create smooth curved edges
-- Renders green button at edge midpoint using `EdgeLabelRenderer`
+- Renders button at edge midpoint using `EdgeLabelRenderer`
 - Button positioning calculated from Bezier path center coordinates
 - Manages dialog open/close state internally
 - Event handlers prevent edge interaction conflicts
 
+**Button Logic**:
+
+- If `hasEvidence` (internal): Green emerald button with `FileText` icon
+- If `hasExternalPapers && !hasEvidence`: Blue button with `BookOpen` icon
+- If neither: No button rendered
+
 **Visual Rendering**:
 
-- Bezier curve path with emerald green stroke
-- 3px stroke width for emphasis
+- Bezier curve path with three-tier color system (green/blue/gray)
+- 3px stroke width for evidence/external edges, 2px for default
 - Arrowhead marker at target end
 - Interactive button only visible on hover
 
@@ -184,23 +211,30 @@ Custom React Flow edge with button toolbar for evidence access:
 
 **Location**: `components/canvas/EvidenceDialog.tsx`
 
-Modal dialog for displaying comprehensive evidence details:
+Modal dialog for displaying comprehensive evidence details in two sections:
 
-**Features**:
+**Internal Evidence Section** (green theme):
 
 - Evidence IDs displayed as clickable links to `/evidence/{id}` pages
-- Relevance scores (0-100) with color-coded badges
-- Confidence ratings (0-100)
+- Relevance scores (0-100) with emerald color-coded badges
 - Full title and structured reasoning
 - Evidence strength ratings (Maryland Scale 0-5)
 - Intervention and outcome text from evidence
 - Warning indicators for evidence with strength < 3
 
+**External Papers Section** (blue theme, "Academic Papers (Reference)"):
+
+- Paper title as clickable link to DOI or Semantic Scholar URL
+- Source badge ("Semantic Scholar")
+- Authors (up to 3, with "et al.") and year
+- Abstract (truncated to 3 lines with ellipsis)
+- DOI identifier
+
 **User Flow**:
 
-1. User clicks green evidence button on edge
-2. Dialog opens with all matched evidence for that relationship
-3. User can click evidence ID to view full evidence page
+1. User clicks green or blue evidence button on edge
+2. Dialog opens showing internal evidence (green) and/or external papers (blue)
+3. User can click evidence ID to view internal evidence page, or paper link to open external URL
 4. Dialog can be closed to return to canvas
 
 ### ReactFlowCanvas Integration
@@ -223,19 +257,27 @@ const edgeTypes = {
 
 **Location**: `lib/canvas/react-flow-utils.ts`
 
-Edge type detection and styling logic:
+Edge type detection and styling logic (three-tier):
 
 ```typescript
 const hasEvidence = arrow.evidenceIds && arrow.evidenceIds.length > 0;
+const hasExternalPapers = arrow.externalPapers && arrow.externalPapers.length > 0;
+const hasAnyContent = hasEvidence || hasExternalPapers;
+
 const edge = {
   ...baseEdge,
-  type: hasEvidence ? "evidence" : "default",
+  type: hasAnyContent ? "evidence" : "default",
+  style: {
+    stroke: hasEvidence ? "#10b981" : hasExternalPapers ? "#3b82f6" : "#6b7280",
+    strokeWidth: hasAnyContent ? 3 : 2,
+  },
 };
 ```
 
-- Sets `type: "evidence"` for arrows with `evidenceIds`
-- Applies green thick styling (`#10b981`, 3px strokeWidth)
-- Default styling for arrows without evidence
+- Sets `type: "evidence"` for arrows with any content (internal or external)
+- Green (`#10b981`, 3px): internal attested evidence
+- Blue (`#3b82f6`, 3px): external papers only
+- Gray (`#6b7280`, 2px): no evidence
 
 ### Evidence Quality Scale
 
@@ -252,35 +294,43 @@ Evidence with strength < 3 displays warning indicator (⚠️) in dialog to aler
 
 ### UI Implementation Details
 
-**Green Thick Edges**:
+**Three-Tier Edge Colors**:
 
-- Arrows with evidence display as emerald green (#10b981)
-- 3px thick bezier curves for visual prominence
-- Smooth animation on hover
+- Arrows with internal evidence display as emerald green (#10b981), 3px thick
+- Arrows with external papers only display as blue (#3b82f6), 3px thick
+- Arrows with no content display as gray (#6b7280), 2px thick (default)
 
 **Evidence Button**:
 
-- Green circular button with FileText icon
-- Only appears on edges with evidence
+- Green circular button with FileText icon: internal evidence present
+- Blue circular button with BookOpen icon: external papers only
+- No button: no evidence or papers
 - Positioned at edge midpoint (calculated geometrically)
 - Hover effect for discoverability
 
 **Evidence Dialog Layout**:
 
-- Evidence ID (clickable link to `/evidence/{id}`)
-- Relevance score (0-100) with color-coded badge:
-  - Green: 90-100 (STRONG)
-  - Blue: 70-89 (MODERATE)
-- Confidence rating (0-100)
-- Title, reasoning, strength rating (0-5)
-- Intervention and outcome text
-- ⚠️ Warning indicator for evidence strength < 3
+- Dialog header: "Evidence for Connection" with total item count
+- **Internal evidence cards** (when present):
+  - Evidence ID (clickable link to `/evidence/{id}`)
+  - Relevance score (0-100) with emerald badge
+  - Title, reasoning, strength rating (0-5)
+  - Intervention and outcome text
+  - ⚠️ Warning indicator for evidence strength < 3
+- **Academic Papers section** (when present, separated by border):
+  - Section header: "Academic Papers (Reference)"
+  - Blue-themed cards with paper title (clickable DOI or URL link)
+  - Source badge ("Semantic Scholar")
+  - Authors (max 3) and year
+  - Abstract (3-line clamp)
+  - DOI identifier
 
 **Clean Design Philosophy**:
 
 - No badges on cards
 - Evidence information only visible on edges
-- Focus user attention on evidence-backed relationships through color and interactivity
+- Three-tier color coding clearly distinguishes evidence status at a glance
+- External papers explicitly labeled "Reference" to distinguish from attested evidence
 - Non-evidence edges appear as normal gray curves (no negative indicator)
 
 ## File References
@@ -293,15 +343,17 @@ Evidence with strength < 3 displays warning indicator (⚠️) in dialog to aler
 
 ### Utilities
 
-- `lib/canvas/react-flow-utils.ts:42` - `arrowsToEdges()` function
-- `lib/canvas/react-flow-utils.ts:78` - `toStandardizedFormat()` function
-- `lib/canvas/react-flow-utils.ts:112` - `toDisplayFormat()` function
+- `lib/canvas/react-flow-utils.ts:42` - `arrowsToEdges()` function (three-tier color logic)
+- `lib/canvas/react-flow-utils.ts:70` - `edgesToArrows()` function (preserves externalPapers)
+- `lib/external-paper-search.ts` - External paper search orchestration
+- `lib/academic-apis/semantic-scholar.ts` - Semantic Scholar API client
 
 ### Types
 
-- `types/index.ts:25` - `CanvasData` interface
-- `types/index.ts:45` - `Arrow` interface
-- `types/index.ts:18` - `Card` interface
+- `types/index.ts` - `CanvasData` interface
+- `types/index.ts` - `Arrow` interface (extended with `externalPapers`)
+- `types/index.ts` - `Card` interface
+- `types/index.ts` - `ExternalPaper` interface (Semantic Scholar paper data)
 
 ## Styling Configuration
 

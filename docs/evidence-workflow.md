@@ -204,10 +204,16 @@ Evidence is semantically matched to logic model arrows (causal relationships) us
    - Outcome in evidence aligns with arrow target
    - Match score ≥ 70 threshold for display
 4. **Result display**:
-   - Green thick edges (#10b981) for evidence-backed relationships
-   - Interactive button at edge midpoint
-   - Evidence dialog with ID, title, score, reasoning, strength
-   - Clickable links to `/evidence/{id}` detail pages
+   - Green thick edges (#10b981) for relationships with internal attested evidence (FileText icon)
+   - Blue thick edges (#3b82f6) for relationships with external papers only (BookOpen icon)
+   - Gray default edges (#6b7280) for relationships with no evidence
+   - Evidence dialog with two sections: internal evidence (green) and academic papers (blue)
+   - Clickable links to `/evidence/{id}` for internal, DOI/URL links for external
+5. **External academic papers** (when enabled via `EXTERNAL_SEARCH_ENABLED`):
+   - Edges with fewer than 1 internal evidence match trigger Semantic Scholar API search
+   - LLM (Gemini 2.5 Flash) extracts English academic keywords from card titles
+   - Results displayed as reference material (no LLM scoring) with blue styling
+   - Cached for 24 hours with in-memory FIFO eviction (500 entries max)
 
 ## Evidence Search Philosophy
 
@@ -230,12 +236,30 @@ The evidence search tool searches for supporting evidence for **ALL arrows in th
 
 ### UI Presentation
 
-- Green thick edges for arrows with evidence (match score ≥ 70)
-- Interactive green button at edge midpoint to access evidence details
-- Evidence coverage naturally visible through color coding (green vs gray edges)
-- Edges without evidence appear as normal gray curves (no negative indicator)
-- Dialog interface with clickable evidence IDs linking to `/evidence/{id}` pages
+- Green thick edges for arrows with internal attested evidence (match score ≥ 70, FileText icon)
+- Blue thick edges for arrows with external papers only, no internal evidence (BookOpen icon)
+- Gray default edges for arrows with no evidence of any kind (no button)
+- Three-color coding makes evidence coverage naturally visible at a glance
+- Interactive button at edge midpoint: green for internal evidence, blue for external papers only
+- Evidence dialog with two sections when both types present:
+  - Internal evidence links to `/evidence/{id}` pages
+  - External papers link to DOI or Semantic Scholar URL
 - Focus user attention on evidence-backed relationships through color and interactivity
+
+### Attested Evidence vs. External Papers
+
+MUSE distinguishes between two categories of evidence:
+
+|                    | Internal (Attested) Evidence             | External Academic Papers                |
+| ------------------ | ---------------------------------------- | --------------------------------------- |
+| **Source**         | `@beaconlabs-io/evidence` repository     | Semantic Scholar API                    |
+| **Trust Level**    | Blockchain-attested via EAS              | Unverified reference                    |
+| **Scoring**        | LLM-scored (0-100) with chain-of-thought | No scoring (raw search results)         |
+| **Display**        | Green styling, FileText icon             | Blue styling, BookOpen icon             |
+| **Dialog Section** | Primary section with full metadata       | "Academic Papers (Reference)" section   |
+| **Purpose**        | Validated evidence backing claims        | Supplementary reading for research gaps |
+
+External papers complement the internal evidence repository by providing relevant academic context for edges that lack attested evidence. They are explicitly labeled as "Reference" material to distinguish them from the scored, attested internal evidence.
 
 ### Scientific Benefit
 
@@ -244,6 +268,7 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 - **Evidence-backed claims** (strong confidence) ✅
 - **Theoretical assumptions** (requires validation) 🔬
 - **Research opportunities** (evidence gaps to fill) 📊
+- **Supplementary references** (external academic context) 📖
 
 ## File Locations
 
@@ -255,3 +280,7 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 - Type definitions: `types/index.ts` (Zod schemas)
 - Evidence parsing: `lib/evidence.ts`
 - Evidence search: `lib/evidence-search-batch.ts`
+- External paper search: `lib/external-paper-search.ts`
+- Semantic Scholar client: `lib/academic-apis/semantic-scholar.ts`
+- Keyword extraction: `lib/academic-apis/extract-search-keywords.ts`
+- External search constants: `lib/constants.ts`
