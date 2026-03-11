@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Evidence } from "@/types";
+import type { Evidence } from "@beaconlabs-io/evidence";
 
 interface DataTableProps {
   data: Evidence[];

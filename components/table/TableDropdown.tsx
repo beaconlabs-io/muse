@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Evidence } from "@/types";
+import type { Evidence } from "@beaconlabs-io/evidence";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData & Evidence>;

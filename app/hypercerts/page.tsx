@@ -14,7 +14,6 @@ export default function Page() {
   const params: GetAllHypercertsParams = {
     first: 100,
     offset: 0,
-    burned: false,
   };
 
   return <HypercertsList hypercertsPromise={getHypercertsData(params)} />;

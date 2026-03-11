@@ -1,7 +1,7 @@
 import React from "react";
 import { EffectIcons } from "@/components/effect-icons";
 import { TooltipEffects } from "@/components/tooltip/tooltip-effects";
-import type { EvidenceResult } from "@/types";
+import type { EvidenceResult } from "@beaconlabs-io/evidence";
 
 interface EvidenceResultsProps {
   results: EvidenceResult[];

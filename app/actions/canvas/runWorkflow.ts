@@ -17,13 +17,8 @@ export async function runLogicModelWorkflow(
   intent: string,
 ): Promise<WorkflowSuccessResult | WorkflowErrorResult> {
   try {
-    // Ensure PROJECT_ROOT is set for Mastra
-    if (!process.env.PROJECT_ROOT) {
-      process.env.PROJECT_ROOT = process.cwd();
-    }
-
     const workflow = mastra.getWorkflow("logicModelWithEvidenceWorkflow");
-    const run = await workflow.createRunAsync();
+    const run = await workflow.createRun();
     const result = await run.start({ inputData: { intent } });
 
     if (result.status === "success") {

@@ -15,7 +15,7 @@ jobs:
       - name: Send PR Notification to Discord
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_PR }}
         run: |
           PAYLOAD=$(jq -n \
             --arg url "$PR_URL" \

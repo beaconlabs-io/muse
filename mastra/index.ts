@@ -1,4 +1,6 @@
 import { Mastra } from "@mastra/core/mastra";
+import { Workspace, LocalFilesystem } from "@mastra/core/workspace";
+import { conversationBotAgent } from "./agents/conversation-bot-agent";
 import { evidenceSearchAgent } from "./agents/evidence-search-agent";
 import { logicModelAgent } from "./agents/logic-model-agent";
 import { logicModelWithEvidenceWorkflow } from "./workflows/logic-model-with-evidence";
@@ -13,12 +15,16 @@ import { logicModelWithEvidenceWorkflow } from "./workflows/logic-model-with-evi
 //   connectionUrl: connectionUrl,
 // });
 
+const workspace = new Workspace({
+  filesystem: new LocalFilesystem({
+    basePath: ".",
+  }),
+  skills: ["/mastra/skills"],
+});
+
 export const mastra = new Mastra({
-  agents: { logicModelAgent, evidenceSearchAgent },
+  agents: { logicModelAgent, evidenceSearchAgent, conversationBotAgent },
   workflows: { logicModelWithEvidenceWorkflow },
+  workspace,
   // vectors: { libSqlVector },
-  telemetry: {
-    serviceName: "Muse",
-    enabled: false,
-  },
 });

@@ -11,8 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { useNodesState, useEdgesState, getNodesBounds, getViewportForBounds } from "@xyflow/react";
-import { toPng } from "html-to-image";
+import { useNodesState, useEdgesState } from "@xyflow/react";
 import { toast } from "sonner";
 import type { CardNodeData } from "@/components/canvas/CardNode";
 import {
@@ -75,9 +74,8 @@ export interface CanvasStateContextValue {
 export interface StateReadingOperations {
   saveLogicModel: () => void;
   exportAsJSON: () => void;
-  exportAsImage: () => void;
   clearAllData: () => void;
-  saveCanvasToIPFS: () => Promise<IPFSStorageResult | null>;
+  saveCanvasToIPFS: (ogImageCID?: string) => Promise<IPFSStorageResult | null>;
 }
 
 /**
@@ -249,7 +247,7 @@ export function CanvasProvider({
     }
   }, [router]);
 
-  const saveCanvasToIPFS = useCallback(async () => {
+  const saveCanvasToIPFS = useCallback(async (ogImageCID?: string) => {
     try {
       const cards = nodesToCards(nodesRef.current);
       const arrows = edgesToArrows(edgesRef.current);
@@ -270,34 +268,10 @@ export function CanvasProvider({
         cards,
         arrows,
         cardMetrics: cardMetricsRef.current,
+        ...(ogImageCID && { ogImageCID }),
       };
 
-      // Show loading toast with timeout
-      const loadingToastId = toast.loading("Uploading to IPFS...", {
-        duration: 30000, // 30 second timeout
-      });
-
-      // Call IPFS upload utility
       const result = await uploadToIPFS(canvasData);
-
-      // Dismiss loading toast
-      toast.dismiss(loadingToastId);
-
-      // Format hash for display (first 8 and last 4 characters)
-      const shortHash = `${result.hash.slice(0, 8)}...${result.hash.slice(-4)}`;
-
-      // Show success toast with action to view canvas
-      toast.success("Successfully uploaded to IPFS!", {
-        duration: 8000,
-        description: `IPFS Hash: ${shortHash}`,
-        action: {
-          label: "View Canvas",
-          onClick: () => {
-            router.push(`/canvas/${result.hash}`);
-          },
-        },
-      });
-
       return result;
     } catch (error) {
       console.error("Failed to upload to IPFS:", error);
@@ -307,7 +281,7 @@ export function CanvasProvider({
       });
       return null;
     }
-  }, [router]);
+  }, []);
 
   const exportAsJSON = useCallback(() => {
     const cards = nodesToCards(nodesRef.current);
@@ -330,50 +304,6 @@ export function CanvasProvider({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, []);
-
-  const exportAsImage = useCallback(() => {
-    if (nodesRef.current.length === 0) {
-      toast.error("Cannot export an empty canvas.", { duration: 3000 });
-      return;
-    }
-
-    const nodesBounds = getNodesBounds(nodesRef.current);
-    const imageWidth = nodesBounds.width;
-    const imageHeight = nodesBounds.height;
-    const viewport = getViewportForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2, 0.2);
-
-    const viewportElement = document.querySelector(".react-flow__viewport") as HTMLElement;
-
-    if (!viewportElement) {
-      console.error("React Flow viewport not found");
-      return;
-    }
-
-    toPng(viewportElement, {
-      backgroundColor: "#f9fafb",
-      width: imageWidth,
-      height: imageHeight,
-      style: {
-        width: `${imageWidth}px`,
-        height: `${imageHeight}px`,
-        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
-      },
-    })
-      .then((dataUrl) => {
-        const a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = `logic-model-${Date.now()}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      })
-      .catch((error) => {
-        console.error("Failed to export image:", error);
-        toast.error("Failed to export image. Please try again.", {
-          duration: 5000,
-        });
-      });
   }, []);
 
   // Actual clear operation (called from AlertDialog)
@@ -456,7 +386,6 @@ export function CanvasProvider({
       onEdgesChange,
       saveLogicModel,
       exportAsJSON,
-      exportAsImage,
       clearAllData,
       saveCanvasToIPFS,
     }),
@@ -468,7 +397,6 @@ export function CanvasProvider({
       onEdgesChange,
       saveLogicModel,
       exportAsJSON,
-      exportAsImage,
       clearAllData,
       saveCanvasToIPFS,
     ],
@@ -479,7 +407,6 @@ export function CanvasProvider({
       <CanvasOperationsContext.Provider value={operationsValue}>
         {children}
 
-        {/* Clear All Data Confirmation Dialog */}
         <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

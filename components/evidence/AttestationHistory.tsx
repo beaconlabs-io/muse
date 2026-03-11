@@ -1,14 +1,13 @@
-import React from "react";
 import Link from "next/link";
 import { Shield, ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { EvidenceAttestation } from "@/types";
+import type { EvidenceDeploymentHistory } from "@beaconlabs-io/evidence";
 import { formatDate } from "@/lib/format-date";
 
 interface AttestationHistoryProps {
   currentAttestationUID?: string;
   currentTimestamp?: string;
-  history?: EvidenceAttestation[];
+  history?: EvidenceDeploymentHistory[];
 }
 
 export function AttestationHistory({
