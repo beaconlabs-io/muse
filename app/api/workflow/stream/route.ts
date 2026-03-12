@@ -83,12 +83,15 @@ export async function POST(request: NextRequest) {
                 case "workflow-step-result":
                   if (event.payload.status === "failed") {
                     lastFailedStepId = event.payload.id;
+                    const output = event.payload.output;
+                    const errorMsg =
+                      typeof output === "object" && output !== null && "error" in output
+                        ? String((output as { error: unknown }).error)
+                        : "Step failed";
                     send({
                       type: "step-error",
                       stepId: event.payload.id,
-                      error: String(
-                        (event.payload.output as Record<string, unknown>)?.error || "Step failed",
-                      ),
+                      error: errorMsg,
                     });
                   } else if (event.payload.status === "success") {
                     send({ type: "step-finish", stepId: event.payload.id });
@@ -99,7 +102,12 @@ export async function POST(request: NextRequest) {
                   if (event.payload.workflowStatus === "success") {
                     try {
                       const result = await output.result;
-                      const canvasData = CanvasDataSchema.parse(result.result?.canvasData);
+                      if (result.status !== "success") {
+                        throw new Error(`Unexpected workflow result status: ${result.status}`);
+                      }
+                      const canvasData = CanvasDataSchema.parse(
+                        (result.result as Record<string, unknown>)?.canvasData,
+                      );
                       send({ type: "workflow-complete", canvasData });
                     } catch (err) {
                       const message =

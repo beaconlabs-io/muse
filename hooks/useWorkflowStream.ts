@@ -57,7 +57,7 @@ export function useWorkflowStream() {
         status: "error",
         error: "Workflow timed out",
       }));
-    }, WORKFLOW_TIMEOUT_MS);
+    }, WORKFLOW_TIMEOUT_MS + 10_000);
 
     try {
       const response = await fetch("/api/workflow/stream", {
@@ -158,10 +158,13 @@ export function useWorkflowStream() {
   const cancel = useCallback(() => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
-    setState((prev) => ({
-      ...prev,
+    setState({
       status: "idle",
-    }));
+      currentStepId: null,
+      error: null,
+      failedStepId: null,
+      canvasData: null,
+    });
   }, []);
 
   return {

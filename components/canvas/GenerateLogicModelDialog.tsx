@@ -87,6 +87,9 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
         case "step-start":
           setDialogStep(event.stepId, "active");
           break;
+        case "step-finish":
+          setDialogStep(event.stepId, "completed");
+          break;
         case "step-error":
           setDialogStep(event.stepId, "error", event.error);
           break;

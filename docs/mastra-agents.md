@@ -47,13 +47,10 @@ sequenceDiagram
 
     User->>FE: Provide intent (e.g., "OSS impact on Ethereum")
 
-    Note over FE: UI Step 1: Analyze Intent (UI only)
-    FE->>FE: Mark "analyze" as active → completed (instant)
-
-    Note over FE, LLM: UI Step 2: Generate Structure (Workflow Runs Here)
-    FE->>FE: Mark "structure" as active
-    FE->>Action: runLogicModelWorkflow(intent)
-    Action->>Workflow: logicModelWithEvidenceWorkflow.start()
+    Note over FE, LLM: UI Step 1: Generate Structure (SSE Stream)
+    FE->>FE: Mark "generate-logic-model" as active
+    FE->>API: POST /api/workflow/stream (SSE)
+    API->>Workflow: logicModelWithEvidenceWorkflow.stream()
 
     Note over Workflow, Agent: Workflow Step 1: Generate Logic Model Structure
     Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 1)
@@ -309,21 +306,12 @@ LLM-based evidence matching with chain-of-thought reasoning:
 
 Main UI component with 4-step process:
 
-- Step 1: "analyze" - Instant UI-only step
-- Step 2: "structure" - Calls server action, all workflow steps execute here
-- Step 3: "illustrate" - Client-side rendering with `loadGeneratedCanvas()`
+- Step 1: "generate-logic-model" - Generates logic model structure via SSE stream
+- Step 2: "search-evidence" - Searches for supporting evidence
+- Step 3: "enrich-canvas" - Enriches canvas with evidence metadata
 - Step 4: "complete" - Final state
-- Form validation with Zod, default intent example provided
-
-### runWorkflow.ts
-
-**Location**: `app/actions/canvas/runWorkflow.ts`
-
-Server action wrapper for workflow execution:
-
-- `runLogicModelWorkflow(intent)`: Executes Mastra workflow, returns simplified result (canvasData only)
-- Validates output with CanvasDataSchema
-- Returns `{ success: true, canvasData }` on success or `{ success: false, error }` on failure
+- Real-time step progress via `useWorkflowStream` hook and SSE route (`/api/workflow/stream`)
+- Form validation with Zod
 
 ### logic-model-with-evidence.ts
 
@@ -577,7 +565,8 @@ bun build:mastra
 ### Components
 
 - `components/canvas/GenerateLogicModelDialog.tsx` - UI with 4-step process
-- `app/actions/canvas/runWorkflow.ts` - Server action wrapper
+- `app/api/workflow/stream/route.ts` - SSE route handler for workflow streaming
+- `hooks/useWorkflowStream.ts` - Client hook for consuming SSE events
 
 ### Skills
 
