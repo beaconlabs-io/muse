@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
-  serverExternalPackages: ["@mastra/*", "@opentelemetry/*"],
+  serverExternalPackages: ["@mastra/*"],
   experimental: {
     mdxRs: true,
   },

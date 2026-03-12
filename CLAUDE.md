@@ -60,7 +60,7 @@ Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS 4, Radix UI + shadcn/ui
 - **Canvas & Graphs**: React Flow (@xyflow/react) for interactive logic model visualization
 - **AI & Agents**: Mastra framework, Vercel AI SDK, OpenAI/Claude APIs
-- **Observability**: Mastra Observability with DefaultExporter + SigNoz Cloud (OtelExporter)
+- **Observability**: Mastra Observability with DefaultExporter (Mastra Studio)
 - **Blockchain**: viem, EAS (Ethereum Attestation Service), Hypercerts SDK, RainbowKit
 - **State Management**: TanStack Query for server state
 - **Content**: MDX with rehype/remark plugins (math, syntax highlighting, TOC)

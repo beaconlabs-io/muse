@@ -7,7 +7,6 @@ import {
   SensitiveDataFilter,
   SamplingStrategyType,
 } from "@mastra/observability";
-import { OtelExporter } from "@mastra/otel-exporter";
 import { conversationBotAgent } from "./agents/conversation-bot-agent";
 import { evidenceSearchAgent } from "./agents/evidence-search-agent";
 import { logicModelAgent } from "./agents/logic-model-agent";
@@ -35,27 +34,18 @@ const storage = new LibSQLStore({
   url: process.env.MASTRA_STORAGE_URL || "file:./mastra.db",
 });
 
-const sigNozExporter = new OtelExporter({
-  provider: {
-    signoz: {
-      apiKey: process.env.SIGNOZ_API_KEY!,
-      region: (process.env.SIGNOZ_REGION as "us" | "eu" | "in") || "us",
-    },
-  },
-});
-
 const observability = new Observability({
   configs: {
     development: {
       serviceName: "muse-dev",
       sampling: { type: SamplingStrategyType.ALWAYS },
-      exporters: [new DefaultExporter(), sigNozExporter],
+      exporters: [new DefaultExporter()],
       spanOutputProcessors: [new SensitiveDataFilter()],
     },
     production: {
       serviceName: "muse",
       sampling: { type: SamplingStrategyType.RATIO, probability: 0.1 },
-      exporters: [new DefaultExporter(), sigNozExporter],
+      exporters: [new DefaultExporter()],
       spanOutputProcessors: [new SensitiveDataFilter()],
     },
   },
