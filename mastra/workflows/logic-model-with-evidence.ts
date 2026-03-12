@@ -2,6 +2,7 @@ import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { evidenceSearchAgent } from "../agents/evidence-search-agent";
 import { logicModelAgent } from "../agents/logic-model-agent";
+import type { ToolResultChunk } from "@mastra/core/stream";
 import { searchEvidenceForAllEdges, type EdgeInput } from "@/lib/evidence-search-batch";
 import { createLogger } from "@/lib/logger";
 import {
@@ -12,16 +13,6 @@ import {
   type Arrow,
   type EvidenceMatch,
 } from "@/types";
-
-/** Expected structure of the logic model tool result from Mastra */
-interface LogicModelToolResult {
-  payload: {
-    toolName: string;
-    result: {
-      canvasData: CanvasData;
-    };
-  };
-}
 
 const logger = createLogger({ module: "workflow:logic-model-with-evidence" });
 /**
@@ -44,112 +35,153 @@ const generateLogicModelStep = createStep({
   }),
   execute: async ({ inputData }) => {
     const { intent } = inputData;
+    const MAX_RETRIES = 2;
 
     logger.info({ intent }, "Step 1: Generating logic model structure");
 
-    // Generate logic model structure from user intent
-    const generateWithIntent = async () => {
-      const userContent = `Create a logic model for: ${intent}`;
+    const userContent = `Create a logic model for: ${intent}`;
 
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        return await logicModelAgent.generate([{ role: "user", content: userContent }], {
+        if (attempt > 0) {
+          logger.info({ attempt, maxRetries: MAX_RETRIES }, "Retrying logic model generation");
+        }
+
+        // Use the logic model agent to generate the structure
+        const result = await logicModelAgent.generate([{ role: "user", content: userContent }], {
           maxSteps: 12,
         });
+
+        // Debug logging
+        logger.debug(
+          {
+            attempt,
+            textPreview: result.text?.slice(0, 200),
+            toolResultsLength: result.toolResults?.length || 0,
+            hasToolResults: !!result.toolResults,
+          },
+          "Agent result received",
+        );
+
+        // Parse the tool result to extract canvas data
+        if (!result.toolResults || result.toolResults.length === 0) {
+          logger.error(
+            { responseTextPreview: result.text?.slice(0, 500) },
+            "Agent did not call any tools",
+          );
+          throw new Error("Agent did not call logicModelTool");
+        }
+
+        const toolResults = result.toolResults as ToolResultChunk[];
+
+        logger.debug(
+          {
+            toolResultsCount: toolResults.length,
+            allToolNames: toolResults.map((tr) => tr.payload?.toolName),
+          },
+          "Extracting canvas data from tool results",
+        );
+
+        const logicModelResult = toolResults.find(
+          (tr) => tr.payload?.toolName === "logicModelTool",
+        );
+
+        if (!logicModelResult) {
+          const toolNames = toolResults.map((tr) => tr.payload?.toolName);
+          logger.error(
+            { toolNames, responseTextPreview: result.text?.slice(0, 500) },
+            "Agent did not call logicModelTool",
+          );
+          throw new Error(
+            `Agent did not call logicModelTool. Tools called: ${toolNames.join(", ")}`,
+          );
+        }
+
+        // Check for tool execution errors (e.g. Zod input validation failures)
+        if (logicModelResult.payload?.isError) {
+          const errorDetail =
+            typeof logicModelResult.payload.result === "string"
+              ? logicModelResult.payload.result
+              : JSON.stringify(logicModelResult.payload.result);
+          logger.error(
+            {
+              attempt,
+              toolName: logicModelResult.payload.toolName,
+              errorResult: errorDetail,
+              providerExecuted: logicModelResult.payload.providerExecuted,
+            },
+            "logicModelTool returned an error (likely input validation failure)",
+          );
+          throw new Error(`logicModelTool execution failed: ${errorDetail}`);
+        }
+
+        const toolReturnValue = logicModelResult.payload?.result as
+          | { canvasData?: CanvasData }
+          | undefined;
+
+        logger.debug(
+          {
+            toolName: logicModelResult.payload?.toolName,
+            hasCanvasData: !!toolReturnValue?.canvasData,
+            resultType: typeof logicModelResult.payload?.result,
+            resultKeys:
+              logicModelResult.payload?.result &&
+              typeof logicModelResult.payload.result === "object"
+                ? Object.keys(logicModelResult.payload.result as Record<string, unknown>)
+                : null,
+          },
+          "Logic model tool result found",
+        );
+
+        const canvasData = toolReturnValue?.canvasData;
+
+        if (!canvasData || !canvasData.cards || !canvasData.arrows) {
+          logger.error(
+            {
+              canvasDataExists: !!canvasData,
+              hasCards: !!canvasData?.cards,
+              hasArrows: !!canvasData?.arrows,
+              resultKeys:
+                toolReturnValue && typeof toolReturnValue === "object"
+                  ? Object.keys(toolReturnValue)
+                  : null,
+              resultPreview: JSON.stringify(toolReturnValue)?.slice(0, 500),
+            },
+            "Failed to generate logic model structure",
+          );
+          throw new Error(
+            "Failed to generate logic model. The agent did not return valid canvas data.",
+          );
+        }
+
+        logger.info(
+          {
+            attempt,
+            cardsCount: canvasData.cards.length,
+            arrowsCount: canvasData.arrows.length,
+          },
+          "Logic model structure generated successfully",
+        );
+
+        return { canvasData };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        logger.warn({ error: errorMessage }, "Logic model generation failed");
-
-        throw error;
+        lastError = error instanceof Error ? error : new Error(String(error));
+        if (attempt < MAX_RETRIES) {
+          logger.warn(
+            { attempt, maxRetries: MAX_RETRIES, error: lastError.message },
+            "Logic model generation attempt failed, retrying",
+          );
+        }
       }
-    };
-
-    // Use the logic model agent to generate the structure
-    const result = await generateWithIntent();
-
-    // Debug logging
-    logger.debug(
-      {
-        textPreview: result.text?.slice(0, 200),
-        toolResultsLength: result.toolResults?.length || 0,
-        hasToolResults: !!result.toolResults,
-      },
-      "Agent result received",
-    );
-
-    // Parse the tool result to extract canvas data
-    if (!result.toolResults || result.toolResults.length === 0) {
-      logger.error(
-        {
-          responseTextPreview: result.text?.slice(0, 500),
-        },
-        "Agent did not call any tools",
-      );
-      throw new Error("Agent did not call logicModelTool");
     }
 
-    logger.debug(
-      {
-        toolResultsCount: result.toolResults.length,
-      },
-      "Extracting canvas data from tool results",
+    logger.error(
+      { error: lastError?.message, totalAttempts: MAX_RETRIES + 1 },
+      "All logic model generation attempts failed",
     );
-
-    const toolResults = result.toolResults as LogicModelToolResult[];
-
-    logger.debug(
-      {
-        allToolNames: toolResults.map((tr) => tr.payload?.toolName),
-      },
-      "All tool results received",
-    );
-
-    const logicModelResult = toolResults.find((tr) => tr.payload?.toolName === "logicModelTool");
-
-    if (!logicModelResult) {
-      const toolNames = toolResults.map((tr) => tr.payload?.toolName);
-      logger.error(
-        { toolNames, responseTextPreview: result.text?.slice(0, 500) },
-        "Agent did not call logicModelTool",
-      );
-      throw new Error(`Agent did not call logicModelTool. Tools called: ${toolNames.join(", ")}`);
-    }
-
-    const toolReturnValue = logicModelResult.payload?.result;
-    logger.debug(
-      {
-        toolName: logicModelResult.payload?.toolName,
-        hasCanvasData: !!toolReturnValue?.canvasData,
-      },
-      "Logic model tool result found",
-    );
-    const canvasData: CanvasData = toolReturnValue?.canvasData;
-
-    if (!canvasData || !canvasData.cards || !canvasData.arrows) {
-      logger.error(
-        {
-          canvasDataExists: !!canvasData,
-          hasCards: !!canvasData?.cards,
-          hasArrows: !!canvasData?.arrows,
-          logicModelResult,
-        },
-        "Failed to generate logic model structure",
-      );
-      throw new Error(
-        "Failed to generate logic model. The agent did not return valid canvas data.",
-      );
-    }
-
-    logger.info(
-      {
-        cardsCount: canvasData.cards.length,
-        arrowsCount: canvasData.arrows.length,
-      },
-      "Logic model structure generated successfully",
-    );
-
-    return {
-      canvasData,
-    };
+    throw lastError!;
   },
 });
 

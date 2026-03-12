@@ -85,7 +85,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Validate and extract canvas data
-    const canvasData = CanvasDataSchema.parse(result.result.canvasData);
+    const output = result.result as Record<string, unknown>;
+    const canvasData = CanvasDataSchema.parse(output.canvasData);
 
     // 7. Upload to IPFS using shared utility
     const ipfsResult = await uploadToIPFS(canvasData, {

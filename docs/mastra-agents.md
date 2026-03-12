@@ -597,6 +597,55 @@ bun build:mastra
 
 - `types/index.ts` - CanvasData, Arrow, Card, EvidenceMatch interfaces
 
+## Observability & Tracing
+
+The application uses Mastra's built-in observability for distributed tracing of agent and workflow executions.
+
+### What is Automatically Traced
+
+- **Agent executions**: Each `agent.generate()` call, including LLM interactions and token usage
+- **Tool invocations**: `logicModelTool`, `getAllEvidenceTool` execution times and results
+- **Workflow steps**: `generateLogicModelStep`, `searchEvidenceStep`, `enrichCanvasStep` execution
+- **LLM parameters**: Model name, token counts (input/output), latency per LLM call
+
+### Configuration
+
+Observability is configured in `mastra/index.ts` with environment-based settings:
+
+| Environment | Sampling           | Exporters                  |
+| ----------- | ------------------ | -------------------------- |
+| Development | 100% (`ALWAYS`)    | DefaultExporter (local DB) |
+| Production  | 10% (`RATIO: 0.1`) | DefaultExporter (local DB) |
+
+Both environments include `SensitiveDataFilter` for data privacy.
+
+### Viewing Traces
+
+**Mastra Studio:**
+
+```bash
+bun dev:mastra
+# Open Mastra Studio at http://localhost:4111
+# Navigate to Traces tab to see agent/workflow executions
+```
+
+Traces are stored locally in LibSQL (`mastra.db`) via `DefaultExporter` and viewed through Mastra Studio.
+
+### Environment Variables
+
+| Variable             | Required | Description                                      |
+| -------------------- | -------- | ------------------------------------------------ |
+| `MASTRA_STORAGE_URL` | No       | LibSQL storage URL (default: `file:./mastra.db`) |
+
+### Relationship with lib/logger.ts
+
+The custom logger (`lib/logger.ts`) and Mastra observability serve complementary purposes:
+
+- **`lib/logger.ts`**: Application-level logging (console output, structured messages for debugging)
+- **Mastra Observability**: Distributed tracing (spans, trace context, LLM token tracking, Mastra Studio)
+
+Both coexist without interference.
+
 ## Future Enhancements
 
 Potential improvements to the Mastra system:

@@ -46,3 +46,8 @@ next-env.d.ts
 .mastra
 # Vector store for RAG evidence search
 vector.*
+# Mastra storage (LibSQL)
+mastra.db
+mastra.db-journal
+mastra.db-wal
+mastra.db-shm

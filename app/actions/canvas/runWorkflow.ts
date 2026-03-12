@@ -23,7 +23,8 @@ export async function runLogicModelWorkflow(
 
     if (result.status === "success") {
       // Validate workflow output with Zod
-      const validatedData = CanvasDataSchema.parse(result.result.canvasData);
+      const output = result.result as Record<string, unknown>;
+      const validatedData = CanvasDataSchema.parse(output.canvasData);
 
       return {
         success: true,
