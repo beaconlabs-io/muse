@@ -6,6 +6,10 @@ import { createLogger } from "@/lib/logger";
 import { mastra } from "@/mastra";
 import { CanvasDataSchema } from "@/types";
 
+// Vercel serverless function timeout (seconds)
+// Must exceed WORKFLOW_TIMEOUT_MS (120s) to allow workflow completion
+export const maxDuration = 300;
+
 const logger = createLogger({ module: "api:workflow-stream" });
 
 const RequestSchema = z.object({
