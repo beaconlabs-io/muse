@@ -14,6 +14,10 @@ import {
   type Card,
 } from "@/types";
 
+// Vercel serverless function timeout (seconds)
+// Must exceed WORKFLOW_TIMEOUT_MS (300s) to allow workflow completion
+export const maxDuration = 300;
+
 const logger = createLogger({ module: "api:compact" });
 
 /**

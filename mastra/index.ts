@@ -26,7 +26,7 @@ const workspace = new Workspace({
   filesystem: new LocalFilesystem({
     basePath: ".",
   }),
-  skills: ["/mastra/skills"],
+  skills: ["mastra/skills"],
 });
 
 const storage = new LibSQLStore({
