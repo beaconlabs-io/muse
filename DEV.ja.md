@@ -66,13 +66,10 @@ sequenceDiagram
 
     User->>FE: 意図を提供（例：「EthereumへのOSSの影響」）
 
-    Note over FE: UI Step 1: 意図を分析 (UIのみ)
-    FE->>FE: "analyze"をアクティブ → 完了にマーク（即座）
-
-    Note over FE, LLM: UI Step 2: 構造を生成 (ワークフロー実行)
-    FE->>FE: "structure"をアクティブにマーク
-    FE->>Action: runLogicModelWorkflow(intent)
-    Action->>Workflow: logicModelWithEvidenceWorkflow.start()
+    Note over FE, LLM: UI Step 1: 構造を生成 (SSEストリーム)
+    FE->>FE: "generate-logic-model"をアクティブにマーク
+    FE->>API: POST /api/workflow/stream (SSE)
+    API->>Workflow: logicModelWithEvidenceWorkflow.stream()
 
     Note over Workflow, Agent: Workflow Step 1: ロジックモデル構造を生成
     Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 1)
@@ -294,16 +291,12 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 **コアコンポーネント:**
 
 - `components/canvas/GenerateLogicModelDialog.tsx`: 4ステッププロセスのメインUIコンポーネント
-  - Step 1: "analyze" - 即座のUI専用ステップ
-  - Step 2: "structure" - サーバーアクションを呼び出し、すべてのワークフローステップがここで実行される
-  - Step 3: "illustrate" - `loadGeneratedCanvas()`でクライアントサイドレンダリング
+  - Step 1: "generate-logic-model" - SSEストリーム経由でロジックモデル構造を生成
+  - Step 2: "search-evidence" - エビデンスを検索
+  - Step 3: "enrich-canvas" - エビデンスメタデータでキャンバスを充実化
   - Step 4: "complete" - 最終状態
-  - Zodでフォーム検証、デフォルトintent例を提供
-
-- `app/actions/canvas/runWorkflow.ts`: ワークフロー実行のためのサーバーアクションラッパー
-  - `runLogicModelWorkflow(intent)`: Mastraワークフローを実行、簡略化された結果（canvasDataのみ）を返す
-  - CanvasDataSchemaで出力を検証
-  - 成功時は`{ success: true, canvasData }`、失敗時は`{ success: false, error }`を返す
+  - `useWorkflowStream`フックとSSEルート（`/api/workflow/stream`）によるリアルタイムステップ進捗
+  - Zodでフォーム検証
 
 - `mastra/workflows/logic-model-with-evidence.ts`: 3ステップのプロダクションワークフロー:
 
