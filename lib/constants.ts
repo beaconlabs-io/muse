@@ -23,8 +23,8 @@ export const EVIDENCE_QUALITY_THRESHOLD = 3;
 /** Maximum size of a canvas data in bytes (5MB) */
 export const MAX_CANVAS_SIZE = 5 * 1024 * 1024;
 
-/** Timeout for workflow execution in milliseconds (2 minutes) */
-export const WORKFLOW_TIMEOUT_MS = 120_000;
+/** Timeout for workflow execution in milliseconds (5 minutes) */
+export const WORKFLOW_TIMEOUT_MS = 300_000;
 
 /** Maximum number of chat messages accepted in a compact request */
 export const MAX_CHAT_HISTORY_LENGTH = 500;
