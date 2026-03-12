@@ -31,7 +31,7 @@ const workspace = new Workspace({
 
 const storage = new LibSQLStore({
   id: "muse-storage",
-  url: process.env.MASTRA_STORAGE_URL || "file:./mastra.db",
+  url: process.env.MASTRA_STORAGE_URL || (process.env.VERCEL ? ":memory:" : "file:./mastra.db"),
 });
 
 const observability = new Observability({
