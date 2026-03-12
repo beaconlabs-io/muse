@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import type { Card, Arrow, Metric } from "@/types";
-import { runLogicModelWorkflow } from "@/app/actions/canvas/runWorkflow";
+import { useWorkflowStream } from "@/hooks/useWorkflowStream";
 
 const generateLogicModelSchema = z.object({
   intent: z
@@ -45,6 +45,13 @@ interface GenerateLogicModelDialogProps {
   }) => void;
 }
 
+const steps = [
+  { id: "generate-logic-model", description: "Generating logic model structure" },
+  { id: "search-evidence", description: "Searching for supporting evidence" },
+  { id: "enrich-canvas", description: "Enriching canvas with evidence" },
+  { id: "complete", description: "Completed!" },
+];
+
 export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialogProps) {
   const [open, setOpen] = useState(false);
   const {
@@ -55,6 +62,9 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setExtraContent,
   } = useStepProcessDialogContext();
 
+  const { status, error, failedStepId, canvasData, stepEvents, startWorkflow, cancel } =
+    useWorkflowStream();
+
   const form = useForm<GenerateLogicModelFormData>({
     resolver: zodResolver(generateLogicModelSchema),
     defaultValues: {
@@ -62,69 +72,76 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     },
   });
 
-  const steps = [
-    { id: "analyze", description: "Analyzing intent" },
-    { id: "structure", description: "Generating logic model from intent" },
-    { id: "illustrate", description: "Illustrating canvas with evidence" },
-    { id: "complete", description: "Completed!" },
-  ];
+  // Track the last processed event index to avoid re-processing
+  const processedEventCountRef = useRef(0);
 
-  const handleSubmit = async (data: GenerateLogicModelFormData) => {
-    // Initialize step dialog
-    setTitle("Generating Logic Model");
-    setSteps(steps);
-    setExtraContent(<GenerationTimeInfo />);
-    setStepDialogOpen(true);
+  // React to step events from the stream
+  useEffect(() => {
+    const newEvents = stepEvents.slice(processedEventCountRef.current);
+    if (newEvents.length === 0) return;
 
-    try {
-      await setDialogStep("analyze", "active");
-      await setDialogStep("analyze", "completed");
+    processedEventCountRef.current = stepEvents.length;
 
-      await setDialogStep("structure", "active");
-
-      // Execute the workflow via server action
-      const result = await runLogicModelWorkflow(data.intent);
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to generate logic model");
+    for (const event of newEvents) {
+      switch (event.type) {
+        case "step-start":
+          setDialogStep(event.stepId, "active");
+          break;
+        case "step-finish":
+          setDialogStep(event.stepId, "completed");
+          break;
+        case "step-error":
+          setDialogStep(event.stepId, "error", event.error);
+          break;
       }
+    }
+  }, [stepEvents, setDialogStep]);
 
-      const { canvasData } = result;
+  // React to workflow completion or error
+  useEffect(() => {
+    if (status === "success" && canvasData) {
+      setDialogStep("complete", "completed");
 
-      await setDialogStep("structure", "completed");
-
-      await setDialogStep("illustrate", "active");
-
-      // Success: pass data to canvas
       onGenerate({
         cards: canvasData.cards,
         arrows: canvasData.arrows,
         cardMetrics: canvasData.cardMetrics,
       });
 
-      await setDialogStep("illustrate", "completed");
-      await setDialogStep("complete", "completed");
-
       // Auto-close after brief delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setStepDialogOpen(false);
-      setOpen(false);
-      form.reset();
-    } catch (err) {
-      // Find the current active step and set it to error
-      const currentStep =
-        steps.find((step) => step.id === "analyze") ||
-        steps.find((step) => step.id === "structure") ||
-        steps.find((step) => step.id === "search") ||
-        steps.find((step) => step.id === "illustrate") ||
-        steps[0];
-      await setDialogStep(
-        currentStep.id,
-        "error",
-        err instanceof Error ? err.message : "An error occurred",
-      );
+      const timeoutId = setTimeout(() => {
+        setStepDialogOpen(false);
+        setOpen(false);
+        form.reset();
+        processedEventCountRef.current = 0;
+      }, 500);
+      return () => clearTimeout(timeoutId);
     }
+
+    if (status === "error") {
+      const errorStepId = failedStepId || "generate-logic-model";
+      setDialogStep(errorStepId, "error", error || "An error occurred");
+    }
+  }, [status, canvasData, error, failedStepId, onGenerate, setDialogStep, setStepDialogOpen, form]);
+
+  const handleSubmit = async (data: GenerateLogicModelFormData) => {
+    setTitle("Generating Logic Model");
+    setSteps(steps);
+    setExtraContent(<GenerationTimeInfo />);
+    setStepDialogOpen(true);
+
+    processedEventCountRef.current = 0;
+    await startWorkflow(data.intent);
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cancel();
+    };
+  }, [cancel]);
+
+  const isRunning = status === "running";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -157,7 +174,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                       placeholder="Enter your intent here"
                       rows={5}
                       className="resize-none"
-                      disabled={form.formState.isSubmitting}
+                      disabled={isRunning}
                       {...field}
                     />
                   </FormControl>
@@ -170,16 +187,12 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
-                disabled={form.formState.isSubmitting}
+                disabled={isRunning}
                 className="cursor-pointer"
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                className="cursor-pointer"
-                disabled={form.formState.isSubmitting}
-              >
+              <Button type="submit" className="cursor-pointer" disabled={isRunning}>
                 Generate Logic Model
               </Button>
             </DialogFooter>
