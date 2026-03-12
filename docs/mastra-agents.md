@@ -612,16 +612,16 @@ The application uses Mastra's built-in observability for distributed tracing of 
 
 Observability is configured in `mastra/index.ts` with environment-based settings:
 
-| Environment | Sampling           | Exporters                                 |
-| ----------- | ------------------ | ----------------------------------------- |
-| Development | 100% (`ALWAYS`)    | DefaultExporter (local DB) + SigNoz Cloud |
-| Production  | 10% (`RATIO: 0.1`) | DefaultExporter + SigNoz Cloud            |
+| Environment | Sampling           | Exporters                  |
+| ----------- | ------------------ | -------------------------- |
+| Development | 100% (`ALWAYS`)    | DefaultExporter (local DB) |
+| Production  | 10% (`RATIO: 0.1`) | DefaultExporter (local DB) |
 
 Both environments include `SensitiveDataFilter` for data privacy.
 
 ### Viewing Traces
 
-**Local Development (Mastra Studio):**
+**Mastra Studio:**
 
 ```bash
 bun dev:mastra
@@ -629,24 +629,20 @@ bun dev:mastra
 # Navigate to Traces tab to see agent/workflow executions
 ```
 
-**Production / All Environments (SigNoz Cloud):**
-
-Traces are sent to SigNoz Cloud (https://signoz.io) via OtelExporter. View traces in the SigNoz dashboard.
+Traces are stored locally in LibSQL (`mastra.db`) via `DefaultExporter` and viewed through Mastra Studio.
 
 ### Environment Variables
 
-| Variable             | Required | Description                                                         |
-| -------------------- | -------- | ------------------------------------------------------------------- |
-| `MASTRA_STORAGE_URL` | No       | LibSQL storage URL (default: `file:./mastra.db`)                    |
-| `SIGNOZ_API_KEY`     | Yes      | SigNoz Cloud **Ingestion Key** (Settings > Ingestion, not API Keys) |
-| `SIGNOZ_REGION`      | No       | SigNoz region: `us` (default), `eu`, `in`                           |
+| Variable             | Required | Description                                      |
+| -------------------- | -------- | ------------------------------------------------ |
+| `MASTRA_STORAGE_URL` | No       | LibSQL storage URL (default: `file:./mastra.db`) |
 
 ### Relationship with lib/logger.ts
 
 The custom logger (`lib/logger.ts`) and Mastra observability serve complementary purposes:
 
 - **`lib/logger.ts`**: Application-level logging (console output, structured messages for debugging)
-- **Mastra Observability**: Distributed tracing (spans, trace context, LLM token tracking, SigNoz dashboard)
+- **Mastra Observability**: Distributed tracing (spans, trace context, LLM token tracking, Mastra Studio)
 
 Both coexist without interference.
 
