@@ -2,6 +2,7 @@ import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { evidenceSearchAgent } from "../agents/evidence-search-agent";
 import { logicModelAgent } from "../agents/logic-model-agent";
+import type { ToolResultChunk } from "@mastra/core/stream";
 import { searchEvidenceForAllEdges, type EdgeInput } from "@/lib/evidence-search-batch";
 import { createLogger } from "@/lib/logger";
 import {
@@ -12,21 +13,6 @@ import {
   type Arrow,
   type EvidenceMatch,
 } from "@/types";
-
-/** Mastra ToolResultChunk structure (matches @mastra/core ToolResultPayload) */
-interface MastraToolResultChunk {
-  type: string;
-  runId: string;
-  from: string;
-  payload: {
-    toolCallId: string;
-    toolName: string;
-    result: unknown;
-    isError?: boolean;
-    providerExecuted?: boolean;
-    args?: unknown;
-  };
-}
 
 const logger = createLogger({ module: "workflow:logic-model-with-evidence" });
 /**
@@ -88,7 +74,7 @@ const generateLogicModelStep = createStep({
           throw new Error("Agent did not call logicModelTool");
         }
 
-        const toolResults = result.toolResults as MastraToolResultChunk[];
+        const toolResults = result.toolResults as ToolResultChunk[];
 
         logger.debug(
           {
