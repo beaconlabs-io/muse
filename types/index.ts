@@ -132,20 +132,23 @@ export type MetricFormInput = z.infer<typeof MetricFormInputSchema>;
 // TOOL INPUT SCHEMAS (for Mastra agents)
 // =============================================================================
 
-// Metric schema for tool input validation (stricter than storage)
+// Metric schema for tool input validation (forgiving for LLM-generated content)
 export const ToolMetricInputSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
-  measurementMethod: z.string(), // REQUIRED for LLM generation
-  frequency: z.enum(Object.values(Frequency) as [Frequency, ...Frequency[]]),
+  measurementMethod: z.string().optional().default("To be defined"),
+  frequency: z
+    .enum(Object.values(Frequency) as [Frequency, ...Frequency[]])
+    .optional()
+    .default(Frequency.QUARTERLY),
 });
 
-// Reusable schema factory for logic model stages
+// Reusable schema factory for logic model stages (relaxed for LLM output)
 export const createStageInputSchema = () =>
   z.object({
-    title: z.string().min(1).max(100),
-    description: z.string().max(200).optional(),
-    metrics: z.array(ToolMetricInputSchema),
+    title: z.string().min(1).max(200),
+    description: z.string().max(500).optional(),
+    metrics: z.array(ToolMetricInputSchema).default([]),
   });
 
 // Connection schema for tool input

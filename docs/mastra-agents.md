@@ -47,13 +47,10 @@ sequenceDiagram
 
     User->>FE: Provide intent (e.g., "OSS impact on Ethereum")
 
-    Note over FE: UI Step 1: Analyze Intent (UI only)
-    FE->>FE: Mark "analyze" as active → completed (instant)
-
-    Note over FE, LLM: UI Step 2: Generate Structure (Workflow Runs Here)
-    FE->>FE: Mark "structure" as active
-    FE->>Action: runLogicModelWorkflow(intent)
-    Action->>Workflow: logicModelWithEvidenceWorkflow.start()
+    Note over FE, LLM: UI Step 1: Generate Structure (SSE Stream)
+    FE->>FE: Mark "generate-logic-model" as active
+    FE->>API: POST /api/workflow/stream (SSE)
+    API->>Workflow: logicModelWithEvidenceWorkflow.stream()
 
     Note over Workflow, Agent: Workflow Step 1: Generate Logic Model Structure
     Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 1)
@@ -309,21 +306,12 @@ LLM-based evidence matching with chain-of-thought reasoning:
 
 Main UI component with 4-step process:
 
-- Step 1: "analyze" - Instant UI-only step
-- Step 2: "structure" - Calls server action, all workflow steps execute here
-- Step 3: "illustrate" - Client-side rendering with `loadGeneratedCanvas()`
+- Step 1: "generate-logic-model" - Generates logic model structure via SSE stream
+- Step 2: "search-evidence" - Searches for supporting evidence
+- Step 3: "enrich-canvas" - Enriches canvas with evidence metadata
 - Step 4: "complete" - Final state
-- Form validation with Zod, default intent example provided
-
-### runWorkflow.ts
-
-**Location**: `app/actions/canvas/runWorkflow.ts`
-
-Server action wrapper for workflow execution:
-
-- `runLogicModelWorkflow(intent)`: Executes Mastra workflow, returns simplified result (canvasData only)
-- Validates output with CanvasDataSchema
-- Returns `{ success: true, canvasData }` on success or `{ success: false, error }` on failure
+- Real-time step progress via `useWorkflowStream` hook and SSE route (`/api/workflow/stream`)
+- Form validation with Zod
 
 ### logic-model-with-evidence.ts
 
@@ -577,7 +565,8 @@ bun build:mastra
 ### Components
 
 - `components/canvas/GenerateLogicModelDialog.tsx` - UI with 4-step process
-- `app/actions/canvas/runWorkflow.ts` - Server action wrapper
+- `app/api/workflow/stream/route.ts` - SSE route handler for workflow streaming
+- `hooks/useWorkflowStream.ts` - Client hook for consuming SSE events
 
 ### Skills
 
@@ -596,6 +585,55 @@ bun build:mastra
 ### Types
 
 - `types/index.ts` - CanvasData, Arrow, Card, EvidenceMatch interfaces
+
+## Observability & Tracing
+
+The application uses Mastra's built-in observability for distributed tracing of agent and workflow executions.
+
+### What is Automatically Traced
+
+- **Agent executions**: Each `agent.generate()` call, including LLM interactions and token usage
+- **Tool invocations**: `logicModelTool`, `getAllEvidenceTool` execution times and results
+- **Workflow steps**: `generateLogicModelStep`, `searchEvidenceStep`, `enrichCanvasStep` execution
+- **LLM parameters**: Model name, token counts (input/output), latency per LLM call
+
+### Configuration
+
+Observability is configured in `mastra/index.ts` with environment-based settings:
+
+| Environment | Sampling           | Exporters                  |
+| ----------- | ------------------ | -------------------------- |
+| Development | 100% (`ALWAYS`)    | DefaultExporter (local DB) |
+| Production  | 10% (`RATIO: 0.1`) | DefaultExporter (local DB) |
+
+Both environments include `SensitiveDataFilter` for data privacy.
+
+### Viewing Traces
+
+**Mastra Studio:**
+
+```bash
+bun dev:mastra
+# Open Mastra Studio at http://localhost:4111
+# Navigate to Traces tab to see agent/workflow executions
+```
+
+Traces are stored locally in LibSQL (`mastra.db`) via `DefaultExporter` and viewed through Mastra Studio.
+
+### Environment Variables
+
+| Variable             | Required | Description                                      |
+| -------------------- | -------- | ------------------------------------------------ |
+| `MASTRA_STORAGE_URL` | No       | LibSQL storage URL (default: `file:./mastra.db`) |
+
+### Relationship with lib/logger.ts
+
+The custom logger (`lib/logger.ts`) and Mastra observability serve complementary purposes:
+
+- **`lib/logger.ts`**: Application-level logging (console output, structured messages for debugging)
+- **Mastra Observability**: Distributed tracing (spans, trace context, LLM token tracking, Mastra Studio)
+
+Both coexist without interference.
 
 ## Future Enhancements
 

@@ -14,6 +14,10 @@ import {
   type Card,
 } from "@/types";
 
+// Vercel serverless function timeout (seconds)
+// Must exceed WORKFLOW_TIMEOUT_MS (300s) to allow workflow completion
+export const maxDuration = 300;
+
 const logger = createLogger({ module: "api:compact" });
 
 /**
@@ -85,7 +89,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Validate and extract canvas data
-    const canvasData = CanvasDataSchema.parse(result.result.canvasData);
+    const output = result.result as Record<string, unknown>;
+    const canvasData = CanvasDataSchema.parse(output.canvasData);
 
     // 7. Upload to IPFS using shared utility
     const ipfsResult = await uploadToIPFS(canvasData, {
