@@ -9,7 +9,7 @@ import { CanvasDataSchema } from "@/types";
 const logger = createLogger({ module: "api:workflow-stream" });
 
 const RequestSchema = z.object({
-  intent: z.string().min(1),
+  intent: z.string().min(1).max(1000),
 });
 
 function formatSSE(event: WorkflowSSEEvent): string {
@@ -83,10 +83,10 @@ export async function POST(request: NextRequest) {
                 case "workflow-step-result":
                   if (event.payload.status === "failed") {
                     lastFailedStepId = event.payload.id;
-                    const output = event.payload.output;
+                    const stepOutput = event.payload.output;
                     const errorMsg =
-                      typeof output === "object" && output !== null && "error" in output
-                        ? String((output as { error: unknown }).error)
+                      typeof stepOutput === "object" && stepOutput !== null && "error" in stepOutput
+                        ? String((stepOutput as { error: unknown }).error)
                         : "Step failed";
                     send({
                       type: "step-error",
