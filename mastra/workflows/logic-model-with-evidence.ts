@@ -3,7 +3,7 @@ import { z } from "zod";
 import { evidenceSearchAgent } from "../agents/evidence-search-agent";
 import { logicModelAgent } from "../agents/logic-model-agent";
 import type { ToolResultChunk } from "@mastra/core/stream";
-import { EXTERNAL_SEARCH_ENABLED, MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL } from "@/lib/constants";
+import { MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL } from "@/lib/constants";
 import { searchEvidenceForAllEdges, type EdgeInput } from "@/lib/evidence-search-batch";
 import { searchExternalPapersForEdge } from "@/lib/external-paper-search";
 import { createLogger } from "@/lib/logger";
@@ -298,11 +298,14 @@ const searchExternalPapersStep = createStep({
     evidenceByArrow: z.record(z.string(), z.array(EvidenceMatchSchema)),
     externalPapersByArrow: z.record(z.string(), z.array(ExternalPaperSchema)),
   }),
-  execute: async ({ inputData }) => {
+  execute: async ({ inputData, getInitData }) => {
     const { canvasData, evidenceByArrow } = inputData;
 
-    if (!EXTERNAL_SEARCH_ENABLED) {
-      logger.debug("External search disabled, skipping step 2.5");
+    const initData = getInitData<{ enableExternalSearch?: boolean }>();
+    const userOptedIn = initData?.enableExternalSearch === true;
+
+    if (!userOptedIn) {
+      logger.debug("External search not opted in, skipping step 2.5");
       return { canvasData, evidenceByArrow, externalPapersByArrow: {} };
     }
 
@@ -410,6 +413,10 @@ export const logicModelWithEvidenceWorkflow = createWorkflow({
   id: "logic-model-with-evidence",
   inputSchema: z.object({
     intent: z.string().describe("User's intent for creating the logic model"),
+    enableExternalSearch: z
+      .boolean()
+      .default(false)
+      .describe("Whether to search Semantic Scholar for external papers"),
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
