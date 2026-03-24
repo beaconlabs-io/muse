@@ -4,6 +4,7 @@ import { searchSemanticScholar } from "@/lib/academic-apis/semantic-scholar";
 import {
   EXTERNAL_CACHE_TTL_MS,
   EXTERNAL_SEARCH_ENABLED,
+  FETCH_LIMIT_PER_QUERY,
   MAX_EXTERNAL_PAPERS_PER_EDGE,
 } from "@/lib/constants";
 import { createLogger } from "@/lib/logger";
@@ -43,7 +44,6 @@ const MAX_CACHE_SIZE = 500;
 
 function setCachedResult(query: string, papers: ExternalPaper[]): void {
   if (searchCache.size >= MAX_CACHE_SIZE) {
-    // FIFO eviction: remove the oldest-inserted entry
     const oldestKey = searchCache.keys().next().value;
     if (oldestKey) searchCache.delete(oldestKey);
   }
@@ -55,16 +55,23 @@ function setCachedResult(query: string, papers: ExternalPaper[]): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Build a deterministic search query from edge source/target content.
- *
- * The workflow passes "title. description" format, so we extract only the
- * title (before the first ".") to produce a focused keyword query.
- * Also used as a stable cache key for edge-based searches.
+ * Build a deterministic stable key from edge content for caching.
  */
-function buildSearchQuery(fromContent: string, toContent: string): string {
+function buildStableKey(fromContent: string, toContent: string): string {
   const fromTitle = fromContent.split(".")[0].trim();
   const toTitle = toContent.split(".")[0].trim();
-  return `${fromTitle} ${toTitle}`.trim();
+  return `${fromTitle} → ${toTitle}`.trim();
+}
+
+/**
+ * Parse "title. description" format into separate parts.
+ */
+function parseContent(content: string): { title: string; description?: string } {
+  const dotIndex = content.indexOf(".");
+  if (dotIndex === -1) return { title: content.trim() };
+  const title = content.slice(0, dotIndex).trim();
+  const description = content.slice(dotIndex + 1).trim() || undefined;
+  return { title, description };
 }
 
 // ---------------------------------------------------------------------------
@@ -82,43 +89,38 @@ function deduplicateByDoi(papers: ExternalPaper[]): ExternalPaper[] {
 }
 
 // ---------------------------------------------------------------------------
-// Main search function
+// Quality ranking
+// ---------------------------------------------------------------------------
+
+function computeQualityScore(paper: ExternalPaper): number {
+  let score = 0;
+  if (paper.influentialCitationCount) {
+    score += Math.log2(paper.influentialCitationCount + 1) * 3;
+  } else if (paper.citationCount) {
+    score += Math.log2(paper.citationCount + 1);
+  }
+  if (paper.abstract || paper.tldr) score += 2;
+  if (paper.isOpenAccess) score += 1;
+  if (paper.year && paper.year >= 2020) score += 1;
+  return score;
+}
+
+function rankByQuality(papers: ExternalPaper[]): ExternalPaper[] {
+  return [...papers].sort((a, b) => computeQualityScore(b) - computeQualityScore(a));
+}
+
+// ---------------------------------------------------------------------------
+// Main search functions
 // ---------------------------------------------------------------------------
 
 /**
- * Core search logic: query Semantic Scholar, deduplicate, and cache.
- * Shared by both edge-based and free-text query search functions.
- */
-async function searchExternalPapersCore(
-  query: string,
-  maxResults: number,
-): Promise<ExternalPaper[]> {
-  const cached = getCachedResult(query);
-  if (cached) {
-    logger.debug({ query, cachedCount: cached.length }, "Cache hit for external search");
-    return cached.slice(0, maxResults);
-  }
-
-  logger.info({ query }, "Searching Semantic Scholar");
-
-  const papers = await searchSemanticScholar(query, maxResults);
-  const deduplicated = deduplicateByDoi(papers);
-  const limited = deduplicated.slice(0, maxResults);
-
-  setCachedResult(query, limited);
-
-  logger.info(
-    { query, totalFound: papers.length, returned: limited.length },
-    "External search completed",
-  );
-
-  return limited;
-}
-
-/**
  * Search external academic databases for papers related to an edge.
- * Uses LLM (Gemini) to extract English academic keywords from edge content,
- * falling back to raw titles on LLM failure.
+ *
+ * Uses a multi-query strategy:
+ * 1. Extract two complementary queries via LLM (concept keywords + causal phrase)
+ * 2. Run both queries in parallel against Semantic Scholar
+ * 3. Merge, deduplicate, and rank results by quality
+ *
  * Results are cached using a deterministic key derived from edge content.
  */
 export async function searchExternalPapersForEdge(
@@ -127,29 +129,58 @@ export async function searchExternalPapersForEdge(
 ): Promise<ExternalPaper[]> {
   if (!EXTERNAL_SEARCH_ENABLED) return [];
 
-  // Use deterministic query as both guard check and cache key
-  const stableKey = buildSearchQuery(fromContent, toContent);
+  const stableKey = buildStableKey(fromContent, toContent);
   if (!stableKey) return [];
 
-  // Check cache with stable key before invoking LLM
   const cached = getCachedResult(stableKey);
   if (cached) {
     logger.debug({ stableKey, cachedCount: cached.length }, "Cache hit for edge search");
     return cached.slice(0, MAX_EXTERNAL_PAPERS_PER_EDGE);
   }
 
-  // Extract English academic keywords via LLM (falls back to raw titles on failure)
-  const fromTitle = fromContent.split(".")[0].trim();
-  const toTitle = toContent.split(".")[0].trim();
-  const query = await extractSearchKeywords(fromTitle, toTitle);
-  if (!query) return [];
+  const from = parseContent(fromContent);
+  const to = parseContent(toContent);
 
-  const papers = await searchExternalPapersCore(query, MAX_EXTERNAL_PAPERS_PER_EDGE);
+  const { keywords, causal } = await extractSearchKeywords(
+    from.title,
+    to.title,
+    from.description,
+    to.description,
+  );
 
-  // Cache under stable key so repeated calls for the same edge hit cache
-  setCachedResult(stableKey, papers);
+  if (!keywords && !causal) return [];
 
-  return papers;
+  // Multi-query: run both searches in parallel
+  const queries = [keywords, causal].filter(Boolean);
+  const searchResults = await Promise.allSettled(
+    queries.map((q) => searchSemanticScholar(q, FETCH_LIMIT_PER_QUERY)),
+  );
+
+  const allPapers: ExternalPaper[] = [];
+  for (const result of searchResults) {
+    if (result.status === "fulfilled") {
+      allPapers.push(...result.value);
+    }
+  }
+
+  const deduplicated = deduplicateByDoi(allPapers);
+  const ranked = rankByQuality(deduplicated);
+  const limited = ranked.slice(0, MAX_EXTERNAL_PAPERS_PER_EDGE);
+
+  setCachedResult(stableKey, limited);
+
+  logger.info(
+    {
+      stableKey,
+      queriesUsed: queries.length,
+      totalFound: allPapers.length,
+      afterDedup: deduplicated.length,
+      returned: limited.length,
+    },
+    "Multi-query external search completed",
+  );
+
+  return limited;
 }
 
 /**
@@ -166,8 +197,27 @@ export async function searchExternalPapers(
   const trimmed = query.trim();
   if (!trimmed) return [];
 
+  const cached = getCachedResult(trimmed);
+  if (cached) {
+    logger.debug({ query: trimmed, cachedCount: cached.length }, "Cache hit for free-text search");
+    return cached.slice(0, maxResults);
+  }
+
   const lastSpace = trimmed.lastIndexOf(" ", 200);
   const searchQuery =
     trimmed.length > 200 ? trimmed.slice(0, lastSpace > 0 ? lastSpace : 200) : trimmed;
-  return searchExternalPapersCore(searchQuery, maxResults);
+
+  const papers = await searchSemanticScholar(searchQuery, maxResults);
+  const deduplicated = deduplicateByDoi(papers);
+  const ranked = rankByQuality(deduplicated);
+  const limited = ranked.slice(0, maxResults);
+
+  setCachedResult(trimmed, limited);
+
+  logger.info(
+    { query: searchQuery, totalFound: papers.length, returned: limited.length },
+    "Free-text external search completed",
+  );
+
+  return limited;
 }

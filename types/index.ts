@@ -232,7 +232,7 @@ export type EvidenceSummary = z.infer<typeof EvidenceSummarySchema>;
 // =============================================================================
 
 /**
- * External academic paper from Semantic Scholar API
+ * External academic paper from Semantic Scholar API.
  * Displayed as reference material only - no LLM scoring applied.
  */
 export const ExternalPaperSchema = z.object({
@@ -245,6 +245,10 @@ export const ExternalPaperSchema = z.object({
   abstract: z.string().optional(),
   source: z.string(),
   citationCount: z.number().optional(),
+  tldr: z.string().optional(),
+  influentialCitationCount: z.number().optional(),
+  fieldsOfStudy: z.array(z.string()).optional(),
+  isOpenAccess: z.boolean().optional(),
 });
 
 export type ExternalPaper = z.infer<typeof ExternalPaperSchema>;

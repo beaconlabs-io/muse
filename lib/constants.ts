@@ -90,8 +90,14 @@ export type StrengthLevelValue = (typeof STRENGTH_LEVELS)[number]["value"];
 /** Whether external academic search is enabled (academic paper search via Semantic Scholar) */
 export const EXTERNAL_SEARCH_ENABLED = process.env.NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED === "true";
 
-/** Maximum external papers to return per edge */
+/** Maximum external papers to return per edge (after ranking) */
 export const MAX_EXTERNAL_PAPERS_PER_EDGE = 3;
+
+/** Papers to fetch per query before merging and ranking */
+export const FETCH_LIMIT_PER_QUERY = 5;
+
+/** Minimum results from filtered search before falling back to unfiltered */
+export const MIN_FILTERED_RESULTS = 2;
 
 /** Cache TTL for external search results (24 hours) */
 export const EXTERNAL_CACHE_TTL_MS = 24 * 60 * 60 * 1000;

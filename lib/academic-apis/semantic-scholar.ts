@@ -1,15 +1,29 @@
 import { createHash } from "crypto";
 import type { ExternalPaper } from "@/types";
+import { MIN_FILTERED_RESULTS } from "@/lib/constants";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger({ module: "lib:semantic-scholar" });
 
 const BASE_URL = "https://api.semanticscholar.org/graph/v1/paper/search";
-const FIELDS = "title,authors,year,abstract,externalIds,url,citationCount";
+const FIELDS =
+  "title,authors,year,abstract,externalIds,url,citationCount,influentialCitationCount,tldr,s2FieldsOfStudy,isOpenAccess";
 const TIMEOUT_MS = 10_000;
+
+/** DPG/EBP-relevant fields of study for filtering */
+const EBP_FIELDS_OF_STUDY =
+  "Medicine,Sociology,Economics,Education,Environmental Science,Political Science,Psychology";
+
+/** High-quality publication types */
+const PUBLICATION_TYPES = "JournalArticle,Review,CaseReport";
 
 interface SemanticScholarAuthor {
   name: string;
+}
+
+interface S2FieldOfStudy {
+  category: string;
+  source: string;
 }
 
 interface SemanticScholarPaper {
@@ -21,6 +35,10 @@ interface SemanticScholarPaper {
   externalIds?: Record<string, string>;
   url?: string;
   citationCount?: number;
+  influentialCitationCount?: number;
+  tldr?: { text: string } | null;
+  s2FieldsOfStudy?: S2FieldOfStudy[];
+  isOpenAccess?: boolean;
 }
 
 interface SemanticScholarResponse {
@@ -52,12 +70,68 @@ function normalizePaper(raw: SemanticScholarPaper): ExternalPaper {
       : undefined,
     source: "semantic_scholar",
     citationCount: raw.citationCount,
+    tldr: raw.tldr?.text,
+    influentialCitationCount: raw.influentialCitationCount,
+    fieldsOfStudy: raw.s2FieldsOfStudy?.map((f) => f.category),
+    isOpenAccess: raw.isOpenAccess,
   };
 }
 
 /**
+ * Execute a single search request against the Semantic Scholar API.
+ */
+async function executeSearch(
+  query: string,
+  maxResults: number,
+  options?: { fieldsOfStudy?: string; publicationTypes?: string },
+): Promise<ExternalPaper[]> {
+  const params = new URLSearchParams({
+    query,
+    limit: String(Math.min(maxResults, 100)),
+    fields: FIELDS,
+  });
+
+  if (options?.fieldsOfStudy) {
+    params.set("fieldsOfStudy", options.fieldsOfStudy);
+  }
+  if (options?.publicationTypes) {
+    params.set("publicationTypes", options.publicationTypes);
+  }
+
+  const headers: Record<string, string> = {};
+  const apiKey = process.env.SEMANTIC_SCHOLAR_API_KEY;
+  if (apiKey) {
+    headers["x-api-key"] = apiKey;
+  }
+
+  const response = await fetch(`${BASE_URL}?${params}`, {
+    headers,
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    logger.warn(
+      { status: response.status, statusText: response.statusText, query },
+      "Semantic Scholar API error",
+    );
+    return [];
+  }
+
+  const json = (await response.json()) as SemanticScholarResponse;
+
+  if (!json.data || !Array.isArray(json.data)) {
+    return [];
+  }
+
+  return json.data.filter((p) => p.title).map(normalizePaper);
+}
+
+/**
  * Search Semantic Scholar Academic Graph API for papers matching a query.
- * Uses the Relevance Search endpoint which returns results ranked by relevance.
+ *
+ * Uses a two-phase strategy:
+ * 1. Search with DPG/EBP-relevant fieldsOfStudy and publicationTypes filters
+ * 2. If too few results, fall back to an unfiltered search
  *
  * @see https://api.semanticscholar.org/api-docs/graph#tag/Paper-Data/operation/get_graph_paper_relevance_search
  */
@@ -71,44 +145,22 @@ export async function searchSemanticScholar(
     return [];
   }
 
-  const params = new URLSearchParams({
-    query: trimmed,
-    limit: String(Math.min(maxResults, 100)),
-    fields: FIELDS,
-  });
-
-  const headers: Record<string, string> = {};
-  const apiKey = process.env.SEMANTIC_SCHOLAR_API_KEY;
-  if (apiKey) {
-    headers["x-api-key"] = apiKey;
-  }
-
   try {
-    const response = await fetch(`${BASE_URL}?${params}`, {
-      headers,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+    // Phase 1: Search with EBP-relevant filters
+    let papers = await executeSearch(trimmed, maxResults, {
+      fieldsOfStudy: EBP_FIELDS_OF_STUDY,
+      publicationTypes: PUBLICATION_TYPES,
     });
 
-    if (!response.ok) {
-      logger.warn(
-        { status: response.status, statusText: response.statusText },
-        "Semantic Scholar API error",
-      );
-      return [];
+    logger.debug({ query: trimmed, filteredCount: papers.length }, "Filtered search completed");
+
+    // Phase 2: Fall back to unfiltered if too few results
+    if (papers.length < MIN_FILTERED_RESULTS) {
+      logger.debug({ query: trimmed }, "Too few filtered results, falling back to unfiltered");
+      papers = await executeSearch(trimmed, maxResults);
     }
 
-    const json = (await response.json()) as SemanticScholarResponse;
-
-    if (!json.data || !Array.isArray(json.data)) {
-      return [];
-    }
-
-    const papers = json.data.filter((p) => p.title).map(normalizePaper);
-
-    logger.debug(
-      { query, total: json.total, returned: papers.length },
-      "Semantic Scholar search completed",
-    );
+    logger.debug({ query: trimmed, returned: papers.length }, "Semantic Scholar search completed");
     return papers;
   } catch (error) {
     logger.warn({ error, query }, "Semantic Scholar search failed");
