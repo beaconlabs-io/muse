@@ -262,7 +262,7 @@ export const CardSchema = z.object({
   x: z.number(),
   y: z.number(),
   title: z.string().min(1, "Title is required").max(100, "Title must be 100 characters or less"),
-  description: z.string().max(200, "Description must be 200 characters or less").optional(),
+  description: z.string().max(300, "Description must be 300 characters or less").optional(),
   color: z.string(),
   type: z.string().optional(),
 });
