@@ -164,7 +164,7 @@ React Flow automatically uses the registered `EvidenceEdge` component when `type
    arrow.evidenceIds = [matchingEvidenceId];
    arrow.evidenceScore = 85;
    arrow.evidenceReasoning = "Strong alignment between...";
-   arrow.externalPapers = [{ id: "ext-...", title: "...", source: "semantic_scholar", ... }];
+   arrow.externalPapers = [{ id: "ext-...", title: "...", source: "semantic_scholar", tldr: "...", influentialCitationCount: 5, fieldsOfStudy: ["Education"], isOpenAccess: true, ... }];
    ```
 4. **Canvas re-renders** with updated arrows
 5. **`arrowsToEdges()`** converts arrows to edges with `type: "evidence"` for any content

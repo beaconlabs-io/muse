@@ -209,10 +209,12 @@ Evidence is semantically matched to logic model arrows (causal relationships) us
    - Gray default edges (#6b7280) for relationships with no evidence
    - Evidence dialog with two sections: internal evidence (green) and academic papers (blue)
    - Clickable links to `/evidence/{id}` for internal, DOI/URL links for external
-5. **External academic papers** (when enabled via `EXTERNAL_SEARCH_ENABLED`):
-   - Edges with fewer than 1 internal evidence match trigger Semantic Scholar API search
-   - LLM (Gemini 2.5 Flash) extracts English academic keywords from card titles
-   - Results displayed as reference material (no LLM scoring) with blue styling
+5. **External academic papers** (when enabled via `EXTERNAL_SEARCH_ENABLED` or compact API):
+   - Edges with fewer than 1 internal evidence match trigger multi-query Semantic Scholar API search
+   - LLM (Gemini 2.5 Flash) generates two queries per edge: concept keywords + causal relationship phrase
+   - Searches filtered by DPG/EBP-relevant fields of study (Medicine, Sociology, Education, etc.) with automatic fallback
+   - Results ranked by quality (influential citations, abstract availability, open access, recency)
+   - Displayed as reference material (no LLM scoring) with blue styling
    - Cached for 24 hours with in-memory FIFO eviction (500 entries max)
 
 ## Evidence Search Philosophy
@@ -250,14 +252,14 @@ The evidence search tool searches for supporting evidence for **ALL arrows in th
 
 MUSE distinguishes between two categories of evidence:
 
-|                    | Internal (Attested) Evidence             | External Academic Papers                |
-| ------------------ | ---------------------------------------- | --------------------------------------- |
-| **Source**         | `@beaconlabs-io/evidence` repository     | Semantic Scholar API                    |
-| **Trust Level**    | Blockchain-attested via EAS              | Unverified reference                    |
-| **Scoring**        | LLM-scored (0-100) with chain-of-thought | No scoring (raw search results)         |
-| **Display**        | Green styling, FileText icon             | Blue styling, BookOpen icon             |
-| **Dialog Section** | Primary section with full metadata       | "Academic Papers (Reference)" section   |
-| **Purpose**        | Validated evidence backing claims        | Supplementary reading for research gaps |
+|                    | Internal (Attested) Evidence             | External Academic Papers                                   |
+| ------------------ | ---------------------------------------- | ---------------------------------------------------------- |
+| **Source**         | `@beaconlabs-io/evidence` repository     | Semantic Scholar API (multi-query, fieldsOfStudy filtered) |
+| **Trust Level**    | Blockchain-attested via EAS              | Unverified reference (quality-ranked)                      |
+| **Scoring**        | LLM-scored (0-100) with chain-of-thought | Quality-ranked (citations, OA, recency)                    |
+| **Display**        | Green styling, FileText icon             | Blue styling, BookOpen icon                                |
+| **Dialog Section** | Primary section with full metadata       | "Academic Papers (Reference)" section                      |
+| **Purpose**        | Validated evidence backing claims        | Supplementary reading for research gaps                    |
 
 External papers complement the internal evidence repository by providing relevant academic context for edges that lack attested evidence. They are explicitly labeled as "Reference" material to distinguish them from the scored, attested internal evidence.
 
@@ -280,7 +282,7 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 - Type definitions: `types/index.ts` (Zod schemas)
 - Evidence parsing: `lib/evidence.ts`
 - Evidence search: `lib/evidence-search-batch.ts`
-- External paper search: `lib/external-paper-search.ts`
-- Semantic Scholar client: `lib/academic-apis/semantic-scholar.ts`
-- Keyword extraction: `lib/academic-apis/extract-search-keywords.ts`
+- External paper search: `lib/external-paper-search.ts` (multi-query orchestration, quality ranking, caching)
+- Semantic Scholar client: `lib/academic-apis/semantic-scholar.ts` (fieldsOfStudy/publicationTypes filter with fallback)
+- Query extraction: `lib/academic-apis/extract-search-keywords.ts` (generates 2 queries: keywords + causal)
 - External search constants: `lib/constants.ts`

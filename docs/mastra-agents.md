@@ -86,7 +86,7 @@ sequenceDiagram
     Note over Workflow, SS: Workflow Step 2.5: External Paper Search (parallel, cached)
     Workflow->>Workflow: Filter edges with < 1 internal match
     Workflow->>SS: Promise.allSettled: search per under-matched edge
-    Note over SS: LLM keyword extraction (Gemini 2.5 Flash)<br/>→ Semantic Scholar Graph API<br/>→ Deduplicate by DOI/title
+    Note over SS: LLM extracts 2 queries (keywords + causal)<br/>→ Parallel Semantic Scholar searches (fieldsOfStudy filtered)<br/>→ Merge, deduplicate, rank by quality
     SS-->>Workflow: ExternalPaper[] per edge
     Note over Workflow: Cache results (24h TTL, 500 entries FIFO)
 
@@ -187,26 +187,39 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 
 ### Step 2.5: External Academic Paper Search
 
-**Trigger condition**: Only runs when `EXTERNAL_SEARCH_ENABLED=true`. Searches edges with fewer than `MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL` (1) internal evidence matches.
+**Trigger condition**: Only runs when `EXTERNAL_SEARCH_ENABLED=true`. Searches edges with fewer than `MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL` (1) internal evidence matches. Also enabled by default in the compact API (`/api/compact`).
 
 **Process**:
 
 1. Filter arrows to those with insufficient internal evidence
 2. For each under-matched edge (parallel via `Promise.allSettled`):
-   a. Extract card titles from source/target content
-   b. Use Gemini 2.5 Flash to convert titles to English academic keywords
-   c. Query Semantic Scholar Graph API with extracted keywords
-   d. Normalize results to `ExternalPaper` format, deduplicate by DOI/title
+   a. Extract card titles and descriptions from source/target content
+   b. Use Gemini 2.5 Flash to generate **two complementary search queries**:
+   - `keywords`: 3-5 English academic keywords covering core concepts
+   - `causal`: Natural-language causal relationship phrase (e.g., "effect of X on Y")
+     c. Run both queries in parallel against Semantic Scholar Graph API with `fieldsOfStudy` filter (Medicine, Sociology, Economics, Education, Environmental Science, Political Science, Psychology) and `publicationTypes` filter (JournalArticle, Review, CaseReport)
+     d. If filtered results are too few, fall back to unfiltered search
+     e. Merge results, deduplicate by DOI/title, rank by quality score
 3. Cache results with 24h TTL (in-memory, 500-entry FIFO)
+
+**Quality Ranking**: Papers are scored and sorted by:
+
+- Influential citation count (×3 weight, log scale)
+- Citation count (log scale, fallback)
+- Has abstract or TLDR (+2)
+- Open access (+1)
+- Published 2020 or later (+1)
 
 **Key Design Decisions**:
 
-- **LLM keyword extraction**: Card titles may be non-English or domain-specific; Gemini 2.5 Flash converts them to concise English academic keywords with graceful fallback to raw titles
+- **Multi-query strategy**: Two queries from different angles improve recall; merged results improve precision via quality ranking
+- **fieldsOfStudy filter**: Prioritizes DPG/EBP-relevant fields with automatic fallback to avoid zero results
+- **LLM query extraction**: Card titles and descriptions may be non-English or domain-specific; Gemini 2.5 Flash generates structured queries with graceful fallback to raw titles
 - **Parallel execution**: `Promise.allSettled` ensures one failing edge search doesn't block others
-- **Caching**: Deterministic cache key from edge content titles avoids redundant LLM + API calls
+- **Caching**: Deterministic cache key from edge content avoids redundant LLM + API calls
 - **No scoring**: External papers are presented as reference material only (no LLM relevance scoring)
 
-**Output**: `Record<arrowId, ExternalPaper[]>` map (max 3 papers per edge)
+**Output**: `Record<arrowId, ExternalPaper[]>` map (max 3 papers per edge, ranked by quality)
 
 ### Step 3: Result Merging
 
@@ -230,7 +243,11 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
         authors: ["Smith, J.", "Jones, K."],
         year: 2022,
         doi: "10.1234/example",
-        source: "semantic_scholar"
+        source: "semantic_scholar",
+        tldr: "Tutoring significantly improves math outcomes...",
+        influentialCitationCount: 5,
+        fieldsOfStudy: ["Education", "Psychology"],
+        isOpenAccess: true
       }
     ]
   }
@@ -382,8 +399,8 @@ Production workflow with 4 steps (including Step 2.5):
 - Checks `EXTERNAL_SEARCH_ENABLED` flag; skips if disabled
 - Filters edges to those with fewer than `MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL` internal matches
 - Parallel search across all under-matched edges via `Promise.allSettled`
-- Each edge: LLM keyword extraction (Gemini 2.5 Flash) → Semantic Scholar API → normalize + deduplicate
-- Returns `Record<arrowId, ExternalPaper[]>` map
+- Each edge: LLM extracts 2 queries (keywords + causal) → parallel Semantic Scholar searches (fieldsOfStudy filtered + fallback) → merge + deduplicate + quality ranking
+- Returns `Record<arrowId, ExternalPaper[]>` map (ranked by quality)
 
 **Step 3: Enrich Canvas with Evidence + External Papers**
 
@@ -422,7 +439,7 @@ Tool for generating logic model structure:
 
 - Arrow type extended with `evidenceIds: string[]`, `evidenceMetadata: EvidenceMatch[]`, and `externalPapers: ExternalPaper[]`
 - EvidenceMatch interface with evidenceId, score, confidence, reasoning, strength, hasWarning, title, interventionText, outcomeText
-- ExternalPaper interface with id, title, authors, year, doi, url, abstract, source, citationCount
+- ExternalPaper interface with id, title, authors, year, doi, url, abstract, source, citationCount, tldr, influentialCitationCount, fieldsOfStudy, isOpenAccess
 - EvidenceSearchRequest extended with `includeExternalPapers: boolean` option
 - EvidenceSearchResponse extended with optional `externalPapers: ExternalPaper[]`
 - CanvasDataSchema reused throughout for validation
@@ -453,7 +470,7 @@ Tool for generating logic model structure:
 2. **Generate Structure** (Server) - **Full workflow executes here**:
    - Workflow Step 1: LLM generates cards and arrows with 5-stage validation
    - Workflow Step 2: Batch evidence search - single LLM call with chain-of-thought for all edges
-   - Workflow Step 2.5: External academic paper search for under-matched edges (Semantic Scholar API)
+   - Workflow Step 2.5: External academic paper search for under-matched edges (multi-query Semantic Scholar API with fieldsOfStudy filter)
    - Workflow Step 3: Enrich arrows with evidence metadata + external papers
    - Returns complete `CanvasData` to frontend
 
