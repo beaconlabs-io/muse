@@ -55,15 +55,6 @@ function setCachedResult(query: string, papers: ExternalPaper[]): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Build a deterministic stable key from edge content for caching.
- */
-function buildStableKey(fromContent: string, toContent: string): string {
-  const fromTitle = fromContent.split(".")[0].trim();
-  const toTitle = toContent.split(".")[0].trim();
-  return `${fromTitle} → ${toTitle}`.trim();
-}
-
-/**
  * Parse "title. description" format into separate parts.
  */
 function parseContent(content: string): { title: string; description?: string } {
@@ -72,6 +63,15 @@ function parseContent(content: string): { title: string; description?: string } 
   const title = content.slice(0, dotIndex).trim();
   const description = content.slice(dotIndex + 1).trim() || undefined;
   return { title, description };
+}
+
+/**
+ * Build a deterministic stable key from edge content for caching.
+ */
+function buildStableKey(fromContent: string, toContent: string): string {
+  const fromTitle = parseContent(fromContent).title;
+  const toTitle = parseContent(toContent).title;
+  return `${fromTitle} → ${toTitle}`.trim();
 }
 
 // ---------------------------------------------------------------------------

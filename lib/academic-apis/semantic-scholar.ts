@@ -61,7 +61,7 @@ function normalizePaper(raw: SemanticScholarPaper): ExternalPaper {
     title: raw.title || "Untitled",
     authors: raw.authors?.map((a) => a.name),
     year: raw.year,
-    doi: doi || undefined,
+    doi: doi && doi.startsWith("10.") ? doi : undefined,
     url: raw.url || undefined,
     abstract: raw.abstract
       ? raw.abstract.length > 500
