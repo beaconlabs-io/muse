@@ -207,6 +207,8 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 - Influential citation count (×3 weight, log scale)
 - Citation count (log scale, fallback)
 - Has abstract or TLDR (+2)
+- Peer-reviewed journal article or review (+2)
+- Conference paper (+1)
 - Open access (+1)
 - Published 2020 or later (+1)
 

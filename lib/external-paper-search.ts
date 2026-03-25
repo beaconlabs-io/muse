@@ -102,6 +102,8 @@ function computeQualityScore(paper: ExternalPaper): number {
   if (paper.abstract || paper.tldr) score += 2;
   if (paper.isOpenAccess) score += 1;
   if (paper.year && paper.year >= 2020) score += 1;
+  if (paper.peerReviewStatus === "peer-reviewed") score += 2;
+  if (paper.peerReviewStatus === "conference") score += 1;
   return score;
 }
 
