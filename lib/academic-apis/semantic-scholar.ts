@@ -7,7 +7,7 @@ const logger = createLogger({ module: "lib:semantic-scholar" });
 
 const BASE_URL = "https://api.semanticscholar.org/graph/v1/paper/search";
 const FIELDS =
-  "title,authors,year,abstract,externalIds,url,citationCount,influentialCitationCount,tldr,s2FieldsOfStudy,isOpenAccess,publicationVenue,publicationTypes";
+  "title,authors,year,abstract,externalIds,url,citationCount,influentialCitationCount,tldr,s2FieldsOfStudy,publicationVenue";
 const TIMEOUT_MS = 10_000;
 
 /** DPG/EBP-relevant fields of study for filtering */
@@ -38,7 +38,6 @@ interface SemanticScholarPaper {
   influentialCitationCount?: number;
   tldr?: { text: string } | null;
   s2FieldsOfStudy?: S2FieldOfStudy[];
-  isOpenAccess?: boolean;
   publicationVenue?: {
     id?: string;
     name?: string;
@@ -46,7 +45,6 @@ interface SemanticScholarPaper {
     issn?: string;
     url?: string;
   } | null;
-  publicationTypes?: string[] | null;
 }
 
 interface SemanticScholarResponse {
@@ -58,25 +56,6 @@ interface SemanticScholarResponse {
 function generateExternalPaperId(source: string, identifier: string): string {
   const hash = createHash("sha256").update(identifier).digest("hex").slice(0, 8);
   return `ext-${source}-${hash}`;
-}
-
-type PeerReviewStatus = "peer-reviewed" | "conference" | "unknown";
-
-function inferPeerReviewStatus(
-  publicationVenue?: SemanticScholarPaper["publicationVenue"],
-  publicationTypes?: string[] | null,
-): PeerReviewStatus {
-  if (publicationTypes && publicationTypes.length > 0) {
-    const types = publicationTypes.map((t) => t.toLowerCase());
-    if (types.includes("journalarticle") || types.includes("review")) return "peer-reviewed";
-    if (types.includes("conference")) return "conference";
-  }
-  if (publicationVenue?.type) {
-    const venueType = publicationVenue.type.toLowerCase();
-    if (venueType === "journal") return "peer-reviewed";
-    if (venueType === "conference") return "conference";
-  }
-  return "unknown";
 }
 
 function normalizePaper(raw: SemanticScholarPaper): ExternalPaper {
@@ -100,8 +79,6 @@ function normalizePaper(raw: SemanticScholarPaper): ExternalPaper {
     tldr: raw.tldr?.text,
     influentialCitationCount: raw.influentialCitationCount,
     fieldsOfStudy: raw.s2FieldsOfStudy?.map((f) => f.category),
-    isOpenAccess: raw.isOpenAccess,
-    peerReviewStatus: inferPeerReviewStatus(raw.publicationVenue, raw.publicationTypes),
     publicationVenue: raw.publicationVenue?.name || undefined,
   };
 }

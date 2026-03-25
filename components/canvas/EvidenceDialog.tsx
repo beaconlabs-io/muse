@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileSymlink, ExternalLink, BookCheck, Users, Unlock } from "lucide-react";
+import { FileSymlink, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -172,24 +172,6 @@ export function EvidenceDialog({
                                 ({paper.influentialCitationCount} influential)
                               </span>
                             )}
-                        </span>
-                      )}
-                      {paper.peerReviewStatus === "peer-reviewed" && (
-                        <span className="inline-flex items-center gap-0.5 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700">
-                          <BookCheck className="h-3 w-3" />
-                          Peer-reviewed
-                        </span>
-                      )}
-                      {paper.peerReviewStatus === "conference" && (
-                        <span className="inline-flex items-center gap-0.5 rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-700">
-                          <Users className="h-3 w-3" />
-                          Conference
-                        </span>
-                      )}
-                      {paper.isOpenAccess && (
-                        <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">
-                          <Unlock className="h-3 w-3" />
-                          Open Access
                         </span>
                       )}
                     </div>
