@@ -40,7 +40,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `components/canvas/` - React Flow canvas components (nodes, edges, controls)
 - `components/evidence/` - Evidence-specific UI components
 - `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
-- `hooks/` - Custom React hooks including blockchain integration
+- `hooks/` - Custom React hooks including blockchain integration and SSE workflow streaming (`useWorkflowStream`)
 - `lib/` - Shared utilities, configuration, and academic API clients (`lib/academic-apis/`)
 - `mastra/` - AI agent system (agents, workflows, tools, skills)
 - `types/` - TypeScript definitions for Evidence, Attestation, graph structures

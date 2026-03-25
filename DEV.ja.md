@@ -59,7 +59,6 @@ sequenceDiagram
     participant Canvas as ReactFlowCanvas
     participant Edge as EvidenceEdge コンポーネント
     participant Dialog as EvidenceDialog
-    participant Action as Server Action
     participant Workflow as Mastra Workflow
     participant Agent as Logic Model Agent
     participant Tool as Logic Model Tool
@@ -78,7 +77,7 @@ sequenceDiagram
     API->>Workflow: logicModelWithEvidenceWorkflow.stream()
 
     Note over Workflow, Agent: Workflow Step 1: ロジックモデル構造を生成
-    Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 1)
+    Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 12)
     Agent->>Agent: Stage 1: Interventionを分析（ドメイン、目標）
     Agent->>Agent: Stage 2: カードを生成（メトリクス付き）
     Agent->>Agent: Stage 3: 接続をデザイン（4-Test Framework）
@@ -115,8 +114,8 @@ sequenceDiagram
     Workflow->>Workflow: エビデンスIDを矢印に添付
     Workflow->>Workflow: 外部学術論文を矢印に添付
     Workflow->>Workflow: エビデンスメタデータを追加（スコア、信頼度、推論、強度）
-    Workflow-->>Action: { canvasData }を返却（完全に強化済み）
-    Action-->>FE: canvasData with evidenceを返却
+    Workflow-->>API: { canvasData }を返却（完全に強化済み）
+    API-->>FE: canvasData with evidenceを返却
     FE->>FE: "structure"を完了にマーク
 
     Note over FE: UI Step 3: Canvasを描画 (クライアントサイド)
@@ -238,7 +237,7 @@ strength: 4 (Maryland Scale)
 
 - **Stage 5: ツールを呼び出し**
   - 検証済み構造でcanvasを生成
-  - ツールは正確に1回だけ呼び出される必要がある（maxSteps: 1）
+  - ツールの呼び出し（maxSteps: 12、スキルアクティベーションステップを許容）
 
 **よくある間違いの防止:**
 
@@ -366,7 +365,7 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 - `types/index.ts`: 型定義
   - `evidenceIds: string[]`、`evidenceMetadata: EvidenceMatch[]`、`externalPapers: ExternalPaper[]`で拡張されたArrow型
   - evidenceId、score、confidence、reasoning、strength、hasWarning、title、interventionText、outcomeTextを含むEvidenceMatchインターフェース
-  - id、title、authors、year、doi、url、abstract、source、citationCountを含むExternalPaperインターフェース
+  - id、title、authors、year、doi、url、abstract、source、citationCount、tldr、influentialCitationCount、fieldsOfStudy、publicationVenueを含むExternalPaperインターフェース
   - `includeExternalPapers: boolean`オプション付きのEvidenceSearchRequest
   - オプションの`externalPapers: ExternalPaper[]`付きのEvidenceSearchResponse
   - 検証のために全体で再利用されるCanvasDataSchema

@@ -84,9 +84,9 @@ Modal component for displaying evidence details when user clicks evidence button
 
 2. **Academic Papers (Reference)** (blue theme, separated by border):
    - Paper title (clickable link to DOI or Semantic Scholar URL)
-   - Source badge (e.g., "Semantic Scholar")
-   - Authors (up to 3, with "et al.") and year
-   - Abstract (truncated to 3 lines)
+   - Authors (up to 3, with "et al."), year, and publication venue (italic)
+   - Citation count badge with influential citation count
+   - TLDR (preferred) or abstract (truncated to 3 lines)
    - DOI identifier
 
 ## Data Flow
@@ -164,7 +164,7 @@ React Flow automatically uses the registered `EvidenceEdge` component when `type
    arrow.evidenceIds = [matchingEvidenceId];
    arrow.evidenceScore = 85;
    arrow.evidenceReasoning = "Strong alignment between...";
-   arrow.externalPapers = [{ id: "ext-...", title: "...", source: "semantic_scholar", tldr: "...", influentialCitationCount: 5, fieldsOfStudy: ["Education"], isOpenAccess: true, ... }];
+   arrow.externalPapers = [{ id: "ext-...", title: "...", source: "semantic_scholar", tldr: "...", influentialCitationCount: 5, fieldsOfStudy: ["Education"], publicationVenue: "Journal of Educational Psychology", ... }];
    ```
 4. **Canvas re-renders** with updated arrows
 5. **`arrowsToEdges()`** converts arrows to edges with `type: "evidence"` for any content
@@ -320,9 +320,9 @@ Evidence with strength < 3 displays warning indicator (⚠️) in dialog to aler
 - **Academic Papers section** (when present, separated by border):
   - Section header: "Academic Papers (Reference)"
   - Blue-themed cards with paper title (clickable DOI or URL link)
-  - Source badge ("Semantic Scholar")
-  - Authors (max 3) and year
-  - Abstract (3-line clamp)
+  - Authors (max 3), year, and publication venue (italic)
+  - Citation count badge with influential citation count
+  - TLDR (preferred) or abstract (3-line clamp)
   - DOI identifier
 
 **Clean Design Philosophy**:

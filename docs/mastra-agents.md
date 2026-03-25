@@ -38,7 +38,6 @@ sequenceDiagram
     participant Canvas as ReactFlowCanvas
     participant Edge as EvidenceEdge Component
     participant Dialog as EvidenceDialog
-    participant Action as Server Action
     participant Workflow as Mastra Workflow
     participant Agent as Logic Model Agent
     participant Tool as Logic Model Tool
@@ -57,7 +56,7 @@ sequenceDiagram
     API->>Workflow: logicModelWithEvidenceWorkflow.stream()
 
     Note over Workflow, Agent: Workflow Step 1: Generate Logic Model Structure
-    Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 1)
+    Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 12)
     Agent->>Agent: Stage 1: Analyze Intervention (domain, goals)
     Agent->>Agent: Stage 2: Generate Cards (with metrics)
     Agent->>Agent: Stage 3: Design Connections (4-Test Framework)
@@ -94,8 +93,8 @@ sequenceDiagram
     Workflow->>Workflow: Attach evidence IDs to arrows
     Workflow->>Workflow: Attach external papers to arrows
     Workflow->>Workflow: Add evidence metadata (score, confidence, reasoning, strength)
-    Workflow-->>Action: Return { canvasData } (fully enriched)
-    Action-->>FE: Return canvasData with evidence
+    Workflow-->>API: Return { canvasData } (fully enriched)
+    API-->>FE: Return canvasData with evidence
     FE->>FE: Mark "structure" as completed
 
     Note over FE: UI Step 3: Illustrate Canvas (Client-side)
@@ -205,11 +204,8 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 **Quality Ranking**: Papers are scored and sorted by:
 
 - Influential citation count (×3 weight, log scale)
-- Citation count (log scale, fallback)
+- Citation count (log scale, fallback when no influential citations)
 - Has abstract or TLDR (+2)
-- Peer-reviewed journal article or review (+2)
-- Conference paper (+1)
-- Open access (+1)
 - Published 2020 or later (+1)
 
 **Key Design Decisions**:
@@ -220,6 +216,13 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 - **Parallel execution**: `Promise.allSettled` ensures one failing edge search doesn't block others
 - **Caching**: Deterministic cache key from edge content avoids redundant LLM + API calls
 - **No scoring**: External papers are presented as reference material only (no LLM relevance scoring)
+
+**Error Handling**: Semantic Scholar API errors are differentiated by HTTP status code:
+
+- **429 (Rate Limit)**: Warning logged with suggestion to reduce concurrency or add API key
+- **5xx (Server Error)**: Warning logged with status code
+- **Other client errors**: Debug-level logging only
+- All errors result in empty results (graceful degradation — never blocks the workflow)
 
 **Output**: `Record<arrowId, ExternalPaper[]>` map (max 3 papers per edge, ranked by quality)
 
@@ -249,7 +252,7 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
         tldr: "Tutoring significantly improves math outcomes...",
         influentialCitationCount: 5,
         fieldsOfStudy: ["Education", "Psychology"],
-        isOpenAccess: true
+        publicationVenue: "Journal of Educational Psychology"
       }
     ]
   }
@@ -297,7 +300,7 @@ Theory of Change specialist with structured 5-stage workflow:
 #### Stage 5: Call Tool
 
 - Generates canvas with validated structure
-- Tool must be called (maxSteps: 5, allowing skill activation steps)
+- Tool must be called (maxSteps: 12, allowing skill activation steps)
 
 ### Common Mistakes Prevention
 
@@ -441,7 +444,7 @@ Tool for generating logic model structure:
 
 - Arrow type extended with `evidenceIds: string[]`, `evidenceMetadata: EvidenceMatch[]`, and `externalPapers: ExternalPaper[]`
 - EvidenceMatch interface with evidenceId, score, confidence, reasoning, strength, hasWarning, title, interventionText, outcomeText
-- ExternalPaper interface with id, title, authors, year, doi, url, abstract, source, citationCount, tldr, influentialCitationCount, fieldsOfStudy, isOpenAccess
+- ExternalPaper interface with id, title, authors, year, doi, url, abstract, source, citationCount, tldr, influentialCitationCount, fieldsOfStudy, publicationVenue
 - EvidenceSearchRequest extended with `includeExternalPapers: boolean` option
 - EvidenceSearchResponse extended with optional `externalPapers: ExternalPaper[]`
 - CanvasDataSchema reused throughout for validation
@@ -462,6 +465,31 @@ Tool for generating logic model structure:
 - **Better Error Recovery**: Explicit validation of tool call results with detailed logging aids debugging
 - **Observability**: Comprehensive logging with structured reasoning makes agent decisions explainable
 - **Graceful External Search**: External paper search runs only for under-matched edges, uses parallel execution with fault isolation (`Promise.allSettled`), and caches aggressively (24h TTL)
+
+### Compact API Endpoint
+
+**Location**: `app/api/compact/route.ts`
+
+`POST /api/compact` — Converts chat history into a Logic Model with evidence.
+
+**Pipeline**:
+
+1. Authenticate via `BOT_API_KEY` header (optional, skipped if `BOT_API_KEY` env var is not configured)
+2. Validate request body with `CompactRequestSchema` (`chatHistory: ChatMessage[]`)
+3. Extract intent from user messages in the conversation
+4. Run `logicModelWithEvidenceWorkflow` with `enableExternalSearch: true` (always enabled)
+5. Validate output with `CanvasDataSchema`
+6. Upload canvas data to IPFS via Pinata
+7. Return `CompactResponse`: `{ canvasUrl, canvasId, summary: { extractedIssues, intervention, targetContext } }`
+
+**Error Handling**:
+
+- `400`: Invalid request body
+- `413`: Payload too large
+- `504`: Workflow timeout (`WORKFLOW_TIMEOUT_MS`)
+- `500`: Workflow failure or canvas data validation error
+
+**Configuration**: `maxDuration = 300` (Vercel serverless timeout, seconds)
 
 ## UI Flow (4 Steps)
 
@@ -709,9 +737,11 @@ Traces are stored locally in LibSQL (`mastra.db`) via `DefaultExporter` and view
 
 ### Environment Variables
 
-| Variable             | Required | Description                                      |
-| -------------------- | -------- | ------------------------------------------------ |
-| `MASTRA_STORAGE_URL` | No       | LibSQL storage URL (default: `file:./mastra.db`) |
+| Variable                              | Required | Description                                                  |
+| ------------------------------------- | -------- | ------------------------------------------------------------ |
+| `MASTRA_STORAGE_URL`                  | No       | LibSQL storage URL (default: `file:./mastra.db`)             |
+| `SEMANTIC_SCHOLAR_API_KEY`            | No       | Semantic Scholar API key for higher rate limits (optional)   |
+| `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` | No       | Set to `true` to show external paper search toggle in the UI |
 
 ### Relationship with lib/logger.ts
 
