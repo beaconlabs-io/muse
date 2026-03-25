@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { ReactFlowCanvas } from "@/components/canvas/ReactFlowCanvas";
 import { Button } from "@/components/ui/button";
 import type { CanvasData } from "@/types";
+import { Link } from "@/i18n/routing";
 import { fetchFromIPFS, isValidCID } from "@/utils/ipfs";
 
 interface LogicModelPageClientProps {
@@ -12,6 +13,8 @@ interface LogicModelPageClientProps {
 }
 
 export function LogicModelPageClient({ id }: LogicModelPageClientProps) {
+  const t = useTranslations("canvas");
+
   const {
     data: canvasData,
     isLoading,
@@ -30,12 +33,10 @@ export function LogicModelPageClient({ id }: LogicModelPageClientProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-gray-900">Invalid Canvas ID</h1>
-          <p className="mb-4 text-gray-600">
-            The provided ID is not a valid IPFS content identifier (CID).
-          </p>
+          <h1 className="mb-4 text-2xl font-bold text-gray-900">{t("invalidCanvasId")}</h1>
+          <p className="mb-4 text-gray-600">{t("invalidCanvasIdDescription")}</p>
           <Button asChild>
-            <Link href="/canvas">Create New Canvas</Link>
+            <Link href="/canvas">{t("createNewCanvas")}</Link>
           </Button>
         </div>
       </div>
@@ -47,7 +48,7 @@ export function LogicModelPageClient({ id }: LogicModelPageClientProps) {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600"></div>
-          <p className="text-gray-600">Loading canvas...</p>
+          <p className="text-gray-600">{t("loadingCanvas")}</p>
         </div>
       </div>
     );
@@ -58,10 +59,10 @@ export function LogicModelPageClient({ id }: LogicModelPageClientProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-gray-900">Canvas Not Found</h1>
+          <h1 className="mb-4 text-2xl font-bold text-gray-900">{t("canvasNotFound")}</h1>
           <p className="mb-4 text-gray-600">{errorMessage}</p>
           <Button asChild>
-            <Link href="/canvas">Create New Canvas</Link>
+            <Link href="/canvas">{t("createNewCanvas")}</Link>
           </Button>
         </div>
       </div>

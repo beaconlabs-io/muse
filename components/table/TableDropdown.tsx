@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,26 +18,28 @@ interface DataTableRowActionsProps<TData> {
 }
 
 export function TableDropdown<TData>({ row }: DataTableRowActionsProps<TData>) {
+  const t = useTranslations("table");
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="flex h-8 w-8 cursor-pointer p-0">
           <MoreHorizontal />
-          <span className="sr-only">Open menu</span>
+          <span className="sr-only">{t("openMenu")}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem>
           <div className="flex w-max flex-col items-center gap-2">
-            <Link
+            <a
               href={`https://base-sepolia.easscan.org/attestation/view/${row.original.attestationUID}`}
               target="_blank"
               rel="noopener noreferrer"
             >
               <Button className="cursor-pointer" variant="outline">
-                View on EAS scan
+                {t("viewOnEAS")}
               </Button>
-            </Link>
+            </a>
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, Star } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { STRENGTH_LEVELS } from "@/lib/constants";
 
+// Map strength level values to translation keys for fullLabel
+const strengthFullLabelKeys: Record<string, string> = {
+  "5": "rctFull",
+  "4": "randomizedFull",
+  "3": "quasiExperimentalFull",
+  "2": "controlledFull",
+  "1": "basicFull",
+  "0": "modelFull",
+};
+
 interface StrengthFilterProps {
   selectedStrengths: string[];
   onStrengthsChange: (strengths: string[]) => void;
 }
 
 export function StrengthFilter({ selectedStrengths, onStrengthsChange }: StrengthFilterProps) {
+  const tFilters = useTranslations("filters");
+  const tStrength = useTranslations("strengthLevels");
+
   const handleToggle = (value: string) => {
     if (selectedStrengths.includes(value)) {
       onStrengthsChange(selectedStrengths.filter((s) => s !== value));
@@ -37,7 +51,7 @@ export function StrengthFilter({ selectedStrengths, onStrengthsChange }: Strengt
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="h-10 cursor-pointer">
           <Star size={14} className="mr-1" />
-          Strength
+          {tFilters("strength")}
           {selectedStrengths.length > 0 && (
             <Badge variant="secondary" className="ml-2 rounded-full">
               {selectedStrengths.length}
@@ -47,10 +61,11 @@ export function StrengthFilter({ selectedStrengths, onStrengthsChange }: Strengt
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>Filter by evidence level</DropdownMenuLabel>
+        <DropdownMenuLabel>{tFilters("filterByLevel")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {STRENGTH_LEVELS.map((option) => {
           const level = parseInt(option.value, 10);
+          const fullLabelKey = strengthFullLabelKeys[option.value];
           return (
             <DropdownMenuCheckboxItem
               key={option.value}
@@ -59,7 +74,9 @@ export function StrengthFilter({ selectedStrengths, onStrengthsChange }: Strengt
             >
               <div className="flex items-center gap-2">
                 <StarRating level={level} size={10} />
-                <span className="text-xs">{option.fullLabel}</span>
+                <span className="text-xs">
+                  {fullLabelKey ? tStrength(fullLabelKey) : option.fullLabel}
+                </span>
               </div>
             </DropdownMenuCheckboxItem>
           );
@@ -73,7 +90,7 @@ export function StrengthFilter({ selectedStrengths, onStrengthsChange }: Strengt
               className="w-full justify-center"
               onClick={handleClearAll}
             >
-              Clear all
+              {tFilters("clearAll")}
             </Button>
           </>
         )}

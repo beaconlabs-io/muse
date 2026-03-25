@@ -1,4 +1,7 @@
+"use client";
+
 import { ExternalLink } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { Chain, TransactionReceipt } from "viem";
 import { HYPERCERTS_URL } from "@/configs/hypercerts";
@@ -11,16 +14,13 @@ interface ExtraContentProps {
   receipt?: TransactionReceipt;
 }
 
-export function ExtraContent({
-  message = "Your hypercert has been minted successfully!",
-  hypercertId,
-  chain,
-  receipt,
-}: ExtraContentProps) {
+export function ExtraContent({ message, hypercertId, chain, receipt }: ExtraContentProps) {
+  const t = useTranslations("mintHypercert");
+
   return (
     <div className="flex flex-col space-y-2">
-      <p className="text-lg font-medium">Success</p>
-      <p className="text-sm font-medium">{message}</p>
+      <p className="text-lg font-medium">{t("successMessage")}</p>
+      {message && <p className="text-sm font-medium">{message}</p>}
       <div className="flex justify-center space-x-4 py-4">
         <Button asChild>
           <a
@@ -28,7 +28,7 @@ export function ExtraContent({
             target="_blank"
             rel="noopener noreferrer"
           >
-            View hypercert <ExternalLink size={14} className="ml-2" />
+            {t("viewHypercert")} <ExternalLink size={14} className="ml-2" />
           </a>
         </Button>
 
@@ -39,15 +39,12 @@ export function ExtraContent({
               target="_blank"
               rel="noopener noreferrer"
             >
-              View transaction <ExternalLink size={14} className="ml-2" />
+              {t("viewTransaction")} <ExternalLink size={14} className="ml-2" />
             </a>
           </Button>
         )}
       </div>
-      <p className="text-sm font-medium">
-        New ownership will not be immediately visible on the Hypercerts page, but will be visible in
-        5-10 minutes.
-      </p>
+      <p className="text-sm font-medium">{t("ownershipNote")}</p>
     </div>
   );
 }

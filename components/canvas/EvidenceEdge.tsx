@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BaseEdge, EdgeLabelRenderer, EdgeProps, getBezierPath } from "@xyflow/react";
 import { FileText } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { EvidenceDialog } from "./EvidenceDialog";
 import { EvidenceMatch } from "@/types";
 
@@ -23,6 +24,7 @@ export function EvidenceEdge(props: EdgeProps) {
     data,
   } = props;
 
+  const t = useTranslations("evidenceDialog");
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const [edgePath, labelX, labelY] = getBezierPath({
@@ -56,7 +58,7 @@ export function EvidenceEdge(props: EdgeProps) {
             <button
               onClick={() => setDialogOpen(true)}
               className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg transition-colors hover:bg-emerald-700"
-              title="View evidence"
+              title={t("viewEvidence")}
             >
               <FileText className="h-3 w-3" />
             </button>

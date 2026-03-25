@@ -1,9 +1,14 @@
+"use client";
+
 import React from "react";
-import Link from "next/link";
 import { CircleHelp } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Link } from "@/i18n/routing";
 
 export function TooltipStrength({ className }: { className?: string }) {
+  const t = useTranslations("evidence");
+
   return (
     <Tooltip>
       <TooltipTrigger>
@@ -13,7 +18,7 @@ export function TooltipStrength({ className }: { className?: string }) {
           />
         </Link>
       </TooltipTrigger>
-      <TooltipContent>View definition of strength of evidence</TooltipContent>
+      <TooltipContent>{t("viewDefinitionStrength")}</TooltipContent>
     </Tooltip>
   );
 }

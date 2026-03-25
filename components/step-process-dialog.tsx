@@ -10,6 +10,7 @@ import React, {
   useState,
 } from "react";
 import { AlertCircle, Badge, BadgeCheck, Loader } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -36,6 +37,7 @@ export type StepData = Pick<DialogStep, "id" | "description">;
 
 const ToastStepper = () => {
   const { dialogSteps, setOpen, open } = useStepProcessDialogContext();
+  const t = useTranslations("stepProcess");
 
   useEffect(() => {
     if (open) return;
@@ -50,7 +52,7 @@ const ToastStepper = () => {
       toast.loading(activeStep.description, {
         duration: Infinity, // Keep toast visible until completes
         action: {
-          label: "View Progress",
+          label: t("viewProgress"),
           onClick: () => setOpen(true),
         },
       });
@@ -59,7 +61,7 @@ const ToastStepper = () => {
       toast.error(errorStep.description, {
         duration: 5000,
         action: {
-          label: "View Details",
+          label: t("viewDetails"),
           onClick: () => setOpen(true),
         },
       });
@@ -68,12 +70,12 @@ const ToastStepper = () => {
       toast.success(lastStep.description, {
         duration: 5000,
         action: {
-          label: "View Details",
+          label: t("viewDetails"),
           onClick: () => setOpen(true),
         },
       });
     }
-  }, [dialogSteps, setOpen, open]);
+  }, [dialogSteps, setOpen, open, t]);
 
   return null;
 };
@@ -101,10 +103,11 @@ export const StepProcessDialogContext = createContext<{
 });
 
 export const StepProcessDialogProvider = ({ children }: { children: React.ReactNode }) => {
+  const t = useTranslations("stepProcess");
   const [steps, setSteps] = useState<StepData[]>([]);
   const [dialogSteps, setDialogSteps] = useState<DialogStep[]>([]);
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("Transaction in progress...");
+  const [title, setTitle] = useState(t("transactionInProgress"));
   const [initialized, setInitialized] = useState(false);
   const [extraContent, setExtraContent] = useState<ReactNode>(null);
 
@@ -229,6 +232,7 @@ const StepProcessModal = ({
   open,
   onOpenChange,
 }: DialogProps & { onOpenChange: (open: boolean) => void }) => {
+  const t = useTranslations("stepProcess");
   const lastStep = steps[steps.length - 1];
   const isLastStepCompleted = lastStep?.state === "completed";
 
@@ -246,7 +250,7 @@ const StepProcessModal = ({
           <DialogHeader>
             <DialogTitle className="text-3xl font-normal">{title}</DialogTitle>
           </DialogHeader>
-          <DialogDescription hidden>Shows the status of the transaction</DialogDescription>
+          <DialogDescription hidden>{t("statusDescription")}</DialogDescription>
           <div className="flex flex-col px-2 pt-3">
             {steps.map((step, index) => (
               <div

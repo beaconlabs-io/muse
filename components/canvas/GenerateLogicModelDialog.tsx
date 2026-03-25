@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import * as z from "zod";
 import { GenerationTimeInfo } from "@/components/canvas/GenerationTimeInfo";
 import { useStepProcessDialogContext } from "@/components/step-process-dialog";
@@ -45,14 +46,17 @@ interface GenerateLogicModelDialogProps {
   }) => void;
 }
 
-const steps = [
-  { id: "generate-logic-model", description: "Generating logic model structure" },
-  { id: "search-evidence", description: "Searching for supporting evidence" },
-  { id: "enrich-canvas", description: "Enriching canvas with evidence" },
-  { id: "complete", description: "Completed!" },
-];
-
 export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialogProps) {
+  const t = useTranslations("generate");
+  const tCanvas = useTranslations("canvas");
+  const tCommon = useTranslations("common");
+
+  const steps = [
+    { id: "generate-logic-model", description: t("stepGenerating") },
+    { id: "search-evidence", description: t("stepSearching") },
+    { id: "enrich-canvas", description: t("stepEnriching") },
+    { id: "complete", description: t("stepComplete") },
+  ];
   const [open, setOpen] = useState(false);
   const {
     setSteps,
@@ -125,7 +129,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   }, [status, canvasData, error, failedStepId, onGenerate, setDialogStep, setStepDialogOpen, form]);
 
   const handleSubmit = async (data: GenerateLogicModelFormData) => {
-    setTitle("Generating Logic Model");
+    setTitle(t("generatingTitle"));
     setSteps(steps);
     setExtraContent(<GenerationTimeInfo />);
     setStepDialogOpen(true);
@@ -148,15 +152,13 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="cursor-pointer">
           <span>🤖</span>
-          <span className="hidden sm:inline">Generate from Intent</span>
+          <span className="hidden sm:inline">{tCanvas("generateFromIntent")}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Generate Logic Model from Intent</DialogTitle>
-          <DialogDescription>
-            Describe your project or program, and AI agent will create a logic model for you.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
           <GenerationTimeInfo />
         </DialogHeader>
         <Form {...form}>
@@ -166,12 +168,10 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
               name="intent"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    What intervention or program do you want to create a logic model for?
-                  </FormLabel>
+                  <FormLabel>{t("formLabel")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter your intent here"
+                      placeholder={t("placeholder")}
                       rows={5}
                       className="resize-none"
                       disabled={isRunning}
@@ -190,10 +190,10 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                 disabled={isRunning}
                 className="cursor-pointer"
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" className="cursor-pointer" disabled={isRunning}>
-                Generate Logic Model
+                {t("generateButton")}
               </Button>
             </DialogFooter>
           </form>

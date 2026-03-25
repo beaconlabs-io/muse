@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import { Link as LinkIcon, ArrowUpRight } from "lucide-react";
 
 type AttachedLink = {
@@ -15,7 +14,7 @@ export function AttachedLinks({ links }: { links: AttachedLink[] }) {
       {links.map((link, index) => {
         const url = link.src;
         return (
-          <Link
+          <a
             key={index}
             href={url}
             target="_blank"
@@ -36,7 +35,7 @@ export function AttachedLinks({ links }: { links: AttachedLink[] }) {
             <div className="shrink-0">
               <ArrowUpRight className="h-5 w-5 text-gray-600" />
             </div>
-          </Link>
+          </a>
         );
       })}
     </div>
