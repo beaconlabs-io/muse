@@ -63,6 +63,7 @@
     "estimatedTimeDescription": "AIが意図を分析し、ロジックモデルの構造を生成し、エビデンスリストから関連するエビデンスを検索します。",
     "stepGenerating": "ロジックモデルの構造を生成中",
     "stepSearching": "関連エビデンスを検索中",
+    "stepSearchingExternal": "外部の学術論文を検索中",
     "stepEnriching": "キャンバスにエビデンスを追加中",
     "stepComplete": "完了しました！"
   },
@@ -160,6 +161,8 @@
     "intervention": "介入:",
     "outcome": "アウトカム:",
     "viewEvidence": "エビデンスを表示",
+    "viewEvidenceAndPapers": "エビデンスと学術論文を表示",
+    "viewAcademicPapers": "学術論文を表示",
     "academicPapers": "学術論文（参考文献）"
   },
   "search": {

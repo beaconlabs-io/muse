@@ -63,6 +63,7 @@
     "estimatedTimeDescription": "The AI will analyze your intent, generate a logic model structure, and search for supporting evidence from our evidence list.",
     "stepGenerating": "Generating logic model structure",
     "stepSearching": "Searching for supporting evidence",
+    "stepSearchingExternal": "Searching external academic papers",
     "stepEnriching": "Enriching canvas with evidence",
     "stepComplete": "Completed!"
   },
@@ -160,6 +161,8 @@
     "intervention": "Intervention:",
     "outcome": "Outcome:",
     "viewEvidence": "View evidence",
+    "viewEvidenceAndPapers": "View evidence & academic papers",
+    "viewAcademicPapers": "View academic papers",
     "academicPapers": "Academic Papers (Reference)"
   },
   "search": {

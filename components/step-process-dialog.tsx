@@ -252,7 +252,7 @@ const StepProcessModal = ({
           </DialogHeader>
           <DialogDescription hidden>{t("statusDescription")}</DialogDescription>
           <div className="flex flex-col px-2 pt-3">
-            {steps.map((step, index) => (
+            {steps.map((step) => (
               <div
                 key={step.id}
                 className="relative flex items-center border-l-2 border-slate-300 pb-6 pl-2 last-of-type:pb-0"

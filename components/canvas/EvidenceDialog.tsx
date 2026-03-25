@@ -1,6 +1,7 @@
 "use client";
 
-import { FileSymlink } from "lucide-react";
+import Link from "next/link";
+import { FileSymlink, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -9,14 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Link } from "@/i18n/routing";
-import { EvidenceMatch } from "@/types";
+import type { EvidenceMatch, ExternalPaper } from "@/types";
 
 interface EvidenceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   evidenceIds: string[];
   evidenceMetadata?: EvidenceMatch[];
+  externalPapers?: ExternalPaper[];
 }
 
 export function EvidenceDialog({
@@ -24,8 +25,13 @@ export function EvidenceDialog({
   onOpenChange,
   evidenceIds,
   evidenceMetadata,
+  externalPapers = [],
 }: EvidenceDialogProps) {
   const t = useTranslations("evidenceDialog");
+  const hasEvidence = evidenceIds.length > 0;
+  const hasExternalPapers = externalPapers.length > 0;
+
+  const totalItems = evidenceIds.length + externalPapers.length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -33,79 +39,167 @@ export function EvidenceDialog({
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            {evidenceIds.length !== 1
-              ? t("itemsCount", { count: evidenceIds.length })
-              : t("itemCount", { count: evidenceIds.length })}
+            {totalItems !== 1
+              ? t("itemsCount", { count: totalItems })
+              : t("itemCount", { count: totalItems })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {evidenceIds.map((evidenceId, index) => {
-            const metadata = evidenceMetadata?.find((m) => m.evidenceId === evidenceId);
+          {/* Internal attested evidence */}
+          {hasEvidence &&
+            evidenceIds.map((evidenceId) => {
+              const metadata = evidenceMetadata?.find((m) => m.evidenceId === evidenceId);
 
-            return (
-              <div key={evidenceId} className="rounded-lg border bg-white p-4 shadow-sm">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Link
-                      href={`/evidence/${evidenceId}`}
-                      className="flex flex-row items-center font-semibold text-black underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <span className="mr-2">{t("evidenceId", { id: evidenceId })} </span>
-                      <span>
-                        <FileSymlink className="h-4 w-4" />
-                      </span>
-                    </Link>
+              return (
+                <div key={evidenceId} className="rounded-lg border bg-white p-4 shadow-sm">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Link
+                        href={`/evidence/${evidenceId}`}
+                        className="flex flex-row items-center font-semibold text-black underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <span className="mr-2">{t("evidenceId", { id: evidenceId })} </span>
+                        <span>
+                          <FileSymlink className="h-4 w-4" />
+                        </span>
+                      </Link>
+                      {metadata && (
+                        <span className="rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
+                          {t("relevance", { score: metadata.score })}
+                        </span>
+                      )}
+                    </div>
+
                     {metadata && (
-                      <span className="rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
-                        {t("relevance", { score: metadata.score })}
-                      </span>
+                      <>
+                        {metadata.title && (
+                          <p className="text-sm font-medium text-gray-700">{metadata.title}</p>
+                        )}
+
+                        {metadata.reasoning && (
+                          <div className="text-sm text-gray-600">
+                            <span className="font-medium">{t("reasoning")}</span>{" "}
+                            {metadata.reasoning}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          {metadata.strength && (
+                            <span>
+                              <strong>{t("strength")}</strong>{" "}
+                              {t("strengthScore", { strength: metadata.strength })}
+                            </span>
+                          )}
+                          {metadata.hasWarning && (
+                            <span className="font-medium text-amber-600">{t("hasWarning")}</span>
+                          )}
+                        </div>
+
+                        {metadata.interventionText && (
+                          <div className="mt-2 text-xs text-gray-600">
+                            <strong>{t("intervention")}</strong> {metadata.interventionText}
+                          </div>
+                        )}
+
+                        {metadata.outcomeText && (
+                          <div className="text-xs text-gray-600">
+                            <strong>{t("outcome")}</strong> {metadata.outcomeText}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
+                </div>
+              );
+            })}
 
-                  {metadata && (
-                    <>
-                      {metadata.title && (
-                        <p className="text-sm font-medium text-gray-700">{metadata.title}</p>
+          {/* External academic papers */}
+          {hasExternalPapers && (
+            <>
+              <div className={hasEvidence ? "border-t pt-4" : ""}>
+                <h3 className="mb-3 text-sm font-semibold text-gray-500">
+                  Academic Papers (Reference)
+                </h3>
+              </div>
+              {externalPapers.map((paper) => (
+                <div
+                  key={paper.id}
+                  className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 shadow-sm"
+                >
+                  <div className="space-y-2">
+                    {/* Title (full width, no source badge) */}
+                    <div>
+                      {paper.url || paper.doi ? (
+                        <a
+                          href={paper.doi ? `https://doi.org/${paper.doi}` : paper.url}
+                          className="inline-flex items-center gap-1 font-semibold text-blue-900 underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span>{paper.title}</span>
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                        </a>
+                      ) : (
+                        <span className="font-semibold text-blue-900">{paper.title}</span>
                       )}
+                    </div>
 
-                      {metadata.reasoning && (
-                        <div className="text-sm text-gray-600">
-                          <span className="font-medium">{t("reasoning")}</span> {metadata.reasoning}
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        {metadata.strength && (
-                          <span>
-                            <strong>{t("strength")}</strong>{" "}
-                            {t("strengthScore", { strength: metadata.strength })}
+                    {/* Authors, year, venue */}
+                    {(paper.authors?.length || paper.year) && (
+                      <p className="text-xs text-gray-600">
+                        {paper.authors && paper.authors.length > 0 && (
+                          <>
+                            {paper.authors.slice(0, 3).join(", ")}
+                            {paper.authors.length > 3 && " et al."}
+                          </>
+                        )}
+                        {paper.year && ` (${paper.year})`}
+                        {paper.publicationVenue && (
+                          <span className="text-gray-400 italic">
+                            {" "}
+                            &mdash; {paper.publicationVenue}
                           </span>
                         )}
-                        {metadata.hasWarning && (
-                          <span className="font-medium text-amber-600">{t("hasWarning")}</span>
-                        )}
-                      </div>
+                      </p>
+                    )}
 
-                      {metadata.interventionText && (
-                        <div className="mt-2 text-xs text-gray-600">
-                          <strong>{t("intervention")}</strong> {metadata.interventionText}
-                        </div>
+                    {/* Metadata badges */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {paper.citationCount != null && paper.citationCount > 0 && (
+                        <span className="inline-flex items-center gap-0.5 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
+                          {paper.citationCount.toLocaleString()} cited
+                          {paper.influentialCitationCount != null &&
+                            paper.influentialCitationCount > 0 && (
+                              <span className="text-gray-400">
+                                {" "}
+                                ({paper.influentialCitationCount} influential)
+                              </span>
+                            )}
+                        </span>
                       )}
+                    </div>
 
-                      {metadata.outcomeText && (
-                        <div className="text-xs text-gray-600">
-                          <strong>{t("outcome")}</strong> {metadata.outcomeText}
-                        </div>
-                      )}
-                    </>
-                  )}
+                    {/* TLDR (preferred) or Abstract */}
+                    {paper.tldr ? (
+                      <p className="line-clamp-3 text-sm text-gray-700">
+                        <span className="font-medium text-gray-500">TLDR: </span>
+                        {paper.tldr}
+                      </p>
+                    ) : (
+                      paper.abstract && (
+                        <p className="line-clamp-3 text-sm text-gray-600">{paper.abstract}</p>
+                      )
+                    )}
+
+                    {paper.doi && <p className="text-xs text-gray-400">DOI: {paper.doi}</p>}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              ))}
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

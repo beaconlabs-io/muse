@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as z from "zod";
 import { GenerationTimeInfo } from "@/components/canvas/GenerationTimeInfo";
@@ -25,15 +26,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Card, Arrow, Metric } from "@/types";
 import { useWorkflowStream } from "@/hooks/useWorkflowStream";
+import { EXTERNAL_SEARCH_ENABLED } from "@/lib/constants";
 
 const generateLogicModelSchema = z.object({
   intent: z
     .string()
     .min(1, "Please enter your intent")
     .max(1000, "Intent must be 1000 characters or less"),
+  enableExternalSearch: z.boolean(),
 });
 
 type GenerateLogicModelFormData = z.infer<typeof generateLogicModelSchema>;
@@ -51,12 +56,18 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   const tCanvas = useTranslations("canvas");
   const tCommon = useTranslations("common");
 
-  const steps = [
-    { id: "generate-logic-model", description: t("stepGenerating") },
-    { id: "search-evidence", description: t("stepSearching") },
-    { id: "enrich-canvas", description: t("stepEnriching") },
-    { id: "complete", description: t("stepComplete") },
-  ];
+  function buildProgressSteps(enableExternalSearch: boolean) {
+    return [
+      { id: "generate-logic-model", description: t("stepGenerating") },
+      { id: "search-evidence", description: t("stepSearching") },
+      ...(enableExternalSearch
+        ? [{ id: "search-external-papers", description: t("stepSearchingExternal") }]
+        : []),
+      { id: "enrich-canvas", description: t("stepEnriching") },
+      { id: "complete", description: t("stepComplete") },
+    ];
+  }
+
   const [open, setOpen] = useState(false);
   const {
     setSteps,
@@ -73,6 +84,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     resolver: zodResolver(generateLogicModelSchema),
     defaultValues: {
       intent: "",
+      enableExternalSearch: false,
     },
   });
 
@@ -130,12 +142,12 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
 
   const handleSubmit = async (data: GenerateLogicModelFormData) => {
     setTitle(t("generatingTitle"));
-    setSteps(steps);
+    setSteps(buildProgressSteps(data.enableExternalSearch));
     setExtraContent(<GenerationTimeInfo />);
     setStepDialogOpen(true);
 
     processedEventCountRef.current = 0;
-    await startWorkflow(data.intent);
+    await startWorkflow(data.intent, data.enableExternalSearch);
   };
 
   // Cleanup on unmount
@@ -163,6 +175,37 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            {EXTERNAL_SEARCH_ENABLED && (
+              <FormField
+                control={form.control}
+                name="enableExternalSearch"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <FormLabel className="text-sm font-normal">
+                        Search papers on Semantic Scholar
+                      </FormLabel>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="text-muted-foreground h-4 w-4 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[260px]">
+                          When enabled, searches external academic papers via the Semantic Scholar
+                          API to supplement evidence. This may increase generation time.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isRunning}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="intent"
@@ -182,6 +225,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                 </FormItem>
               )}
             />
+
             <DialogFooter>
               <Button
                 type="button"

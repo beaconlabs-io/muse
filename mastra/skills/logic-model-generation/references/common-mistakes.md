@@ -94,7 +94,7 @@ The tool enforces strict character limits on card text.
 | Field       | Limit              |
 | ----------- | ------------------ |
 | title       | 100 characters max |
-| description | 200 characters max |
+| description | 300 characters max |
 
 Fix: Keep titles short and specific. Use description for detail.
 If a title exceeds 100 characters, it is too verbose -- extract the
