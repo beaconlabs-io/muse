@@ -100,7 +100,6 @@ function computeQualityScore(paper: ExternalPaper): number {
     score += Math.log2(paper.citationCount + 1);
   }
   if (paper.abstract || paper.tldr) score += 2;
-  if (paper.isOpenAccess) score += 1;
   if (paper.year && paper.year >= 2020) score += 1;
   return score;
 }

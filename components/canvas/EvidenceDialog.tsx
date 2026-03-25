@@ -124,41 +124,68 @@ export function EvidenceDialog({
                   className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 shadow-sm"
                 >
                   <div className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        {paper.url || paper.doi ? (
-                          <a
-                            href={paper.doi ? `https://doi.org/${paper.doi}` : paper.url}
-                            className="flex items-center gap-1 font-semibold text-blue-900 underline"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <span className="line-clamp-2">{paper.title}</span>
-                            <ExternalLink className="h-3 w-3 shrink-0" />
-                          </a>
-                        ) : (
-                          <span className="font-semibold text-blue-900">{paper.title}</span>
-                        )}
-                      </div>
-                      <span className="shrink-0 rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
-                        {paper.source === "pubmed"
-                          ? "PubMed"
-                          : paper.source === "semantic_scholar"
-                            ? "Semantic Scholar"
-                            : paper.source}
-                      </span>
+                    {/* Title (full width, no source badge) */}
+                    <div>
+                      {paper.url || paper.doi ? (
+                        <a
+                          href={paper.doi ? `https://doi.org/${paper.doi}` : paper.url}
+                          className="inline-flex items-center gap-1 font-semibold text-blue-900 underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span>{paper.title}</span>
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                        </a>
+                      ) : (
+                        <span className="font-semibold text-blue-900">{paper.title}</span>
+                      )}
                     </div>
 
-                    {paper.authors && paper.authors.length > 0 && (
+                    {/* Authors, year, venue */}
+                    {(paper.authors?.length || paper.year) && (
                       <p className="text-xs text-gray-600">
-                        {paper.authors.slice(0, 3).join(", ")}
-                        {paper.authors.length > 3 && ` et al.`}
+                        {paper.authors && paper.authors.length > 0 && (
+                          <>
+                            {paper.authors.slice(0, 3).join(", ")}
+                            {paper.authors.length > 3 && " et al."}
+                          </>
+                        )}
                         {paper.year && ` (${paper.year})`}
+                        {paper.publicationVenue && (
+                          <span className="text-gray-400 italic">
+                            {" "}
+                            &mdash; {paper.publicationVenue}
+                          </span>
+                        )}
                       </p>
                     )}
 
-                    {paper.abstract && (
-                      <p className="line-clamp-3 text-sm text-gray-600">{paper.abstract}</p>
+                    {/* Metadata badges */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {paper.citationCount != null && paper.citationCount > 0 && (
+                        <span className="inline-flex items-center gap-0.5 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
+                          {paper.citationCount.toLocaleString()} cited
+                          {paper.influentialCitationCount != null &&
+                            paper.influentialCitationCount > 0 && (
+                              <span className="text-gray-400">
+                                {" "}
+                                ({paper.influentialCitationCount} influential)
+                              </span>
+                            )}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* TLDR (preferred) or Abstract */}
+                    {paper.tldr ? (
+                      <p className="line-clamp-3 text-sm text-gray-700">
+                        <span className="font-medium text-gray-500">TLDR: </span>
+                        {paper.tldr}
+                      </p>
+                    ) : (
+                      paper.abstract && (
+                        <p className="line-clamp-3 text-sm text-gray-600">{paper.abstract}</p>
+                      )
                     )}
 
                     {paper.doi && <p className="text-xs text-gray-400">DOI: {paper.doi}</p>}

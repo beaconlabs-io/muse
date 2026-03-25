@@ -7,7 +7,7 @@ const logger = createLogger({ module: "lib:semantic-scholar" });
 
 const BASE_URL = "https://api.semanticscholar.org/graph/v1/paper/search";
 const FIELDS =
-  "title,authors,year,abstract,externalIds,url,citationCount,influentialCitationCount,tldr,s2FieldsOfStudy,isOpenAccess";
+  "title,authors,year,abstract,externalIds,url,citationCount,influentialCitationCount,tldr,s2FieldsOfStudy,publicationVenue";
 const TIMEOUT_MS = 10_000;
 
 /** DPG/EBP-relevant fields of study for filtering */
@@ -38,7 +38,13 @@ interface SemanticScholarPaper {
   influentialCitationCount?: number;
   tldr?: { text: string } | null;
   s2FieldsOfStudy?: S2FieldOfStudy[];
-  isOpenAccess?: boolean;
+  publicationVenue?: {
+    id?: string;
+    name?: string;
+    type?: string;
+    issn?: string;
+    url?: string;
+  } | null;
 }
 
 interface SemanticScholarResponse {
@@ -73,7 +79,7 @@ function normalizePaper(raw: SemanticScholarPaper): ExternalPaper {
     tldr: raw.tldr?.text,
     influentialCitationCount: raw.influentialCitationCount,
     fieldsOfStudy: raw.s2FieldsOfStudy?.map((f) => f.category),
-    isOpenAccess: raw.isOpenAccess,
+    publicationVenue: raw.publicationVenue?.name || undefined,
   };
 }
 

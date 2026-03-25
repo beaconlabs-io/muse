@@ -248,7 +248,7 @@ export const ExternalPaperSchema = z.object({
   tldr: z.string().optional(),
   influentialCitationCount: z.number().optional(),
   fieldsOfStudy: z.array(z.string()).optional(),
-  isOpenAccess: z.boolean().optional(),
+  publicationVenue: z.string().optional(),
 });
 
 export type ExternalPaper = z.infer<typeof ExternalPaperSchema>;

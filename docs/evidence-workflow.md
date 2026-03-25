@@ -213,7 +213,7 @@ Evidence is semantically matched to logic model arrows (causal relationships) us
    - Edges with fewer than 1 internal evidence match trigger multi-query Semantic Scholar API search
    - LLM (Gemini 2.5 Flash) generates two queries per edge: concept keywords + causal relationship phrase
    - Searches filtered by DPG/EBP-relevant fields of study (Medicine, Sociology, Education, etc.) with automatic fallback
-   - Results ranked by quality (influential citations, abstract availability, open access, recency)
+   - Results ranked by quality (influential citations, peer-review status, abstract availability, open access, recency)
    - Displayed as reference material (no LLM scoring) with blue styling
    - Cached for 24 hours with in-memory FIFO eviction (500 entries max)
 
