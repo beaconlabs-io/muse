@@ -228,6 +228,32 @@ export const EvidenceSummarySchema = z.object({
 export type EvidenceSummary = z.infer<typeof EvidenceSummarySchema>;
 
 // =============================================================================
+// EXTERNAL PAPER SCHEMAS (Semantic Scholar API integration)
+// =============================================================================
+
+/**
+ * External academic paper from Semantic Scholar API.
+ * Displayed as reference material only - no LLM scoring applied.
+ */
+export const ExternalPaperSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  authors: z.array(z.string()).optional(),
+  year: z.number().optional(),
+  doi: z.string().optional(),
+  url: z.url().optional(),
+  abstract: z.string().optional(),
+  source: z.string(),
+  citationCount: z.number().optional(),
+  tldr: z.string().optional(),
+  influentialCitationCount: z.number().optional(),
+  fieldsOfStudy: z.array(z.string()).optional(),
+  publicationVenue: z.string().optional(),
+});
+
+export type ExternalPaper = z.infer<typeof ExternalPaperSchema>;
+
+// =============================================================================
 // CANVAS / LOGIC MODEL SCHEMAS
 // =============================================================================
 
@@ -236,7 +262,7 @@ export const CardSchema = z.object({
   x: z.number(),
   y: z.number(),
   title: z.string().min(1, "Title is required").max(100, "Title must be 100 characters or less"),
-  description: z.string().max(200, "Description must be 200 characters or less").optional(),
+  description: z.string().max(300, "Description must be 300 characters or less").optional(),
   color: z.string(),
   type: z.string().optional(),
 });
@@ -249,6 +275,7 @@ export const ArrowSchema = z.object({
   toCardId: z.string(),
   evidenceIds: z.array(z.string()).optional(),
   evidenceMetadata: z.array(EvidenceMatchSchema).optional(),
+  externalPapers: z.array(ExternalPaperSchema).optional(),
 });
 
 export type Arrow = z.infer<typeof ArrowSchema>;
@@ -307,6 +334,7 @@ export type NodeType = keyof typeof TYPE_COLOR_MAP;
 export const EvidenceSearchRequestSchema = z.object({
   query: z.string().min(1, "Query is required").max(500, "Query too long"),
   limit: z.number().min(1).max(20).optional().default(5),
+  includeExternalPapers: z.boolean().optional().default(false),
 });
 
 export type EvidenceSearchRequest = z.infer<typeof EvidenceSearchRequestSchema>;
@@ -317,6 +345,7 @@ export type EvidenceSearchRequest = z.infer<typeof EvidenceSearchRequestSchema>;
 export const EvidenceSearchResponseSchema = z.object({
   response: z.string(),
   query: z.string(),
+  externalPapers: z.array(ExternalPaperSchema).optional(),
 });
 
 export type EvidenceSearchResponse = z.infer<typeof EvidenceSearchResponseSchema>;
