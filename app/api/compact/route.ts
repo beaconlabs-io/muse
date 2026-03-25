@@ -71,7 +71,10 @@ export async function POST(request: NextRequest) {
 
     let result;
     try {
-      result = await Promise.race([run.start({ inputData: { intent } }), timeoutPromise]);
+      result = await Promise.race([
+        run.start({ inputData: { intent, enableExternalSearch: true } }),
+        timeoutPromise,
+      ]);
     } finally {
       clearTimeout(timeoutId!);
     }

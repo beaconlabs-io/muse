@@ -13,13 +13,16 @@ sequenceDiagram
     participant FE as Frontend (Muse)
     participant Agent as Logic Model Agent
     participant Evidence as Evidence Repository
+    participant SS as Semantic Scholar API
 
-    Note over User, Evidence: Logic Model Generation with Agent
+    Note over User, SS: Logic Model Generation with Agent
 
     User->>FE: Provide intent (goal)
     FE->>Agent: Send intent
     Agent->>Evidence: Query relevant evidence
     Evidence-->>Agent: Return evidence data
+    Agent->>SS: Search external papers (under-matched edges)
+    SS-->>Agent: Return academic papers
     Agent->>Agent: Generate Logic Model (JSON)
     Agent->>FE: Display Logic Model
     FE->>User: Show Logic Model with evidence validation
@@ -35,15 +38,15 @@ sequenceDiagram
     participant Canvas as ReactFlowCanvas
     participant Edge as EvidenceEdge Component
     participant Dialog as EvidenceDialog
-    participant Action as Server Action
     participant Workflow as Mastra Workflow
     participant Agent as Logic Model Agent
     participant Tool as Logic Model Tool
     participant Search as Evidence Search
     participant EvidenceAgent as Evidence Search Agent
     participant LLM
+    participant SS as Semantic Scholar API
 
-    Note over User, LLM: Logic Model Generation with Evidence Validation (Mastra Workflow)
+    Note over User, SS: Logic Model Generation with Evidence Validation (Mastra Workflow)
 
     User->>FE: Provide intent (e.g., "OSS impact on Ethereum")
 
@@ -53,7 +56,7 @@ sequenceDiagram
     API->>Workflow: logicModelWithEvidenceWorkflow.stream()
 
     Note over Workflow, Agent: Workflow Step 1: Generate Logic Model Structure
-    Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 1)
+    Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 12)
     Agent->>Agent: Stage 1: Analyze Intervention (domain, goals)
     Agent->>Agent: Stage 2: Generate Cards (with metrics)
     Agent->>Agent: Stage 3: Design Connections (4-Test Framework)
@@ -79,11 +82,19 @@ sequenceDiagram
     Search-->>Workflow: Return evidenceByArrow map
     Note over Workflow: Single LLM call for all edges<br/>(Eliminates N+1 pattern)
 
-    Note over Workflow: Workflow Step 3: Enrich Canvas with Evidence
+    Note over Workflow, SS: Workflow Step 2.5: External Paper Search (parallel, cached)
+    Workflow->>Workflow: Filter edges with < 1 internal match
+    Workflow->>SS: Promise.allSettled: search per under-matched edge
+    Note over SS: LLM extracts 2 queries (keywords + causal)<br/>→ Parallel Semantic Scholar searches (fieldsOfStudy filtered)<br/>→ Merge, deduplicate, rank by quality
+    SS-->>Workflow: ExternalPaper[] per edge
+    Note over Workflow: Cache results (24h TTL, 500 entries FIFO)
+
+    Note over Workflow: Workflow Step 3: Enrich Canvas with Evidence + External Papers
     Workflow->>Workflow: Attach evidence IDs to arrows
+    Workflow->>Workflow: Attach external papers to arrows
     Workflow->>Workflow: Add evidence metadata (score, confidence, reasoning, strength)
-    Workflow-->>Action: Return { canvasData } (fully enriched)
-    Action-->>FE: Return canvasData with evidence
+    Workflow-->>API: Return { canvasData } (fully enriched)
+    API-->>FE: Return canvasData with evidence
     FE->>FE: Mark "structure" as completed
 
     Note over FE: UI Step 3: Illustrate Canvas (Client-side)
@@ -91,19 +102,19 @@ sequenceDiagram
     FE->>Canvas: loadGeneratedCanvas(canvasData)
     Canvas->>Canvas: Convert cards to React Flow nodes
     Canvas->>Canvas: Convert arrows to React Flow edges
-    Note over Canvas: Arrows with evidenceIds get type="evidence"<br/>Green color (#10b981), 3px strokeWidth
+    Note over Canvas: evidenceIds付きの矢印 → type="evidence", Green (#10b981)<br/>externalPapers only → type="evidence", Blue (#3b82f6)<br/>Neither → default, Gray (#6b7280)
     FE->>FE: Mark "illustrate" as completed
 
     Note over FE: UI Step 4: Complete
     FE->>FE: Mark "complete" as completed
-    FE-->>User: Show canvasData (green edges for evidence-backed arrows)
+    FE-->>User: Show canvasData (green/blue/gray edges)
 
     Note over User, Edge: User Interaction with Evidence
-    User->>Edge: Click green evidence button on edge
+    User->>Edge: Click green or blue evidence button on edge
     Edge->>Dialog: Open EvidenceDialog
-    Dialog-->>User: Show evidence details (ID, score, confidence, reasoning, strength)
-    User->>Dialog: Click evidence ID link
-    Dialog->>User: Navigate to /evidence/{id} page
+    Dialog-->>User: Show internal evidence (green) + external papers (blue)
+    User->>Dialog: Click evidence ID or paper DOI link
+    Dialog->>User: Navigate to /evidence/{id} or external URL
 ```
 
 ## Architecture Overview
@@ -173,24 +184,81 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 }
 ```
 
+### Step 2.5: External Academic Paper Search
+
+**Trigger condition**: Only runs when `EXTERNAL_SEARCH_ENABLED=true`. Searches edges with fewer than `MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL` (1) internal evidence matches. Also enabled by default in the compact API (`/api/compact`).
+
+**Process**:
+
+1. Filter arrows to those with insufficient internal evidence
+2. For each under-matched edge (parallel via `Promise.allSettled`):
+   a. Extract card titles and descriptions from source/target content
+   b. Use Gemini 2.5 Flash to generate **two complementary search queries**:
+   - `keywords`: 3-5 English academic keywords covering core concepts
+   - `causal`: Natural-language causal relationship phrase (e.g., "effect of X on Y")
+     c. Run both queries in parallel against Semantic Scholar Graph API with `fieldsOfStudy` filter (Medicine, Sociology, Economics, Education, Environmental Science, Political Science, Psychology) and `publicationTypes` filter (JournalArticle, Review, CaseReport)
+     d. If filtered results are too few, fall back to unfiltered search
+     e. Merge results, deduplicate by DOI/title, rank by quality score
+3. Cache results with 24h TTL (in-memory, 500-entry FIFO)
+
+**Quality Ranking**: Papers are scored and sorted by:
+
+- Influential citation count (×3 weight, log scale)
+- Citation count (log scale, fallback when no influential citations)
+- Has abstract or TLDR (+2)
+- Published 2020 or later (+1)
+
+**Key Design Decisions**:
+
+- **Multi-query strategy**: Two queries from different angles improve recall; merged results improve precision via quality ranking
+- **fieldsOfStudy filter**: Prioritizes DPG/EBP-relevant fields with automatic fallback to avoid zero results
+- **LLM query extraction**: Card titles and descriptions may be non-English or domain-specific; Gemini 2.5 Flash generates structured queries with graceful fallback to raw titles
+- **Parallel execution**: `Promise.allSettled` ensures one failing edge search doesn't block others
+- **Caching**: Deterministic cache key from edge content avoids redundant LLM + API calls
+- **No scoring**: External papers are presented as reference material only (no LLM relevance scoring)
+
+**Error Handling**: Semantic Scholar API errors are differentiated by HTTP status code:
+
+- **429 (Rate Limit)**: Warning logged with suggestion to reduce concurrency or add API key
+- **5xx (Server Error)**: Warning logged with status code
+- **Other client errors**: Debug-level logging only
+- All errors result in empty results (graceful degradation — never blocks the workflow)
+
+**Output**: `Record<arrowId, ExternalPaper[]>` map (max 3 papers per edge, ranked by quality)
+
 ### Step 3: Result Merging
 
 **Process**:
 
 - Results from batch evidence search merged into canvas data
 - Arrows with matches (score ≥ 70) get `evidenceIds` populated
-- Evidence metadata attached to arrows:
+- Evidence metadata attached to arrows
+- External papers from Step 2.5 attached to arrows as `externalPapers: ExternalPaper[]`
   ```typescript
   {
     ...arrow,
     evidenceIds: ["ev_001"],
     evidenceScore: 85,
     evidenceReasoning: "Strong alignment between tutoring intervention and math outcomes",
-    evidenceStrength: 5
+    evidenceStrength: 5,
+    externalPapers: [
+      {
+        id: "ext-semantic_scholar-a1b2c3d4",
+        title: "Effects of Tutoring on Mathematics Achievement",
+        authors: ["Smith, J.", "Jones, K."],
+        year: 2022,
+        doi: "10.1234/example",
+        source: "semantic_scholar",
+        tldr: "Tutoring significantly improves math outcomes...",
+        influentialCitationCount: 5,
+        fieldsOfStudy: ["Education", "Psychology"],
+        publicationVenue: "Journal of Educational Psychology"
+      }
+    ]
   }
   ```
 
-**Output**: Complete `CanvasData` with evidence-backed arrows
+**Output**: Complete `CanvasData` with evidence-backed arrows and external papers
 
 ## Agent Architecture & Quality Controls
 
@@ -232,7 +300,7 @@ Theory of Change specialist with structured 5-stage workflow:
 #### Stage 5: Call Tool
 
 - Generates canvas with validated structure
-- Tool must be called (maxSteps: 5, allowing skill activation steps)
+- Tool must be called (maxSteps: 12, allowing skill activation steps)
 
 ### Common Mistakes Prevention
 
@@ -317,7 +385,7 @@ Main UI component with 4-step process:
 
 **Location**: `mastra/workflows/logic-model-with-evidence.ts`
 
-Production workflow with 3 steps:
+Production workflow with 4 steps (including Step 2.5):
 
 **Step 1: Generate Logic Model Structure**
 
@@ -331,10 +399,19 @@ Production workflow with 3 steps:
 - Single batch call to `searchEvidenceForAllEdges`
 - Ensures all arrows have evidence entries (empty arrays if no matches)
 
-**Step 3: Enrich Canvas with Evidence**
+**Step 2.5: External Academic Paper Search**
+
+- Checks `EXTERNAL_SEARCH_ENABLED` flag; skips if disabled
+- Filters edges to those with fewer than `MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL` internal matches
+- Parallel search across all under-matched edges via `Promise.allSettled`
+- Each edge: LLM extracts 2 queries (keywords + causal) → parallel Semantic Scholar searches (fieldsOfStudy filtered + fallback) → merge + deduplicate + quality ranking
+- Returns `Record<arrowId, ExternalPaper[]>` map (ranked by quality)
+
+**Step 3: Enrich Canvas with Evidence + External Papers**
 
 - Maps evidence matches to arrow IDs
 - Attaches evidenceIds and evidenceMetadata to arrows
+- Attaches externalPapers to arrows
 - Returns enriched canvas data
 
 Returns simplified output: `{ canvasData }` (stats derived from data, no separate tracking)
@@ -365,8 +442,11 @@ Tool for generating logic model structure:
 
 **Location**: `types/index.ts`
 
-- Arrow type extended with `evidenceIds: string[]` and `evidenceMetadata: EvidenceMatch[]`
+- Arrow type extended with `evidenceIds: string[]`, `evidenceMetadata: EvidenceMatch[]`, and `externalPapers: ExternalPaper[]`
 - EvidenceMatch interface with evidenceId, score, confidence, reasoning, strength, hasWarning, title, interventionText, outcomeText
+- ExternalPaper interface with id, title, authors, year, doi, url, abstract, source, citationCount, tldr, influentialCitationCount, fieldsOfStudy, publicationVenue
+- EvidenceSearchRequest extended with `includeExternalPapers: boolean` option
+- EvidenceSearchResponse extended with optional `externalPapers: ExternalPaper[]`
 - CanvasDataSchema reused throughout for validation
 
 ### Architecture Benefits
@@ -384,6 +464,32 @@ Tool for generating logic model structure:
 - **Transparent Evidence Search**: Evidence search happens invisibly during structure step, no separate UI loading state
 - **Better Error Recovery**: Explicit validation of tool call results with detailed logging aids debugging
 - **Observability**: Comprehensive logging with structured reasoning makes agent decisions explainable
+- **Graceful External Search**: External paper search runs only for under-matched edges, uses parallel execution with fault isolation (`Promise.allSettled`), and caches aggressively (24h TTL)
+
+### Compact API Endpoint
+
+**Location**: `app/api/compact/route.ts`
+
+`POST /api/compact` — Converts chat history into a Logic Model with evidence.
+
+**Pipeline**:
+
+1. Authenticate via `BOT_API_KEY` header (optional, skipped if `BOT_API_KEY` env var is not configured)
+2. Validate request body with `CompactRequestSchema` (`chatHistory: ChatMessage[]`)
+3. Extract intent from user messages in the conversation
+4. Run `logicModelWithEvidenceWorkflow` with `enableExternalSearch: true` (always enabled)
+5. Validate output with `CanvasDataSchema`
+6. Upload canvas data to IPFS via Pinata
+7. Return `CompactResponse`: `{ canvasUrl, canvasId, summary: { extractedIssues, intervention, targetContext } }`
+
+**Error Handling**:
+
+- `400`: Invalid request body
+- `413`: Payload too large
+- `504`: Workflow timeout (`WORKFLOW_TIMEOUT_MS`)
+- `500`: Workflow failure or canvas data validation error
+
+**Configuration**: `maxDuration = 300` (Vercel serverless timeout, seconds)
 
 ## UI Flow (4 Steps)
 
@@ -394,7 +500,8 @@ Tool for generating logic model structure:
 2. **Generate Structure** (Server) - **Full workflow executes here**:
    - Workflow Step 1: LLM generates cards and arrows with 5-stage validation
    - Workflow Step 2: Batch evidence search - single LLM call with chain-of-thought for all edges
-   - Workflow Step 3: Enrich arrows with evidence metadata
+   - Workflow Step 2.5: External academic paper search for under-matched edges (multi-query Semantic Scholar API with fieldsOfStudy filter)
+   - Workflow Step 3: Enrich arrows with evidence metadata + external papers
    - Returns complete `CanvasData` to frontend
 
 3. **Illustrate Canvas** (Client)
@@ -404,8 +511,8 @@ Tool for generating logic model structure:
 
 4. **Complete** (UI)
    - Displays final logic model
-   - Green edges for evidence-backed arrows
-   - Interactive evidence buttons on edges
+   - Green edges for evidence-backed arrows, blue edges for external papers only
+   - Interactive evidence buttons on edges (green FileText / blue BookOpen)
 
 ## Evidence Search Implementation
 
@@ -459,11 +566,16 @@ Custom Mastra tool that agents can invoke to search evidence library.
 
 ### Canvas Visualization
 
-Arrows with evidence display as:
+Arrows display with color coding based on their evidence status:
 
-- **Green thick edges** (#10b981, 3px strokeWidth)
-- **Interactive button** at edge midpoint
-- **Evidence dialog** on button click (see `docs/react-flow-architecture.md`)
+- **Green thick edges** (#10b981, 3px) - Has internal attested evidence (green FileText button)
+- **Blue thick edges** (#3b82f6, 3px) - Has external papers only, no internal evidence (blue BookOpen button)
+- **Gray default edges** (#6b7280, 2px) - No evidence or external papers (no button)
+
+Evidence dialog shows two sections:
+
+- **Internal Evidence** (green theme): Attested evidence with score, reasoning, strength, and link to `/evidence/{id}`
+- **Academic Papers (Reference)** (blue theme): External papers with title, authors, year, DOI, abstract, and citation count
 
 ### Evidence Detail Page
 
@@ -548,7 +660,7 @@ bun build:mastra
 
 ### Workflows
 
-- `mastra/workflows/logic-model-with-evidence.ts` - Production workflow with 3 steps
+- `mastra/workflows/logic-model-with-evidence.ts` - Production workflow with 4 steps (including Step 2.5)
 
 ### Agents
 
@@ -561,6 +673,9 @@ bun build:mastra
 - `mastra/tools/evidenceSearch.ts` - Evidence search tool implementation
 - `lib/evidence-search-batch.ts` - Batch evidence search function
 - `lib/evidence-search-mastra.ts` - LLM-based evidence matching logic
+- `lib/external-paper-search.ts` - External paper search orchestration with caching
+- `lib/academic-apis/semantic-scholar.ts` - Semantic Scholar Graph API client
+- `lib/academic-apis/extract-search-keywords.ts` - Gemini 2.5 Flash keyword extraction
 
 ### Components
 
@@ -584,7 +699,7 @@ bun build:mastra
 
 ### Types
 
-- `types/index.ts` - CanvasData, Arrow, Card, EvidenceMatch interfaces
+- `types/index.ts` - CanvasData, Arrow, Card, EvidenceMatch, ExternalPaper interfaces
 
 ## Observability & Tracing
 
@@ -622,9 +737,11 @@ Traces are stored locally in LibSQL (`mastra.db`) via `DefaultExporter` and view
 
 ### Environment Variables
 
-| Variable             | Required | Description                                      |
-| -------------------- | -------- | ------------------------------------------------ |
-| `MASTRA_STORAGE_URL` | No       | LibSQL storage URL (default: `file:./mastra.db`) |
+| Variable                              | Required | Description                                                  |
+| ------------------------------------- | -------- | ------------------------------------------------------------ |
+| `MASTRA_STORAGE_URL`                  | No       | LibSQL storage URL (default: `file:./mastra.db`)             |
+| `SEMANTIC_SCHOLAR_API_KEY`            | No       | Semantic Scholar API key for higher rate limits (optional)   |
+| `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` | No       | Set to `true` to show external paper search toggle in the UI |
 
 ### Relationship with lib/logger.ts
 
@@ -639,7 +756,7 @@ Both coexist without interference.
 
 Potential improvements to the Mastra system:
 
-- **Caching**: Cache evidence embeddings for faster semantic search
+- **Caching**: External paper search now uses in-memory cache (24h TTL, 500 entries FIFO). Internal evidence search could benefit from similar caching
 - **Incremental updates**: Support adding/removing individual arrows without full regeneration
 - **Multi-agent collaboration**: Specialized agents for different logic model stages
 - **User feedback loop**: Incorporate user corrections to improve matching accuracy
