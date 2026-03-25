@@ -110,10 +110,22 @@ async function executeSearch(
   });
 
   if (!response.ok) {
-    logger.warn(
-      { status: response.status, statusText: response.statusText, query },
-      "Semantic Scholar API error",
-    );
+    if (response.status === 429) {
+      logger.warn(
+        { status: response.status, query },
+        "Semantic Scholar API rate limited (429) — consider reducing concurrency or adding an API key",
+      );
+    } else if (response.status >= 500) {
+      logger.warn(
+        { status: response.status, statusText: response.statusText, query },
+        "Semantic Scholar API server error",
+      );
+    } else {
+      logger.debug(
+        { status: response.status, statusText: response.statusText, query },
+        "Semantic Scholar API client error",
+      );
+    }
     return [];
   }
 
