@@ -241,7 +241,7 @@ export const ExternalPaperSchema = z.object({
   authors: z.array(z.string()).optional(),
   year: z.number().optional(),
   doi: z.string().optional(),
-  url: z.string().optional(),
+  url: z.url().optional(),
   abstract: z.string().optional(),
   source: z.string(),
   citationCount: z.number().optional(),
