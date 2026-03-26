@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-- `bun dev` - Start development server with webpack (opens http://localhost:3000)
+- `bun dev` - Start development server (opens http://localhost:3000)
 - `bun run build` - Build application for production
 - `bun start` - Start production server
 - `bun lint` - Run ESLint with auto-fix
@@ -34,11 +34,20 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 ## Key Directories
 
 - `app/` - Next.js App Router pages and API routes
-- `app/canvas/` - Interactive logic model builder with React Flow
-- `app/evidence/` - Evidence browsing and detail pages
+- `app/[lang]/` - Locale-routed pages (en, ja) via next-intl
+- `app/[lang]/canvas/` - Interactive logic model builder with React Flow
+- `app/[lang]/evidence/` - Evidence browsing and detail pages
+- `app/[lang]/effects/` - Effects/outcomes listing page
+- `app/[lang]/search/` - Evidence search and filtering
+- `app/[lang]/strength-of-evidence/` - Scientific Maryland Scale reference
+- `app/actions/` - Server actions (hypercerts)
 - `app/api/` - Server-side API endpoints
 - `components/canvas/` - React Flow canvas components (nodes, edges, controls)
 - `components/evidence/` - Evidence-specific UI components
+- `components/hypercerts/` - Hypercerts integration components
+- `components/mastra/` - Mastra/AI-related components
+- `components/table/` - Table components
+- `components/tooltip/` - Tooltip components
 - `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
 - `hooks/` - Custom React hooks including blockchain integration and SSE workflow streaming (`useWorkflowStream`)
 - `lib/` - Shared utilities, configuration, and academic API clients (`lib/academic-apis/`)
@@ -46,6 +55,9 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `types/` - TypeScript definitions for Evidence, Attestation, graph structures
 - `utils/` - Configuration and helper functions
 - `docs/` - Detailed technical documentation (see Additional Documentation section)
+- `configs/` - EAS GraphQL endpoints, Hypercerts SDK configuration
+- `i18n/` - next-intl routing and request configuration
+- `messages/` - Translation files (en.json, ja.json)
 
 ## Evidence Data
 
@@ -58,6 +70,7 @@ Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
 ## Technology Stack
 
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS 4, Radix UI + shadcn/ui
+- **i18n**: next-intl (locales: en, ja)
 - **Canvas & Graphs**: React Flow (@xyflow/react) for interactive logic model visualization
 - **AI & Agents**: Mastra framework, Vercel AI SDK, OpenAI/Claude APIs, Semantic Scholar API
 - **Observability**: Mastra Observability with DefaultExporter (Mastra Studio)
@@ -73,7 +86,8 @@ Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
 - Path alias `@/*` maps to project root
 - ESLint ignores `components/ui/**` (shadcn/ui auto-generated components)
 - Git pre-commit hooks via husky automatically lint and format code
-- Project includes English and Japanese documentation
+- Application is internationalized (en, ja) via next-intl; all pages route through `app/[lang]/`
+- Translation files: `messages/en.json`, `messages/ja.json`
 
 ## Additional Documentation
 

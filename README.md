@@ -58,6 +58,8 @@ A React Flow-powered visual builder for creating and editing logic models. Evide
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+The application supports English and Japanese (next-intl), with all pages routed through `app/[lang]/`.
+
 ## Getting Started
 
 ### Prerequisites
@@ -109,14 +111,23 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 ```
 .
 ├── app/                  # Next.js App Router
-│   ├── canvas/           #   Interactive logic model builder
-│   ├── evidence/         #   Evidence browsing and detail pages
-│   ├── hypercerts/       #   Hypercerts integration
+│   ├── [lang]/           #   Locale-routed pages (en, ja)
+│   │   ├── canvas/       #     Interactive logic model builder
+│   │   ├── evidence/     #     Evidence browsing and detail pages
+│   │   ├── effects/      #     Effects/outcomes listing
+│   │   ├── hypercerts/   #     Hypercerts integration
+│   │   ├── search/       #     Evidence search and filtering
+│   │   └── strength-of-evidence/  # Scientific Maryland Scale
+│   ├── actions/          #   Server actions
 │   └── api/              #   Server-side API endpoints
 ├── components/           # React components
 │   ├── canvas/           #   React Flow nodes, edges, and controls
 │   ├── evidence/         #   Evidence-specific UI components
+│   ├── hypercerts/       #   Hypercerts components
 │   └── ui/               #   shadcn/ui primitives (auto-generated)
+├── configs/              # EAS and Hypercerts SDK configuration
+├── i18n/                 # next-intl routing and request config
+├── messages/             # Translation files (en, ja)
 ├── mastra/               # AI agent system
 │   ├── agents/           #   Logic model and evidence search agents
 │   ├── workflows/        #   Multi-step agent workflows
