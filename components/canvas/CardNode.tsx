@@ -114,9 +114,7 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
         {/* Metrics count (bottom right) */}
         {data.metrics && data.metrics.length > 0 && (
           <div className="rounded bg-gray-700 px-2 py-1 text-xs font-medium text-white">
-            {data.metrics.length !== 1
-              ? tMetrics("metricsCount", { count: data.metrics.length })
-              : tMetrics("metricCount", { count: data.metrics.length })}
+            {tMetrics("metricCount", { count: data.metrics.length })}
           </div>
         )}
       </div>

@@ -38,11 +38,7 @@ export function EvidenceDialog({
       <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>
-            {totalItems !== 1
-              ? t("itemsCount", { count: totalItems })
-              : t("itemCount", { count: totalItems })}
-          </DialogDescription>
+          <DialogDescription>{t("itemCount", { count: totalItems })}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

@@ -85,7 +85,7 @@
     "addCard": "カードを追加"
   },
   "nodeTypes": {
-    "activities": "活動",
+    "activities": "アクティビティ",
     "outputs": "アウトプット",
     "outcomesShort": "短期アウトカム",
     "outcomesIntermediate": "中期アウトカム",
@@ -109,8 +109,7 @@
     "targetValue": "目標値（任意）",
     "targetPlaceholder": "例：50%改善",
     "target": "目標: {value}",
-    "metricCount": "{count} メトリクス",
-    "metricsCount": "{count} メトリクス"
+    "metricCount": "{count} メトリクス"
   },
   "frequency": {
     "daily": "毎日",
@@ -153,7 +152,6 @@
   "evidenceDialog": {
     "title": "接続されたエビデンス",
     "itemCount": "関連エビデンス: {count}件",
-    "itemsCount": "関連エビデンス: {count}件",
     "evidenceId": "エビデンスID: {id}",
     "relevance": "関連度: {score}",
     "reasoning": "理由:",
@@ -175,7 +173,6 @@
     "filtering": "フィルタリング中...",
     "results": "{total}件中{filtered}件を表示",
     "filterActive": "（{count}件のフィルターが有効）",
-    "filtersActive": "（{count}件のフィルターが有効）",
     "clearAllFilters": "すべてのフィルターをクリア"
   },
   "filters": {
@@ -192,8 +189,8 @@
     "unclearDescription": "サンプルサイズが不十分、または分析手法が不適切な場合に「不明」と分類されます。「不明」と判断された介入には、追加の検証が必要です。",
     "positive": "正の効果",
     "positiveDescription": "期待された効果が確認されたことを示します。多くの場合、統計的に有意であり、実質的に意味のある十分な大きさの効果が観察されたことを意味します。",
-    "no": "効果なし",
-    "noDescription": "期待された効果が観察されなかったことを示します。多くの場合、サンプルサイズは十分でしたが、効果は統計的に有意ではありませんでした。サンプルサイズが非常に大きい場合、統計的に有意であっても実質的に意味のない効果を表す場合があり、そのような場合もこのカテゴリに分類されます。",
+    "noEffect": "効果なし",
+    "noEffectDescription": "期待された効果が観察されなかったことを示します。多くの場合、サンプルサイズは十分でしたが、効果は統計的に有意ではありませんでした。サンプルサイズが非常に大きい場合、統計的に有意であっても実質的に意味のない効果を表す場合があり、そのような場合もこのカテゴリに分類されます。",
     "mixed": "混合",
     "mixedDescription": "介入の効果に異質性が見られる場合に分類されます。例えば、男性には効果があったが女性にはなかった、若年層には効果があったが高齢者にはなかったなどです。様々な条件によって結果が異なる場合に「混合」と分類されます。",
     "side": "副作用",
@@ -246,7 +243,7 @@
     "viewDefinitionStrength": "エビデンスの強さの定義を見る"
   },
   "hypercerts": {
-    "noFound": "インパクト証明書が見つかりません",
+    "notFound": "インパクト証明書が見つかりません",
     "showing": "{total}件中{shown}件のインパクト証明書を表示",
     "untitled": "[無題]",
     "noDescription": "説明はありません",

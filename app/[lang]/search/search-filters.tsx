@@ -92,8 +92,7 @@ export function SearchFilters({
             {isPending
               ? t("filtering")
               : t("results", { filtered: filteredCount, total: totalCount })}
-            {activeFilterCount > 0 &&
-              ` ${activeFilterCount > 1 ? t("filtersActive", { count: activeFilterCount }) : t("filterActive", { count: activeFilterCount })}`}
+            {activeFilterCount > 0 && ` ${t("filterActive", { count: activeFilterCount })}`}
           </span>
           {activeFilterCount > 0 && (
             <button className="text-primary hover:underline" onClick={handleClearAll}>

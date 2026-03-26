@@ -109,8 +109,7 @@
     "targetValue": "Target Value (optional)",
     "targetPlaceholder": "e.g., 50% improvement",
     "target": "Target: {value}",
-    "metricCount": "{count} metric",
-    "metricsCount": "{count} metrics"
+    "metricCount": "{count, plural, one {# metric} other {# metrics}}"
   },
   "frequency": {
     "daily": "Daily",
@@ -152,8 +151,7 @@
   },
   "evidenceDialog": {
     "title": "Evidence for Connection",
-    "itemCount": "{count} evidence item linked to this connection",
-    "itemsCount": "{count} evidence items linked to this connection",
+    "itemCount": "{count, plural, one {# evidence item linked to this connection} other {# evidence items linked to this connection}}",
     "evidenceId": "Evidence ID: {id}",
     "relevance": "Relevance: {score}",
     "reasoning": "Reasoning:",
@@ -174,8 +172,7 @@
     "placeholder": "Search evidence...",
     "filtering": "Filtering...",
     "results": "{filtered} of {total} results",
-    "filterActive": "({count} filter active)",
-    "filtersActive": "({count} filters active)",
+    "filterActive": "({count, plural, one {# filter active} other {# filters active}})",
     "clearAllFilters": "Clear all filters"
   },
   "filters": {
@@ -192,8 +189,8 @@
     "unclearDescription": "Classified as unclear when the sample size is insufficient or analytical methods are inadequate. Interventions judged as unclear require additional testing.",
     "positive": "Positive",
     "positiveDescription": "Indicates that the expected effect was found. In many cases, this is statistically significant and shows that a practically meaningful effect of considerable magnitude was observed.",
-    "no": "No",
-    "noDescription": "Indicates that the expected effect was not observed. In many cases, this shows that the sample size was sufficient but the effect was not statistically significant. When the sample size is extremely large, even if statistically significant, it may represent a practically meaningless effect, which would be classified in this category.",
+    "noEffect": "No",
+    "noEffectDescription": "Indicates that the expected effect was not observed. In many cases, this shows that the sample size was sufficient but the effect was not statistically significant. When the sample size is extremely large, even if statistically significant, it may represent a practically meaningless effect, which would be classified in this category.",
     "mixed": "Mixed",
     "mixedDescription": "Intervention effects show heterogeneity in many cases. For example, effects were found for men but not for women, or effects were found for young people but not for elderly people. Results are classified as mixed when outcomes differ depending on various conditions.",
     "side": "Side",
@@ -246,7 +243,7 @@
     "viewDefinitionStrength": "View definition of strength of evidence"
   },
   "hypercerts": {
-    "noFound": "No hypercerts found",
+    "notFound": "No hypercerts found",
     "showing": "Showing {shown} of {total} hypercerts",
     "untitled": "[Untitled]",
     "noDescription": "No description available",
