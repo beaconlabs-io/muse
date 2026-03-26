@@ -36,7 +36,7 @@ export function ExportImageDialog({ open, onOpenChange, nodes }: ExportImageDial
   useEffect(() => {
     if (open && status === "idle" && !hasTriggeredRef.current) {
       hasTriggeredRef.current = true;
-      generate(nodes);
+      generate(nodes, "export");
     }
   }, [open, status, nodes, generate]);
 
@@ -84,7 +84,7 @@ export function ExportImageDialog({ open, onOpenChange, nodes }: ExportImageDial
           status={status}
           result={result}
           error={error}
-          onRetry={() => generate(nodes)}
+          onRetry={() => generate(nodes, "export")}
         />
 
         {/* Action Buttons */}
