@@ -33,18 +33,18 @@ const logger = createLogger({ module: "workflow:logic-model-with-evidence" });
 const generateLogicModelStep = createStep({
   id: "generate-logic-model",
   inputSchema: z.object({
-    intent: z.string().describe("User's intent for creating the logic model"),
+    goal: z.string().describe("User's goal — what they want to achieve"),
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
   }),
   execute: async ({ inputData }) => {
-    const { intent } = inputData;
+    const { goal } = inputData;
     const MAX_RETRIES = 2;
 
-    logger.info({ intent }, "Step 1: Generating logic model structure");
+    logger.info({ goal }, "Step 1: Generating logic model structure");
 
-    const userContent = `Create a logic model for: ${intent}`;
+    const userContent = `Create a logic model for the following goal: ${goal}`;
 
     let lastError: Error | null = null;
 
@@ -412,7 +412,7 @@ const enrichCanvasStep = createStep({
 export const logicModelWithEvidenceWorkflow = createWorkflow({
   id: "logic-model-with-evidence",
   inputSchema: z.object({
-    intent: z.string().describe("User's intent for creating the logic model"),
+    goal: z.string().describe("User's goal — what they want to achieve"),
     enableExternalSearch: z
       .boolean()
       .default(false)

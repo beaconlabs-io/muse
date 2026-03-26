@@ -34,10 +34,10 @@ import { useWorkflowStream } from "@/hooks/useWorkflowStream";
 import { EXTERNAL_SEARCH_ENABLED } from "@/lib/constants";
 
 const generateLogicModelSchema = z.object({
-  intent: z
+  goal: z
     .string()
-    .min(1, "Please enter your intent")
-    .max(1000, "Intent must be 1000 characters or less"),
+    .min(1, "Please enter your goal")
+    .max(1000, "Goal must be 1000 characters or less"),
   enableExternalSearch: z.boolean(),
 });
 
@@ -93,7 +93,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   const form = useForm<GenerateLogicModelFormData>({
     resolver: zodResolver(generateLogicModelSchema),
     defaultValues: {
-      intent: "",
+      goal: "",
       enableExternalSearch: false,
     },
   });
@@ -172,7 +172,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setStepDialogOpen(true);
 
     processedEventCountRef.current = 0;
-    await startWorkflow(data.intent, data.enableExternalSearch);
+    await startWorkflow(data.goal, data.enableExternalSearch);
   };
 
   // Cleanup on unmount
@@ -232,7 +232,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
             )}
             <FormField
               control={form.control}
-              name="intent"
+              name="goal"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("formLabel")}</FormLabel>

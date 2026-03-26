@@ -25,7 +25,7 @@ const logger = createLogger({ module: "api:compact" });
  * POST /api/compact
  *
  * Create a Logic Model from chat history.
- * 1. Extract intent from conversation
+ * 1. Extract goal from conversation
  * 2. Run Logic Model workflow
  * 3. Upload to IPFS
  * 4. Return canvas URL
@@ -58,8 +58,8 @@ export async function POST(request: NextRequest) {
 
     const { chatHistory } = validationResult.data;
 
-    // 3. Extract intent from chat history
-    const intent = extractIntentFromHistory(chatHistory);
+    // 3. Extract goal from chat history
+    const goal = extractGoalFromHistory(chatHistory);
 
     // 4. Run Logic Model workflow with timeout
     const workflow = mastra.getWorkflow("logicModelWithEvidenceWorkflow");
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     let result;
     try {
       result = await Promise.race([
-        run.start({ inputData: { intent, enableExternalSearch: true } }),
+        run.start({ inputData: { goal, enableExternalSearch: true } }),
         timeoutPromise,
       ]);
     } finally {
@@ -152,10 +152,10 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Extract intent from chat history.
+ * Extract goal from chat history.
  * Creates a unified prompt that asks AI to respond in the conversation's language.
  */
-function extractIntentFromHistory(chatHistory: ChatMessage[]): string {
+function extractGoalFromHistory(chatHistory: ChatMessage[]): string {
   const conversationText = chatHistory
     .filter((m) => m.role === "user")
     .map((m) => m.content)

@@ -24,7 +24,7 @@
     "error": "Error"
   },
   "canvas": {
-    "generateFromIntent": "Generate from Intent",
+    "generateFromIntent": "Generate Logic Model",
     "addNode": "Add Node",
     "more": "More",
     "mintHypercert": "Mint Hypercert",
@@ -53,14 +53,14 @@
     "clearAllConfirm": "Clear All Data"
   },
   "generate": {
-    "title": "Generate Logic Model from Intent",
-    "description": "Describe your project or program, and AI agent will create a logic model for you.",
-    "formLabel": "What intervention or program do you want to create a logic model for?",
-    "placeholder": "Enter your intent here",
-    "generateButton": "Generate Logic Model",
+    "title": "Generate Logic Model",
+    "description": "Describe what you want to achieve, and AI agent will create a logic model for you.",
+    "formLabel": "What do you want to achieve?",
+    "placeholder": "e.g., Accelerate innovation through public funding of open-source infrastructure",
+    "generateButton": "Generate",
     "generatingTitle": "Generating Logic Model",
     "estimatedTime": "⏱️ Estimated time: ~1 minute",
-    "estimatedTimeDescription": "The AI will analyze your intent, generate a logic model structure, and search for supporting evidence from our evidence list.",
+    "estimatedTimeDescription": "The AI will analyze your goal, generate a logic model structure, and search for supporting evidence from our evidence list.",
     "stepGenerating": "Generating logic model structure",
     "stepSearching": "Searching for supporting evidence",
     "stepSearchingExternal": "Searching external academic papers",
@@ -218,18 +218,18 @@
   },
   "strengthLevels": {
     "rct": "RCT",
-    "rctFull": "Level 5 - RCT",
+    "rctFull": "RCT",
     "rctDescription": "Randomized Controlled Trial",
     "randomizedDesign": "Randomized Design",
-    "randomizedFull": "Level 4 - Randomized",
+    "randomizedFull": "Randomized Design",
     "quasiExperimental": "Quasi-experimental",
-    "quasiExperimentalFull": "Level 3 - Quasi-exp",
+    "quasiExperimentalFull": "Quasi-experimental",
     "controlledComparison": "Controlled Comparison",
-    "controlledFull": "Level 2 - Controlled",
+    "controlledFull": "Controlled Comparison",
     "basicComparison": "Basic Comparison",
-    "basicFull": "Level 1 - Basic",
+    "basicFull": "Basic Comparison",
     "mathematicalModel": "Mathematical Model",
-    "modelFull": "Level 0 - Model"
+    "modelFull": "Mathematical Model"
   },
   "evidence": {
     "results": "Results",

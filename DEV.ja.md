@@ -77,7 +77,7 @@ sequenceDiagram
     API->>Workflow: logicModelWithEvidenceWorkflow.stream()
 
     Note over Workflow, Agent: Workflow Step 1: ロジックモデル構造を生成
-    Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 12)
+    Workflow->>Agent: logicModelAgent.generate(goal, maxSteps: 12)
     Agent->>Agent: Stage 1: Interventionを分析（ドメイン、目標）
     Agent->>Agent: Stage 2: カードを生成（メトリクス付き）
     Agent->>Agent: Stage 3: 接続をデザイン（4-Test Framework）
