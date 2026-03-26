@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import type { ErrorCategory } from "@/lib/workflow-errors";
 import type { CanvasData } from "@/types";
 import type { WorkflowSSEEvent } from "@/types/workflow-events";
 import { WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
@@ -11,6 +12,8 @@ interface WorkflowStreamState {
   status: WorkflowStreamStatus;
   currentStepId: string | null;
   error: string | null;
+  errorCategory: ErrorCategory | null;
+  rawError: string | null;
   failedStepId: string | null;
   canvasData: CanvasData | null;
 }
@@ -19,6 +22,7 @@ interface StepEvent {
   type: "step-start" | "step-finish" | "step-error";
   stepId: string;
   error?: string;
+  errorCategory?: ErrorCategory;
 }
 
 export function useWorkflowStream() {
@@ -26,6 +30,8 @@ export function useWorkflowStream() {
     status: "idle",
     currentStepId: null,
     error: null,
+    errorCategory: null,
+    rawError: null,
     failedStepId: null,
     canvasData: null,
   });
@@ -33,130 +39,136 @@ export function useWorkflowStream() {
   const [stepEvents, setStepEvents] = useState<StepEvent[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const startWorkflow = useCallback(
-    async (intent: string, enableExternalSearch: boolean = false) => {
-      // Abort any existing stream
-      abortControllerRef.current?.abort();
+  const startWorkflow = useCallback(async (goal: string, enableExternalSearch: boolean = false) => {
+    // Abort any existing stream
+    abortControllerRef.current?.abort();
 
-      const abortController = new AbortController();
-      abortControllerRef.current = abortController;
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
-      setState({
-        status: "running",
-        currentStepId: null,
-        error: null,
-        failedStepId: null,
-        canvasData: null,
+    setState({
+      status: "running",
+      currentStepId: null,
+      error: null,
+      errorCategory: null,
+      rawError: null,
+      failedStepId: null,
+      canvasData: null,
+    });
+    setStepEvents([]);
+
+    // Client-side timeout
+    const timeoutId = setTimeout(() => {
+      abortController.abort();
+      setState((prev) => ({
+        ...prev,
+        status: "error",
+        error: "Workflow timed out",
+      }));
+    }, WORKFLOW_TIMEOUT_MS + 10_000);
+
+    try {
+      const response = await fetch("/api/workflow/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goal, enableExternalSearch }),
+        signal: abortController.signal,
       });
-      setStepEvents([]);
 
-      // Client-side timeout
-      const timeoutId = setTimeout(() => {
-        abortController.abort();
-        setState((prev) => ({
-          ...prev,
-          status: "error",
-          error: "Workflow timed out",
-        }));
-      }, WORKFLOW_TIMEOUT_MS + 10_000);
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error((errorBody as Record<string, string>).error || `HTTP ${response.status}`);
+      }
 
-      try {
-        const response = await fetch("/api/workflow/stream", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ intent, enableExternalSearch }),
-          signal: abortController.signal,
-        });
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("No response stream");
+      }
 
-        if (!response.ok) {
-          const errorBody = await response.json().catch(() => ({}));
-          throw new Error((errorBody as Record<string, string>).error || `HTTP ${response.status}`);
-        }
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error("No response stream");
-        }
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        const decoder = new TextDecoder();
-        let buffer = "";
+        buffer += decoder.decode(value, { stream: true });
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        // Parse SSE lines
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || "";
 
-          buffer += decoder.decode(value, { stream: true });
+        for (const chunk of lines) {
+          const dataLine = chunk.split("\n").find((line) => line.startsWith("data: "));
+          if (!dataLine) continue;
 
-          // Parse SSE lines
-          const lines = buffer.split("\n\n");
-          buffer = lines.pop() || "";
+          const jsonStr = dataLine.slice(6); // Remove "data: " prefix
+          let event: WorkflowSSEEvent;
+          try {
+            event = JSON.parse(jsonStr) as WorkflowSSEEvent;
+          } catch {
+            continue;
+          }
 
-          for (const chunk of lines) {
-            const dataLine = chunk.split("\n").find((line) => line.startsWith("data: "));
-            if (!dataLine) continue;
+          switch (event.type) {
+            case "step-start":
+              setState((prev) => ({
+                ...prev,
+                currentStepId: event.stepId,
+              }));
+              setStepEvents((prev) => [...prev, { type: "step-start", stepId: event.stepId }]);
+              break;
 
-            const jsonStr = dataLine.slice(6); // Remove "data: " prefix
-            let event: WorkflowSSEEvent;
-            try {
-              event = JSON.parse(jsonStr) as WorkflowSSEEvent;
-            } catch {
-              continue;
-            }
+            case "step-finish":
+              setStepEvents((prev) => [...prev, { type: "step-finish", stepId: event.stepId }]);
+              break;
 
-            switch (event.type) {
-              case "step-start":
-                setState((prev) => ({
-                  ...prev,
-                  currentStepId: event.stepId,
-                }));
-                setStepEvents((prev) => [...prev, { type: "step-start", stepId: event.stepId }]);
-                break;
-
-              case "step-finish":
-                setStepEvents((prev) => [...prev, { type: "step-finish", stepId: event.stepId }]);
-                break;
-
-              case "step-error":
-                setStepEvents((prev) => [
-                  ...prev,
-                  { type: "step-error", stepId: event.stepId, error: event.error },
-                ]);
-                break;
-
-              case "workflow-complete":
-                setState((prev) => ({
-                  ...prev,
-                  status: "success",
-                  canvasData: event.canvasData,
-                }));
-                break;
-
-              case "workflow-error":
-                setState((prev) => ({
-                  ...prev,
-                  status: "error",
+            case "step-error":
+              setStepEvents((prev) => [
+                ...prev,
+                {
+                  type: "step-error",
+                  stepId: event.stepId,
                   error: event.error,
-                  failedStepId: event.failedStepId || null,
-                }));
-                break;
-            }
+                  errorCategory: event.errorCategory,
+                },
+              ]);
+              break;
+
+            case "workflow-complete":
+              setState((prev) => ({
+                ...prev,
+                status: "success",
+                canvasData: event.canvasData,
+              }));
+              break;
+
+            case "workflow-error":
+              setState((prev) => ({
+                ...prev,
+                status: "error",
+                error: event.error,
+                errorCategory: event.errorCategory || null,
+                rawError: event.rawError || null,
+                failedStepId: event.failedStepId || null,
+              }));
+              break;
           }
         }
-      } catch (err) {
-        if (abortController.signal.aborted) return;
-
-        setState((prev) => ({
-          ...prev,
-          status: "error",
-          error: err instanceof Error ? err.message : "Unknown error",
-        }));
-      } finally {
-        clearTimeout(timeoutId);
-        abortControllerRef.current = null;
       }
-    },
-    [],
-  );
+    } catch (err) {
+      if (abortController.signal.aborted) return;
+
+      setState((prev) => ({
+        ...prev,
+        status: "error",
+        error: err instanceof Error ? err.message : "Unknown error",
+      }));
+    } finally {
+      clearTimeout(timeoutId);
+      abortControllerRef.current = null;
+    }
+  }, []);
 
   const cancel = useCallback(() => {
     abortControllerRef.current?.abort();
@@ -165,6 +177,8 @@ export function useWorkflowStream() {
       status: "idle",
       currentStepId: null,
       error: null,
+      errorCategory: null,
+      rawError: null,
       failedStepId: null,
       canvasData: null,
     });

@@ -43,6 +43,15 @@ export const effectData = [
   },
 ];
 
+/** Map effect IDs to i18n translation keys in the "effects" namespace */
+export const effectTranslationKeys: Record<string, { title: string; description: string }> = {
+  "N/A": { title: "unclear", description: "unclearDescription" },
+  "+": { title: "positive", description: "positiveDescription" },
+  "-": { title: "noEffect", description: "noEffectDescription" },
+  "+-": { title: "mixed", description: "mixedDescription" },
+  "!": { title: "side", description: "sideDescription" },
+};
+
 const effectMap = new Map(effectData.map((e) => [e.id, e]));
 
 export function extractEffectData(effectId: string) {

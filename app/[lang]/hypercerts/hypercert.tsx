@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { HYPERCERTS_URL } from "@/configs/hypercerts";
 import { HypercertListFragment } from "@/types/hypercerts/fragments/hypercert-list.fragment";
@@ -16,8 +19,9 @@ const CHAIN_NAMES: Record<number, string> = {
 };
 
 export function Hypercert({ hypercert }: { hypercert: HypercertListFragment }) {
+  const t = useTranslations("hypercerts");
   const chainId = hypercert.contract?.chain_id;
-  const chainName = chainId ? CHAIN_NAMES[Number(chainId)] || `${chainId}` : "Unknown";
+  const chainName = chainId ? CHAIN_NAMES[Number(chainId)] || `${chainId}` : t("unknown");
 
   return (
     <Link
@@ -62,17 +66,17 @@ export function Hypercert({ hypercert }: { hypercert: HypercertListFragment }) {
         >
           {/* Title */}
           <h3 className="text-foreground group-hover:text-primary leading-tight font-semibold transition-colors duration-200">
-            {hypercert.metadata?.name ?? "[Untitled]"}
+            {hypercert.metadata?.name ?? t("untitled")}
           </h3>
 
           {/* Description */}
           <p className="text-muted-foreground group-hover:text-foreground line-clamp-2 h-10 text-sm text-ellipsis transition-colors duration-200">
-            {hypercert.metadata?.description ?? "No description available"}
+            {hypercert.metadata?.description ?? t("noDescription")}
           </p>
 
           {/* External Link Indicator */}
           <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-            <span>View details</span>
+            <span>{t("viewDetails")}</span>
             <ExternalLink className="h-3 w-3" />
           </div>
         </section>

@@ -17,8 +17,8 @@ sequenceDiagram
 
     Note over User, SS: Logic Model Generation with Agent
 
-    User->>FE: Provide intent (goal)
-    FE->>Agent: Send intent
+    User->>FE: Provide goal
+    FE->>Agent: Send goal
     Agent->>Evidence: Query relevant evidence
     Evidence-->>Agent: Return evidence data
     Agent->>SS: Search external papers (under-matched edges)
@@ -48,7 +48,7 @@ sequenceDiagram
 
     Note over User, SS: Logic Model Generation with Evidence Validation (Mastra Workflow)
 
-    User->>FE: Provide intent (e.g., "OSS impact on Ethereum")
+    User->>FE: Provide goal (e.g., "OSS impact on Ethereum")
 
     Note over FE, LLM: UI Step 1: Generate Structure (SSE Stream)
     FE->>FE: Mark "generate-logic-model" as active
@@ -56,7 +56,7 @@ sequenceDiagram
     API->>Workflow: logicModelWithEvidenceWorkflow.stream()
 
     Note over Workflow, Agent: Workflow Step 1: Generate Logic Model Structure
-    Workflow->>Agent: logicModelAgent.generate(intent, maxSteps: 12)
+    Workflow->>Agent: logicModelAgent.generate(goal, maxSteps: 12)
     Agent->>Agent: Stage 1: Analyze Intervention (domain, goals)
     Agent->>Agent: Stage 2: Generate Cards (with metrics)
     Agent->>Agent: Stage 3: Design Connections (4-Test Framework)
@@ -132,11 +132,11 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 
 ### Step 1: Structure Generation
 
-**Input**: User intent (e.g., "Create a logic model for improving student literacy")
+**Input**: User goal (e.g., "Improve student literacy through school library programs")
 
 **Process**:
 
-- Agent analyzes user intent
+- Agent analyzes user goal
 - Generates logic model structure with:
   - **Cards**: Representing stages (activities, outputs, outcomes, impact)
   - **Arrows**: Representing causal relationships ("if X, then Y")
@@ -476,7 +476,7 @@ Tool for generating logic model structure:
 
 1. Authenticate via `BOT_API_KEY` header (optional, skipped if `BOT_API_KEY` env var is not configured)
 2. Validate request body with `CompactRequestSchema` (`chatHistory: ChatMessage[]`)
-3. Extract intent from user messages in the conversation
+3. Extract goal from user messages in the conversation
 4. Run `logicModelWithEvidenceWorkflow` with `enableExternalSearch: true` (always enabled)
 5. Validate output with `CanvasDataSchema`
 6. Upload canvas data to IPFS via Pinata
@@ -493,7 +493,7 @@ Tool for generating logic model structure:
 
 ## UI Flow (4 Steps)
 
-1. **Analyze Intent** (UI only)
+1. **Analyze Goal** (UI only)
    - Marks step as active → completed immediately
    - No server interaction
 

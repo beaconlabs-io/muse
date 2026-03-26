@@ -1,4 +1,6 @@
-import Link from "next/link";
+"use client";
+
+import { useTranslations } from "next-intl";
 
 const text = `{
   "id": "0",
@@ -9,6 +11,8 @@ const text = `{
 }`;
 
 export function Hero() {
+  const t = useTranslations("hero");
+
   return (
     <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20">
       <div className="container mx-auto px-4 pt-10 pb-24 sm:pb-32 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:py-40">
@@ -16,23 +20,20 @@ export function Hero() {
           <div className="mx-auto max-w-2xl">
             <div className="max-w-lg">
               <h1 className="mt-10 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                MUSE
+                {t("title")}
               </h1>
               {/* TODO: to be modified */}
-              <p className="mt-6 text-lg leading-8 text-gray-600">
-                Bridge communities and decision makers through evidence-based decision making.
-                Curate research evidence, build logic models, and track impact with hypercerts.
-              </p>
+              <p className="mt-6 text-lg leading-8 text-gray-600">{t("description")}</p>
               <div className="mt-10 flex items-center gap-x-6">
                 {/* TODO: replace to whitepaper */}
-                <Link
+                <a
                   href="https://beaconlabs.io/reports/evidence-layer-for-digital-public-goods"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm leading-6 font-semibold text-gray-900"
                 >
-                  Learn more <span aria-hidden="true">→</span>
-                </Link>
+                  {t("learnMore")} <span aria-hidden="true">&rarr;</span>
+                </a>
               </div>
             </div>
           </div>
@@ -48,9 +49,11 @@ export function Hero() {
                     <div className="flex bg-gray-800/40 ring-1 ring-white/5">
                       <div className="-mb-px flex text-sm leading-6 font-medium text-gray-400">
                         <div className="border-r border-b border-r-white/10 border-b-white/20 bg-white/5 px-4 py-2 text-white">
-                          Evidence
+                          {t("tabEvidence")}
                         </div>
-                        <div className="border-r border-gray-600/10 px-4 py-2">Claims</div>
+                        <div className="border-r border-gray-600/10 px-4 py-2">
+                          {t("tabClaims")}
+                        </div>
                       </div>
                     </div>
                     <div className="px-6 pt-6 pb-14">

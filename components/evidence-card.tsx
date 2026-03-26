@@ -1,15 +1,20 @@
-import Link from "next/link";
+"use client";
+
+import { useTranslations } from "next-intl";
 import { EffectIcons } from "@/components/effect-icons";
 import { StrengthIndicator } from "@/components/strength-indicator";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Evidence } from "@beaconlabs-io/evidence";
+import { Link } from "@/i18n/routing";
 
 interface EvidenceCardProps {
   evidence: Evidence;
 }
 
 export function EvidenceCard({ evidence }: EvidenceCardProps) {
+  const t = useTranslations("evidence");
+
   const validTags = evidence.tags?.filter((tag) => tag && tag.trim().length > 0) ?? [];
   const displayedTags = validTags.slice(0, 3);
   const extraTagCount = Math.max(0, validTags.length - 3);
@@ -54,7 +59,7 @@ export function EvidenceCard({ evidence }: EvidenceCardProps) {
             ))}
             {extraResultCount > 0 && (
               <div className="text-muted-foreground pl-8 text-xs">
-                +{extraResultCount} more results
+                {t("moreResults", { count: extraResultCount })}
               </div>
             )}
           </div>

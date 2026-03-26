@@ -1,6 +1,5 @@
 "use client";
 import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formatHypercertData, TransferRestrictions } from "@hypercerts-org/sdk";
@@ -8,6 +7,7 @@ import { track } from "@vercel/analytics";
 import { format } from "date-fns";
 import { toPng } from "html-to-image";
 import { ArrowLeft, Loader2, CalendarIcon, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { waitForTransactionReceipt } from "viem/actions";
 import { useAccount, useWalletClient } from "wagmi";
 import { z } from "zod";
@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { getHypercertsClient } from "@/configs/hypercerts";
+import { useRouter } from "@/i18n/routing";
 import { BASE_URL } from "@/lib/constants";
 import { createLogger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
@@ -86,6 +87,7 @@ const getStoredCanvasData = (): CanvasData | null => {
 
 export default function MintHypercertPage() {
   const router = useRouter();
+  const t = useTranslations("mintHypercert");
   const storedCanvasData = getStoredCanvasData();
 
   const [canvasData] = useState<CanvasData | null>(storedCanvasData);
@@ -103,11 +105,11 @@ export default function MintHypercertPage() {
 
   // Define steps for the minting process
   const mintingSteps = [
-    { id: "upload-ipfs", description: "Uploading logic model to IPFS" },
-    { id: "generate-image", description: "Generating hypercert image" },
-    { id: "mint-hypercert", description: `Minting hypercert on ${chain?.name}` },
-    { id: "confirming", description: "Waiting for on-chain confirmation" },
-    { id: "done", description: "Minting complete!" },
+    { id: "upload-ipfs", description: t("stepUploadIPFS") },
+    { id: "generate-image", description: t("stepGenerateImage") },
+    { id: "mint-hypercert", description: t("stepMint", { chain: chain?.name ?? "" }) },
+    { id: "confirming", description: t("stepConfirming") },
+    { id: "done", description: t("stepDone") },
   ];
 
   // Function to generate hypercert image from the HypercertCard component
@@ -188,7 +190,7 @@ export default function MintHypercertPage() {
 
     // Initialize step process dialog
     setSteps(mintingSteps);
-    setTitle("Minting Hypercert");
+    setTitle(t("mintingTitle"));
     setOpen(true);
 
     let ipfsResult: any = null;
@@ -351,7 +353,7 @@ export default function MintHypercertPage() {
       <div className="container mx-auto px-4 py-4">
         <Button variant="ghost" size="sm" onClick={() => router.back()} className="cursor-pointer">
           <ArrowLeft className="h-4 w-4" />
-          Back to Canvas
+          {t("backToCanvas")}
         </Button>
       </div>
 
@@ -367,9 +369,9 @@ export default function MintHypercertPage() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title *</FormLabel>
+                      <FormLabel>{t("titleLabel")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter hypercert title" {...field} />
+                        <Input placeholder={t("titlePlaceholder")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -381,13 +383,9 @@ export default function MintHypercertPage() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description *</FormLabel>
+                      <FormLabel>{t("descriptionLabel")}</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="Describe the impact and work represented by this hypercert"
-                          rows={4}
-                          {...field}
-                        />
+                        <Textarea placeholder={t("descriptionPlaceholder")} rows={4} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -399,16 +397,11 @@ export default function MintHypercertPage() {
                   name="impactScope"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Impact Scope *</FormLabel>
+                      <FormLabel>{t("impactScopeLabel")}</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="e.g., Education, Healthcare, Climate Change"
-                          {...field}
-                        />
+                        <Input placeholder={t("impactScopePlaceholder")} {...field} />
                       </FormControl>
-                      <FormDescription>
-                        Define the area of impact for this hypercert
-                      </FormDescription>
+                      <FormDescription>{t("impactScopeDescription")}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -420,7 +413,7 @@ export default function MintHypercertPage() {
                   name="logoFile"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Logo</FormLabel>
+                      <FormLabel>{t("logoLabel")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -457,7 +450,7 @@ export default function MintHypercertPage() {
                   name="bannerFile"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Banner Image</FormLabel>
+                      <FormLabel>{t("bannerLabel")}</FormLabel>
                       <FormControl>
                         <div className="space-y-2">
                           <div className="relative">
@@ -496,7 +489,7 @@ export default function MintHypercertPage() {
                   name="workDates"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Work Timeline</FormLabel>
+                      <FormLabel>{t("workTimelineLabel")}</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -514,7 +507,7 @@ export default function MintHypercertPage() {
                                   {format(field.value[1], "LLL dd, y")}
                                 </>
                               ) : (
-                                <span>Pick work date range</span>
+                                <span>{t("pickDateRange")}</span>
                               )}
                             </Button>
                           </FormControl>
@@ -545,18 +538,11 @@ export default function MintHypercertPage() {
                   name="contributors"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Contributors</FormLabel>
+                      <FormLabel>{t("contributorsLabel")}</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="List contributors (names, addresses, or pseudonyms) separated by commas"
-                          rows={3}
-                          {...field}
-                        />
+                        <Textarea placeholder={t("contributorsPlaceholder")} rows={3} {...field} />
                       </FormControl>
-                      <FormDescription>
-                        Add contributor addresses, names or pseudonyms whose work is represented by
-                        the hypercert
-                      </FormDescription>
+                      <FormDescription>{t("contributorsDescription")}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -564,7 +550,7 @@ export default function MintHypercertPage() {
 
                 {!isConnected && (
                   <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-600">
-                    Please connect your wallet to mint a hypercert
+                    {t("connectWallet")}
                   </div>
                 )}
 
@@ -575,7 +561,7 @@ export default function MintHypercertPage() {
                   disabled={true}
                   size="lg"
                 >
-                  Mint Hypercert
+                  {t("mintButton")}
                 </Button>
               </form>
             </Form>
@@ -587,7 +573,7 @@ export default function MintHypercertPage() {
               <div className="flex justify-center">
                 <HypercertCard
                   ref={hypercertCardRef}
-                  title={watchedTitle || "Your title here"}
+                  title={watchedTitle || t("yourTitleHere")}
                   banner={bannerPreviewUrl || "/canvas-og.svg"}
                   logo={logoPreviewUrl || "/beaconlabs.png"}
                   workStartDate={watchedWorkDates?.[0] || new Date()}
@@ -601,9 +587,7 @@ export default function MintHypercertPage() {
                   }
                 />
               </div>
-              <p className="text-muted-foreground mt-4 text-center text-xs">
-                Preview of your hypercert
-              </p>
+              <p className="text-muted-foreground mt-4 text-center text-xs">{t("preview")}</p>
             </div>
           </div>
         </div>

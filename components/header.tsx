@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
-import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -9,23 +12,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-const navigation = [
-  {
-    title: "Evidence",
-    href: "/search",
-    description: "Search evidence curated by community and Beacon Labs.",
-  },
-  {
-    title: "Canvas",
-    href: "/canvas",
-    description: "Create and edit interactive logic models with evidence.",
-  },
-  {
-    title: "Hypercerts",
-    href: "/hypercerts",
-    description: "Explore Hypercerts created via MUSE.",
-  },
-];
+import { Link } from "@/i18n/routing";
 
 function ListItem({
   title,
@@ -46,6 +33,26 @@ function ListItem({
 }
 
 export function Header() {
+  const t = useTranslations("nav");
+
+  const navigation = [
+    {
+      title: t("evidence"),
+      href: "/search",
+      description: t("evidenceDescription"),
+    },
+    {
+      title: t("canvas"),
+      href: "/canvas",
+      description: t("canvasDescription"),
+    },
+    {
+      title: t("hypercerts"),
+      href: "/hypercerts",
+      description: t("hypercertsDescription"),
+    },
+  ];
+
   return (
     <header className="w-full border-b">
       <div className="flex h-16 items-center justify-between px-4">
@@ -65,11 +72,11 @@ export function Header() {
           <NavigationMenu className="md:hidden">
             <NavigationMenuList className="flex-wrap">
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Menu</NavigationMenuTrigger>
+                <NavigationMenuTrigger>{t("menu")}</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[150px] gap-2">
                     {navigation.map((item) => (
-                      <ListItem key={item.title} href={item.href} title={item.title}>
+                      <ListItem key={item.href} href={item.href} title={item.title}>
                         {item.description}
                       </ListItem>
                     ))}
@@ -81,7 +88,7 @@ export function Header() {
           <nav className="hidden items-center gap-6 md:flex">
             {navigation.map((item) => (
               <Link
-                key={item.title}
+                key={item.href}
                 href={item.href}
                 className="hover:text-primary text-sm font-medium transition-colors"
               >
@@ -90,20 +97,23 @@ export function Header() {
             ))}
           </nav>
         </div>
-        <ConnectButton
-          chainStatus={{
-            smallScreen: "none",
-            largeScreen: "full",
-          }}
-          showBalance={{
-            smallScreen: false,
-            largeScreen: true,
-          }}
-          accountStatus={{
-            smallScreen: "avatar",
-            largeScreen: "full",
-          }}
-        />
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <ConnectButton
+            chainStatus={{
+              smallScreen: "none",
+              largeScreen: "full",
+            }}
+            showBalance={{
+              smallScreen: false,
+              largeScreen: true,
+            }}
+            accountStatus={{
+              smallScreen: "avatar",
+              largeScreen: "full",
+            }}
+          />
+        </div>
       </div>
     </header>
   );

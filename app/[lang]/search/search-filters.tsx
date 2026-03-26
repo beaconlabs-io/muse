@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useTransition } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { EffectFilter } from "@/components/effect-filter";
 import { SearchFilter } from "@/components/search-filter";
 import { StrengthFilter } from "@/components/strength-filter";
+import { useRouter, usePathname } from "@/i18n/routing";
 
 interface SearchFiltersProps {
   searchQuery: string;
@@ -27,6 +29,7 @@ export function SearchFilters({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const t = useTranslations("search");
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -86,13 +89,14 @@ export function SearchFilters({
 
         <div className="text-muted-foreground flex items-center justify-between text-sm">
           <span>
-            {isPending ? "Filtering..." : `${filteredCount} of ${totalCount} results`}
-            {activeFilterCount > 0 &&
-              ` (${activeFilterCount} filter${activeFilterCount > 1 ? "s" : ""} active)`}
+            {isPending
+              ? t("filtering")
+              : t("results", { filtered: filteredCount, total: totalCount })}
+            {activeFilterCount > 0 && ` ${t("filterActive", { count: activeFilterCount })}`}
           </span>
           {activeFilterCount > 0 && (
             <button className="text-primary hover:underline" onClick={handleClearAll}>
-              Clear all filters
+              {t("clearAllFilters")}
             </button>
           )}
         </div>
