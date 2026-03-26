@@ -129,7 +129,13 @@ export function CanvasProvider({
 
   // 1. Initialize React Flow state with server-safe values (no localStorage during SSR/hydration)
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<CardNodeData>>(
-    cardsToNodes(initialCards),
+    cardsToNodes(initialCards).map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        metrics: initialCardMetrics[node.id],
+      },
+    })),
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(arrowsToEdges(initialArrows));
   const [cardMetrics, setCardMetrics] = useState<Record<string, Metric[]>>(initialCardMetrics);
@@ -141,7 +147,15 @@ export function CanvasProvider({
     hasHydrated.current = true;
     const savedState = loadCanvasState();
     if (savedState) {
-      setNodes(cardsToNodes(savedState.cards));
+      setNodes(
+        cardsToNodes(savedState.cards).map((node) => ({
+          ...node,
+          data: {
+            ...node.data,
+            metrics: savedState.cardMetrics[node.id],
+          },
+        })),
+      );
       setEdges(arrowsToEdges(savedState.arrows));
       setCardMetrics(savedState.cardMetrics);
     }
