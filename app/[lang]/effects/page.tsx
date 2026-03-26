@@ -2,6 +2,29 @@ import React from "react";
 import { getTranslations } from "next-intl/server";
 import { EffectIcons, effectData, effectTranslationKeys } from "@/components/effect-icons";
 import { Separator } from "@/components/ui/separator";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const t = await getTranslations({ locale: lang, namespace: "metadata" });
+
+  return {
+    title: t("effectsTitle"),
+    description: t("effectsDescription"),
+    alternates: {
+      canonical: `/${lang}/effects`,
+      languages: { en: "/en/effects", ja: "/ja/effects" },
+    },
+    openGraph: {
+      title: t("effectsTitle"),
+      description: t("effectsDescription"),
+    },
+  };
+}
 
 export default async function EffectsPage() {
   const t = await getTranslations("effects");

@@ -310,6 +310,14 @@
     "siteTitle": "MUSE by BeaconLabs",
     "siteDescription": "エビデンスを活用したインタラクティブなロジックモデルの作成と編集",
     "canvasTitle": "MUSEキャンバス - インタラクティブなロジックモデル",
-    "canvasDescription": "エビデンスを活用したインタラクティブなロジックモデルの作成と編集 - MUSE by BeaconLabs"
+    "canvasDescription": "エビデンスを活用したインタラクティブなロジックモデルの作成と編集 - MUSE by BeaconLabs",
+    "searchTitle": "エビデンス検索 - MUSE by BeaconLabs",
+    "searchDescription": "ロジックモデル構築のための研究エビデンスを検索・フィルタリング",
+    "effectsTitle": "効果の種類 - MUSE by BeaconLabs",
+    "effectsDescription": "エビデンスに基づく研究で測定される効果の種類を探索",
+    "strengthTitle": "エビデンスの強度 - MUSE by BeaconLabs",
+    "strengthDescription": "エビデンスの質を評価するメリーランド科学的方法スケールについて",
+    "hypercertsTitle": "ハイパーサーツ - MUSE by BeaconLabs",
+    "hypercertsDescription": "エビデンスに基づくロジックモデルから生成されたインパクト証明書を探索"
   }
 }

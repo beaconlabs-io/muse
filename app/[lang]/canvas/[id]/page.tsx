@@ -4,11 +4,11 @@ import { BASE_URL } from "@/lib/constants";
 import { isValidCID } from "@/utils/ipfs";
 
 export interface PageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ lang: string; id: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params;
+  const { lang, id } = await params;
 
   // Metadata for invalid CIDs (still include OG to override parent layout)
   if (!isValidCID(id)) {
@@ -36,6 +36,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: "MUSE Canvas - Interactive Logic Models",
     description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+    alternates: {
+      canonical: `/${lang}/canvas/${id}`,
+      languages: {
+        en: `/en/canvas/${id}`,
+        ja: `/ja/canvas/${id}`,
+      },
+    },
     openGraph: {
       title: "MUSE Canvas - Interactive Logic Models",
       description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
