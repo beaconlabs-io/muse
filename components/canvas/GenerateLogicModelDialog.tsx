@@ -77,8 +77,18 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setExtraContent,
   } = useStepProcessDialogContext();
 
-  const { status, error, failedStepId, canvasData, stepEvents, startWorkflow, cancel } =
-    useWorkflowStream();
+  const {
+    status,
+    error,
+    errorCategory,
+    rawError,
+    failedStepId,
+    canvasData,
+    stepEvents,
+    startWorkflow,
+    cancel,
+  } = useWorkflowStream();
+  const tErrors = useTranslations("workflowErrors");
 
   const form = useForm<GenerateLogicModelFormData>({
     resolver: zodResolver(generateLogicModelSchema),
@@ -136,9 +146,24 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
 
     if (status === "error") {
       const errorStepId = failedStepId || "generate-logic-model";
-      setDialogStep(errorStepId, "error", error || "An error occurred");
+      const userMessage = errorCategory ? tErrors(errorCategory) : error || tErrors("unknown");
+      const fullMessage =
+        rawError && rawError !== userMessage ? `${userMessage}\n---\n${rawError}` : userMessage;
+      setDialogStep(errorStepId, "error", fullMessage);
     }
-  }, [status, canvasData, error, failedStepId, onGenerate, setDialogStep, setStepDialogOpen, form]);
+  }, [
+    status,
+    canvasData,
+    error,
+    errorCategory,
+    rawError,
+    failedStepId,
+    onGenerate,
+    setDialogStep,
+    setStepDialogOpen,
+    form,
+    tErrors,
+  ]);
 
   const handleSubmit = async (data: GenerateLogicModelFormData) => {
     setTitle(t("generatingTitle"));

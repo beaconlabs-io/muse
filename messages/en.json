@@ -299,6 +299,16 @@
     "openMenu": "Open menu",
     "viewOnEAS": "View on EAS scan"
   },
+  "workflowErrors": {
+    "highDemand": "The AI model is currently experiencing high demand. Please wait a moment and try again.",
+    "rateLimit": "Request rate limit reached. Please wait a moment and try again.",
+    "timeout": "The operation timed out. Please try again with a simpler prompt or try again later.",
+    "authError": "Authentication error. Please check your configuration.",
+    "invalidInput": "There was an issue with the input data. Please try modifying your prompt.",
+    "modelError": "The AI model encountered an error. Please try again.",
+    "unknown": "An unexpected error occurred. Please try again.",
+    "detailsLabel": "Error details"
+  },
   "metadata": {
     "siteTitle": "MUSE by BeaconLabs",
     "siteDescription": "Create and edit interactive logic models with evidence",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import type { ErrorCategory } from "@/lib/workflow-errors";
 import type { CanvasData } from "@/types";
 import type { WorkflowSSEEvent } from "@/types/workflow-events";
 import { WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
@@ -11,6 +12,8 @@ interface WorkflowStreamState {
   status: WorkflowStreamStatus;
   currentStepId: string | null;
   error: string | null;
+  errorCategory: ErrorCategory | null;
+  rawError: string | null;
   failedStepId: string | null;
   canvasData: CanvasData | null;
 }
@@ -19,6 +22,7 @@ interface StepEvent {
   type: "step-start" | "step-finish" | "step-error";
   stepId: string;
   error?: string;
+  errorCategory?: ErrorCategory;
 }
 
 export function useWorkflowStream() {
@@ -26,6 +30,8 @@ export function useWorkflowStream() {
     status: "idle",
     currentStepId: null,
     error: null,
+    errorCategory: null,
+    rawError: null,
     failedStepId: null,
     canvasData: null,
   });
@@ -45,6 +51,8 @@ export function useWorkflowStream() {
         status: "running",
         currentStepId: null,
         error: null,
+        errorCategory: null,
+        rawError: null,
         failedStepId: null,
         canvasData: null,
       });
@@ -119,7 +127,12 @@ export function useWorkflowStream() {
               case "step-error":
                 setStepEvents((prev) => [
                   ...prev,
-                  { type: "step-error", stepId: event.stepId, error: event.error },
+                  {
+                    type: "step-error",
+                    stepId: event.stepId,
+                    error: event.error,
+                    errorCategory: event.errorCategory,
+                  },
                 ]);
                 break;
 
@@ -136,6 +149,8 @@ export function useWorkflowStream() {
                   ...prev,
                   status: "error",
                   error: event.error,
+                  errorCategory: event.errorCategory || null,
+                  rawError: event.rawError || null,
                   failedStepId: event.failedStepId || null,
                 }));
                 break;
@@ -165,6 +180,8 @@ export function useWorkflowStream() {
       status: "idle",
       currentStepId: null,
       error: null,
+      errorCategory: null,
+      rawError: null,
       failedStepId: null,
       canvasData: null,
     });
