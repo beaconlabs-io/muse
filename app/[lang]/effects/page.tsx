@@ -1,16 +1,7 @@
 import React from "react";
 import { getTranslations } from "next-intl/server";
-import { EffectIcons, effectData } from "@/components/effect-icons";
+import { EffectIcons, effectData, effectTranslationKeys } from "@/components/effect-icons";
 import { Separator } from "@/components/ui/separator";
-
-// Map effect IDs to translation keys
-const effectTranslationKeys: Record<string, { title: string; description: string }> = {
-  "N/A": { title: "unclear", description: "unclearDescription" },
-  "+": { title: "positive", description: "positiveDescription" },
-  "-": { title: "no", description: "noDescription" },
-  "+-": { title: "mixed", description: "mixedDescription" },
-  "!": { title: "side", description: "sideDescription" },
-};
 
 export default async function EffectsPage() {
   const t = await getTranslations("effects");

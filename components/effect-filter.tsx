@@ -2,7 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { effectData } from "@/components/effect-icons";
+import { effectData, effectTranslationKeys } from "@/components/effect-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,15 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Map effect IDs to translation keys
-const effectTranslationKeys: Record<string, string> = {
-  "N/A": "unclear",
-  "+": "positive",
-  "-": "no",
-  "+-": "mixed",
-  "!": "side",
-};
 
 interface EffectFilterProps {
   selectedEffects: string[];
@@ -45,8 +36,8 @@ export function EffectFilter({ selectedEffects, onEffectsChange }: EffectFilterP
   };
 
   const getEffectTitle = (effectId: string) => {
-    const key = effectTranslationKeys[effectId];
-    return key ? tEffects(key) : effectId;
+    const keys = effectTranslationKeys[effectId];
+    return keys ? tEffects(keys.title) : effectId;
   };
 
   return (
