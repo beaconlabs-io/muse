@@ -15,6 +15,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch main branch
+        run: git fetch origin main:main
+
       - name: Check for existing PR
         id: check-pr
         env:
@@ -34,7 +37,7 @@ jobs:
             echo ""
 
             # List merged PRs with nested sub-PRs
-            git log main..dev --merges --first-parent --pretty=format:"%H %s" \
+            git log main..dev --merges --first-parent --pretty=tformat:"%H %s" \
               | while read -r sha rest; do
                   pr_num=$(echo "$rest" | grep -oE 'Merge pull request #[0-9]+' | sed 's/Merge pull request #//')
                   [ -z "$pr_num" ] && continue
@@ -44,7 +47,7 @@ jobs:
 
                   # Find sub-PRs within this merge
                   merge_base=$(git merge-base "${sha}^1" "${sha}^2" 2>/dev/null) || continue
-                  git log "${merge_base}..${sha}^2" --merges --first-parent --pretty=format:"%s" 2>/dev/null \
+                  git log "${merge_base}..${sha}^2" --merges --first-parent --pretty=tformat:"%s" 2>/dev/null \
                     | grep -v 'from beaconlabs-io/dev' \
                     | grep -v 'Merge branch' \
                     | grep -oE 'Merge pull request #[0-9]+' \
@@ -56,7 +59,7 @@ jobs:
                 done
 
             # List direct (non-merge) commits not part of a merged PR branch
-            git log main..dev --no-merges --first-parent --pretty=format:"- %s"
+            git log main..dev --no-merges --first-parent --pretty=tformat:"- %s"
 
             echo ""
             echo ""
