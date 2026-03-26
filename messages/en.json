@@ -165,7 +165,10 @@
     "viewEvidence": "View evidence",
     "viewEvidenceAndPapers": "View evidence & academic papers",
     "viewAcademicPapers": "View academic papers",
-    "academicPapers": "Academic Papers (Reference)"
+    "academicPapers": "Academic Papers (Reference)",
+    "cited": "{count} cited",
+    "influential": "{count} influential",
+    "tldr": "TLDR: "
   },
   "search": {
     "placeholder": "Search evidence...",

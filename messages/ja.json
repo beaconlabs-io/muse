@@ -151,9 +151,9 @@
     "generatingPreview": "プレビューを生成中..."
   },
   "evidenceDialog": {
-    "title": "接続のエビデンス",
-    "itemCount": "この接続に{count}件のエビデンスがリンクされています",
-    "itemsCount": "この接続に{count}件のエビデンスがリンクされています",
+    "title": "接続されたエビデンス",
+    "itemCount": "関連エビデンス: {count}件",
+    "itemsCount": "関連エビデンス: {count}件",
     "evidenceId": "エビデンスID: {id}",
     "relevance": "関連度: {score}",
     "reasoning": "理由:",
@@ -165,7 +165,10 @@
     "viewEvidence": "エビデンスを表示",
     "viewEvidenceAndPapers": "エビデンスと学術論文を表示",
     "viewAcademicPapers": "学術論文を表示",
-    "academicPapers": "学術論文（参考文献）"
+    "academicPapers": "学術論文（参考文献）",
+    "cited": "{count}件の引用",
+    "influential": "{count}件の主要引用",
+    "tldr": "要約: "
   },
   "search": {
     "placeholder": "エビデンスを検索...",

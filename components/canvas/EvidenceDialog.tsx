@@ -120,9 +120,7 @@ export function EvidenceDialog({
           {hasExternalPapers && (
             <>
               <div className={hasEvidence ? "border-t pt-4" : ""}>
-                <h3 className="mb-3 text-sm font-semibold text-gray-500">
-                  Academic Papers (Reference)
-                </h3>
+                <h3 className="mb-3 text-sm font-semibold text-gray-500">{t("academicPapers")}</h3>
               </div>
               {externalPapers.map((paper) => (
                 <div
@@ -170,12 +168,12 @@ export function EvidenceDialog({
                     <div className="flex flex-wrap items-center gap-1.5">
                       {paper.citationCount != null && paper.citationCount > 0 && (
                         <span className="inline-flex items-center gap-0.5 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
-                          {paper.citationCount.toLocaleString()} cited
+                          {t("cited", { count: paper.citationCount.toLocaleString() })}
                           {paper.influentialCitationCount != null &&
                             paper.influentialCitationCount > 0 && (
                               <span className="text-gray-400">
                                 {" "}
-                                ({paper.influentialCitationCount} influential)
+                                ({t("influential", { count: paper.influentialCitationCount })})
                               </span>
                             )}
                         </span>
@@ -185,7 +183,7 @@ export function EvidenceDialog({
                     {/* TLDR (preferred) or Abstract */}
                     {paper.tldr ? (
                       <p className="line-clamp-3 text-sm text-gray-700">
-                        <span className="font-medium text-gray-500">TLDR: </span>
+                        <span className="font-medium text-gray-500">{t("tldr")}</span>
                         {paper.tldr}
                       </p>
                     ) : (
