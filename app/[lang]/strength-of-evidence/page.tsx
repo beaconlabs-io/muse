@@ -2,6 +2,32 @@ import React from "react";
 import { getTranslations } from "next-intl/server";
 import { StarsComponent } from "@/components/stars";
 import { Separator } from "@/components/ui/separator";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const t = await getTranslations({ locale: lang, namespace: "metadata" });
+
+  return {
+    title: t("strengthTitle"),
+    description: t("strengthDescription"),
+    alternates: {
+      canonical: `/${lang}/strength-of-evidence`,
+      languages: {
+        en: "/en/strength-of-evidence",
+        ja: "/ja/strength-of-evidence",
+      },
+    },
+    openGraph: {
+      title: t("strengthTitle"),
+      description: t("strengthDescription"),
+    },
+  };
+}
 
 export default async function SMS() {
   const t = await getTranslations("strengthOfEvidence");

@@ -9,6 +9,10 @@ import { Header } from "@/components/header";
 import Providers from "./providers";
 import { locales, type Locale } from "@/i18n/routing";
 import { BASE_URL } from "@/lib/constants";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { GoogleTagManager } from "@next/third-parties/google";
+import { JsonLd, organizationJsonLd, websiteJsonLd } from "@/lib/structured-data";
 
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
@@ -23,8 +27,16 @@ export async function generateMetadata({
   const t = await getTranslations({ locale: lang, namespace: "metadata" });
 
   return {
+    metadataBase: new URL(BASE_URL),
     title: t("siteTitle"),
     description: t("siteDescription"),
+    alternates: {
+      canonical: `/${lang}`,
+      languages: {
+        en: "/en",
+        ja: "/ja",
+      },
+    },
     openGraph: {
       title: t("siteTitle"),
       description: t("siteDescription"),
@@ -66,7 +78,12 @@ export default async function LocaleLayout({
 
   return (
     <html lang={lang}>
+      {process.env.NEXT_PUBLIC_GTM_ID && (
+        <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID} />
+      )}
       <body>
+        <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={websiteJsonLd()} />
         <NextIntlClientProvider messages={messages}>
           <Providers>
             <Header />
@@ -74,6 +91,8 @@ export default async function LocaleLayout({
             <Toaster />
           </Providers>
         </NextIntlClientProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

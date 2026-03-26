@@ -1,8 +1,32 @@
 import { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
 import { EvidenceGrid } from "./evidence-grid";
 import { SearchFilters } from "./search-filters";
+import type { Metadata } from "next";
 import { getAllEvidenceMeta } from "@/lib/evidence";
 import { filterEvidence } from "@/lib/evidence-filters";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const t = await getTranslations({ locale: lang, namespace: "metadata" });
+
+  return {
+    title: t("searchTitle"),
+    description: t("searchDescription"),
+    alternates: {
+      canonical: `/${lang}/search`,
+      languages: { en: "/en/search", ja: "/ja/search" },
+    },
+    openGraph: {
+      title: t("searchTitle"),
+      description: t("searchDescription"),
+    },
+  };
+}
 
 interface SearchPageProps {
   searchParams: Promise<{

@@ -310,6 +310,14 @@
     "siteTitle": "MUSE by BeaconLabs",
     "siteDescription": "Create and edit interactive logic models with evidence",
     "canvasTitle": "MUSE Canvas - Interactive Logic Models",
-    "canvasDescription": "Create and edit interactive logic models with evidence - MUSE by BeaconLabs"
+    "canvasDescription": "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+    "searchTitle": "Evidence Search - MUSE by BeaconLabs",
+    "searchDescription": "Search and filter curated research evidence for building logic models",
+    "effectsTitle": "Effect Types - MUSE by BeaconLabs",
+    "effectsDescription": "Explore types of effects measured in evidence-based research",
+    "strengthTitle": "Strength of Evidence - MUSE by BeaconLabs",
+    "strengthDescription": "Learn about the Maryland Scientific Methods Scale for evaluating evidence quality",
+    "hypercertsTitle": "Hypercerts - MUSE by BeaconLabs",
+    "hypercertsDescription": "Explore impact certificates created from evidence-based logic models"
   }
 }
