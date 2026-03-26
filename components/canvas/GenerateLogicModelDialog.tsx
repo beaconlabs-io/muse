@@ -183,15 +183,14 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                   <FormItem className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <FormLabel className="text-sm font-normal">
-                        Search papers on Semantic Scholar
+                        {t("externalSearchLabel")}
                       </FormLabel>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Info className="text-muted-foreground h-4 w-4 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-[260px]">
-                          When enabled, searches external academic papers via the Semantic Scholar
-                          API to supplement evidence. This may increase generation time.
+                          {t("externalSearchTooltip")}
                         </TooltipContent>
                       </Tooltip>
                     </div>

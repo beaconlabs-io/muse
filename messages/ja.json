@@ -65,7 +65,9 @@
     "stepSearching": "関連エビデンスを検索中",
     "stepSearchingExternal": "外部の学術論文を検索中",
     "stepEnriching": "キャンバスにエビデンスを追加中",
-    "stepComplete": "完了しました！"
+    "stepComplete": "完了しました！",
+    "externalSearchLabel": "Semantic Scholarで論文を検索",
+    "externalSearchTooltip": "有効にすると、Semantic Scholar APIを使用して外部の学術論文を検索し、エビデンスを補完します。生成時間が長くなる場合があります。"
   },
   "addNode": {
     "editTitle": "ロジックノードを編集",

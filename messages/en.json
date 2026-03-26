@@ -65,7 +65,9 @@
     "stepSearching": "Searching for supporting evidence",
     "stepSearchingExternal": "Searching external academic papers",
     "stepEnriching": "Enriching canvas with evidence",
-    "stepComplete": "Completed!"
+    "stepComplete": "Completed!",
+    "externalSearchLabel": "Search papers on Semantic Scholar",
+    "externalSearchTooltip": "When enabled, searches external academic papers via the Semantic Scholar API to supplement evidence. This may increase generation time."
   },
   "addNode": {
     "editTitle": "Edit Logic Node",
