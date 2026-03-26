@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { StarRating } from "@/components/star-rating";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Link } from "@/i18n/routing";
 import { STRENGTH_LABELS } from "@/lib/constants";
 
 interface StrengthIndicatorProps {

@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { AttachedLinks } from "@/components/AttachedLinks";
 import type { EvidenceCitation } from "@beaconlabs-io/evidence";
 
@@ -5,15 +6,16 @@ interface EvidenceCitationListProps {
   citations: EvidenceCitation[] | undefined;
 }
 
-export function EvidenceCitationList({ citations }: EvidenceCitationListProps) {
+export async function EvidenceCitationList({ citations }: EvidenceCitationListProps) {
   if (!citations || citations.length === 0) return null;
 
+  const t = await getTranslations("evidence");
   const linkCitations = citations.filter((d) => d.type === "link" && d.src);
   const nonLinkCitations = citations.filter((d) => d.type !== "link");
 
   return (
     <div className="mb-6">
-      <h3 className="mb-2 text-lg font-semibold">Citation</h3>
+      <h3 className="mb-2 text-lg font-semibold">{t("citation")}</h3>
 
       {linkCitations.length > 0 && (
         <AttachedLinks

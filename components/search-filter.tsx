@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 
 interface SearchFilterProps {
@@ -12,8 +13,9 @@ interface SearchFilterProps {
 export function SearchFilter({
   value: controlledValue = "",
   onSearchChange,
-  placeholder = "Search evidence...",
+  placeholder,
 }: SearchFilterProps) {
+  const t = useTranslations("search");
   const [localValue, setLocalValue] = useState(controlledValue);
 
   // Sync when controlled value changes (browser back/forward)
@@ -37,7 +39,7 @@ export function SearchFilter({
 
   return (
     <Input
-      placeholder={placeholder}
+      placeholder={placeholder ?? t("placeholder")}
       value={localValue}
       onChange={handleChange}
       className="h-10 flex-1 sm:max-w-md"

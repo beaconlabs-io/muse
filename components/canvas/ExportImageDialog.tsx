@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Copy, Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,7 @@ interface ExportImageDialogProps {
  * Dialog for exporting canvas as an image
  */
 export function ExportImageDialog({ open, onOpenChange, nodes }: ExportImageDialogProps) {
+  const t = useTranslations("exportDialog");
   const { status, result, error, generate, reset } = useCanvasImage();
   // Use ref to track if generation has been triggered for this dialog session
   const hasTriggeredRef = useRef(false);
@@ -55,10 +57,10 @@ export function ExportImageDialog({ open, onOpenChange, nodes }: ExportImageDial
 
     const success = await copyImageToClipboard(result.blob);
     if (success) {
-      toast.success("Image copied to clipboard");
+      toast.success(t("imageCopied"));
     } else {
-      toast.error("Failed to copy image. Try downloading instead.", {
-        description: "Your browser may not support image clipboard.",
+      toast.error(t("copyFailed"), {
+        description: t("copyFailedDescription"),
       });
     }
   };
@@ -66,15 +68,15 @@ export function ExportImageDialog({ open, onOpenChange, nodes }: ExportImageDial
   const handleDownload = () => {
     if (!result) return;
     downloadImage(result.dataUrl, `logic-model-${Date.now()}.png`);
-    toast.success("Image downloaded");
+    toast.success(t("imageDownloaded"));
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Export Image</DialogTitle>
-          <DialogDescription>Download or copy your logic model as an image</DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         {/* Image Preview Area */}
@@ -94,11 +96,11 @@ export function ExportImageDialog({ open, onOpenChange, nodes }: ExportImageDial
             className="flex-1"
           >
             <Copy className="mr-2 h-4 w-4" />
-            Copy image
+            {t("copyImage")}
           </Button>
           <Button onClick={handleDownload} disabled={status !== "ready"} className="flex-1">
             <Download className="mr-2 h-4 w-4" />
-            Download
+            {t("download")}
           </Button>
         </div>
       </DialogContent>

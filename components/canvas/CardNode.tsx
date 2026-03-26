@@ -3,6 +3,7 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Pencil, Zap, Package, Target, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCanvasOperations } from "./context";
 import type { Metric } from "@/types";
 import type { LucideIcon } from "lucide-react";
@@ -16,22 +17,25 @@ export interface CardNodeData extends Record<string, unknown> {
   metrics?: Metric[];
 }
 
-// Map types to display labels and icons
-const TYPE_CONFIG: Record<string, { label: string; icon: LucideIcon }> = {
-  activities: { label: "Activities", icon: Zap },
-  outputs: { label: "Outputs", icon: Package },
-  "outcomes-short": { label: "Outcomes - Short Term", icon: Target },
-  "outcomes-intermediate": { label: "Outcomes - Intermediate Term", icon: Target },
-  impact: { label: "Impact", icon: Sparkles },
+// Map types to translation keys and icons
+const TYPE_CONFIG: Record<string, { key: string; icon: LucideIcon }> = {
+  activities: { key: "activities", icon: Zap },
+  outputs: { key: "outputs", icon: Package },
+  "outcomes-short": { key: "outcomesShort", icon: Target },
+  "outcomes-intermediate": { key: "outcomesIntermediate", icon: Target },
+  impact: { key: "impact", icon: Sparkles },
 };
 
 export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeData }) => {
+  const tNodeTypes = useTranslations("nodeTypes");
+  const tMetrics = useTranslations("metrics");
+  const tAddNode = useTranslations("addNode");
   // Get operations from context
   const { deleteCard, openEditSheet } = useCanvasOperations();
 
   // Get type config (label and icon)
   const typeConfig = data.type ? TYPE_CONFIG[data.type] : null;
-  const typeLabel = typeConfig?.label || "Node";
+  const typeLabel = typeConfig ? tNodeTypes(typeConfig.key) : tNodeTypes("node");
   const TypeIcon = typeConfig?.icon;
 
   const handleDoubleClick = () => {
@@ -100,7 +104,7 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
           openEditSheet(data.id);
         }}
         className="absolute -top-2 -right-2 hidden h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-gray-500 text-white group-hover:flex hover:bg-gray-600"
-        title="Edit card"
+        title={tAddNode("editTitle")}
       >
         <Pencil className="h-3 w-3" aria-hidden="true" />
       </button>
@@ -110,7 +114,7 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
         {/* Metrics count (bottom right) */}
         {data.metrics && data.metrics.length > 0 && (
           <div className="rounded bg-gray-700 px-2 py-1 text-xs font-medium text-white">
-            {data.metrics.length} metric{data.metrics.length !== 1 ? "s" : ""}
+            {tMetrics("metricCount", { count: data.metrics.length })}
           </div>
         )}
       </div>

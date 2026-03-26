@@ -10,8 +10,8 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
 import { useNodesState, useEdgesState } from "@xyflow/react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { CardNodeData } from "@/components/canvas/CardNode";
 import {
@@ -31,6 +31,7 @@ import {
 } from "./canvas-operations";
 import type { MetricFormInput, Metric, Card, Arrow, CanvasData, IPFSStorageResult } from "@/types";
 import type { OnNodesChange, OnEdgesChange, Node, Edge } from "@xyflow/react";
+import { useRouter } from "@/i18n/routing";
 import {
   cardsToNodes,
   nodesToCards,
@@ -123,6 +124,9 @@ export function CanvasProvider({
   disableLocalStorage = false,
   children,
 }: CanvasProviderProps) {
+  const t = useTranslations("canvas");
+  const tCommon = useTranslations("common");
+
   // 1. Load from localStorage (if enabled)
   const savedState = useMemo(
     () => (disableLocalStorage ? null : loadCanvasState()),
@@ -220,7 +224,7 @@ export function CanvasProvider({
 
       // Validate that canvas is not empty
       if (cards.length === 0) {
-        toast.error("Cannot save an empty logic model. Please add at least one card.", {
+        toast.error(t("saveEmptyError"), {
           duration: 5000,
         });
         return;
@@ -241,47 +245,50 @@ export function CanvasProvider({
       router.push("/canvas/mint-hypercert");
     } catch (error) {
       console.error("Failed to prepare canvas data:", error);
-      toast.error("Failed to prepare canvas data. Please try again.", {
+      toast.error(t("prepareError"), {
         duration: 5000,
       });
     }
-  }, [router]);
+  }, [router, t]);
 
-  const saveCanvasToIPFS = useCallback(async (ogImageCID?: string) => {
-    try {
-      const cards = nodesToCards(nodesRef.current);
-      const arrows = edgesToArrows(edgesRef.current);
+  const saveCanvasToIPFS = useCallback(
+    async (ogImageCID?: string) => {
+      try {
+        const cards = nodesToCards(nodesRef.current);
+        const arrows = edgesToArrows(edgesRef.current);
 
-      // Validate that canvas is not empty
-      if (cards.length === 0) {
-        toast.error("Cannot upload an empty canvas to IPFS. Please add at least one card.", {
+        // Validate that canvas is not empty
+        if (cards.length === 0) {
+          toast.error(t("uploadEmptyCardError"), {
+            duration: 5000,
+          });
+          return null;
+        }
+
+        // Generate unique ID for the canvas
+        const id = generateLogicModelId();
+
+        const canvasData: CanvasData = {
+          id,
+          cards,
+          arrows,
+          cardMetrics: cardMetricsRef.current,
+          ...(ogImageCID && { ogImageCID }),
+        };
+
+        const result = await uploadToIPFS(canvasData);
+        return result;
+      } catch (error) {
+        console.error("Failed to upload to IPFS:", error);
+        toast.error(t("uploadFailed"), {
           duration: 5000,
+          description: error instanceof Error ? error.message : undefined,
         });
         return null;
       }
-
-      // Generate unique ID for the canvas
-      const id = generateLogicModelId();
-
-      const canvasData: CanvasData = {
-        id,
-        cards,
-        arrows,
-        cardMetrics: cardMetricsRef.current,
-        ...(ogImageCID && { ogImageCID }),
-      };
-
-      const result = await uploadToIPFS(canvasData);
-      return result;
-    } catch (error) {
-      console.error("Failed to upload to IPFS:", error);
-      toast.error("Failed to upload to IPFS. Please try again.", {
-        duration: 5000,
-        description: error instanceof Error ? error.message : "Unknown error",
-      });
-      return null;
-    }
-  }, []);
+    },
+    [t],
+  );
 
   const exportAsJSON = useCallback(() => {
     const cards = nodesToCards(nodesRef.current);
@@ -318,8 +325,8 @@ export function CanvasProvider({
     }
 
     setClearConfirmOpen(false);
-    toast.success("Canvas cleared successfully", { duration: 3000 });
-  }, [setNodes, setEdges, setCardMetrics]);
+    toast.success(t("canvasCleared"), { duration: 3000 });
+  }, [setNodes, setEdges, setCardMetrics, t]);
 
   // Public API - opens confirmation dialog
   const clearAllData = useCallback(() => {
@@ -410,15 +417,14 @@ export function CanvasProvider({
         <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Clear All Canvas Data?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will remove all cards, connections, and metrics from the canvas. This action
-                cannot be undone.
-              </AlertDialogDescription>
+              <AlertDialogTitle>{t("clearAllTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>{t("clearAllDescription")}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={executeClearAllData}>Clear All Data</AlertDialogAction>
+              <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={executeClearAllData}>
+                {t("clearAllConfirm")}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

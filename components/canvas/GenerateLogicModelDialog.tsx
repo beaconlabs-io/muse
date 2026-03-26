@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Info } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as z from "zod";
 import { GenerationTimeInfo } from "@/components/canvas/GenerationTimeInfo";
 import { useStepProcessDialogContext } from "@/components/step-process-dialog";
@@ -33,10 +34,10 @@ import { useWorkflowStream } from "@/hooks/useWorkflowStream";
 import { EXTERNAL_SEARCH_ENABLED } from "@/lib/constants";
 
 const generateLogicModelSchema = z.object({
-  intent: z
+  goal: z
     .string()
-    .min(1, "Please enter your intent")
-    .max(1000, "Intent must be 1000 characters or less"),
+    .min(1, "Please enter your goal")
+    .max(1000, "Goal must be 1000 characters or less"),
   enableExternalSearch: z.boolean(),
 });
 
@@ -50,19 +51,23 @@ interface GenerateLogicModelDialogProps {
   }) => void;
 }
 
-function buildProgressSteps(enableExternalSearch: boolean) {
-  return [
-    { id: "generate-logic-model", description: "Generating logic model structure" },
-    { id: "search-evidence", description: "Searching for supporting evidence" },
-    ...(enableExternalSearch
-      ? [{ id: "search-external-papers", description: "Searching external academic papers" }]
-      : []),
-    { id: "enrich-canvas", description: "Enriching canvas with evidence" },
-    { id: "complete", description: "Completed!" },
-  ];
-}
-
 export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialogProps) {
+  const t = useTranslations("generate");
+  const tCanvas = useTranslations("canvas");
+  const tCommon = useTranslations("common");
+
+  function buildProgressSteps(enableExternalSearch: boolean) {
+    return [
+      { id: "generate-logic-model", description: t("stepGenerating") },
+      { id: "search-evidence", description: t("stepSearching") },
+      ...(enableExternalSearch
+        ? [{ id: "search-external-papers", description: t("stepSearchingExternal") }]
+        : []),
+      { id: "enrich-canvas", description: t("stepEnriching") },
+      { id: "complete", description: t("stepComplete") },
+    ];
+  }
+
   const [open, setOpen] = useState(false);
   const {
     setSteps,
@@ -72,13 +77,23 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setExtraContent,
   } = useStepProcessDialogContext();
 
-  const { status, error, failedStepId, canvasData, stepEvents, startWorkflow, cancel } =
-    useWorkflowStream();
+  const {
+    status,
+    error,
+    errorCategory,
+    rawError,
+    failedStepId,
+    canvasData,
+    stepEvents,
+    startWorkflow,
+    cancel,
+  } = useWorkflowStream();
+  const tErrors = useTranslations("workflowErrors");
 
   const form = useForm<GenerateLogicModelFormData>({
     resolver: zodResolver(generateLogicModelSchema),
     defaultValues: {
-      intent: "",
+      goal: "",
       enableExternalSearch: false,
     },
   });
@@ -131,18 +146,33 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
 
     if (status === "error") {
       const errorStepId = failedStepId || "generate-logic-model";
-      setDialogStep(errorStepId, "error", error || "An error occurred");
+      const userMessage = errorCategory ? tErrors(errorCategory) : error || tErrors("unknown");
+      const fullMessage =
+        rawError && rawError !== userMessage ? `${userMessage}\n---\n${rawError}` : userMessage;
+      setDialogStep(errorStepId, "error", fullMessage);
     }
-  }, [status, canvasData, error, failedStepId, onGenerate, setDialogStep, setStepDialogOpen, form]);
+  }, [
+    status,
+    canvasData,
+    error,
+    errorCategory,
+    rawError,
+    failedStepId,
+    onGenerate,
+    setDialogStep,
+    setStepDialogOpen,
+    form,
+    tErrors,
+  ]);
 
   const handleSubmit = async (data: GenerateLogicModelFormData) => {
-    setTitle("Generating Logic Model");
+    setTitle(t("generatingTitle"));
     setSteps(buildProgressSteps(data.enableExternalSearch));
     setExtraContent(<GenerationTimeInfo />);
     setStepDialogOpen(true);
 
     processedEventCountRef.current = 0;
-    await startWorkflow(data.intent, data.enableExternalSearch);
+    await startWorkflow(data.goal, data.enableExternalSearch);
   };
 
   // Cleanup on unmount
@@ -159,15 +189,13 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="cursor-pointer">
           <span>🤖</span>
-          <span className="hidden sm:inline">Generate from Intent</span>
+          <span className="hidden sm:inline">{tCanvas("generateFromIntent")}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Generate Logic Model from Intent</DialogTitle>
-          <DialogDescription>
-            Describe your project or program, and AI agent will create a logic model for you.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
           <GenerationTimeInfo />
         </DialogHeader>
         <Form {...form}>
@@ -180,15 +208,14 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                   <FormItem className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <FormLabel className="text-sm font-normal">
-                        Search papers on Semantic Scholar
+                        {t("externalSearchLabel")}
                       </FormLabel>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Info className="text-muted-foreground h-4 w-4 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-[260px]">
-                          When enabled, searches external academic papers via the Semantic Scholar
-                          API to supplement evidence. This may increase generation time.
+                          {t("externalSearchTooltip")}
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -205,15 +232,13 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
             )}
             <FormField
               control={form.control}
-              name="intent"
+              name="goal"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    What intervention or program do you want to create a logic model for?
-                  </FormLabel>
+                  <FormLabel>{t("formLabel")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter your intent here"
+                      placeholder={t("placeholder")}
                       rows={5}
                       className="resize-none"
                       disabled={isRunning}
@@ -233,10 +258,10 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                 disabled={isRunning}
                 className="cursor-pointer"
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" className="cursor-pointer" disabled={isRunning}>
-                Generate Logic Model
+                {t("generateButton")}
               </Button>
             </DialogFooter>
           </form>

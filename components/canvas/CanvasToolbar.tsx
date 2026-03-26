@@ -1,5 +1,6 @@
 import { memo, useState, useCallback } from "react";
 import { Save, CloudCheck, Download, Trash2, MoreVertical } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,7 @@ import { useCanvasImage } from "@/hooks/useCanvasImage";
 import { uploadImageToIPFS } from "@/utils/ipfs";
 
 export const CanvasToolbar = memo(() => {
+  const t = useTranslations("canvas");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [uploadingToIPFS, setUploadingToIPFS] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -46,16 +48,16 @@ export const CanvasToolbar = memo(() => {
 
   const handleExportImage = useCallback(() => {
     if (nodes.length === 0) {
-      toast.error("Cannot export an empty canvas.", { duration: 3000 });
+      toast.error(t("exportEmptyError"), { duration: 3000 });
       return;
     }
     setDropdownOpen(false);
     setExportDialogOpen(true);
-  }, [nodes.length]);
+  }, [nodes.length, t]);
 
   const handleUploadToIPFS = useCallback(async () => {
     if (nodes.length === 0) {
-      toast.error("Cannot upload an empty canvas to IPFS.", { duration: 3000 });
+      toast.error(t("uploadEmptyError"), { duration: 3000 });
       return;
     }
 
@@ -99,9 +101,9 @@ export const CanvasToolbar = memo(() => {
       console.error("Failed to upload to IPFS:", error);
       setUploadingToIPFS(false);
       setIpfsDialogOpen(false);
-      toast.error("Failed to upload to IPFS. Please try again.", { duration: 3000 });
+      toast.error(t("uploadFailed"), { duration: 3000 });
     }
-  }, [nodes, saveCanvasToIPFS, generateImage]);
+  }, [nodes, saveCanvasToIPFS, generateImage, t]);
 
   return (
     <>
@@ -116,13 +118,13 @@ export const CanvasToolbar = memo(() => {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="cursor-pointer gap-2">
                 <MoreVertical className="h-4 w-4" />
-                <span className="hidden sm:inline">More</span>
+                <span className="hidden sm:inline">{t("more")}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem disabled={true} onClick={saveLogicModel} className="cursor-pointer">
                 <Save className="mr-2 h-4 w-4" />
-                Mint Hypercert
+                {t("mintHypercert")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleUploadToIPFS}
@@ -130,16 +132,16 @@ export const CanvasToolbar = memo(() => {
                 className="cursor-pointer"
               >
                 <CloudCheck className="mr-2 h-4 w-4" />
-                {uploadingToIPFS ? "Uploading..." : "Save to IPFS"}
+                {uploadingToIPFS ? t("uploading") : t("saveToIPFS")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportImage} className="cursor-pointer">
                 <Download className="mr-2 h-4 w-4" />
-                Export Image
+                {t("exportImage")}
               </DropdownMenuItem>
 
               <DropdownMenuItem onClick={exportAsJSON} className="cursor-pointer">
                 <Download className="mr-2 h-4 w-4" />
-                Export JSON
+                {t("exportJSON")}
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
@@ -148,7 +150,7 @@ export const CanvasToolbar = memo(() => {
                 className="text-destructive focus:text-destructive cursor-pointer"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Clear All
+                {t("clearAll")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -1,7 +1,8 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { effectData } from "@/components/effect-icons";
+import { useTranslations } from "next-intl";
+import { effectData, effectTranslationKeys } from "@/components/effect-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,9 @@ interface EffectFilterProps {
 }
 
 export function EffectFilter({ selectedEffects, onEffectsChange }: EffectFilterProps) {
+  const tFilters = useTranslations("filters");
+  const tEffects = useTranslations("effects");
+
   const handleToggleEffect = (effectId: string) => {
     if (selectedEffects.includes(effectId)) {
       onEffectsChange(selectedEffects.filter((id) => id !== effectId));
@@ -31,12 +35,17 @@ export function EffectFilter({ selectedEffects, onEffectsChange }: EffectFilterP
     onEffectsChange([]);
   };
 
+  const getEffectTitle = (effectId: string) => {
+    const keys = effectTranslationKeys[effectId];
+    return keys ? tEffects(keys.title) : effectId;
+  };
+
   return (
     <div className="flex items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="h-10 cursor-pointer">
-            Effects
+            {tFilters("effects")}
             {selectedEffects.length > 0 && (
               <Badge variant="secondary" className="ml-2 rounded-full">
                 {selectedEffects.length}
@@ -46,7 +55,7 @@ export function EffectFilter({ selectedEffects, onEffectsChange }: EffectFilterP
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">
-          <DropdownMenuLabel>Filter by effect</DropdownMenuLabel>
+          <DropdownMenuLabel>{tFilters("filterByEffect")}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {effectData.map((effect) => (
             <DropdownMenuCheckboxItem
@@ -60,7 +69,7 @@ export function EffectFilter({ selectedEffects, onEffectsChange }: EffectFilterP
                 >
                   <span className="scale-75">{effect.icon}</span>
                 </div>
-                {effect.title}
+                {getEffectTitle(effect.id)}
               </div>
             </DropdownMenuCheckboxItem>
           ))}
@@ -73,7 +82,7 @@ export function EffectFilter({ selectedEffects, onEffectsChange }: EffectFilterP
                 className="w-full justify-center"
                 onClick={handleClearAll}
               >
-                Clear all
+                {tFilters("clearAll")}
               </Button>
             </>
           )}
@@ -95,7 +104,7 @@ export function EffectFilter({ selectedEffects, onEffectsChange }: EffectFilterP
                 >
                   <span className="scale-50">{effect.icon}</span>
                 </div>
-                {effect.title}
+                {getEffectTitle(effectId)}
               </Badge>
             );
           })}

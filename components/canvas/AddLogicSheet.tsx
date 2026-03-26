@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, Edit2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as z from "zod";
 import {
   Accordion,
@@ -37,7 +38,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { Frequency, FREQUENCY_OPTIONS, MetricFormInputSchema } from "@/types";
+import { Frequency, MetricFormInputSchema } from "@/types";
 
 // Use centralized schema from types
 const metricsSchema = MetricFormInputSchema;
@@ -64,13 +65,22 @@ interface AddLogicSheetProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const LOGIC_TYPES = [
-  { value: "activities", label: "Activities" },
-  { value: "outputs", label: "Outputs" },
-  { value: "outcomes-short", label: "Outcomes - Short Term" },
-  { value: "outcomes-intermediate", label: "Outcomes - Intermediate Term" },
-  { value: "impact", label: "Impact" },
-] as const;
+const LOGIC_TYPE_KEYS = [
+  { value: "activities", key: "activities" as const },
+  { value: "outputs", key: "outputs" as const },
+  { value: "outcomes-short", key: "outcomesShort" as const },
+  { value: "outcomes-intermediate", key: "outcomesIntermediate" as const },
+  { value: "impact", key: "impact" as const },
+];
+
+const FREQUENCY_KEYS: Record<string, string> = {
+  [Frequency.DAILY]: "daily",
+  [Frequency.WEEKLY]: "weekly",
+  [Frequency.MONTHLY]: "monthly",
+  [Frequency.QUARTERLY]: "quarterly",
+  [Frequency.ANNUALLY]: "annually",
+  [Frequency.OTHER]: "other",
+};
 
 export function AddLogicSheet({
   onSubmit,
@@ -79,6 +89,12 @@ export function AddLogicSheet({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
 }: AddLogicSheetProps) {
+  const tCanvas = useTranslations("canvas");
+  const tAddNode = useTranslations("addNode");
+  const tNodeTypes = useTranslations("nodeTypes");
+  const tMetrics = useTranslations("metrics");
+  const tFrequency = useTranslations("frequency");
+  const tCommon = useTranslations("common");
   const [internalOpen, setInternalOpen] = useState(false);
   const [metrics, setMetrics] = useState<Metrics[]>([]);
   const [editingMetricId, setEditingMetricId] = useState<string | null>(null);
@@ -175,17 +191,15 @@ export function AddLogicSheet({
         <SheetTrigger asChild>
           <Button size="sm" variant="outline" className="flex cursor-pointer items-center gap-2">
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Add Node</span>
+            <span className="hidden sm:inline">{tCanvas("addNode")}</span>
           </Button>
         </SheetTrigger>
       )}
       <SheetContent className="overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{editMode ? "Edit Logic Node" : "Add Logic Node"}</SheetTitle>
+          <SheetTitle>{editMode ? tAddNode("editTitle") : tAddNode("addTitle")}</SheetTitle>
           <SheetDescription>
-            {editMode
-              ? "Update the logic node with new information."
-              : "Add a new logic node with type, title, and description."}
+            {editMode ? tAddNode("editDescription") : tAddNode("addDescription")}
           </SheetDescription>
         </SheetHeader>
 
@@ -194,23 +208,23 @@ export function AddLogicSheet({
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
               {/* Node Info Section */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold">Node Information</h3>
+                <h3 className="text-sm font-semibold">{tAddNode("nodeInfo")}</h3>
                 <FormField
                   control={form.control}
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Type</FormLabel>
+                      <FormLabel>{tAddNode("type")}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select node type" />
+                            <SelectValue placeholder={tAddNode("typePlaceholder")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {LOGIC_TYPES.map((type) => (
+                          {LOGIC_TYPE_KEYS.map((type) => (
                             <SelectItem key={type.value} value={type.value}>
-                              {type.label}
+                              {tNodeTypes(type.key)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -225,9 +239,9 @@ export function AddLogicSheet({
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title</FormLabel>
+                      <FormLabel>{tAddNode("title")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter title" {...field} />
+                        <Input placeholder={tAddNode("titlePlaceholder")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -239,10 +253,10 @@ export function AddLogicSheet({
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description (optional)</FormLabel>
+                      <FormLabel>{tAddNode("descriptionLabel")}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Enter description"
+                          placeholder={tAddNode("descriptionPlaceholder")}
                           className="min-h-[120px]"
                           {...field}
                         />
@@ -259,13 +273,13 @@ export function AddLogicSheet({
                   <AccordionItem value="metrics" className="border-none">
                     <AccordionTrigger className="py-3 hover:no-underline">
                       <h3 className="text-sm font-semibold">
-                        Metrics {metrics.length > 0 && `(${metrics.length})`}
+                        {tMetrics("title")} {metrics.length > 0 && `(${metrics.length})`}
                       </h3>
                     </AccordionTrigger>
                     <AccordionContent className="space-y-4 pt-2">
                       {/* Existing Metrics List */}
                       {metrics.length === 0 ? (
-                        <p className="text-muted-foreground text-sm">No metrics added yet</p>
+                        <p className="text-muted-foreground text-sm">{tMetrics("noMetrics")}</p>
                       ) : (
                         <div className="space-y-2">
                           {metrics.map((metric) => (
@@ -281,16 +295,14 @@ export function AddLogicSheet({
                                   <div className="text-muted-foreground mt-2 flex flex-wrap gap-2 text-xs">
                                     {metric.frequency && (
                                       <span className="bg-muted rounded px-2 py-1">
-                                        {
-                                          FREQUENCY_OPTIONS.find(
-                                            (o) => o.value === metric.frequency,
-                                          )?.label
-                                        }
+                                        {tFrequency(
+                                          FREQUENCY_KEYS[metric.frequency] || metric.frequency,
+                                        )}
                                       </span>
                                     )}
                                     {metric.targetValue && (
                                       <span className="bg-muted rounded px-2 py-1">
-                                        Target: {metric.targetValue}
+                                        {tMetrics("target", { value: metric.targetValue })}
                                       </span>
                                     )}
                                   </div>
@@ -324,22 +336,24 @@ export function AddLogicSheet({
                       {/* Add Metric Form */}
                       <div className="border-t pt-4">
                         <h4 className="mb-3 text-sm font-medium">
-                          {editingMetricId ? "Edit Metric" : "Add Metric"}
+                          {editingMetricId ? tMetrics("editMetric") : tMetrics("addMetric")}
                         </h4>
                         <div className="space-y-3">
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Metric Name</label>
+                            <label className="text-sm font-medium">{tMetrics("metricName")}</label>
                             <Input
-                              placeholder="e.g., Participation Rate"
+                              placeholder={tMetrics("metricNamePlaceholder")}
                               value={metricsForm.watch("name") || ""}
                               onChange={(e) => metricsForm.setValue("name", e.target.value)}
                             />
                           </div>
 
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Description (optional)</label>
+                            <label className="text-sm font-medium">
+                              {tMetrics("descriptionOptional")}
+                            </label>
                             <Textarea
-                              placeholder="What this metric measures"
+                              placeholder={tMetrics("descriptionPlaceholder")}
                               rows={2}
                               value={metricsForm.watch("description") || ""}
                               onChange={(e) => metricsForm.setValue("description", e.target.value)}
@@ -348,10 +362,10 @@ export function AddLogicSheet({
 
                           <div className="space-y-2">
                             <label className="text-sm font-medium">
-                              Measurement Method (optional)
+                              {tMetrics("measurementMethod")}
                             </label>
                             <Input
-                              placeholder="Survey, observation, etc."
+                              placeholder={tMetrics("measurementPlaceholder")}
                               value={metricsForm.watch("measurementMethod") || ""}
                               onChange={(e) =>
                                 metricsForm.setValue("measurementMethod", e.target.value)
@@ -360,7 +374,7 @@ export function AddLogicSheet({
                           </div>
 
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Frequency (optional)</label>
+                            <label className="text-sm font-medium">{tMetrics("frequency")}</label>
                             <Select
                               onValueChange={(value) =>
                                 metricsForm.setValue("frequency", value as Frequency)
@@ -368,12 +382,12 @@ export function AddLogicSheet({
                               value={metricsForm.watch("frequency")}
                             >
                               <SelectTrigger>
-                                <SelectValue placeholder="Select frequency" />
+                                <SelectValue placeholder={tMetrics("frequencyPlaceholder")} />
                               </SelectTrigger>
                               <SelectContent>
-                                {FREQUENCY_OPTIONS.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
+                                {Object.values(Frequency).map((value) => (
+                                  <SelectItem key={value} value={value}>
+                                    {tFrequency(FREQUENCY_KEYS[value] || value)}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -381,9 +395,9 @@ export function AddLogicSheet({
                           </div>
 
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Target Value (optional)</label>
+                            <label className="text-sm font-medium">{tMetrics("targetValue")}</label>
                             <Input
-                              placeholder="e.g., 50% improvement"
+                              placeholder={tMetrics("targetPlaceholder")}
                               value={metricsForm.watch("targetValue") || ""}
                               onChange={(e) => metricsForm.setValue("targetValue", e.target.value)}
                             />
@@ -396,11 +410,11 @@ export function AddLogicSheet({
                               onClick={metricsForm.handleSubmit(handleMetricSubmit)}
                             >
                               <Plus className="mr-2 h-4 w-4" />
-                              {editingMetricId ? "Update Metric" : "Add Metric"}
+                              {editingMetricId ? tMetrics("updateMetric") : tMetrics("addMetric")}
                             </Button>
                             {editingMetricId && (
                               <Button type="button" variant="outline" onClick={cancelMetricEditing}>
-                                Cancel
+                                {tCommon("cancel")}
                               </Button>
                             )}
                           </div>
@@ -422,9 +436,9 @@ export function AddLogicSheet({
                     setOpen(false);
                   }}
                 >
-                  Cancel
+                  {tCommon("cancel")}
                 </Button>
-                <Button type="submit">{editMode ? "Update" : "Add Card"}</Button>
+                <Button type="submit">{editMode ? tAddNode("update") : tAddNode("addCard")}</Button>
               </div>
             </form>
           </Form>

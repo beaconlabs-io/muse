@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FileSymlink, ExternalLink } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ export function EvidenceDialog({
   evidenceMetadata,
   externalPapers = [],
 }: EvidenceDialogProps) {
+  const t = useTranslations("evidenceDialog");
   const hasEvidence = evidenceIds.length > 0;
   const hasExternalPapers = externalPapers.length > 0;
 
@@ -35,10 +37,8 @@ export function EvidenceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Evidence for Connection</DialogTitle>
-          <DialogDescription>
-            {totalItems} item{totalItems !== 1 ? "s" : ""} linked to this connection
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("itemCount", { count: totalItems })}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -57,14 +57,14 @@ export function EvidenceDialog({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <span className="mr-2">Evidence ID: {evidenceId} </span>
+                        <span className="mr-2">{t("evidenceId", { id: evidenceId })} </span>
                         <span>
                           <FileSymlink className="h-4 w-4" />
                         </span>
                       </Link>
                       {metadata && (
                         <span className="rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
-                          Relevance: {metadata.score}
+                          {t("relevance", { score: metadata.score })}
                         </span>
                       )}
                     </div>
@@ -77,30 +77,32 @@ export function EvidenceDialog({
 
                         {metadata.reasoning && (
                           <div className="text-sm text-gray-600">
-                            <span className="font-medium">Reasoning:</span> {metadata.reasoning}
+                            <span className="font-medium">{t("reasoning")}</span>{" "}
+                            {metadata.reasoning}
                           </div>
                         )}
 
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           {metadata.strength && (
                             <span>
-                              <strong>Strength:</strong> {metadata.strength}/5
+                              <strong>{t("strength")}</strong>{" "}
+                              {t("strengthScore", { strength: metadata.strength })}
                             </span>
                           )}
                           {metadata.hasWarning && (
-                            <span className="font-medium text-amber-600">⚠️ Has Warning</span>
+                            <span className="font-medium text-amber-600">{t("hasWarning")}</span>
                           )}
                         </div>
 
                         {metadata.interventionText && (
                           <div className="mt-2 text-xs text-gray-600">
-                            <strong>Intervention:</strong> {metadata.interventionText}
+                            <strong>{t("intervention")}</strong> {metadata.interventionText}
                           </div>
                         )}
 
                         {metadata.outcomeText && (
                           <div className="text-xs text-gray-600">
-                            <strong>Outcome:</strong> {metadata.outcomeText}
+                            <strong>{t("outcome")}</strong> {metadata.outcomeText}
                           </div>
                         )}
                       </>
@@ -114,9 +116,7 @@ export function EvidenceDialog({
           {hasExternalPapers && (
             <>
               <div className={hasEvidence ? "border-t pt-4" : ""}>
-                <h3 className="mb-3 text-sm font-semibold text-gray-500">
-                  Academic Papers (Reference)
-                </h3>
+                <h3 className="mb-3 text-sm font-semibold text-gray-500">{t("academicPapers")}</h3>
               </div>
               {externalPapers.map((paper) => (
                 <div
@@ -164,12 +164,12 @@ export function EvidenceDialog({
                     <div className="flex flex-wrap items-center gap-1.5">
                       {paper.citationCount != null && paper.citationCount > 0 && (
                         <span className="inline-flex items-center gap-0.5 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
-                          {paper.citationCount.toLocaleString()} cited
+                          {t("cited", { count: paper.citationCount.toLocaleString() })}
                           {paper.influentialCitationCount != null &&
                             paper.influentialCitationCount > 0 && (
                               <span className="text-gray-400">
                                 {" "}
-                                ({paper.influentialCitationCount} influential)
+                                ({t("influential", { count: paper.influentialCitationCount })})
                               </span>
                             )}
                         </span>
@@ -179,7 +179,7 @@ export function EvidenceDialog({
                     {/* TLDR (preferred) or Abstract */}
                     {paper.tldr ? (
                       <p className="line-clamp-3 text-sm text-gray-700">
-                        <span className="font-medium text-gray-500">TLDR: </span>
+                        <span className="font-medium text-gray-500">{t("tldr")}</span>
                         {paper.tldr}
                       </p>
                     ) : (

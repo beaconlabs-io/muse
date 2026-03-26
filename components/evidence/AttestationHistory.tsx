@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Shield, ArrowUpRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import type { EvidenceDeploymentHistory } from "@beaconlabs-io/evidence";
 import { formatDate } from "@/lib/format-date";
@@ -15,6 +18,8 @@ export function AttestationHistory({
   currentTimestamp,
   history,
 }: AttestationHistoryProps) {
+  const t = useTranslations("evidence");
+
   // Combine current and historical attestations, then sort by date descending
   const allAttestations = [
     ...(currentAttestationUID && currentTimestamp
@@ -30,7 +35,7 @@ export function AttestationHistory({
 
   return (
     <div className="mb-6">
-      <h3 className="mb-2 text-lg font-semibold">Change Log</h3>
+      <h3 className="mb-2 text-lg font-semibold">{t("changeLog")}</h3>
       <div className="space-y-3">
         {allAttestations.map((attestation, index) => (
           <Link
@@ -48,7 +53,7 @@ export function AttestationHistory({
                 <div className="truncate text-base font-semibold text-gray-900">
                   {formatDate(attestation.timestamp)}
                 </div>
-                {index === 0 && <Badge variant="secondary">Latest</Badge>}
+                {index === 0 && <Badge variant="secondary">{t("latest")}</Badge>}
               </div>
             </div>
             <div className="shrink-0">
