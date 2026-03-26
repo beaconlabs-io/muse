@@ -127,28 +127,25 @@ export function CanvasProvider({
   const t = useTranslations("canvas");
   const tCommon = useTranslations("common");
 
-  // 1. Load from localStorage (if enabled)
-  const savedState = useMemo(
-    () => (disableLocalStorage ? null : loadCanvasState()),
-    [disableLocalStorage],
+  // 1. Initialize React Flow state with server-safe values (no localStorage during SSR/hydration)
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<CardNodeData>>(
+    cardsToNodes(initialCards),
   );
+  const [edges, setEdges, onEdgesChange] = useEdgesState(arrowsToEdges(initialArrows));
+  const [cardMetrics, setCardMetrics] = useState<Record<string, Metric[]>>(initialCardMetrics);
 
-  // 2. Initialize React Flow state
-  const initialNodes = useMemo(() => {
-    const cards = savedState?.cards || initialCards;
-    return cardsToNodes(cards);
-  }, [savedState, initialCards]);
-
-  const initialEdges = useMemo(() => {
-    const arrows = savedState?.arrows || initialArrows;
-    return arrowsToEdges(arrows);
-  }, [savedState, initialArrows]);
-
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<CardNodeData>>(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [cardMetrics, setCardMetrics] = useState<Record<string, Metric[]>>(
-    savedState?.cardMetrics || initialCardMetrics,
-  );
+  // 2. Hydrate from localStorage after mount to avoid hydration mismatch
+  const hasHydrated = useRef(false);
+  useEffect(() => {
+    if (disableLocalStorage || hasHydrated.current) return;
+    hasHydrated.current = true;
+    const savedState = loadCanvasState();
+    if (savedState) {
+      setNodes(cardsToNodes(savedState.cards));
+      setEdges(arrowsToEdges(savedState.arrows));
+      setCardMetrics(savedState.cardMetrics);
+    }
+  }, [disableLocalStorage, setNodes, setEdges]);
 
   // 3. Edit sheet state
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
