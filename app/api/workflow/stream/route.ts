@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { WorkflowSSEEvent } from "@/types/workflow-events";
 import { WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
 import { createLogger } from "@/lib/logger";
+import { extractErrorMessage, categorizeError } from "@/lib/workflow-errors";
 import { mastra } from "@/mastra";
 import { CanvasDataSchema } from "@/types";
 
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
         });
 
         let lastFailedStepId: string | undefined;
+        let lastFailedStepError: string | undefined;
 
         // Process the stream
         const processStream = async () => {
@@ -88,15 +90,16 @@ export async function POST(request: NextRequest) {
                 case "workflow-step-result":
                   if (event.payload.status === "failed") {
                     lastFailedStepId = event.payload.id;
-                    const stepOutput = event.payload.output;
-                    const errorMsg =
-                      typeof stepOutput === "object" && stepOutput !== null && "error" in stepOutput
-                        ? String((stepOutput as { error: unknown }).error)
-                        : "Step failed";
+                    const errorMsg = extractErrorMessage(
+                      event.payload as unknown as Record<string, unknown>,
+                    );
+                    lastFailedStepError = errorMsg;
+                    const { category } = categorizeError(errorMsg);
                     send({
                       type: "step-error",
                       stepId: event.payload.id,
                       error: errorMsg,
+                      errorCategory: category,
                     });
                   } else if (event.payload.status === "success") {
                     send({ type: "step-finish", stepId: event.payload.id });
@@ -125,9 +128,14 @@ export async function POST(request: NextRequest) {
                       });
                     }
                   } else {
+                    const workflowErrorMsg =
+                      lastFailedStepError || `Workflow ${event.payload.workflowStatus}`;
+                    const { category } = categorizeError(workflowErrorMsg);
                     send({
                       type: "workflow-error",
-                      error: `Workflow ${event.payload.workflowStatus}`,
+                      error: workflowErrorMsg,
+                      errorCategory: category,
+                      rawError: lastFailedStepError,
                       failedStepId: lastFailedStepId,
                     });
                   }
@@ -143,8 +151,9 @@ export async function POST(request: NextRequest) {
         await Promise.race([processStream(), timeoutPromise]);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
-        logger.error({ error: message }, "Workflow stream error");
-        send({ type: "workflow-error", error: message });
+        const { category } = categorizeError(message);
+        logger.error({ error: message, category }, "Workflow stream error");
+        send({ type: "workflow-error", error: message, errorCategory: category });
       } finally {
         clearTimeout(timeoutId);
         try {

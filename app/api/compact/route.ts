@@ -4,6 +4,7 @@ import { validateApiKey, unauthorizedResponse, isAuthEnabled } from "@/lib/api-a
 import { BASE_URL, WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
 import { uploadToIPFS } from "@/lib/ipfs";
 import { createLogger } from "@/lib/logger";
+import { categorizeError } from "@/lib/workflow-errors";
 import { mastra } from "@/mastra";
 import {
   CompactRequestSchema,
@@ -84,9 +85,14 @@ export async function POST(request: NextRequest) {
         result.status === "failed"
           ? result.error?.message || "Workflow failed"
           : "Workflow was suspended";
-      logger.error({ error: errorMessage }, "Workflow failed");
+      const { category } = categorizeError(errorMessage);
+      logger.error({ error: errorMessage, category }, "Workflow failed");
       return NextResponse.json(
-        { error: "Failed to create Logic Model. Please try again." },
+        {
+          error: "Failed to create Logic Model. Please try again.",
+          errorCategory: category,
+          rawError: errorMessage,
+        },
         { status: 500 },
       );
     }

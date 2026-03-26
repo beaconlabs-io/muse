@@ -278,12 +278,24 @@ const StepProcessModal = ({
                   >
                     {step.description}
                   </p>
-                  {step.state === "error" && step.errorMessage && (
-                    <ScrollArea className="h-16 w-96 rounded bg-red-50 p-2">
-                      <p className="text-xs text-red-500">({step.errorMessage})</p>
-                      <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
-                  )}
+                  {step.state === "error" &&
+                    step.errorMessage &&
+                    (() => {
+                      const parts = step.errorMessage.split("\n---\n");
+                      const userMessage = parts[0];
+                      const rawDetail = parts[1];
+                      return (
+                        <div className="mt-1 space-y-1">
+                          <p className="text-sm font-medium text-red-600">{userMessage}</p>
+                          {rawDetail && (
+                            <ScrollArea className="h-16 w-96 rounded bg-red-50 p-2">
+                              <p className="text-xs text-red-400">{rawDetail}</p>
+                              <ScrollBar orientation="horizontal" />
+                            </ScrollArea>
+                          )}
+                        </div>
+                      );
+                    })()}
                 </div>
               </div>
             ))}
