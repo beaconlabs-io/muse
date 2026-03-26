@@ -16,7 +16,7 @@ export async function HypercertsList({ hypercertsPromise }: HypercertsListProps)
   if (!hypercerts || hypercerts.length === 0) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-muted-foreground text-lg">{t("noFound")}</p>
+        <p className="text-muted-foreground text-lg">{t("notFound")}</p>
       </div>
     );
   }
