@@ -13,8 +13,8 @@ sequenceDiagram
 
     Note over User, SS: エージェントによるロジックモデル生成
 
-    User->>FE: 意図（目標）を提供
-    FE->>Agent: 意図を送信
+    User->>FE: 目標を提供
+    FE->>Agent: 目標を送信
     Agent->>Evidence: 関連エビデンスを検索
     Evidence-->>Agent: エビデンスデータを返却
     Agent->>SS: 外部学術論文を検索（エビデンス不足エッジ）
@@ -69,7 +69,7 @@ sequenceDiagram
 
     Note over User, SS: ロジックモデル生成とエビデンス検証 (Mastra Workflow)
 
-    User->>FE: 意図を提供（例：「EthereumへのOSSの影響」）
+    User->>FE: 目標を提供（例：「EthereumへのOSSの影響」）
 
     Note over FE, LLM: UI Step 1: 構造を生成 (SSEストリーム)
     FE->>FE: "generate-logic-model"をアクティブにマーク
@@ -390,7 +390,7 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 
 **UIフロー（4ステップ）:**
 
-1. **Analyze Intent**（UIのみ） - ステップをアクティブ → 即座に完了にマーク
+1. **Analyze Goal**（UIのみ） - ステップをアクティブ → 即座に完了にマーク
 2. **Generate Structure**（サーバー） - **完全なワークフローがここで実行**:
    - Workflow Step 1: 5段階検証付きでカードと矢印をLLMが生成
    - Workflow Step 2: バッチエビデンス検索 - すべてのエッジに対してchain-of-thought付き単一LLM呼び出し
