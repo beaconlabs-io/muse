@@ -39,6 +39,7 @@ const generateLogicModelSchema = z.object({
     .min(1, "Please enter your goal")
     .max(1000, "Goal must be 1000 characters or less"),
   enableExternalSearch: z.boolean(),
+  enableMetrics: z.boolean(),
 });
 
 type GenerateLogicModelFormData = z.infer<typeof generateLogicModelSchema>;
@@ -95,6 +96,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     defaultValues: {
       goal: "",
       enableExternalSearch: false,
+      enableMetrics: false,
     },
   });
 
@@ -172,7 +174,10 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setStepDialogOpen(true);
 
     processedEventCountRef.current = 0;
-    await startWorkflow(data.goal, data.enableExternalSearch);
+    await startWorkflow(data.goal, {
+      enableExternalSearch: data.enableExternalSearch,
+      enableMetrics: data.enableMetrics,
+    });
   };
 
   // Cleanup on unmount
@@ -230,6 +235,32 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                 )}
               />
             )}
+            <FormField
+              control={form.control}
+              name="enableMetrics"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <FormLabel className="text-sm font-normal">{t("metricsLabel")}</FormLabel>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="text-muted-foreground h-4 w-4 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[260px]">
+                        {t("metricsTooltip")}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isRunning}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="goal"
