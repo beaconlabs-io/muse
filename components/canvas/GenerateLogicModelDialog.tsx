@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Info } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as z from "zod";
 import { GenerationTimeInfo } from "@/components/canvas/GenerationTimeInfo";
 import { useStepProcessDialogContext } from "@/components/step-process-dialog";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -205,62 +206,6 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            {EXTERNAL_SEARCH_ENABLED && (
-              <FormField
-                control={form.control}
-                name="enableExternalSearch"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <FormLabel className="text-sm font-normal">
-                        {t("externalSearchLabel")}
-                      </FormLabel>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="text-muted-foreground h-4 w-4 cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-[260px]">
-                          {t("externalSearchTooltip")}
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={isRunning}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            )}
-            <FormField
-              control={form.control}
-              name="enableMetrics"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <FormLabel className="text-sm font-normal">{t("metricsLabel")}</FormLabel>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="text-muted-foreground h-4 w-4 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[260px]">
-                        {t("metricsTooltip")}
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={isRunning}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="goal"
@@ -280,6 +225,70 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                 </FormItem>
               )}
             />
+            <Collapsible>
+              <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors [&[data-state=open]>svg]:rotate-180">
+                <ChevronDown className="h-4 w-4 transition-transform" />
+                {t("optionsLabel")}
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-3">
+                {EXTERNAL_SEARCH_ENABLED && (
+                  <FormField
+                    control={form.control}
+                    name="enableExternalSearch"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <FormLabel className="text-sm font-normal">
+                            {t("externalSearchLabel")}
+                          </FormLabel>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="text-muted-foreground h-4 w-4 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[260px]">
+                              {t("externalSearchTooltip")}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={isRunning}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                )}
+                <FormField
+                  control={form.control}
+                  name="enableMetrics"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <FormLabel className="text-sm font-normal">{t("metricsLabel")}</FormLabel>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="text-muted-foreground h-4 w-4 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[260px]">
+                            {t("metricsTooltip")}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isRunning}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </CollapsibleContent>
+            </Collapsible>
 
             <DialogFooter>
               <Button

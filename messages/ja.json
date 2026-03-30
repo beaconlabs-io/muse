@@ -66,6 +66,7 @@
     "stepSearchingExternal": "外部の学術論文を検索中",
     "stepEnriching": "キャンバスにエビデンスを追加中",
     "stepComplete": "完了しました！",
+    "optionsLabel": "オプション",
     "externalSearchLabel": "外部の学術論文を検索",
     "externalSearchTooltip": "有効にすると、外部APIを使用して学術論文を検索し、エビデンスを補完します。生成時間が長くなる場合があります。",
     "metricsLabel": "各カードのメトリクスを生成",

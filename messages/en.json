@@ -66,6 +66,7 @@
     "stepSearchingExternal": "Searching external academic papers",
     "stepEnriching": "Enriching canvas with evidence",
     "stepComplete": "Completed!",
+    "optionsLabel": "Options",
     "externalSearchLabel": "Search external academic papers",
     "externalSearchTooltip": "When enabled, searches external academic papers to supplement evidence. This may increase generation time.",
     "metricsLabel": "Generate metrics for each card",
