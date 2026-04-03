@@ -8,6 +8,7 @@ import {
   MAX_EXTERNAL_PAPERS_PER_EDGE,
 } from "@/lib/constants";
 import { createLogger } from "@/lib/logger";
+import { queryTranslationAgent } from "@/mastra/agents/query-translation-agent";
 
 const logger = createLogger({ module: "lib:external-paper-search" });
 
@@ -109,6 +110,47 @@ function rankByQuality(papers: ExternalPaper[]): ExternalPaper[] {
 }
 
 // ---------------------------------------------------------------------------
+// Query translation
+// ---------------------------------------------------------------------------
+
+/**
+ * Check if a string is primarily ASCII (English).
+ */
+function isPrimarilyEnglish(text: string): boolean {
+  const nonWhitespace = text.replace(/\s/g, "");
+  if (!nonWhitespace) return true;
+  const asciiCount = [...nonWhitespace].filter((c) => c.charCodeAt(0) < 128).length;
+  return asciiCount / nonWhitespace.length > 0.8;
+}
+
+/**
+ * Translate a non-English query to English academic search keywords.
+ * Uses the same AI SDK pattern as extract-search-keywords.ts.
+ * Falls back to the original query on failure.
+ */
+async function translateToEnglishQuery(query: string): Promise<string> {
+  if (isPrimarilyEnglish(query)) return query;
+
+  try {
+    const result = await queryTranslationAgent.generate(
+      `Translate the following search query into English academic search keywords suitable for Semantic Scholar. Return ONLY the English search query, nothing else.\n\nQuery: ${query}`,
+    );
+
+    const translated = result.text.trim();
+    if (!translated) {
+      logger.warn({ query }, "Translation returned empty, using original");
+      return query;
+    }
+
+    logger.debug({ original: query, translated }, "Query translated to English");
+    return translated;
+  } catch (error) {
+    logger.warn({ error, query }, "Query translation failed, using original");
+    return query;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main search functions
 // ---------------------------------------------------------------------------
 
@@ -185,7 +227,8 @@ export async function searchExternalPapersForEdge(
 /**
  * Search external academic databases using a free-text query.
  * Used by the evidence search API for user-facing queries.
- * Deterministic (no LLM calls). Results are cached for 24 hours.
+ * Non-English queries are translated to English via LLM for better results.
+ * Results are cached for 24 hours.
  */
 export async function searchExternalPapers(
   query: string,
@@ -202,9 +245,12 @@ export async function searchExternalPapers(
     return cached.slice(0, maxResults);
   }
 
-  const lastSpace = trimmed.lastIndexOf(" ", 200);
+  // Translate non-English queries to English for better Semantic Scholar results
+  const translated = await translateToEnglishQuery(trimmed);
+
+  const lastSpace = translated.lastIndexOf(" ", 200);
   const searchQuery =
-    trimmed.length > 200 ? trimmed.slice(0, lastSpace > 0 ? lastSpace : 200) : trimmed;
+    translated.length > 200 ? translated.slice(0, lastSpace > 0 ? lastSpace : 200) : translated;
 
   const papers = await searchSemanticScholar(searchQuery, maxResults);
   const deduplicated = deduplicateByDoi(papers);
