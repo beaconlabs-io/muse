@@ -16,6 +16,7 @@ const logger = createLogger({ module: "api:workflow-stream" });
 const RequestSchema = z.object({
   goal: z.string().min(1).max(1000),
   enableExternalSearch: z.boolean().default(false),
+  enableMetrics: z.boolean().default(false),
 });
 
 function formatSSE(event: WorkflowSSEEvent): string {
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { goal, enableExternalSearch } = parsed.data;
+  const { goal, enableExternalSearch, enableMetrics } = parsed.data;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -62,7 +63,9 @@ export async function POST(request: NextRequest) {
       try {
         const workflow = mastra.getWorkflow("logicModelWithEvidenceWorkflow");
         const run = await workflow.createRun();
-        const output = await run.stream({ inputData: { goal, enableExternalSearch } });
+        const output = await run.stream({
+          inputData: { goal, enableExternalSearch, enableMetrics },
+        });
 
         // Set up timeout
         const timeoutPromise = new Promise<never>((_, reject) => {

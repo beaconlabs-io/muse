@@ -128,7 +128,9 @@ export function EvidenceDialog({
                     <div>
                       {paper.url || paper.doi ? (
                         <a
-                          href={paper.doi ? `https://doi.org/${paper.doi}` : paper.url}
+                          href={
+                            paper.doi ? `https://doi.org/${paper.doi}` : (paper.url ?? undefined)
+                          }
                           className="inline-flex items-center gap-1 font-semibold text-blue-900 underline"
                           target="_blank"
                           rel="noopener noreferrer"

@@ -58,7 +58,7 @@ sequenceDiagram
     Note over Workflow, Agent: Workflow Step 1: Generate Logic Model Structure
     Workflow->>Agent: logicModelAgent.generate(goal, maxSteps: 12)
     Agent->>Agent: Stage 1: Analyze Intervention (domain, goals)
-    Agent->>Agent: Stage 2: Generate Cards (with metrics)
+    Agent->>Agent: Stage 2: Generate Cards (optionally with metrics)
     Agent->>Agent: Stage 3: Design Connections (4-Test Framework)
     Agent->>Agent: Stage 4: Self-Critique (validation checklists)
     Agent->>Tool: Stage 5: Call logicModelTool (ONCE)
@@ -278,9 +278,9 @@ Theory of Change specialist with structured 5-stage workflow:
 
 #### Stage 2: Generate Cards
 
-- Creates 1-2 cards per stage with title (max 100 chars), description (max 200 chars), and metrics
+- Creates 1-2 cards per stage with title (max 100 chars), description (max 200 chars), and optionally metrics
 - Stages: Activities → Outputs → Outcomes-Short (0-6 months) → Outcomes-Intermediate (6-18 months) → Impact (18+ months)
-- Each card requires 1 metric object with name, measurementMethod, and frequency fields
+- When `enableMetrics` is true, each card includes 1 metric object with name, measurementMethod, and frequency fields. When disabled (default), metrics arrays are empty.
 
 #### Stage 3: Design Connections with 4-Test Framework
 
@@ -305,10 +305,10 @@ Theory of Change specialist with structured 5-stage workflow:
 ### Common Mistakes Prevention
 
 - ❌ **TOP MISTAKE #1**: targetContext as object instead of string
-- ❌ **TOP MISTAKE #2**: Metrics as strings instead of objects
+- ❌ **TOP MISTAKE #2**: Metrics as strings instead of objects (when metrics enabled)
 - ❌ **TOP MISTAKE #3**: Too many (>15) or too few (<8) connections
 - ❌ **TOP MISTAKE #4**: Weak/indirect connections to hit count
-- ❌ **TOP MISTAKE #5**: Invalid frequency values
+- ❌ **TOP MISTAKE #5**: Invalid frequency values (when metrics enabled)
 
 ### 2. Evidence Search Agent
 
@@ -380,6 +380,9 @@ Main UI component with 4-step process:
 - Step 4: "complete" - Final state
 - Real-time step progress via `useWorkflowStream` hook and SSE route (`/api/workflow/stream`)
 - Form validation with Zod
+- Collapsible "Options" section with:
+  - `enableExternalSearch` toggle (visible when `EXTERNAL_SEARCH_ENABLED=true`)
+  - `enableMetrics` toggle (default OFF) — controls whether the agent generates metrics for cards
 
 ### logic-model-with-evidence.ts
 
@@ -389,6 +392,8 @@ Production workflow with 4 steps (including Step 2.5):
 
 **Step 1: Generate Logic Model Structure**
 
+- Reads `enableMetrics` from workflow init data (default: false)
+- Conditionally instructs agent to generate or skip metrics
 - Validates agent called logicModelTool and returned valid canvas data with detailed logging
 - Extracts canvasData from tool results with detailed logging
 
@@ -477,7 +482,7 @@ Tool for generating logic model structure:
 1. Authenticate via `BOT_API_KEY` header (optional, skipped if `BOT_API_KEY` env var is not configured)
 2. Validate request body with `CompactRequestSchema` (`chatHistory: ChatMessage[]`)
 3. Extract goal from user messages in the conversation
-4. Run `logicModelWithEvidenceWorkflow` with `enableExternalSearch: true` (always enabled)
+4. Run `logicModelWithEvidenceWorkflow` with `enableExternalSearch: true` and `enableMetrics: false` (default)
 5. Validate output with `CanvasDataSchema`
 6. Upload canvas data to IPFS via Pinata
 7. Return `CompactResponse`: `{ canvasUrl, canvasId, summary: { extractedIssues, intervention, targetContext } }`
