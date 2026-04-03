@@ -8,6 +8,7 @@ import {
 const getHypercertsData = cache(async (params: GetAllHypercertsParams) => {
   return await getAllHypercerts(params);
 });
+export const dynamic = "force-dynamic";
 
 export default function Page() {
   // TODO: implement pagenation
@@ -15,6 +16,5 @@ export default function Page() {
     first: 100,
     offset: 0,
   };
-
   return <HypercertsList hypercertsPromise={getHypercertsData(params)} />;
 }
