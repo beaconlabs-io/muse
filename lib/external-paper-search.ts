@@ -1,5 +1,3 @@
-import { google } from "@ai-sdk/google";
-import { generateText } from "ai";
 import type { ExternalPaper } from "@/types";
 import { extractSearchKeywords } from "@/lib/academic-apis/extract-search-keywords";
 import { searchSemanticScholar } from "@/lib/academic-apis/semantic-scholar";
@@ -10,6 +8,7 @@ import {
   MAX_EXTERNAL_PAPERS_PER_EDGE,
 } from "@/lib/constants";
 import { createLogger } from "@/lib/logger";
+import { queryTranslationAgent } from "@/mastra/agents/query-translation-agent";
 
 const logger = createLogger({ module: "lib:external-paper-search" });
 
@@ -133,12 +132,11 @@ async function translateToEnglishQuery(query: string): Promise<string> {
   if (isPrimarilyEnglish(query)) return query;
 
   try {
-    const { text } = await generateText({
-      model: google("gemini-2.5-flash"),
-      prompt: `Translate the following search query into English academic search keywords suitable for Semantic Scholar. Return ONLY the English search query, nothing else.\n\nQuery: ${query}`,
-    });
+    const result = await queryTranslationAgent.generate(
+      `Translate the following search query into English academic search keywords suitable for Semantic Scholar. Return ONLY the English search query, nothing else.\n\nQuery: ${query}`,
+    );
 
-    const translated = text.trim();
+    const translated = result.text.trim();
     if (!translated) {
       logger.warn({ query }, "Translation returned empty, using original");
       return query;

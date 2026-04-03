@@ -9,7 +9,9 @@ import {
 } from "@mastra/observability";
 import { conversationBotAgent } from "./agents/conversation-bot-agent";
 import { evidenceSearchAgent } from "./agents/evidence-search-agent";
+import { keywordExtractionAgent } from "./agents/keyword-extraction-agent";
 import { logicModelAgent } from "./agents/logic-model-agent";
+import { queryTranslationAgent } from "./agents/query-translation-agent";
 import { logicModelWithEvidenceWorkflow } from "./workflows/logic-model-with-evidence";
 
 // TODO: validate CONNECTION_URL for production
@@ -53,7 +55,13 @@ const observability = new Observability({
 });
 
 export const mastra = new Mastra({
-  agents: { logicModelAgent, evidenceSearchAgent, conversationBotAgent },
+  agents: {
+    logicModelAgent,
+    evidenceSearchAgent,
+    conversationBotAgent,
+    queryTranslationAgent,
+    keywordExtractionAgent,
+  },
   workflows: { logicModelWithEvidenceWorkflow },
   workspace,
   storage,
