@@ -38,13 +38,20 @@ const generateLogicModelStep = createStep({
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
   }),
-  execute: async ({ inputData }) => {
+  execute: async ({ inputData, getInitData }) => {
     const { goal } = inputData;
     const MAX_RETRIES = 2;
 
-    logger.info({ goal }, "Step 1: Generating logic model structure");
+    const initData = getInitData<{ enableMetrics?: boolean }>();
+    const enableMetrics = initData?.enableMetrics === true;
 
-    const userContent = `Create a logic model for the following goal: ${goal}`;
+    logger.info({ goal, enableMetrics }, "Step 1: Generating logic model structure");
+
+    const metricsInstruction = enableMetrics
+      ? "\n\nGenerate meaningful metrics for each card, including name, measurementMethod, and frequency."
+      : "\n\nDo NOT generate metrics. Pass empty arrays for all metrics fields.";
+
+    const userContent = `Create a logic model for the following goal: ${goal}${metricsInstruction}`;
 
     let lastError: Error | null = null;
 
@@ -417,6 +424,7 @@ export const logicModelWithEvidenceWorkflow = createWorkflow({
       .boolean()
       .default(false)
       .describe("Whether to search Semantic Scholar for external papers"),
+    enableMetrics: z.boolean().default(false).describe("Whether to generate metrics for each card"),
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,

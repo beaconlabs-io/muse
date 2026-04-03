@@ -66,8 +66,11 @@
     "stepSearchingExternal": "Searching external academic papers",
     "stepEnriching": "Enriching canvas with evidence",
     "stepComplete": "Completed!",
+    "optionsLabel": "Options",
     "externalSearchLabel": "Search external academic papers",
-    "externalSearchTooltip": "When enabled, searches external academic papers to supplement evidence. This may increase generation time."
+    "externalSearchTooltip": "When enabled, searches external academic papers to supplement evidence. This may increase generation time.",
+    "metricsLabel": "Generate metrics for each card",
+    "metricsTooltip": "Generate measurement indicators for each card. Can be added manually later."
   },
   "addNode": {
     "editTitle": "Edit Logic Node",

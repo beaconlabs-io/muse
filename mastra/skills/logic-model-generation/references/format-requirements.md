@@ -23,11 +23,11 @@ Wrong:
 
 Each card (in activities, outputs, outcomesShort, outcomesIntermediate, impact) requires:
 
-| Field       | Type                    | Constraint                   |
-| ----------- | ----------------------- | ---------------------------- |
-| title       | string                  | Required, 1-100 characters   |
-| description | string                  | Optional, max 300 characters |
-| metrics     | array of metric objects | Required, minimum 1 per card |
+| Field       | Type                    | Constraint                                                         |
+| ----------- | ----------------------- | ------------------------------------------------------------------ |
+| title       | string                  | Required, 1-100 characters                                         |
+| description | string                  | Optional, max 300 characters                                       |
+| metrics     | array of metric objects | Optional (empty array allowed when metrics generation is disabled) |
 
 ## Metric Objects
 

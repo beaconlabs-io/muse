@@ -24,6 +24,8 @@ Fix:
 
 ## Mistake #2: Metrics as Strings (30% of errors)
 
+**Note:** When metrics generation is disabled, an empty array `[]` is valid for the metrics field. The following applies only when metrics are being generated.
+
 Each metric must be an object with name, measurementMethod, and frequency.
 
 Wrong:
