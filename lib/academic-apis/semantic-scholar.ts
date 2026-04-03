@@ -76,7 +76,7 @@ function normalizePaper(raw: SemanticScholarPaper): ExternalPaper {
       : undefined,
     source: "semantic_scholar",
     citationCount: raw.citationCount,
-    tldr: raw.tldr?.text,
+    tldr: raw.tldr?.text || undefined,
     influentialCitationCount: raw.influentialCitationCount,
     fieldsOfStudy: raw.s2FieldsOfStudy?.map((f) => f.category),
     publicationVenue: raw.publicationVenue?.name || undefined,

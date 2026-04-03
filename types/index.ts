@@ -238,17 +238,17 @@ export type EvidenceSummary = z.infer<typeof EvidenceSummarySchema>;
 export const ExternalPaperSchema = z.object({
   id: z.string(),
   title: z.string(),
-  authors: z.array(z.string()).optional(),
-  year: z.number().optional(),
-  doi: z.string().optional(),
-  url: z.url().optional(),
-  abstract: z.string().optional(),
+  authors: z.array(z.string()).nullish(),
+  year: z.number().nullish(),
+  doi: z.string().nullish(),
+  url: z.url().nullish(),
+  abstract: z.string().nullish(),
   source: z.string(),
-  citationCount: z.number().optional(),
-  tldr: z.string().optional(),
-  influentialCitationCount: z.number().optional(),
-  fieldsOfStudy: z.array(z.string()).optional(),
-  publicationVenue: z.string().optional(),
+  citationCount: z.number().nullish(),
+  tldr: z.string().nullish(),
+  influentialCitationCount: z.number().nullish(),
+  fieldsOfStudy: z.array(z.string()).nullish(),
+  publicationVenue: z.string().nullish(),
 });
 
 export type ExternalPaper = z.infer<typeof ExternalPaperSchema>;
