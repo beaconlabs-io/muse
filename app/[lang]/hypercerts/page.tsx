@@ -5,10 +5,11 @@ import {
   GetAllHypercertsParams,
 } from "@/app/actions/hypercerts/getAllHypercerts";
 
+export const dynamic = "force-dynamic";
+
 const getHypercertsData = cache(async (params: GetAllHypercertsParams) => {
   return await getAllHypercerts(params);
 });
-export const dynamic = "force-dynamic";
 
 export default function Page() {
   // TODO: implement pagenation
