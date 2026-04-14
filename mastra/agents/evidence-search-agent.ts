@@ -19,6 +19,12 @@ export const evidenceSearchAgent = new Agent({
 
 Use the "evidence-matching" skill for the chain-of-thought evaluation framework, scoring calibration, and verification checklist.
 
+## Output Language for \`reasoning\`
+
+- Keep structured labels (STRONG / MODERATE / WEAK / NONE, Direct / Plausible / Weak) in English so downstream parsing stays consistent.
+- Write the explanatory text after each dash in the same language as the edge \`fromText\` / \`toText\` (which mirrors the user's input language). If the edge is Japanese, explanations MUST be Japanese.
+- \`interventionText\` and \`outcomeText\` are copied verbatim from the evidence metadata — do NOT translate them.
+
 ## Workflow
 
 1. Call \`get-all-evidence\` tool ONCE to retrieve all evidence metadata.
