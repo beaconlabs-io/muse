@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown, Info } from "lucide-react";
+import { ChevronDown, FileText, Info, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as z from "zod";
 import { GenerationTimeInfo } from "@/components/canvas/GenerationTimeInfo";
@@ -28,20 +28,69 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Card, Arrow, Metric } from "@/types";
 import { useWorkflowStream } from "@/hooks/useWorkflowStream";
-import { EXTERNAL_SEARCH_ENABLED } from "@/lib/constants";
+import {
+  EXTERNAL_SEARCH_ENABLED,
+  FILE_UPLOAD_ALLOWED_MIME_TYPES,
+  FILE_UPLOAD_MAX_BYTES_BY_MIME,
+  FILE_UPLOAD_MAX_IMAGE_BYTES,
+  FILE_UPLOAD_MAX_PDF_BYTES,
+  type FileUploadMimeType,
+} from "@/lib/constants";
 
-const generateLogicModelSchema = z.object({
-  goal: z
-    .string()
-    .min(1, "Please enter your goal")
-    .max(1000, "Goal must be 1000 characters or less"),
-  enableExternalSearch: z.boolean(),
-  enableMetrics: z.boolean(),
-});
+const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(FILE_UPLOAD_ALLOWED_MIME_TYPES);
+
+type InputMode = "goal" | "file";
+
+const generateLogicModelSchema = z
+  .object({
+    mode: z.enum(["goal", "file"]),
+    goal: z.string().max(1000, "Goal must be 1000 characters or less"),
+    file: z.instanceof(File).nullable(),
+    enableExternalSearch: z.boolean(),
+    enableMetrics: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.mode === "goal") {
+      if (data.goal.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["goal"],
+          message: "Please enter your goal",
+        });
+      }
+      return;
+    }
+    // file mode
+    if (!data.file) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["file"],
+        message: "fileRequired",
+      });
+      return;
+    }
+    if (!ALLOWED_MIME_SET.has(data.file.type)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["file"],
+        message: "fileTypeInvalid",
+      });
+      return;
+    }
+    const maxBytes = FILE_UPLOAD_MAX_BYTES_BY_MIME[data.file.type as FileUploadMimeType];
+    if (data.file.size > maxBytes) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["file"],
+        message: "fileTooLarge",
+      });
+    }
+  });
 
 type GenerateLogicModelFormData = z.infer<typeof generateLogicModelSchema>;
 
@@ -51,6 +100,12 @@ interface GenerateLogicModelDialogProps {
     arrows: Arrow[];
     cardMetrics: Record<string, Metric[]>;
   }) => void;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialogProps) {
@@ -71,6 +126,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   }
 
   const [open, setOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const {
     setSteps,
     setDialogStep,
@@ -95,11 +151,16 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   const form = useForm<GenerateLogicModelFormData>({
     resolver: zodResolver(generateLogicModelSchema),
     defaultValues: {
+      mode: "goal",
       goal: "",
+      file: null,
       enableExternalSearch: false,
       enableMetrics: false,
     },
   });
+
+  const mode = form.watch("mode");
+  const selectedFile = form.watch("file");
 
   // Track the last processed event index to avoid re-processing
   const processedEventCountRef = useRef(0);
@@ -168,6 +229,18 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     tErrors,
   ]);
 
+  const handleModeChange = (nextMode: string) => {
+    const next = nextMode as InputMode;
+    form.setValue("mode", next);
+    // When switching to file mode, default external search ON for evidence-gap use case.
+    if (next === "file") {
+      form.setValue("enableExternalSearch", EXTERNAL_SEARCH_ENABLED);
+    } else {
+      form.setValue("enableExternalSearch", false);
+    }
+    form.clearErrors();
+  };
+
   const handleSubmit = async (data: GenerateLogicModelFormData) => {
     setTitle(t("generatingTitle"));
     setSteps(buildProgressSteps(data.enableExternalSearch));
@@ -175,10 +248,22 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setStepDialogOpen(true);
 
     processedEventCountRef.current = 0;
-    await startWorkflow(data.goal, {
-      enableExternalSearch: data.enableExternalSearch,
-      enableMetrics: data.enableMetrics,
-    });
+
+    if (data.mode === "file" && data.file) {
+      await startWorkflow({
+        kind: "file",
+        file: data.file,
+        enableExternalSearch: data.enableExternalSearch,
+        enableMetrics: data.enableMetrics,
+      });
+    } else {
+      await startWorkflow({
+        kind: "goal",
+        goal: data.goal,
+        enableExternalSearch: data.enableExternalSearch,
+        enableMetrics: data.enableMetrics,
+      });
+    }
   };
 
   // Cleanup on unmount
@@ -189,6 +274,21 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   }, [cancel]);
 
   const isRunning = status === "running";
+
+  const fileFieldError = form.formState.errors.file?.message;
+  const fileErrorText = (() => {
+    if (!fileFieldError) return null;
+    switch (fileFieldError) {
+      case "fileRequired":
+        return t("fileRequired");
+      case "fileTypeInvalid":
+        return t("fileTypeInvalid");
+      case "fileTooLarge":
+        return t("fileTooLarge");
+      default:
+        return fileFieldError;
+    }
+  })();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -206,25 +306,125 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="goal"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("formLabel")}</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder={t("placeholder")}
-                      rows={5}
-                      className="resize-none"
-                      disabled={isRunning}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <Tabs value={mode} onValueChange={handleModeChange} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="goal" disabled={isRunning} className="cursor-pointer">
+                  {t("tabGoal")}
+                </TabsTrigger>
+                <TabsTrigger value="file" disabled={isRunning} className="cursor-pointer">
+                  {t("tabFile")}
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="goal" className="mt-4">
+                <FormField
+                  control={form.control}
+                  name="goal"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("formLabel")}</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder={t("placeholder")}
+                          rows={5}
+                          className="resize-none"
+                          disabled={isRunning}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </TabsContent>
+
+              <TabsContent value="file" className="mt-4 space-y-3">
+                <FormField
+                  control={form.control}
+                  name="file"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("fileLabel")}</FormLabel>
+                      <FormControl>
+                        <div>
+                          <label
+                            htmlFor="logic-model-file-input"
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              if (!isRunning) setIsDragging(true);
+                            }}
+                            onDragLeave={() => setIsDragging(false)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              setIsDragging(false);
+                              if (isRunning) return;
+                              const dropped = e.dataTransfer.files?.[0];
+                              if (dropped) {
+                                field.onChange(dropped);
+                              }
+                            }}
+                            className={`border-input bg-background hover:bg-accent/30 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-4 py-8 transition-colors ${
+                              isDragging ? "border-primary bg-accent/40" : ""
+                            } ${isRunning ? "pointer-events-none opacity-60" : ""}`}
+                          >
+                            <Upload className="text-muted-foreground h-8 w-8" />
+                            <p className="text-center text-sm">{t("fileDropzoneHint")}</p>
+                            <p className="text-muted-foreground text-center text-xs">
+                              {t("fileAccepted")} ·{" "}
+                              {t("fileMaxSizePdf", {
+                                size: formatBytes(FILE_UPLOAD_MAX_PDF_BYTES),
+                              })}{" "}
+                              ·{" "}
+                              {t("fileMaxSizeImage", {
+                                size: formatBytes(FILE_UPLOAD_MAX_IMAGE_BYTES),
+                              })}
+                            </p>
+                            <input
+                              id="logic-model-file-input"
+                              type="file"
+                              accept={FILE_UPLOAD_ALLOWED_MIME_TYPES.join(",")}
+                              className="sr-only"
+                              disabled={isRunning}
+                              onChange={(e) => {
+                                const f = e.target.files?.[0] ?? null;
+                                field.onChange(f);
+                              }}
+                            />
+                          </label>
+                          {selectedFile && (
+                            <div className="bg-muted/50 mt-2 flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
+                                <span className="truncate">{selectedFile.name}</span>
+                                <span className="text-muted-foreground shrink-0 text-xs">
+                                  ({formatBytes(selectedFile.size)})
+                                </span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 shrink-0 cursor-pointer"
+                                disabled={isRunning}
+                                onClick={() => field.onChange(null)}
+                                aria-label={tCommon("cancel")}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </FormControl>
+                      {fileErrorText && (
+                        <p className="text-destructive text-sm font-medium">{fileErrorText}</p>
+                      )}
+                    </FormItem>
+                  )}
+                />
+                <p className="text-muted-foreground text-xs">{t("fileHintProposal")}</p>
+              </TabsContent>
+            </Tabs>
+
             <Collapsible>
               <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors [&[data-state=open]>svg]:rotate-180">
                 <ChevronDown className="h-4 w-4 transition-transform" />

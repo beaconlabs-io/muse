@@ -104,3 +104,31 @@ export const EXTERNAL_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** Minimum internal evidence matches before skipping external search for an edge */
 export const MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL = 1;
+
+// =============================================================================
+// FILE UPLOAD (Logic Model generation from PDF/image)
+// =============================================================================
+
+/** Maximum upload size for PDF files (10MB) */
+export const FILE_UPLOAD_MAX_PDF_BYTES = 10 * 1024 * 1024;
+
+/** Maximum upload size for image files (5MB) */
+export const FILE_UPLOAD_MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+/** Whitelisted MIME types for logic model file upload */
+export const FILE_UPLOAD_ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+] as const;
+
+export type FileUploadMimeType = (typeof FILE_UPLOAD_ALLOWED_MIME_TYPES)[number];
+
+/** Per-MIME-type max size in bytes */
+export const FILE_UPLOAD_MAX_BYTES_BY_MIME: Record<FileUploadMimeType, number> = {
+  "application/pdf": FILE_UPLOAD_MAX_PDF_BYTES,
+  "image/png": FILE_UPLOAD_MAX_IMAGE_BYTES,
+  "image/jpeg": FILE_UPLOAD_MAX_IMAGE_BYTES,
+  "image/webp": FILE_UPLOAD_MAX_IMAGE_BYTES,
+};
