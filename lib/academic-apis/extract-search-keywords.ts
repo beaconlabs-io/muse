@@ -1,6 +1,5 @@
-import { google } from "@ai-sdk/google";
-import { generateText } from "ai";
 import { createLogger } from "@/lib/logger";
+import { keywordExtractionAgent } from "@/mastra/agents/keyword-extraction-agent";
 
 const logger = createLogger({ module: "lib:extract-search-keywords" });
 
@@ -35,23 +34,9 @@ export async function extractSearchKeywords(
   const toContext = toDescription ? `${toTitle} - ${toDescription}` : toTitle;
 
   try {
-    const { text } = await generateText({
-      model: google("gemini-2.5-flash"),
-      prompt: `You are extracting search queries for Semantic Scholar to find academic evidence supporting a causal link in a Theory of Change logic model.
+    const result = await keywordExtractionAgent.generate(`From: ${fromContext}\nTo: ${toContext}`);
 
-Context: This is a causal arrow in an evidence-based impact model connecting an activity/output to an outcome. The goal is to find peer-reviewed research validating this causal relationship.
-
-From: ${fromContext}
-To: ${toContext}
-
-Generate TWO search queries in English:
-1. "keywords": 3-5 English academic keywords covering the core research concepts, methods, or interventions
-2. "causal": A natural-language query phrasing the causal relationship (e.g., "effect of [intervention] on [outcome]", "impact of [activity] on [indicator]")
-
-Return ONLY valid JSON: {"keywords": "...", "causal": "..."}`,
-    });
-
-    const cleaned = text
+    const cleaned = result.text
       .trim()
       .replace(/^```json\s*/, "")
       .replace(/\s*```$/, "");
