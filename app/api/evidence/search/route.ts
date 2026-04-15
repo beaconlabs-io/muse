@@ -4,7 +4,11 @@ import { BASE_URL, EVIDENCE_SEARCH_MAX_STEPS } from "@/lib/constants";
 import { searchExternalPapers } from "@/lib/external-paper-search";
 import { createLogger } from "@/lib/logger";
 import { mastra } from "@/mastra";
-import { EvidenceSearchRequestSchema, type EvidenceSearchResponse } from "@/types";
+import {
+  EvidenceSearchRequestSchema,
+  type EvidenceSearchResponse,
+  type ExternalPaper,
+} from "@/types";
 
 const logger = createLogger({ module: "api:evidence-search" });
 
@@ -54,12 +58,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Run internal evidence search and external paper search in parallel
-    const internalSearchPromise = agent.generate(
-      [
-        {
-          role: "user",
-          content: `Search for evidence related to: "${query}"
+    // Step 1: Fetch external papers first (fast, 1-3s from Semantic Scholar)
+    let externalPapers: ExternalPaper[] = [];
+    if (includeExternalPapers) {
+      try {
+        externalPapers = await searchExternalPapers(query, limit);
+      } catch (error) {
+        logger.warn(
+          { error: error instanceof Error ? error.message : String(error) },
+          "External paper search failed, continuing with internal only",
+        );
+      }
+    }
+
+    // Step 2: Build user prompt with external paper context
+    let userPrompt = `Search for evidence related to: "${query}"
 
 Please:
 1. Call the get-all-evidence tool to load the evidence repository
@@ -70,45 +83,29 @@ Please:
 Format each result with a clickable link using evidenceId:
 Example: [View details](${BASE_URL}/evidence/08) for evidenceId "08"
 
-Respond in the same language as the query.`,
-        },
-      ],
-      { maxSteps: EVIDENCE_SEARCH_MAX_STEPS },
-    );
+Respond in the same language as the query.`;
 
-    const externalSearchPromise = includeExternalPapers
-      ? searchExternalPapers(query, limit)
-      : Promise.resolve([]);
-
-    const [internalResult, externalResult] = await Promise.allSettled([
-      internalSearchPromise,
-      externalSearchPromise,
-    ]);
-
-    // Handle internal search result
-    if (internalResult.status === "rejected") {
-      throw internalResult.reason;
+    if (externalPapers.length > 0) {
+      userPrompt += `\n\n---\n## External Academic Papers (Reference Only)\n\nThe following papers were found via Semantic Scholar. These are NOT validated internal evidence. Use them to supplement your response if internal evidence is insufficient.\n\n${formatExternalPapersForPrompt(externalPapers)}`;
     }
 
-    // Build response
+    // Step 3: Run agent with enriched prompt
+    const result = await agent.generate([{ role: "user", content: userPrompt }], {
+      maxSteps: EVIDENCE_SEARCH_MAX_STEPS,
+    });
+
+    // Step 4: Build response
     const response: EvidenceSearchResponse = {
-      response: internalResult.value.text,
+      response: result.text,
       query,
     };
 
-    // Attach external papers if requested (always set array, even if empty)
     if (includeExternalPapers) {
-      response.externalPapers = externalResult.status === "fulfilled" ? externalResult.value : [];
-      if (externalResult.status === "rejected") {
-        logger.warn(
-          { error: externalResult.reason },
-          "External paper search failed, returning internal results only",
-        );
-      }
+      response.externalPapers = externalPapers;
     }
 
     return NextResponse.json(response);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(
       { error: error instanceof Error ? error.message : String(error) },
       "Evidence search error",
@@ -118,4 +115,39 @@ Respond in the same language as the query.`,
       { status: 500 },
     );
   }
+}
+
+/**
+ * Format external papers into a concise text block for the agent prompt.
+ */
+function formatExternalPapersForPrompt(papers: ExternalPaper[]): string {
+  return papers
+    .map((paper, i) => {
+      const authors = paper.authors?.length
+        ? paper.authors.length > 3
+          ? `${paper.authors.slice(0, 3).join(", ")} et al.`
+          : paper.authors.join(", ")
+        : "Unknown authors";
+      const year = paper.year ? ` (${paper.year})` : "";
+      const summary =
+        paper.tldr ||
+        (paper.abstract
+          ? paper.abstract.length > 150
+            ? paper.abstract.slice(0, 150) + "..."
+            : paper.abstract
+          : "No summary available");
+      const citations = paper.citationCount != null ? `Citations: ${paper.citationCount}` : "";
+      const url = paper.url ? `URL: ${paper.url}` : "";
+
+      return [
+        `${i + 1}. **${paper.title}**${year}`,
+        `   Authors: ${authors}`,
+        citations ? `   ${citations}` : "",
+        `   Summary: ${summary}`,
+        url ? `   ${url}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n\n");
 }

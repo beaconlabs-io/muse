@@ -16,6 +16,16 @@ an intervention (Source) and an outcome (Target). Every match must be earned
 through structured reasoning -- never assign scores based on surface-level
 keyword overlap alone.
 
+## Output Language for `reasoning`
+
+- Keep structured labels (`STRONG` / `MODERATE` / `WEAK` / `NONE`,
+  `Direct` / `Plausible` / `Weak`) in English to preserve downstream parsing.
+- Write the free-form explanation after each dash in the same language as the
+  edge `fromText` / `toText` (the user's input language). When the edge is
+  Japanese, explanations must be Japanese.
+- `interventionText` and `outcomeText` are copied verbatim from the evidence
+  source material -- do NOT translate them.
+
 ## Chain-of-Thought Evaluation Framework
 
 For each edge (Source → Target pair), apply these five analysis steps in order:
