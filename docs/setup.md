@@ -93,9 +93,65 @@ See [mastra-agents.md](./mastra-agents.md) for how each agent picks its model.
 
 ## Docker
 
-`docker-compose.yml` wires the above variables into a production image.
-Provide them via `.env.local` (mounted by `env_file`) or export them into
-the shell before running `docker compose up`.
+A production image is available via the repo-root `Dockerfile` and
+`docker-compose.yml`. Useful when reproducing production-like behaviour
+locally (standalone Next.js output, non-root runtime) or when deploying
+to a server without a Vercel-style platform.
+
+### Image layout
+
+Multi-stage build (`Dockerfile`):
+
+1. **deps** — `oven/bun:1.3.5-alpine` installs dependencies from
+   `package.json` + `bun.lock` (`--frozen-lockfile`).
+2. **builder** — copies the source, bakes `NEXT_PUBLIC_*` build args into
+   the client bundle, then runs `bun run build` (Next.js `standalone`
+   output).
+3. **runner** — `node:22-alpine` with only `public/`, `.next/standalone`,
+   and `.next/static` copied in. Runs as the non-root user `nextjs:nodejs`
+   (uid 1001) on port 3000 via `node server.js`.
+
+Because `NEXT_PUBLIC_*` values are baked in at build time, they must be
+passed as **build args** (not runtime env). Server-only secrets
+(`PINATA_JWT`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
+`GOOGLE_GENERATIVE_AI_API_KEY`, `MODEL`) are injected at runtime.
+
+### docker-compose
+
+`docker-compose.yml` wires all of the above together:
+
+- Build args sourced from the host shell:
+  `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`,
+  `NEXT_PUBLIC_ENV` (defaults to `production`).
+- Runtime `environment:` for server-side secrets plus `NODE_ENV=production`.
+- `env_file: .env.local` — any additional variables in `.env.local` are
+  also loaded at runtime (e.g. `BOT_API_KEY`, `SEMANTIC_SCHOLAR_API_KEY`,
+  `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED`, `MASTRA_STORAGE_URL`).
+- Port `3000:3000`, `restart: unless-stopped`.
+
+### Typical flow
+
+```bash
+cp .env.example .env.local   # fill in values per Environment variables above
+export NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=…   # build arg, not loaded from .env.local
+docker compose build
+docker compose up -d
+docker compose logs -f app
+```
+
+### Notes and gotchas
+
+- **`NEXT_PUBLIC_*` values are baked into the bundle** — changing them
+  requires a rebuild (`docker compose build`), not just a restart.
+- **`.env.local` is a runtime-only file** for this setup. Do not expect
+  values listed there to influence the client bundle unless they are
+  also passed as build args.
+- **Mastra storage on ephemeral containers** — the default local fallback
+  is `file:./mastra.db`, which is inside the container and lost on
+  restart. For production set `MASTRA_STORAGE_URL` to a durable LibSQL
+  endpoint (or `:memory:` if you do not need persistence).
+- **Running Mastra Studio in Docker** is not wired up — use
+  `bun dev:mastra` on the host against the same data.
 
 ## i18n
 

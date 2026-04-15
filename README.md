@@ -91,6 +91,17 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the application.
 
+### Docker
+
+A production-style image is available via the repo-root `Dockerfile` and `docker-compose.yml`:
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+See [docs/setup.md](./docs/setup.md#docker) for build args vs runtime env, persistence notes, and gotchas.
+
 ## Scripts
 
 | Command            | Description                           |

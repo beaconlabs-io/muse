@@ -16,6 +16,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun dev:mastra` - Start Mastra development server (includes Mastra Studio for viewing traces at http://localhost:4111)
 - `bun build:mastra` - Build Mastra agent system
 
+### Docker
+
+- `docker compose build` - Build the production image (multi-stage Bun→Node; bakes `NEXT_PUBLIC_*` build args)
+- `docker compose up -d` - Run the container (standalone Next.js on port 3000, loads runtime env from `.env.local`)
+- See `docs/setup.md` for build args vs runtime env and gotchas
+
 **Important**: The project uses husky for git hooks with lint-staged. Code is automatically linted and formatted on commit.
 
 **Note**: There are no test scripts configured.
