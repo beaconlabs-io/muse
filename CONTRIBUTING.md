@@ -19,7 +19,7 @@ cp .env.example .env.local  # Fill in required values
 bun dev
 ```
 
-See the [README](./README.md#getting-started) for detailed setup instructions.
+See [docs/setup.md](./docs/setup.md) for environment variables, Mastra Studio, and troubleshooting.
 
 ## Development Workflow
 
@@ -100,8 +100,4 @@ See the [evidence repository README](https://github.com/beaconlabs-io/evidence/b
 
 ## Project Architecture
 
-For understanding the codebase in depth, refer to the technical documentation:
-
-- [AI Agent Architecture](./docs/mastra-agents.md) — Agent workflows, quality controls, Skills API
-- [Evidence Workflow](./docs/evidence-workflow.md) — Submission, attestation, search philosophy
-- [React Flow Architecture](./docs/react-flow-architecture.md) — Canvas implementation, evidence edges, UI flow
+For understanding the codebase in depth, start with [CLAUDE.md](./CLAUDE.md) and the grouped docs under [`docs/`](./docs/) (architecture, agents & workflow, operations).
