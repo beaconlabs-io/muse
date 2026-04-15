@@ -93,6 +93,18 @@ Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
 
 For detailed technical information, see:
 
-- `docs/mastra-agents.md` - AI agent architecture, workflows, diagrams, quality controls, observability
-- `docs/evidence-workflow.md` - Evidence submission, attestation, search philosophy
-- `docs/react-flow-architecture.md` - Canvas implementation, UI flow, custom components
+**Architecture**
+
+- `docs/react-flow-architecture.md` - Canvas implementation, evidence edges, dialog UX
+- `docs/frontend-map.md` - Non-canvas components, server actions, custom hooks
+
+**Agents & Workflow**
+
+- `docs/mastra-agents.md` - AI agent architecture, workflows, skills, output language policy, observability
+- `docs/evidence-workflow.md` - Evidence submission, attestation, batch matching pipeline
+
+**Operations**
+
+- `docs/api-routes.md` - HTTP endpoints (workflow/stream, compact, evidence, IPFS, hypercerts)
+- `docs/setup.md` - Local setup, environment variables grouped by concern
+- `docs/i18n.md` - next-intl wiring and agent output language interaction
