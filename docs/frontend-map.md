@@ -58,7 +58,6 @@ ESLint for that reason).
   decoded attestation data for an evidence ID or attestation UID.
 - `hooks/useCanvasImage.ts` — generates a PNG from the current React Flow
   canvas (used by `ExportImageDialog` and IPFS image upload flow).
-- `hooks/getGrowThePie.ts` — GrowThePie data fetcher (external).
 - `hooks/use-mobile.ts` — viewport helper from shadcn.
 
 ## Where to go next
