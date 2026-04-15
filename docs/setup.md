@@ -43,12 +43,9 @@ in parentheses.
 
 ### LLM keys
 
-Mastra/AI SDK reads the provider key matching the selected model. Set at
-least one:
+muse ships with Gemini as the default LLM provider. Required:
 
-- `ANTHROPIC_API_KEY` — for `anthropic/…` models
-- `OPENAI_API_KEY` — for `openai/…` models
-- `GOOGLE_GENERATIVE_AI_API_KEY` — for `google/…` models (default stack)
+- `GOOGLE_GENERATIVE_AI_API_KEY` — used by every agent; required
 - `MODEL` — primary reasoning model (default `google/gemini-2.5-pro`; used
   by logic-model, evidence-search, and conversation-bot agents)
 - `FLASH_MODEL` — lightweight model for translation/keyword extraction
@@ -113,8 +110,8 @@ Multi-stage build (`Dockerfile`):
 
 Because `NEXT_PUBLIC_*` values are baked in at build time, they must be
 passed as **build args** (not runtime env). Server-only secrets
-(`PINATA_JWT`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
-`GOOGLE_GENERATIVE_AI_API_KEY`, `MODEL`) are injected at runtime.
+(`PINATA_JWT`, `GOOGLE_GENERATIVE_AI_API_KEY`, `MODEL`) are injected at
+runtime.
 
 ### docker-compose
 
