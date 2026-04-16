@@ -102,6 +102,21 @@ interface GenerateLogicModelDialogProps {
   }) => void;
 }
 
+/**
+ * Middle-truncate a filename, preserving the extension when possible.
+ * Example: "very_long_file_name.pdf" (maxLen=20) → "very_long_fi…e.pdf"
+ */
+function middleEllipsis(name: string, maxLen = 50): string {
+  if (name.length <= maxLen) return name;
+  const lastDot = name.lastIndexOf(".");
+  const hasValidExt = lastDot > 0 && lastDot < name.length - 1 && name.length - lastDot <= 8;
+  if (!hasValidExt) return name.slice(0, maxLen - 1) + "…";
+  const ext = name.slice(lastDot);
+  const startLen = maxLen - ext.length - 1;
+  if (startLen < 10) return name.slice(0, maxLen - 1) + "…";
+  return name.slice(0, startLen) + "…" + ext;
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -392,14 +407,14 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                             />
                           </label>
                           {selectedFile && (
-                            <div className="bg-muted/50 mt-2 flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm">
-                              <div className="flex min-w-0 items-center gap-2">
-                                <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
-                                <span className="truncate">{selectedFile.name}</span>
-                                <span className="text-muted-foreground shrink-0 text-xs">
-                                  ({formatBytes(selectedFile.size)})
-                                </span>
-                              </div>
+                            <div className="bg-muted/50 mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-sm">
+                              <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
+                              <span className="min-w-0 flex-1 truncate" title={selectedFile.name}>
+                                {middleEllipsis(selectedFile.name)}
+                              </span>
+                              <span className="text-muted-foreground shrink-0 text-xs">
+                                ({formatBytes(selectedFile.size)})
+                              </span>
                               <Button
                                 type="button"
                                 variant="ghost"
