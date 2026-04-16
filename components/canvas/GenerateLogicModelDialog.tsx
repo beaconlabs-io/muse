@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown, FileText, Info, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import * as z from "zod";
 import { GenerationTimeInfo } from "@/components/canvas/GenerationTimeInfo";
 import { useStepProcessDialogContext } from "@/components/step-process-dialog";
@@ -103,18 +104,59 @@ interface GenerateLogicModelDialogProps {
 }
 
 /**
- * Middle-truncate a filename, preserving the extension when possible.
- * Example: "very_long_file_name.pdf" (maxLen=20) → "very_long_fi…e.pdf"
+ * Width a character occupies on screen, weighted so CJK / full-width
+ * characters count as 2 and Latin / narrow characters count as 1.
+ * Matches the Unicode East Asian Width ≈ W / F categories.
  */
-function middleEllipsis(name: string, maxLen = 50): string {
-  if (name.length <= maxLen) return name;
+function charWidth(ch: string): 1 | 2 {
+  const code = ch.codePointAt(0) ?? 0;
+  const isWide =
+    (code >= 0x1100 && code <= 0x115f) || // Hangul Jamo
+    (code >= 0x2e80 && code <= 0x9fff) || // CJK radicals, Hiragana, Katakana, Kanji
+    (code >= 0xa000 && code <= 0xa4cf) || // Yi
+    (code >= 0xac00 && code <= 0xd7a3) || // Hangul syllables
+    (code >= 0xf900 && code <= 0xfaff) || // CJK compat ideographs
+    (code >= 0xfe30 && code <= 0xfe4f) || // CJK compat forms
+    (code >= 0xff00 && code <= 0xff60) || // Fullwidth Latin / punctuation
+    (code >= 0xffe0 && code <= 0xffe6); // Fullwidth signs
+  return isWide ? 2 : 1;
+}
+
+function visualWidth(str: string): number {
+  let w = 0;
+  for (const ch of str) w += charWidth(ch);
+  return w;
+}
+
+function sliceByWidth(str: string, maxWidth: number): string {
+  let w = 0;
+  let out = "";
+  for (const ch of str) {
+    const cw = charWidth(ch);
+    if (w + cw > maxWidth) break;
+    out += ch;
+    w += cw;
+  }
+  return out;
+}
+
+/**
+ * Middle-truncate a filename, preserving the extension when possible.
+ * Uses CJK-aware visual width so Japanese filenames don't overflow.
+ * Example ASCII: "very_long_file_name.pdf" (maxWidth=20) → "very_long_fi…e.pdf"
+ * Example CJK:   "とても長いファイル名.pdf" collapses to fit ~20 half-widths.
+ */
+function middleEllipsis(name: string, maxWidth = 50): string {
+  if (visualWidth(name) <= maxWidth) return name;
   const lastDot = name.lastIndexOf(".");
   const hasValidExt = lastDot > 0 && lastDot < name.length - 1 && name.length - lastDot <= 8;
-  if (!hasValidExt) return name.slice(0, maxLen - 1) + "…";
-  const ext = name.slice(lastDot);
-  const startLen = maxLen - ext.length - 1;
-  if (startLen < 10) return name.slice(0, maxLen - 1) + "…";
-  return name.slice(0, startLen) + "…" + ext;
+  const ext = hasValidExt ? name.slice(lastDot) : "";
+  const extWidth = visualWidth(ext);
+  const startWidth = maxWidth - extWidth - 1; // 1 = "…"
+  if (startWidth < 6) {
+    return sliceByWidth(name, maxWidth - 1) + "…";
+  }
+  return sliceByWidth(name, startWidth) + "…" + ext;
 }
 
 function formatBytes(bytes: number): string {
@@ -142,6 +184,15 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
 
   const [open, setOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  const acceptFile = (file: File | null | undefined, onChange: (f: File) => void) => {
+    if (!file) return;
+    if (!ALLOWED_MIME_SET.has(file.type)) {
+      toast.error(t("fileTypeInvalid"));
+      return;
+    }
+    onChange(file);
+  };
   const {
     setSteps,
     setDialogStep,
@@ -361,7 +412,11 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                     <FormItem>
                       <FormLabel>{t("fileLabel")}</FormLabel>
                       <FormControl>
-                        <div>
+                        {/* min-w-0 is required because FormItem is a CSS grid
+                            whose items default to min-width: auto (= content size).
+                            Without this the preview row expands past the dialog
+                            when a long (esp. CJK) filename is selected. */}
+                        <div className="min-w-0">
                           <label
                             htmlFor="logic-model-file-input"
                             onDragOver={(e) => {
@@ -373,10 +428,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                               e.preventDefault();
                               setIsDragging(false);
                               if (isRunning) return;
-                              const dropped = e.dataTransfer.files?.[0];
-                              if (dropped) {
-                                field.onChange(dropped);
-                              }
+                              acceptFile(e.dataTransfer.files?.[0], field.onChange);
                             }}
                             className={`border-input bg-background hover:bg-accent/30 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-4 py-8 transition-colors ${
                               isDragging ? "border-primary bg-accent/40" : ""
@@ -401,8 +453,8 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                               className="sr-only"
                               disabled={isRunning}
                               onChange={(e) => {
-                                const f = e.target.files?.[0] ?? null;
-                                field.onChange(f);
+                                acceptFile(e.target.files?.[0], field.onChange);
+                                e.target.value = "";
                               }}
                             />
                           </label>
