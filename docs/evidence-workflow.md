@@ -197,7 +197,7 @@ The GitHub Actions workflow requires:
 
 Evidence is semantically matched to logic model arrows (causal relationships) using:
 
-1. **LLM-based matching** - Uses `google/gemini-2.5-pro` via `lib/evidence-search-mastra.ts`
+1. **LLM-based matching** - Uses `google/gemini-2.5-pro` via `lib/evidence-search-batch.ts`
 2. **Batch processing** - Single LLM call evaluates all arrows together (not parallel N+1)
 3. **Match criteria**:
    - Intervention in evidence aligns with arrow source
@@ -216,6 +216,23 @@ Evidence is semantically matched to logic model arrows (causal relationships) us
    - Results ranked by quality (influential citations, abstract/TLDR availability, recency)
    - Displayed as reference material (no LLM scoring) with blue styling
    - Cached for 24 hours with in-memory FIFO eviction (500 entries max)
+
+### Batch search pipeline
+
+`lib/evidence-search-batch.ts` is the single entry point used by both the
+workflow (`mastra/workflows/logic-model-with-evidence.ts`) and the
+Conversation Bot Agent's tooling. It:
+
+1. Loads the full internal evidence library via
+   `mastra/tools/get-all-evidence-tool.ts`.
+2. Sends all arrows + library to the Evidence Search Agent in a single LLM
+   call (the Agent activates the `evidence-matching` skill for scoring).
+3. Returns structured JSON (arrowId → matches) that is then fed into
+   `evidence-presentation` when surfacing results to users.
+
+See [mastra-agents.md](./mastra-agents.md#3-supporting-agents) for the
+individual agent responsibilities and [mastra-agents.md](./mastra-agents.md#output-language-handling)
+for the multilingual output policy.
 
 ## Evidence Search Philosophy
 
