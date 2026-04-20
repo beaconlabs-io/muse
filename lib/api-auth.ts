@@ -16,6 +16,7 @@ export function validateApiKey(request: NextRequest): boolean {
   try {
     return timingSafeEqual(Buffer.from(apiKey, "utf8"), Buffer.from(expectedKey, "utf8"));
   } catch {
+    /* v8 ignore next -- defensive guard for unexpected crypto/runtime failures */
     return false;
   }
 }
