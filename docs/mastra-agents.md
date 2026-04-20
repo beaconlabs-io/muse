@@ -163,7 +163,7 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 3. Single LLM call evaluates all arrows at once
 4. LLM returns batch results with match scores, reasoning, and evidence IDs
 
-**LLM Model**: `google/gemini-2.5-pro` (configured in `lib/evidence-search-mastra.ts`)
+**LLM Model**: `google/gemini-2.5-pro` (configured in `lib/evidence-search-batch.ts`)
 
 **Matching Criteria**:
 
@@ -366,6 +366,67 @@ LLM-based evidence matching with chain-of-thought reasoning:
 - ✓ Confidence values populated (0-100)
 - ✓ JSON format matches schema exactly
 
+### 3. Supporting Agents
+
+These lighter-weight agents handle specific subtasks invoked by the primary
+workflow or by API routes. They intentionally use a faster model
+(`FLASH_MODEL`, defaults to `google/gemini-2.5-flash`) since the tasks are
+narrow transformations, not reasoning.
+
+#### Conversation Bot Agent
+
+**Location**: `mastra/agents/conversation-bot-agent.ts`
+
+Natural-language assistant for evidence exploration. Loads the full internal
+evidence library via `get-all-evidence-tool` and answers user queries using
+the `evidence-matching` and `evidence-presentation` skills.
+
+- **Used by**: `app/api/evidence/search` (conversational evidence search)
+- **Language policy**: Responds in the user's input language
+- **External papers**: Distinguishes internal (attested, SMS-rated) from
+  Semantic Scholar external papers in the response
+
+#### Keyword Extraction Agent
+
+**Location**: `mastra/agents/keyword-extraction-agent.ts`
+
+Converts a logic-model edge (`From` → `To`) into two complementary English
+search queries (`keywords` + `causal`) for Semantic Scholar lookups. Returns
+strict JSON.
+
+- **Used by**: `lib/academic-apis/extract-search-keywords.ts` (invoked inside
+  the Step 2.5 External Paper Search)
+- **Model**: `FLASH_MODEL`
+
+#### Query Translation Agent
+
+**Location**: `mastra/agents/query-translation-agent.ts`
+
+Translates non-English search queries into English academic keywords before
+they hit Semantic Scholar. Pure translation — no reasoning.
+
+- **Used by**: `lib/external-paper-search.ts` (`translateToEnglishQuery()`)
+- **Model**: `FLASH_MODEL`
+
+### Output Language Handling
+
+Since commit `31081da`, logic-model cards and evidence-search reasoning are
+emitted in the language of the user's input (`goal` text for logic models,
+edge `fromText`/`toText` for evidence matching). Implementation details:
+
+- The rule lives in **both** agent instructions and the activated skill
+  (`mastra/skills/logic-model-generation/SKILL.md`,
+  `mastra/skills/evidence-matching/SKILL.md`) so it applies before and after
+  skill activation.
+- Structured labels (`STRONG` / `MODERATE` / `WEAK` / `NONE`, `Direct` /
+  `Plausible` / `Weak`, Maryland SMS levels) stay in **English** to keep
+  downstream parsing stable.
+- `interventionText` / `outcomeText` are copied verbatim from source
+  evidence — never translated.
+- For external paper search, `query-translation-agent` is the source of
+  truth for detecting non-English input and translating to English before
+  Semantic Scholar lookup.
+
 ## Core Components
 
 ### GenerateLogicModelDialog.tsx
@@ -523,7 +584,7 @@ Tool for generating logic model structure:
 
 ### Semantic Matching with LLM
 
-**Location**: `lib/evidence-search-mastra.ts`
+**Location**: `lib/evidence-search-batch.ts`
 
 **Key Features**:
 
@@ -631,6 +692,8 @@ Skills follow the [Agent Skills specification](https://agentskills.io/specificat
   - `references/stage-definitions.md` - Stage definitions, boundary tests, examples
   - `references/format-requirements.md` - Format rules, connection patterns, field limits
   - `references/common-mistakes.md` - Top 5 error patterns and fixes
+- **`evidence-matching/SKILL.md`** - Evidence-to-intervention matching methodology: chain-of-thought scoring, STRONG/MODERATE/WEAK/NONE labels, borderline handling. Activated by the Evidence Search Agent during batch matching.
+- **`evidence-presentation/SKILL.md`** - Evidence presentation methodology: Maryland Scientific Methods Scale explanations, citation formatting, accessible-language summaries. Activated by the Conversation Bot Agent when presenting results.
 
 ### Agent Instructions
 
@@ -671,13 +734,15 @@ bun build:mastra
 
 - `mastra/agents/logic-model-agent.ts` - Logic model generation agent (5-stage workflow)
 - `mastra/agents/evidence-search-agent.ts` - Evidence matching agent (chain-of-thought)
+- `mastra/agents/conversation-bot-agent.ts` - Conversational evidence search (used by `/api/evidence/search`)
+- `mastra/agents/keyword-extraction-agent.ts` - Semantic Scholar query extraction from edge text
+- `mastra/agents/query-translation-agent.ts` - Non-English → English query translation
 
 ### Tools
 
 - `mastra/tools/logic-model-tool.ts` - Logic model structure generation tool
-- `mastra/tools/evidenceSearch.ts` - Evidence search tool implementation
-- `lib/evidence-search-batch.ts` - Batch evidence search function
-- `lib/evidence-search-mastra.ts` - LLM-based evidence matching logic
+- `mastra/tools/get-all-evidence-tool.ts` - Loads the full internal evidence library for batch matching
+- `lib/evidence-search-batch.ts` - Batch evidence matching (single LLM call for all arrows)
 - `lib/external-paper-search.ts` - External paper search orchestration with caching
 - `lib/academic-apis/semantic-scholar.ts` - Semantic Scholar Graph API client
 - `lib/academic-apis/extract-search-keywords.ts` - Gemini 2.5 Flash keyword extraction
@@ -692,14 +757,15 @@ bun build:mastra
 
 - `mastra/skills/logic-model-generation/SKILL.md` - Logic model generation skill (Agent Skills spec)
 - `mastra/skills/logic-model-generation/references/causal-reasoning.md` - Connection evaluation and failure patterns
+- `mastra/skills/evidence-matching/SKILL.md` - Evidence matching methodology (scoring, language policy)
+- `mastra/skills/evidence-presentation/SKILL.md` - Evidence presentation methodology (Maryland SMS, citations)
 - `mastra/skills/logic-model-generation/references/stage-definitions.md` - Stage definitions and boundary tests
 - `mastra/skills/logic-model-generation/references/format-requirements.md` - Format rules and connection patterns
 - `mastra/skills/logic-model-generation/references/common-mistakes.md` - Top 5 error patterns
 
 ### Configuration
 
-- `mastra/index.ts` - Mastra framework initialization (includes workspace with skills)
-- `mastra/config.ts` - Agent and LLM configuration
+- `mastra/index.ts` - Mastra framework initialization (storage, workspace with skills, processors)
 - `lib/evidence.ts` - Evidence loading with MDX compilation
 
 ### Types

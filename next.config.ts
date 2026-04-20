@@ -7,6 +7,7 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
   serverExternalPackages: ["@mastra/*"],
+  output: "standalone",
   experimental: {
     mdxRs: true,
   },

@@ -77,13 +77,11 @@ bun install
 
 ### Environment Setup
 
-Copy the example environment file and fill in the required values:
-
 ```bash
 cp .env.example .env.local
 ```
 
-Key variables include API keys for AI providers, `PINATA_JWT` for IPFS uploads, and `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` for wallet connection. See `.env.example` for the full list.
+See [docs/setup.md](./docs/setup.md) for the full variable reference grouped by concern (LLM keys, IPFS, EAS/hypercerts chain, i18n, feature flags) and common troubleshooting.
 
 ### Development
 
@@ -93,18 +91,31 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the application.
 
+### Docker
+
+A production-style image is available via the repo-root `Dockerfile` and `docker-compose.yml`:
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+See [docs/setup.md](./docs/setup.md#docker) for build args vs runtime env, persistence notes, and gotchas.
+
 ## Scripts
 
-| Command            | Description                           |
-| ------------------ | ------------------------------------- |
-| `bun dev`          | Start Next.js development server      |
-| `bun run build`    | Build for production                  |
-| `bun start`        | Start production server               |
-| `bun lint`         | Run ESLint with auto-fix              |
-| `bun format`       | Format code with Prettier             |
-| `bun clean`        | Clean build artifacts and reinstall   |
-| `bun dev:mastra`   | Start Mastra agent development server |
-| `bun build:mastra` | Build Mastra agent system             |
+| Command                 | Description                           |
+| ----------------------- | ------------------------------------- |
+| `bun dev`               | Start Next.js development server      |
+| `bun run build`         | Build for production                  |
+| `bun start`             | Start production server               |
+| `bun lint`              | Run ESLint with auto-fix              |
+| `bun run test:run`      | Run unit tests once                   |
+| `bun run test:coverage` | Run unit tests with coverage          |
+| `bun format`            | Format code with Prettier             |
+| `bun clean`             | Clean build artifacts and reinstall   |
+| `bun dev:mastra`        | Start Mastra agent development server |
+| `bun build:mastra`      | Build Mastra agent system             |
 
 ## Project Structure
 
@@ -143,11 +154,15 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 
 For detailed technical information, see:
 
-| Document                                                     | Description                                    |
-| ------------------------------------------------------------ | ---------------------------------------------- |
-| [AI Agent Architecture](./docs/mastra-agents.md)             | Agent workflows, quality controls, Skills API  |
-| [Evidence Workflow](./docs/evidence-workflow.md)             | Submission, attestation, search philosophy     |
-| [React Flow Architecture](./docs/react-flow-architecture.md) | Canvas implementation, evidence edges, UI flow |
+| Document                                                     | Description                                                      |
+| ------------------------------------------------------------ | ---------------------------------------------------------------- |
+| [AI Agent Architecture](./docs/mastra-agents.md)             | Agents, workflows, skills, output language policy, observability |
+| [Evidence Workflow](./docs/evidence-workflow.md)             | Submission, attestation, batch matching pipeline                 |
+| [React Flow Architecture](./docs/react-flow-architecture.md) | Canvas implementation, evidence edges, UI flow                   |
+| [Frontend Map](./docs/frontend-map.md)                       | Non-canvas components, server actions, custom hooks              |
+| [API Routes](./docs/api-routes.md)                           | HTTP endpoints (workflow/stream, compact, evidence, IPFS)        |
+| [Setup](./docs/setup.md)                                     | Local setup, environment variables, troubleshooting              |
+| [Internationalization](./docs/i18n.md)                       | next-intl wiring and agent output language                       |
 
 ## Deployments
 
