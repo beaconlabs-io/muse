@@ -8,6 +8,7 @@ export default [
     ignores: [
       "*.config.js",
       "node_modules/**",
+      "coverage/**",
       "dist/**",
       ".next/**",
       ".mastra/**",
