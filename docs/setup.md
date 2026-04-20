@@ -27,14 +27,16 @@ bun dev:mastra               # http://localhost:4111
 
 Other common commands:
 
-| Command            | Purpose                       |
-| ------------------ | ----------------------------- |
-| `bun run build`    | Production build              |
-| `bun start`        | Start built server            |
-| `bun lint`         | ESLint (auto-fix)             |
-| `bun format`       | Prettier                      |
-| `bun build:mastra` | Build the Mastra agent bundle |
-| `bun clean`        | Clean artifacts + reinstall   |
+| Command                 | Purpose                       |
+| ----------------------- | ----------------------------- |
+| `bun run build`         | Production build              |
+| `bun start`             | Start built server            |
+| `bun lint`              | ESLint (auto-fix)             |
+| `bun run test:run`      | Run unit tests once           |
+| `bun run test:coverage` | Run unit tests with coverage  |
+| `bun format`            | Prettier                      |
+| `bun build:mastra`      | Build the Mastra agent bundle |
+| `bun clean`             | Clean artifacts + reinstall   |
 
 ## Environment variables
 

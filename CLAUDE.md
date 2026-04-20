@@ -8,6 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun run build` - Build application for production
 - `bun start` - Start production server
 - `bun lint` - Run ESLint with auto-fix
+- `bun lint:check` - Run ESLint without fixing (CI / pre-PR checks)
+- `bun run test` - Run Vitest in watch mode
+- `bun run test:run` - Run Vitest once (CI-equivalent)
+- `bun run test:coverage` - Run Vitest with v8 coverage report
 - `bun format` - Format code with Prettier (required before commits via husky pre-commit hook)
 - `bun clean` - Clean build artifacts and reinstall dependencies
 
@@ -24,7 +28,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Important**: The project uses husky for git hooks with lint-staged. Code is automatically linted and formatted on commit.
 
-**Note**: There are no test scripts configured.
+## Testing Policy
+
+- **Add tests alongside implementation** — not strict TDD, but any new pure function, utility, API handler, or Mastra tool should land with Vitest coverage in the same PR.
+- Place `*.test.ts` next to the source file (e.g., `lib/foo.ts` → `lib/foo.test.ts`); shared setup lives in `tests/setup.ts`.
+- Run `bun run test:run` before pushing; CI (`.github/workflows/quality.yml`) also runs it on every PR.
+- See [docs/testing.md](./docs/testing.md) for patterns, fixtures, and troubleshooting.
 
 ## Architecture Overview
 
@@ -60,6 +69,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `mastra/` - AI agent system (agents, workflows, tools, skills)
 - `types/` - TypeScript definitions for Evidence, Attestation, graph structures
 - `utils/` - Configuration and helper functions
+- `tests/` - Vitest global setup (e.g., `@testing-library/jest-dom` extensions)
 - `docs/` - Detailed technical documentation (see Additional Documentation section)
 - `configs/` - EAS GraphQL endpoints, Hypercerts SDK configuration
 - `i18n/` - next-intl routing and request configuration
@@ -113,4 +123,5 @@ For detailed technical information, see:
 
 - `docs/api-routes.md` - HTTP endpoints (workflow/stream, compact, evidence, IPFS, hypercerts)
 - `docs/setup.md` - Local setup, environment variables grouped by concern
+- `docs/testing.md` - Vitest conventions, patterns (env stubbing, `it.each`, factories), CI integration
 - `docs/i18n.md` - next-intl wiring and agent output language interaction

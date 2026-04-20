@@ -4,7 +4,11 @@ export const generateBlockExplorerLink = (chain: Chain | undefined, transactionH
   if (!chain) {
     return "";
   }
-  return `${getBlockExplorerPath(chain)}/tx/${transactionHash}`;
+  const blockExplorerPath = getBlockExplorerPath(chain);
+  if (!blockExplorerPath) {
+    return "";
+  }
+  return `${blockExplorerPath}/tx/${transactionHash}`;
 };
 
 export const getBlockExplorerPath = (chain: Chain | undefined) => {
@@ -24,6 +28,6 @@ export const getBlockExplorerPath = (chain: Chain | undefined) => {
     case 42161: // Arbitrum Mainnet
       return "https://arbiscan.io";
     default:
-      return `${chain.blockExplorers?.default.url}`;
+      return chain.blockExplorers?.default.url ?? "";
   }
 };
