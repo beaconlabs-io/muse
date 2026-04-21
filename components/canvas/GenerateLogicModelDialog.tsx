@@ -191,6 +191,11 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
       toast.error(t("fileTypeInvalid"));
       return;
     }
+    const maxBytes = FILE_UPLOAD_MAX_BYTES_BY_MIME[file.type as FileUploadMimeType];
+    if (file.size > maxBytes) {
+      toast.error(t("fileTooLarge"));
+      return;
+    }
     onChange(file);
   };
   const {
