@@ -29,29 +29,52 @@ const logger = createLogger({ module: "workflow:logic-model-with-evidence" });
  * 3. Enrich canvas data with evidence metadata + external papers
  */
 
+const FileInputSchema = z.object({
+  mediaType: z.enum(["application/pdf", "image/png", "image/jpeg", "image/webp"]),
+  data: z.string().describe("base64-encoded file contents"),
+  fileName: z.string().optional(),
+});
+
 // Step 1: Generate logic model structure
 const generateLogicModelStep = createStep({
   id: "generate-logic-model",
   inputSchema: z.object({
-    goal: z.string().describe("User's goal — what they want to achieve"),
+    goal: z.string().optional().describe("User's goal — what they want to achieve"),
+    fileInput: FileInputSchema.optional(),
   }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
   }),
   execute: async ({ inputData, getInitData }) => {
-    const { goal } = inputData;
+    const { goal, fileInput } = inputData;
     const MAX_RETRIES = 2;
 
     const initData = getInitData<{ enableMetrics?: boolean }>();
     const enableMetrics = initData?.enableMetrics === true;
 
-    logger.info({ goal, enableMetrics }, "Step 1: Generating logic model structure");
+    if (!goal && !fileInput) {
+      throw new Error("Either goal text or fileInput must be provided");
+    }
+
+    logger.info(
+      {
+        hasGoal: !!goal,
+        goalLength: goal?.length,
+        hasFileInput: !!fileInput,
+        fileMediaType: fileInput?.mediaType,
+        fileName: fileInput?.fileName,
+        enableMetrics,
+      },
+      "Step 1: Generating logic model structure",
+    );
 
     const metricsInstruction = enableMetrics
       ? "\n\nGenerate meaningful metrics for each card, including name, measurementMethod, and frequency."
       : "\n\nDo NOT generate metrics. Pass empty arrays for all metrics fields.";
 
-    const userContent = `Create a logic model for the following goal: ${goal}${metricsInstruction}`;
+    const textInstruction = fileInput
+      ? `The user has attached a document (typically a grant application or program proposal). Treat the attached document as the primary source: faithfully reconstruct the author's stated theory of change into a logic model, preserving their intended causal chain without inventing or "fixing" missing links.${metricsInstruction}`
+      : `Create a logic model for the following goal: ${goal}${metricsInstruction}`;
 
     let lastError: Error | null = null;
 
@@ -61,10 +84,32 @@ const generateLogicModelStep = createStep({
           logger.info({ attempt, maxRetries: MAX_RETRIES }, "Retrying logic model generation");
         }
 
-        // Use the logic model agent to generate the structure
-        const result = await logicModelAgent.generate([{ role: "user", content: userContent }], {
-          maxSteps: 12,
-        });
+        // Build multimodal content when a file is attached; otherwise plain text.
+        // Cast via `unknown` because Mastra's Agent.generate accepts AI-SDK-style
+        // multi-part content but the union type is not publicly indexable here.
+        const userMessage = fileInput
+          ? {
+              role: "user" as const,
+              content: [
+                { type: "text" as const, text: textInstruction },
+                {
+                  type: "file" as const,
+                  data: Buffer.from(fileInput.data, "base64"),
+                  mediaType: fileInput.mediaType,
+                },
+              ],
+            }
+          : {
+              role: "user" as const,
+              content: textInstruction,
+            };
+
+        const result = await logicModelAgent.generate(
+          [userMessage] as unknown as Parameters<typeof logicModelAgent.generate>[0],
+          {
+            maxSteps: 12,
+          },
+        );
 
         // Debug logging
         logger.debug(
@@ -418,14 +463,24 @@ const enrichCanvasStep = createStep({
 // Create the workflow
 export const logicModelWithEvidenceWorkflow = createWorkflow({
   id: "logic-model-with-evidence",
-  inputSchema: z.object({
-    goal: z.string().describe("User's goal — what they want to achieve"),
-    enableExternalSearch: z
-      .boolean()
-      .default(false)
-      .describe("Whether to search Semantic Scholar for external papers"),
-    enableMetrics: z.boolean().default(false).describe("Whether to generate metrics for each card"),
-  }),
+  inputSchema: z
+    .object({
+      goal: z.string().optional().describe("User's goal text (text-based generation)"),
+      fileInput: FileInputSchema.optional().describe(
+        "Optional file (PDF or image) as the primary source",
+      ),
+      enableExternalSearch: z
+        .boolean()
+        .default(false)
+        .describe("Whether to search Semantic Scholar for external papers"),
+      enableMetrics: z
+        .boolean()
+        .default(false)
+        .describe("Whether to generate metrics for each card"),
+    })
+    .refine((data) => data.goal || data.fileInput, {
+      message: "Either goal text or fileInput must be provided",
+    }),
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
   }),

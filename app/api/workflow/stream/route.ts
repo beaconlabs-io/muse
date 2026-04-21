@@ -1,7 +1,12 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import type { WorkflowSSEEvent } from "@/types/workflow-events";
-import { WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
+import {
+  FILE_UPLOAD_ALLOWED_MIME_TYPES,
+  FILE_UPLOAD_MAX_BYTES_BY_MIME,
+  WORKFLOW_TIMEOUT_MS,
+  type FileUploadMimeType,
+} from "@/lib/constants";
 import { createLogger } from "@/lib/logger";
 import { extractErrorMessage, categorizeError } from "@/lib/workflow-errors";
 import { mastra } from "@/mastra";
@@ -13,39 +18,179 @@ export const maxDuration = 300;
 
 const logger = createLogger({ module: "api:workflow-stream" });
 
-const RequestSchema = z.object({
+const JsonRequestSchema = z.object({
   goal: z.string().min(1).max(1000),
   enableExternalSearch: z.boolean().default(false),
   enableMetrics: z.boolean().default(false),
 });
+
+const MimeTypeSchema = z.enum(FILE_UPLOAD_ALLOWED_MIME_TYPES);
+
+type WorkflowInput = {
+  goal?: string;
+  fileInput?: {
+    mediaType: FileUploadMimeType;
+    data: string;
+    fileName?: string;
+  };
+  enableExternalSearch: boolean;
+  enableMetrics: boolean;
+};
+
+/**
+ * Magic-byte check to catch mismatched Content-Type / extension spoofing.
+ * Returns true only if the first bytes look like the declared MIME type.
+ */
+function verifyMagicBytes(buffer: Buffer, mediaType: FileUploadMimeType): boolean {
+  if (buffer.length < 4) return false;
+
+  switch (mediaType) {
+    case "application/pdf":
+      // %PDF-
+      return buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46;
+    case "image/png":
+      // 89 50 4E 47
+      return buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+    case "image/jpeg":
+      // FF D8 FF
+      return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+    case "image/webp":
+      // RIFF....WEBP
+      if (buffer.length < 12) return false;
+      return (
+        buffer[0] === 0x52 &&
+        buffer[1] === 0x49 &&
+        buffer[2] === 0x46 &&
+        buffer[3] === 0x46 &&
+        buffer[8] === 0x57 &&
+        buffer[9] === 0x45 &&
+        buffer[10] === 0x42 &&
+        buffer[11] === 0x50
+      );
+    default:
+      return false;
+  }
+}
+
+type ParseResult = { ok: true; input: WorkflowInput } | { ok: false; status: number; body: string };
+
+async function parseRequest(request: NextRequest): Promise<ParseResult> {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("multipart/form-data")) {
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return {
+        ok: false,
+        status: 400,
+        body: JSON.stringify({ error: "Invalid multipart payload" }),
+      };
+    }
+
+    const file = formData.get("file");
+    if (!(file instanceof File)) {
+      return {
+        ok: false,
+        status: 400,
+        body: JSON.stringify({ error: "Missing file field" }),
+      };
+    }
+
+    const mediaTypeResult = MimeTypeSchema.safeParse(file.type);
+    if (!mediaTypeResult.success) {
+      return {
+        ok: false,
+        status: 400,
+        body: JSON.stringify({
+          error: "Unsupported file type",
+          details: `Got ${file.type || "unknown"}; allowed: ${FILE_UPLOAD_ALLOWED_MIME_TYPES.join(", ")}`,
+        }),
+      };
+    }
+    const mediaType = mediaTypeResult.data;
+
+    const maxBytes = FILE_UPLOAD_MAX_BYTES_BY_MIME[mediaType];
+    if (file.size > maxBytes) {
+      return {
+        ok: false,
+        status: 413,
+        body: JSON.stringify({
+          error: "File too large",
+          details: `Max ${maxBytes} bytes for ${mediaType}; got ${file.size}`,
+        }),
+      };
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    if (!verifyMagicBytes(buffer, mediaType)) {
+      return {
+        ok: false,
+        status: 400,
+        body: JSON.stringify({
+          error: "File content does not match declared type",
+        }),
+      };
+    }
+
+    const enableExternalSearch = formData.get("enableExternalSearch") === "true";
+    const enableMetrics = formData.get("enableMetrics") === "true";
+
+    return {
+      ok: true,
+      input: {
+        fileInput: {
+          mediaType,
+          data: buffer.toString("base64"),
+          fileName: file.name || undefined,
+        },
+        enableExternalSearch,
+        enableMetrics,
+      },
+    };
+  }
+
+  // JSON path (legacy / text goal)
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return {
+      ok: false,
+      status: 400,
+      body: JSON.stringify({ error: "Invalid JSON" }),
+    };
+  }
+
+  const parsed = JsonRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      status: 400,
+      body: JSON.stringify({ error: "Invalid request", details: parsed.error.flatten() }),
+    };
+  }
+
+  return { ok: true, input: parsed.data };
+}
 
 function formatSSE(event: WorkflowSSEEvent): string {
   return `data: ${JSON.stringify(event)}\n\n`;
 }
 
 export async function POST(request: NextRequest) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-      status: 400,
+  const parseResult = await parseRequest(request);
+  if (!parseResult.ok) {
+    return new Response(parseResult.body, {
+      status: parseResult.status,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  const parsed = RequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return new Response(
-      JSON.stringify({ error: "Invalid request", details: parsed.error.flatten() }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
-  }
-
-  const { goal, enableExternalSearch, enableMetrics } = parsed.data;
+  const workflowInput = parseResult.input;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -64,7 +209,7 @@ export async function POST(request: NextRequest) {
         const workflow = mastra.getWorkflow("logicModelWithEvidenceWorkflow");
         const run = await workflow.createRun();
         const output = await run.stream({
-          inputData: { goal, enableExternalSearch, enableMetrics },
+          inputData: workflowInput,
         });
 
         // Set up timeout
