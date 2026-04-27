@@ -70,7 +70,18 @@
     "externalSearchLabel": "Search external academic papers",
     "externalSearchTooltip": "When enabled, searches external academic papers to supplement evidence. This may increase generation time.",
     "metricsLabel": "Generate metrics for each card",
-    "metricsTooltip": "Generate measurement indicators for each card. Can be added manually later."
+    "metricsTooltip": "Generate measurement indicators for each card. Can be added manually later.",
+    "tabGoal": "From goal",
+    "tabFile": "From file",
+    "fileLabel": "Upload PDF or image",
+    "fileDropzoneHint": "Drop a file here, or click to browse",
+    "fileAccepted": "PDF, PNG, JPG, WebP",
+    "fileMaxSizePdf": "PDF up to {size}",
+    "fileMaxSizeImage": "Images up to {size}",
+    "fileHintProposal": "Upload a grant application or program proposal. We'll turn it into a logic model and flag arrows that lack supporting evidence.",
+    "fileRequired": "Please select a file",
+    "fileTypeInvalid": "Unsupported file type. Allowed: PDF, PNG, JPG, WebP.",
+    "fileTooLarge": "File is too large."
   },
   "addNode": {
     "editTitle": "Edit Logic Node",

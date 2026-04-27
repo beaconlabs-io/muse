@@ -70,7 +70,18 @@
     "externalSearchLabel": "外部の学術論文を検索",
     "externalSearchTooltip": "有効にすると、外部APIを使用して学術論文を検索し、エビデンスを補完します。生成時間が長くなる場合があります。",
     "metricsLabel": "各カードのメトリクスを生成",
-    "metricsTooltip": "各カードに測定指標を生成します。後から手動で追加することもできます。"
+    "metricsTooltip": "各カードに測定指標を生成します。後から手動で追加することもできます。",
+    "tabGoal": "目標から",
+    "tabFile": "ファイルから",
+    "fileLabel": "PDF または画像をアップロード",
+    "fileDropzoneHint": "ここにファイルをドロップするか、クリックして選択",
+    "fileAccepted": "PDF・PNG・JPG・WebP",
+    "fileMaxSizePdf": "PDF は {size} まで",
+    "fileMaxSizeImage": "画像は {size} まで",
+    "fileHintProposal": "助成金申請書や事業計画書をアップロードすると、その内容をロジックモデルに起こし、エビデンスが不足している矢印を可視化します。",
+    "fileRequired": "ファイルを選択してください",
+    "fileTypeInvalid": "対応していないファイル形式です。PDF・PNG・JPG・WebP を選択してください。",
+    "fileTooLarge": "ファイルサイズが大きすぎます。"
   },
   "addNode": {
     "editTitle": "ロジックノードを編集",

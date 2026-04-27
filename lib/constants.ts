@@ -104,3 +104,46 @@ export const EXTERNAL_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** Minimum internal evidence matches before skipping external search for an edge */
 export const MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL = 1;
+
+// =============================================================================
+// FILE UPLOAD (Logic Model generation from PDF/image)
+// =============================================================================
+
+/**
+ * Vercel Functions request body size limit (4.5 MB).
+ * Enforced at the Vercel edge layer — requests exceeding this are rejected
+ * with 413 FUNCTION_PAYLOAD_TOO_LARGE before reaching the route handler.
+ * https://vercel.com/docs/functions/limitations#request-body-size
+ */
+export const VERCEL_REQUEST_BODY_LIMIT_BYTES = 4.5 * 1024 * 1024;
+
+/**
+ * Maximum upload size for a single file (4 MB).
+ * Leaves headroom under Vercel's 4.5 MB limit for multipart/form-data
+ * boundary and non-file fields (enableExternalSearch, enableMetrics).
+ */
+export const FILE_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
+
+/** Maximum upload size for PDF files */
+export const FILE_UPLOAD_MAX_PDF_BYTES = FILE_UPLOAD_MAX_BYTES;
+
+/** Maximum upload size for image files */
+export const FILE_UPLOAD_MAX_IMAGE_BYTES = FILE_UPLOAD_MAX_BYTES;
+
+/** Whitelisted MIME types for logic model file upload */
+export const FILE_UPLOAD_ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+] as const;
+
+export type FileUploadMimeType = (typeof FILE_UPLOAD_ALLOWED_MIME_TYPES)[number];
+
+/** Per-MIME-type max size in bytes */
+export const FILE_UPLOAD_MAX_BYTES_BY_MIME: Record<FileUploadMimeType, number> = {
+  "application/pdf": FILE_UPLOAD_MAX_PDF_BYTES,
+  "image/png": FILE_UPLOAD_MAX_IMAGE_BYTES,
+  "image/jpeg": FILE_UPLOAD_MAX_IMAGE_BYTES,
+  "image/webp": FILE_UPLOAD_MAX_IMAGE_BYTES,
+};

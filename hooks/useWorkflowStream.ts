@@ -40,8 +40,23 @@ export function useWorkflowStream() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const startWorkflow = useCallback(
-    async (goal: string, options?: { enableExternalSearch?: boolean; enableMetrics?: boolean }) => {
-      const { enableExternalSearch = false, enableMetrics = false } = options ?? {};
+    async (
+      input:
+        | {
+            kind: "goal";
+            goal: string;
+            enableExternalSearch?: boolean;
+            enableMetrics?: boolean;
+          }
+        | {
+            kind: "file";
+            file: File;
+            enableExternalSearch?: boolean;
+            enableMetrics?: boolean;
+          },
+    ) => {
+      const enableExternalSearch = input.enableExternalSearch ?? false;
+      const enableMetrics = input.enableMetrics ?? false;
       // Abort any existing stream
       abortControllerRef.current?.abort();
 
@@ -70,12 +85,32 @@ export function useWorkflowStream() {
       }, WORKFLOW_TIMEOUT_MS + 10_000);
 
       try {
-        const response = await fetch("/api/workflow/stream", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ goal, enableExternalSearch, enableMetrics }),
-          signal: abortController.signal,
-        });
+        const fetchInit: RequestInit =
+          input.kind === "file"
+            ? (() => {
+                const formData = new FormData();
+                formData.set("file", input.file);
+                formData.set("enableExternalSearch", String(enableExternalSearch));
+                formData.set("enableMetrics", String(enableMetrics));
+                // Do NOT set Content-Type manually; fetch adds the multipart boundary.
+                return {
+                  method: "POST",
+                  body: formData,
+                  signal: abortController.signal,
+                };
+              })()
+            : {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  goal: input.goal,
+                  enableExternalSearch,
+                  enableMetrics,
+                }),
+                signal: abortController.signal,
+              };
+
+        const response = await fetch("/api/workflow/stream", fetchInit);
 
         if (!response.ok) {
           const errorBody = await response.json().catch(() => ({}));

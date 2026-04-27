@@ -132,11 +132,25 @@ The application uses Mastra to orchestrate AI-powered logic model generation wit
 
 ### Step 1: Structure Generation
 
-**Input**: User goal (e.g., "Improve student literacy through school library programs")
+**Input** — one of:
+
+- `goal`: free-text user goal (e.g., "Improve student literacy through school library programs"), or
+- `fileInput`: base64-encoded PDF / image (`application/pdf`, `image/png`,
+  `image/jpeg`, `image/webp`) with `mediaType` and optional `fileName`.
+  The file is forwarded to Gemini 2.5 Pro as native multimodal content
+  (no PDF parser or OCR step on our side). Used by the "From file" tab of
+  the Generate Logic Model dialog; the HTTP contract lives in
+  [api-routes.md § File upload path](./api-routes.md#file-upload-path).
+
+When `fileInput` is present, the Logic Model Agent is instructed to treat
+the attached document as the author's proposal and reconstruct their
+stated theory of change faithfully — preserving the intended causal chain
+without inventing or "fixing" missing links. The agent then runs the same
+5-stage workflow described below.
 
 **Process**:
 
-- Agent analyzes user goal
+- Agent analyzes goal text or attached document
 - Generates logic model structure with:
   - **Cards**: Representing stages (activities, outputs, outcomes, impact)
   - **Arrows**: Representing causal relationships ("if X, then Y")
@@ -441,6 +455,23 @@ Main UI component with 4-step process:
 - Step 4: "complete" - Final state
 - Real-time step progress via `useWorkflowStream` hook and SSE route (`/api/workflow/stream`)
 - Form validation with Zod
+
+**Input modes (shadcn `Tabs`)**:
+
+- **Goal**: free-text prompt; posts JSON to `/api/workflow/stream`.
+- **From file**: drag-and-drop dropzone for a PDF or image (PNG / JPEG /
+  WebP, ≤4 MB). Client-side validation mirrors the server whitelist /
+  size ceiling from `lib/constants.ts` with i18n error messages. The
+  selected file is previewed before submit and posted as
+  `multipart/form-data`. Switching to this tab flips
+  `enableExternalSearch` to the `EXTERNAL_SEARCH_ENABLED` flag value
+  (effectively ON when the flag is enabled) because evidence-gap
+  detection is the primary value for proposals that may lack citations.
+
+`useWorkflowStream.startWorkflow` accepts a discriminated union
+(`{ kind: "goal", goal }` or `{ kind: "file", file }`) and picks the
+JSON vs `FormData` transport accordingly.
+
 - Collapsible "Options" section with:
   - `enableExternalSearch` toggle (visible when `EXTERNAL_SEARCH_ENABLED=true`)
   - `enableMetrics` toggle (default OFF) — controls whether the agent generates metrics for cards
@@ -559,9 +590,12 @@ Tool for generating logic model structure:
 
 ## UI Flow (4 Steps)
 
-1. **Analyze Goal** (UI only)
+1. **Analyze Goal or File** (UI only)
    - Marks step as active → completed immediately
    - No server interaction
+   - Both input modes (text `goal` and uploaded `fileInput`) feed into the
+     same server workflow — only Workflow Step 1 branches on the input;
+     Steps 2 / 2.5 / 3 are identical.
 
 2. **Generate Structure** (Server) - **Full workflow executes here**:
    - Workflow Step 1: LLM generates cards and arrows with 5-stage validation
