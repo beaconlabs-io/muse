@@ -10,7 +10,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { useNodesState, useEdgesState } from "@xyflow/react";
+import { useNodesState, useEdgesState, useReactFlow } from "@xyflow/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { CardNodeData } from "@/components/canvas/CardNode";
@@ -32,6 +32,7 @@ import {
 import type { MetricFormInput, Metric, Card, Arrow, CanvasData, IPFSStorageResult } from "@/types";
 import type { OnNodesChange, OnEdgesChange, Node, Edge } from "@xyflow/react";
 import { useRouter } from "@/i18n/routing";
+import { computeDagreLayout } from "@/lib/canvas/dagre-layout";
 import {
   cardsToNodes,
   nodesToCards,
@@ -77,6 +78,7 @@ export interface StateReadingOperations {
   exportAsJSON: () => void;
   clearAllData: () => void;
   saveCanvasToIPFS: (ogImageCID?: string) => Promise<IPFSStorageResult | null>;
+  autoLayout: () => void;
 }
 
 /**
@@ -139,6 +141,7 @@ export function CanvasProvider({
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(arrowsToEdges(initialArrows));
   const [cardMetrics, setCardMetrics] = useState<Record<string, Metric[]>>(initialCardMetrics);
+  const { fitView } = useReactFlow();
 
   // 2. Hydrate from localStorage after mount to avoid hydration mismatch
   const hasHydrated = useRef(false);
@@ -344,6 +347,46 @@ export function CanvasProvider({
     setClearConfirmOpen(true);
   }, []);
 
+  const autoLayout = useCallback(() => {
+    if (nodesRef.current.length === 0) {
+      toast.error(t("autoLayoutEmptyError"), { duration: 3000 });
+      return;
+    }
+
+    const cards = nodesToCards(nodesRef.current);
+    const arrows = edgesToArrows(edgesRef.current);
+    // Use real DOM-measured dimensions from React Flow so dagre spacing matches
+    // what the user actually sees, eliminating overlap from height estimation.
+    const measuredSizes: Record<string, { width: number; height: number }> = {};
+    for (const n of nodesRef.current) {
+      const w = n.measured?.width;
+      const h = n.measured?.height;
+      if (w && h) {
+        measuredSizes[n.id] = { width: w, height: h };
+      }
+    }
+    const newCards = computeDagreLayout({
+      cards,
+      arrows,
+      cardMetrics: cardMetricsRef.current,
+      measuredSizes,
+    });
+    const positionById = new Map(newCards.map((c) => [c.id, { x: c.x, y: c.y }]));
+
+    setNodes((prev) =>
+      prev.map((n) => {
+        const pos = positionById.get(n.id);
+        return pos ? { ...n, position: pos } : n;
+      }),
+    );
+
+    // Wait one frame so React Flow commits the new positions before fitView
+    // computes bounds — otherwise it zooms to the pre-layout viewport.
+    requestAnimationFrame(() => fitView({ padding: 0.1, duration: 300 }));
+
+    toast.success(t("autoLayoutApplied"), { duration: 2000 });
+  }, [setNodes, fitView, t]);
+
   // 8. Create operations (memoized - now only depends on stable setters)
   const operations = useMemo(
     () =>
@@ -406,6 +449,7 @@ export function CanvasProvider({
       exportAsJSON,
       clearAllData,
       saveCanvasToIPFS,
+      autoLayout,
     }),
     [
       operations,
@@ -417,6 +461,7 @@ export function CanvasProvider({
       exportAsJSON,
       clearAllData,
       saveCanvasToIPFS,
+      autoLayout,
     ],
   );
 
