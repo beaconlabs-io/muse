@@ -79,6 +79,7 @@
     "fileMaxSizePdf": "PDF は {size} まで",
     "fileMaxSizeImage": "画像は {size} まで",
     "fileHintProposal": "助成金申請書や事業計画書をアップロードすると、その内容をロジックモデルに起こし、エビデンスが不足している矢印を可視化します。",
+    "fileNotStored": "ファイルはメモリ上で処理され、サーバーには保存されません。",
     "fileRequired": "ファイルを選択してください",
     "fileTypeInvalid": "対応していないファイル形式です。PDF・PNG・JPG・WebP を選択してください。",
     "fileTooLarge": "ファイルサイズが大きすぎます。"
