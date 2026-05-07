@@ -116,13 +116,14 @@ const computeLogicalColumns = (cards: Card[], arrows: Arrow[]): Map<string, numb
   }
 
   const inDegree = new Map<string, number>();
-  for (const c of cards) inDegree.set(c.id, incoming.get(c.id)!.length);
+  for (const c of cards) inDegree.set(c.id, (incoming.get(c.id) ?? []).length);
   const queue: string[] = [];
   for (const [id, deg] of inDegree) if (deg === 0) queue.push(id);
 
   const topoOrder: string[] = [];
   while (queue.length > 0) {
-    const id = queue.shift()!;
+    const id = queue.shift();
+    if (id === undefined) continue;
     topoOrder.push(id);
     for (const succ of outgoing.get(id) ?? []) {
       const newDeg = (inDegree.get(succ) ?? 0) - 1;
@@ -133,7 +134,8 @@ const computeLogicalColumns = (cards: Card[], arrows: Arrow[]): Map<string, numb
 
   const logicalCol = new Map<string, number>();
   for (const id of topoOrder) {
-    const card = cardById.get(id)!;
+    const card = cardById.get(id);
+    if (!card) continue;
     const floor = Math.max(0, stageIndex(card.type));
     let col = floor;
     for (const predId of incoming.get(id) ?? []) {
@@ -227,8 +229,9 @@ export const computeDagreLayout = (input: LayoutInput, options?: LayoutOptions):
     // visually belong to.
     const groupKey =
       stageIndex(card.type) < 0 ? "__unknown__" : `col:${logicalCol.get(card.id) ?? 0}`;
-    if (!cardsByCol.has(groupKey)) cardsByCol.set(groupKey, []);
-    cardsByCol.get(groupKey)!.push({ card, dagreY, height });
+    const bucket = cardsByCol.get(groupKey) ?? [];
+    bucket.push({ card, dagreY, height });
+    cardsByCol.set(groupKey, bucket);
   }
 
   const yByCardId = new Map<string, number>();
