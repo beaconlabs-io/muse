@@ -1,6 +1,13 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import type { Card, Arrow, Metric, CanvasData, StageInput, ConnectionInput } from "@/types";
+import { computeDagreLayout } from "@/lib/canvas/dagre-layout";
+import {
+  calculateColumnYs,
+  estimateCardHeight,
+  HORIZONTAL_SPACING,
+  START_X,
+} from "@/lib/canvas/layout-helpers";
 import { createLogger } from "@/lib/logger";
 import {
   CanvasDataSchema,
@@ -11,33 +18,8 @@ import {
 
 const logger = createLogger({ module: "tool:logic-model" });
 
-const MIN_CARD_HEIGHT = 150;
-const ROW_GAP = 60;
-const BASE_Y = 350;
-
-export const estimateCardHeight = (metricsCount: number, hasDescription: boolean): number => {
-  let h = 70;
-  if (hasDescription) h += 70;
-  if (metricsCount > 0) h += 30 + metricsCount * 24;
-  return Math.max(MIN_CARD_HEIGHT, h);
-};
-
-export const calculateColumnYs = (
-  items: Array<{ description?: string; metrics: { length: number } }>,
-): number[] => {
-  if (items.length === 0) return [];
-  const heights = items.map((it) => estimateCardHeight(it.metrics.length, !!it.description));
-  const totalSpan = heights.reduce((sum, h) => sum + h, 0) + ROW_GAP * (items.length - 1);
-  const startTop = BASE_Y - totalSpan / 2;
-
-  const tops: number[] = [];
-  let cursor = startTop;
-  for (const h of heights) {
-    tops.push(cursor);
-    cursor += h + ROW_GAP;
-  }
-  return tops;
-};
+// Re-export for backwards compatibility with existing tests/callers
+export { calculateColumnYs, estimateCardHeight };
 
 export const logicModelTool = createTool({
   id: "generate-logic-model",
@@ -131,10 +113,6 @@ const generateLogicModel = async (params: {
 
   const timestamp = Date.now();
   const generateId = (type: string, index: number) => `${type}-${timestamp}-${index}`;
-
-  // Layout configuration: horizontal tree flow with spacing
-  const HORIZONTAL_SPACING = 400; // Space between stages horizontally
-  const START_X = 50; // Starting X position
 
   const cards: Card[] = [];
   const arrows: Arrow[] = [];
@@ -420,9 +398,12 @@ const generateLogicModel = async (params: {
     logger.info({ connectionsCount: arrows.length }, "Created fallback connections");
   }
 
+  // Apply hierarchical layout so chains align horizontally instead of zig-zagging
+  const laidOutCards = computeDagreLayout({ cards, arrows, cardMetrics });
+
   const canvasData: CanvasData = {
     id: `canvas-${timestamp}`,
-    cards,
+    cards: laidOutCards,
     arrows,
     cardMetrics,
   };

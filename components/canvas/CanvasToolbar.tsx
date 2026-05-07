@@ -1,5 +1,5 @@
 import { memo, useState, useCallback } from "react";
-import { Save, CloudCheck, Download, Trash2, MoreVertical } from "lucide-react";
+import { Save, CloudCheck, Download, Trash2, MoreVertical, LayoutDashboard } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ export const CanvasToolbar = memo(() => {
     clearAllData,
     loadGeneratedCanvas,
     saveCanvasToIPFS,
+    autoLayout,
   } = useCanvasOperations();
   const { generate: generateImage } = useCanvasImage();
 
@@ -45,6 +46,11 @@ export const CanvasToolbar = memo(() => {
     // Open alert dialog after dropdown closes
     clearAllData();
   }, [clearAllData]);
+
+  const handleAutoLayout = useCallback(() => {
+    setDropdownOpen(false);
+    autoLayout();
+  }, [autoLayout]);
 
   const handleExportImage = useCallback(() => {
     if (nodes.length === 0) {
@@ -122,6 +128,11 @@ export const CanvasToolbar = memo(() => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleAutoLayout} className="cursor-pointer">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                {t("autoLayout")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem disabled={true} onClick={saveLogicModel} className="cursor-pointer">
                 <Save className="mr-2 h-4 w-4" />
                 {t("mintHypercert")}
