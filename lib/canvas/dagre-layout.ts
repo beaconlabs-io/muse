@@ -2,7 +2,6 @@ import dagre from "@dagrejs/dagre";
 import type { Card, Arrow, Metric } from "@/types";
 import {
   NODE_WIDTH,
-  STAGE_ORDER,
   HORIZONTAL_SPACING,
   START_X,
   estimateCardHeight,
@@ -247,5 +246,3 @@ export const computeDagreLayout = (input: LayoutInput, options?: LayoutOptions):
     return { ...card, x, y };
   });
 };
-
-export { STAGE_ORDER };
