@@ -494,6 +494,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                   )}
                 />
                 <p className="text-muted-foreground text-xs">{t("fileHintProposal")}</p>
+                <p className="text-muted-foreground text-xs">{t("fileNotStored")}</p>
               </TabsContent>
             </Tabs>
 

@@ -79,6 +79,7 @@
     "fileMaxSizePdf": "PDF up to {size}",
     "fileMaxSizeImage": "Images up to {size}",
     "fileHintProposal": "Upload a grant application or program proposal. We'll turn it into a logic model and flag arrows that lack supporting evidence.",
+    "fileNotStored": "Your file is processed in memory and never stored on our servers.",
     "fileRequired": "Please select a file",
     "fileTypeInvalid": "Unsupported file type. Allowed: PDF, PNG, JPG, WebP.",
     "fileTooLarge": "File is too large."
