@@ -33,6 +33,9 @@
     "exportImage": "Export Image",
     "exportJSON": "Export JSON",
     "clearAll": "Clear All",
+    "autoLayout": "Auto Layout",
+    "autoLayoutApplied": "Layout updated",
+    "autoLayoutEmptyError": "No nodes to lay out.",
     "createNewCanvas": "Create New Canvas",
     "invalidCanvasId": "Invalid Canvas ID",
     "invalidCanvasIdDescription": "The provided ID is not a valid IPFS content identifier (CID).",
@@ -123,8 +126,7 @@
     "frequencyPlaceholder": "Select frequency",
     "targetValue": "Target Value (optional)",
     "targetPlaceholder": "e.g., 50% improvement",
-    "target": "Target: {value}",
-    "metricCount": "{count, plural, one {# metric} other {# metrics}}"
+    "target": "Target: {value}"
   },
   "frequency": {
     "daily": "Daily",

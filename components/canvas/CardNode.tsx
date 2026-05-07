@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Pencil, Zap, Package, Target, Sparkles } from "lucide-react";
+import { Pencil, Zap, Package, Target, Sparkles, BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCanvasOperations } from "./context";
 import type { Metric } from "@/types";
@@ -93,6 +93,26 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
                 </div>
               </>
             )}
+
+            {/* Metrics list (if exists) */}
+            {data.metrics && data.metrics.length > 0 && (
+              <>
+                <div className="border-t border-gray-300/50" />
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <BarChart3 className="h-3 w-3" aria-hidden="true" />
+                    <span className="text-xs font-semibold">{tMetrics("title")}</span>
+                  </div>
+                  <ul className="list-disc space-y-0.5 pl-4 text-xs text-gray-700">
+                    {data.metrics.map((metric) => (
+                      <li key={metric.id} className="break-words">
+                        {metric.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -103,21 +123,11 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
           e.stopPropagation();
           openEditSheet(data.id);
         }}
-        className="absolute -top-2 -right-2 hidden h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-gray-500 text-white group-hover:flex hover:bg-gray-600"
+        className="absolute -top-3 -right-3 hidden h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gray-500 text-white group-hover:flex hover:bg-gray-600"
         title={tAddNode("editTitle")}
       >
-        <Pencil className="h-3 w-3" aria-hidden="true" />
+        <Pencil className="h-6 w-6" aria-hidden="true" />
       </button>
-
-      {/* Bottom badges area */}
-      <div className="absolute right-2 bottom-2 left-2 flex items-center justify-end gap-2">
-        {/* Metrics count (bottom right) */}
-        {data.metrics && data.metrics.length > 0 && (
-          <div className="rounded bg-gray-700 px-2 py-1 text-xs font-medium text-white">
-            {tMetrics("metricCount", { count: data.metrics.length })}
-          </div>
-        )}
-      </div>
     </div>
   );
 });

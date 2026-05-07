@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import {
   ReactFlow,
+  ReactFlowProvider,
   Background,
   Controls,
   MiniMap,
@@ -32,14 +33,18 @@ export function ReactFlowCanvas({
   disableLocalStorage = false,
 }: ReactFlowCanvasProps) {
   return (
-    <CanvasProvider
-      initialCards={initialCards}
-      initialArrows={initialArrows}
-      initialCardMetrics={initialCardMetrics}
-      disableLocalStorage={disableLocalStorage}
-    >
-      <ReactFlowCanvasInner />
-    </CanvasProvider>
+    // ReactFlowProvider must wrap CanvasProvider so autoLayout can call
+    // useReactFlow().fitView() after repositioning nodes.
+    <ReactFlowProvider>
+      <CanvasProvider
+        initialCards={initialCards}
+        initialArrows={initialArrows}
+        initialCardMetrics={initialCardMetrics}
+        disableLocalStorage={disableLocalStorage}
+      >
+        <ReactFlowCanvasInner />
+      </CanvasProvider>
+    </ReactFlowProvider>
   );
 }
 

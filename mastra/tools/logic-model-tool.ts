@@ -1,6 +1,13 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import type { Card, Arrow, Metric, CanvasData, StageInput, ConnectionInput } from "@/types";
+import { computeDagreLayout } from "@/lib/canvas/dagre-layout";
+import {
+  calculateColumnYs,
+  estimateCardHeight,
+  HORIZONTAL_SPACING,
+  START_X,
+} from "@/lib/canvas/layout-helpers";
 import { createLogger } from "@/lib/logger";
 import {
   CanvasDataSchema,
@@ -10,6 +17,9 @@ import {
 } from "@/types";
 
 const logger = createLogger({ module: "tool:logic-model" });
+
+// Re-export for backwards compatibility with existing tests/callers
+export { calculateColumnYs, estimateCardHeight };
 
 export const logicModelTool = createTool({
   id: "generate-logic-model",
@@ -104,33 +114,20 @@ const generateLogicModel = async (params: {
   const timestamp = Date.now();
   const generateId = (type: string, index: number) => `${type}-${timestamp}-${index}`;
 
-  // Layout configuration: horizontal tree flow with spacing
-  const HORIZONTAL_SPACING = 400; // Space between stages horizontally
-  const VERTICAL_SPACING = 200; // Space between cards vertically within same stage
-  const BASE_Y = 350; // Base Y position (middle of viewport)
-  const START_X = 50; // Starting X position
-
   const cards: Card[] = [];
   const arrows: Arrow[] = [];
   const cardMetrics: Record<string, Metric[]> = {};
 
-  // Helper to calculate Y position for cards in same column
-  const calculateY = (index: number, total: number): number => {
-    if (total === 1) return BASE_Y;
-    const totalHeight = (total - 1) * VERTICAL_SPACING;
-    const startY = BASE_Y - totalHeight / 2;
-    return startY + index * VERTICAL_SPACING;
-  };
-
   // 1. Create Activity cards
   const activityIds: string[] = [];
+  const activityYs = calculateColumnYs(activities);
   activities.forEach((activity, index) => {
     const activityId = generateId("activities", index);
     activityIds.push(activityId);
     cards.push({
       id: activityId,
       x: START_X,
-      y: calculateY(index, activities.length),
+      y: activityYs[index],
       title: activity.title,
       description: activity.description,
       color: TYPE_COLOR_MAP.activities,
@@ -148,13 +145,14 @@ const generateLogicModel = async (params: {
 
   // 2. Create Output cards
   const outputIds: string[] = [];
+  const outputYs = calculateColumnYs(outputs);
   outputs.forEach((output, index) => {
     const outputId = generateId("output", index);
     outputIds.push(outputId);
     cards.push({
       id: outputId,
       x: START_X + HORIZONTAL_SPACING,
-      y: calculateY(index, outputs.length),
+      y: outputYs[index],
       title: output.title,
       description: output.description,
       color: TYPE_COLOR_MAP.outputs,
@@ -172,13 +170,14 @@ const generateLogicModel = async (params: {
 
   // 3. Create Outcomes-Short cards
   const outcomeShortIds: string[] = [];
+  const outcomeShortYs = calculateColumnYs(outcomesShort);
   outcomesShort.forEach((outcome, index) => {
     const outcomeShortId = generateId("outcomes-short", index);
     outcomeShortIds.push(outcomeShortId);
     cards.push({
       id: outcomeShortId,
       x: START_X + HORIZONTAL_SPACING * 2,
-      y: calculateY(index, outcomesShort.length),
+      y: outcomeShortYs[index],
       title: outcome.title,
       description: outcome.description,
       color: TYPE_COLOR_MAP["outcomes-short"],
@@ -196,13 +195,14 @@ const generateLogicModel = async (params: {
 
   // 4. Create Outcomes-Intermediate cards
   const outcomeIntermediateIds: string[] = [];
+  const outcomeIntermediateYs = calculateColumnYs(outcomesIntermediate);
   outcomesIntermediate.forEach((outcome, index) => {
     const outcomeIntermediateId = generateId("outcomes-intermediate", index);
     outcomeIntermediateIds.push(outcomeIntermediateId);
     cards.push({
       id: outcomeIntermediateId,
       x: START_X + HORIZONTAL_SPACING * 3,
-      y: calculateY(index, outcomesIntermediate.length),
+      y: outcomeIntermediateYs[index],
       title: outcome.title,
       description: outcome.description,
       color: TYPE_COLOR_MAP["outcomes-intermediate"],
@@ -220,13 +220,14 @@ const generateLogicModel = async (params: {
 
   // 5. Create Impact cards
   const impactIds: string[] = [];
+  const impactYs = calculateColumnYs(impact);
   impact.forEach((impactItem, index) => {
     const impactId = generateId("impact", index);
     impactIds.push(impactId);
     cards.push({
       id: impactId,
       x: START_X + HORIZONTAL_SPACING * 4,
-      y: calculateY(index, impact.length),
+      y: impactYs[index],
       title: impactItem.title,
       description: impactItem.description,
       color: TYPE_COLOR_MAP.impact,
@@ -397,9 +398,12 @@ const generateLogicModel = async (params: {
     logger.info({ connectionsCount: arrows.length }, "Created fallback connections");
   }
 
+  // Apply hierarchical layout so chains align horizontally instead of zig-zagging
+  const laidOutCards = computeDagreLayout({ cards, arrows, cardMetrics });
+
   const canvasData: CanvasData = {
     id: `canvas-${timestamp}`,
-    cards,
+    cards: laidOutCards,
     arrows,
     cardMetrics,
   };

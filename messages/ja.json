@@ -33,6 +33,9 @@
     "exportImage": "画像エクスポート",
     "exportJSON": "JSONエクスポート",
     "clearAll": "すべてクリア",
+    "autoLayout": "自動レイアウト",
+    "autoLayoutApplied": "レイアウトを更新しました",
+    "autoLayoutEmptyError": "整列するノードがありません。",
     "createNewCanvas": "新しいキャンバスを作成",
     "invalidCanvasId": "無効なキャンバスID",
     "invalidCanvasIdDescription": "指定されたIDは有効なIPFSコンテンツ識別子（CID）ではありません。",
@@ -123,8 +126,7 @@
     "frequencyPlaceholder": "頻度を選択",
     "targetValue": "目標値（任意）",
     "targetPlaceholder": "例：50%改善",
-    "target": "目標: {value}",
-    "metricCount": "{count} メトリクス"
+    "target": "目標: {value}"
   },
   "frequency": {
     "daily": "毎日",
