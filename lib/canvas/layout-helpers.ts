@@ -28,12 +28,14 @@ export const estimateCardHeight = (metricsCount: number, hasDescription: boolean
   return Math.max(MIN_CARD_HEIGHT, h);
 };
 
-export const calculateColumnYs = (
-  items: Array<{ description?: string; metrics: { length: number } }>,
-): number[] => {
-  if (items.length === 0) return [];
-  const heights = items.map((it) => estimateCardHeight(it.metrics.length, !!it.description));
-  const totalSpan = heights.reduce((sum, h) => sum + h, 0) + ROW_GAP * (items.length - 1);
+/**
+ * Pack pre-computed heights into a column centered around BASE_Y.
+ * Shared between AI-generated layouts (via calculateColumnYs) and the dagre
+ * post-pass so both paths produce identical vertical spacing.
+ */
+export const calculateColumnYsFromHeights = (heights: number[]): number[] => {
+  if (heights.length === 0) return [];
+  const totalSpan = heights.reduce((sum, h) => sum + h, 0) + ROW_GAP * (heights.length - 1);
   const startTop = BASE_Y - totalSpan / 2;
 
   const tops: number[] = [];
@@ -43,6 +45,13 @@ export const calculateColumnYs = (
     cursor += h + ROW_GAP;
   }
   return tops;
+};
+
+export const calculateColumnYs = (
+  items: Array<{ description?: string; metrics: { length: number } }>,
+): number[] => {
+  const heights = items.map((it) => estimateCardHeight(it.metrics.length, !!it.description));
+  return calculateColumnYsFromHeights(heights);
 };
 
 export const stageIndex = (type: Card["type"]): number => {

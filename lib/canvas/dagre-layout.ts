@@ -7,6 +7,7 @@ import {
   START_X,
   estimateCardHeight,
   calculateColumnYs,
+  calculateColumnYsFromHeights,
   stageX,
   stageIndex,
 } from "@/lib/canvas/layout-helpers";
@@ -245,26 +246,6 @@ export const computeDagreLayout = (input: LayoutInput, options?: LayoutOptions):
     const y = yByCardId.get(card.id) ?? card.y;
     return { ...card, x, y };
   });
-};
-
-/**
- * Variant of calculateColumnYs that takes pre-computed heights directly.
- * Used after dagre to pack each stage column tightly while preserving the
- * vertical order dagre derived from edge connectivity.
- */
-const ROW_GAP_PACK = 60;
-const BASE_Y_PACK = 350;
-const calculateColumnYsFromHeights = (heights: number[]): number[] => {
-  if (heights.length === 0) return [];
-  const totalSpan = heights.reduce((sum, h) => sum + h, 0) + ROW_GAP_PACK * (heights.length - 1);
-  const startTop = BASE_Y_PACK - totalSpan / 2;
-  const tops: number[] = [];
-  let cursor = startTop;
-  for (const h of heights) {
-    tops.push(cursor);
-    cursor += h + ROW_GAP_PACK;
-  }
-  return tops;
 };
 
 export { STAGE_ORDER };
