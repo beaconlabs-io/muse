@@ -123,10 +123,10 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
           e.stopPropagation();
           openEditSheet(data.id);
         }}
-        className="absolute -top-2 -right-2 hidden h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-gray-500 text-white group-hover:flex hover:bg-gray-600"
+        className="absolute -top-3 -right-3 hidden h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gray-500 text-white group-hover:flex hover:bg-gray-600"
         title={tAddNode("editTitle")}
       >
-        <Pencil className="h-3 w-3" aria-hidden="true" />
+        <Pencil className="h-6 w-6" aria-hidden="true" />
       </button>
     </div>
   );
