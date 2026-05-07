@@ -10,7 +10,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { useNodesState, useEdgesState } from "@xyflow/react";
+import { useNodesState, useEdgesState, useReactFlow } from "@xyflow/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { CardNodeData } from "@/components/canvas/CardNode";
@@ -141,6 +141,7 @@ export function CanvasProvider({
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(arrowsToEdges(initialArrows));
   const [cardMetrics, setCardMetrics] = useState<Record<string, Metric[]>>(initialCardMetrics);
+  const { fitView } = useReactFlow();
 
   // 2. Hydrate from localStorage after mount to avoid hydration mismatch
   const hasHydrated = useRef(false);
@@ -379,8 +380,12 @@ export function CanvasProvider({
       }),
     );
 
+    // Wait one frame so React Flow commits the new positions before fitView
+    // computes bounds — otherwise it zooms to the pre-layout viewport.
+    requestAnimationFrame(() => fitView({ padding: 0.1, duration: 300 }));
+
     toast.success(t("autoLayoutApplied"), { duration: 2000 });
-  }, [setNodes, t]);
+  }, [setNodes, fitView, t]);
 
   // 8. Create operations (memoized - now only depends on stable setters)
   const operations = useMemo(
