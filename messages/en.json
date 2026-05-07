@@ -122,8 +122,7 @@
     "frequencyPlaceholder": "Select frequency",
     "targetValue": "Target Value (optional)",
     "targetPlaceholder": "e.g., 50% improvement",
-    "target": "Target: {value}",
-    "metricCount": "{count, plural, one {# metric} other {# metrics}}"
+    "target": "Target: {value}"
   },
   "frequency": {
     "daily": "Daily",

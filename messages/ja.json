@@ -122,8 +122,7 @@
     "frequencyPlaceholder": "頻度を選択",
     "targetValue": "目標値（任意）",
     "targetPlaceholder": "例：50%改善",
-    "target": "目標: {value}",
-    "metricCount": "{count} メトリクス"
+    "target": "目標: {value}"
   },
   "frequency": {
     "daily": "毎日",
