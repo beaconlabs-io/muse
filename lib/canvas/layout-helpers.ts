@@ -16,6 +16,11 @@ export const STAGE_ORDER: ReadonlyArray<NonNullable<Card["type"]>> = [
   "impact",
 ];
 
+// Constants tuned to match CardNode's actual rendered dimensions (header +
+// padding + footer chrome) so dagre/Auto Layout spacing aligns with what the
+// user sees. Earlier values (base 70, +desc 70, +metrics 30+24*n, MIN 150)
+// under-estimated heights and produced overlap when AI-generated cards were
+// laid out without measured DOM sizes.
 export const estimateCardHeight = (metricsCount: number, hasDescription: boolean): number => {
   let h = 90;
   if (hasDescription) h += 100;
