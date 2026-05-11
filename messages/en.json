@@ -33,6 +33,9 @@
     "exportImage": "Export Image",
     "exportJSON": "Export JSON",
     "clearAll": "Clear All",
+    "autoLayout": "Auto Layout",
+    "autoLayoutApplied": "Layout updated",
+    "autoLayoutEmptyError": "No nodes to lay out.",
     "createNewCanvas": "Create New Canvas",
     "invalidCanvasId": "Invalid Canvas ID",
     "invalidCanvasIdDescription": "The provided ID is not a valid IPFS content identifier (CID).",
@@ -79,6 +82,7 @@
     "fileMaxSizePdf": "PDF up to {size}",
     "fileMaxSizeImage": "Images up to {size}",
     "fileHintProposal": "Upload a grant application or program proposal. We'll turn it into a logic model and flag arrows that lack supporting evidence.",
+    "fileNotStored": "Your file is processed in memory and never stored on our servers.",
     "fileRequired": "Please select a file",
     "fileTypeInvalid": "Unsupported file type. Allowed: PDF, PNG, JPG, WebP.",
     "fileTooLarge": "File is too large."
@@ -122,8 +126,7 @@
     "frequencyPlaceholder": "Select frequency",
     "targetValue": "Target Value (optional)",
     "targetPlaceholder": "e.g., 50% improvement",
-    "target": "Target: {value}",
-    "metricCount": "{count, plural, one {# metric} other {# metrics}}"
+    "target": "Target: {value}"
   },
   "frequency": {
     "daily": "Daily",

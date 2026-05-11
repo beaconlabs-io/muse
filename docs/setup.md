@@ -90,6 +90,31 @@ See [mastra-agents.md](./mastra-agents.md) for how each agent picks its model.
 - `NODE_ENV` — used by `lib/logger.ts` and a few dev-only log verbosity
   toggles
 
+## Dependency install policy (`bunfig.toml`)
+
+`muse/bunfig.toml` pins a single Bun install setting:
+
+```toml
+[install]
+minimumReleaseAge = 259200
+```
+
+- `minimumReleaseAge` is expressed in seconds (`259200` = **3 days**).
+- Bun refuses to resolve any package version published less than that ago,
+  falling back to the most recent version that satisfies the constraint
+  and is old enough.
+- The intent is to widen the window for the npm ecosystem to flag a
+  malicious or broken release before muse pulls it in (supply-chain
+  hardening).
+- Practical impact: when adding or upgrading a dependency, a brand-new
+  release (e.g. one published this morning) will be skipped until it has
+  aged 3 days. If you specifically need a fresh version locally, override
+  with `bun install <pkg>@<exact-version>` — the explicit version pin
+  bypasses the age floor.
+- The same `bunfig.toml` applies in CI (`.github/workflows/quality.yml`)
+  and in the Docker build, so lockfile resolution stays deterministic
+  across environments.
+
 ## Docker
 
 A production image is available via the repo-root `Dockerfile` and

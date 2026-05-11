@@ -333,18 +333,216 @@ Evidence with strength < 3 displays warning indicator (⚠️) in dialog to aler
 - External papers explicitly labeled "Reference" to distinguish from attested evidence
 - Non-evidence edges appear as normal gray curves (no negative indicator)
 
+## Card Metrics
+
+Cards carry an optional list of measurement metrics that the agent may
+generate during logic-model creation, and that the user can edit on the
+canvas.
+
+### Metric data shape
+
+**Location**: `types/index.ts` (`MetricSchema`, `Metric`)
+
+```typescript
+type Metric = {
+  id: string;
+  name: string;
+  description?: string;
+  measurementMethod?: string;
+  targetValue?: string;
+  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
+};
+```
+
+- `id` is stable per metric (so React keys and edit/delete operations
+  survive re-renders).
+- All other fields are optional — the agent emits whatever subset the
+  Stage 2 prompt yields, and form inputs can leave them blank.
+- `frequency` is constrained to the `Frequency` enum (see
+  `FREQUENCY_LABELS`, `FREQUENCY_OPTIONS` in `types/index.ts`).
+
+Storage on the canvas lives in `CanvasContext` as
+`cardMetrics: Record<cardId, Metric[]>`, kept separate from the card's
+own `data` so dagre layout, persistence, and metric editing can each
+touch only what they need.
+
+### CardNode rendering
+
+**Location**: `components/canvas/CardNode.tsx`
+
+CardNode displays metrics as a bulleted list under the card body,
+separated from the description by a thin border. The badge uses a
+`BarChart3` icon and the localised label from
+`useTranslations("metrics").title`. Only `metric.name` is shown in the
+card itself — full details (description, measurement method, frequency,
+target) are reachable through the edit sheet.
+
+If `data.metrics` is empty or `undefined` the metric block is omitted
+entirely; the same is true when the workflow was run with
+`enableMetrics: false` (the default), so cards render compactly.
+
+### Editing in AddLogicSheet
+
+**Location**: `components/canvas/AddLogicSheet.tsx`
+
+The card editing sheet hosts a sub-form (`metricsForm`) built with
+`react-hook-form` + `MetricFormInputSchema` for metric CRUD:
+
+1. **Add** — empty form pushes a new metric with a fresh `id`.
+2. **Edit** — `metricsForm.reset(metric)` loads the selected metric;
+   submitting replaces it in place by `id`.
+3. **Delete** — removes by `id` from the card's metrics array.
+
+Submission mutates `CanvasContext.cardMetrics` for the card being edited
+(not the agent output), and `CardNode` re-renders via React Flow's
+node-data subscription.
+
+### Layout coupling
+
+Metric count feeds into `estimateCardHeight(metricsCount, hasDescription)`
+in `lib/canvas/layout-helpers.ts`, so adding or removing metrics changes
+the height that the dagre layout (without measured DOM sizes) assumes.
+See [Auto Layout](#auto-layout) for the full picture.
+
+### Agent contract
+
+`mastra/workflows/logic-model-with-evidence.ts` reads `enableMetrics`
+from workflow init data:
+
+- `enableMetrics: false` (default): the agent emits cards with
+  `metrics: []`, and Stage 2 prompt instructions skip metric generation
+  entirely.
+- `enableMetrics: true`: each card includes 1 metric object validated
+  against `ToolMetricInputSchema` (forgiving variant of `MetricSchema`
+  for LLM output).
+
+See `docs/mastra-agents.md` for the agent-side specification.
+
+### Persistence
+
+Metrics ride along with the canvas in both localStorage (autosave) and
+the IPFS canvas JSON. `CanvasDataSchema.cardMetrics` is the wire format;
+restoration rebuilds the `cardMetrics` map on canvas hydration so a
+reload (or opening an IPFS-pinned canvas) preserves the metrics view.
+
+## Auto Layout
+
+Auto Layout re-positions every card on the canvas so causal flow reads
+left to right and columns stay tightly packed.
+
+### Trigger
+
+**Location**: `components/canvas/CanvasToolbar.tsx`
+
+The toolbar exposes an **Auto Layout** menu item
+(`t("autoLayout")`) that calls `autoLayout()` on the canvas context.
+There is no automatic trigger — layout always runs in response to an
+explicit user action.
+
+### Pipeline
+
+**Location**: `components/canvas/context/CanvasContext.tsx`
+(`autoLayout` callback)
+
+1. Convert the live React Flow nodes/edges back into the internal
+   `Card[]` / `Arrow[]` format via `nodesToCards` and `edgesToArrows`.
+2. Collect each node's **measured DOM size** (`node.measured.width/height`)
+   from React Flow into a `measuredSizes` map. This step is what makes
+   the layout match what the user sees — falling back to estimates only
+   for nodes React Flow has not measured yet.
+3. Call `computeDagreLayout({ cards, arrows, cardMetrics, measuredSizes })`
+   to compute new `{ x, y }` for every card.
+4. `setNodes(...)` applies the new positions.
+5. After a single `requestAnimationFrame` (so React Flow commits the
+   positions before bounds are read), call
+   `fitView({ padding: 0.1, duration: 300 })` so the laid-out cards
+   land inside the current viewport.
+6. Surface a `t("autoLayoutApplied")` toast on success or
+   `t("autoLayoutEmptyError")` when the canvas is empty.
+
+`ReactFlowProvider` must wrap `CanvasProvider` for step 5 to work —
+`useReactFlow().fitView()` is only available inside the provider tree
+(see comment in `ReactFlowCanvas.tsx:36`).
+
+### Layout strategy (`lib/canvas/dagre-layout.ts`)
+
+The layout is a hybrid: dagre is used as a **y-ordering signal**, while
+horizontal placement is computed by a **longest-path DP** that respects
+both the stage taxonomy and intra-stage causal edges.
+
+1. **Validate arrows** — drop arrows whose endpoints are missing or
+   self-loops. If no valid arrows remain, fall through to the
+   centered-stage fallback (`fallbackStageLayout`).
+2. **Detect cycles** — `dagre.graphlib.alg.findCycles(g)`; if any
+   exist, log a warning and use `fallbackStageLayout` (stage-based X
+   - `calculateColumnYs` for Y). The diagram never crashes from a
+     user-introduced cycle.
+3. **Run dagre** with `rankdir: "LR"`, `ranker: "tight-tree"`,
+   `ranksep/nodesep/edgesep` from `DEFAULT_OPTIONS`. Node widths come
+   from `measuredSizes` or `NODE_WIDTH`; heights come from
+   `measuredSizes` or `estimateCardHeight(metricsCount, hasDescription)`.
+4. **Compute logical columns** via `computeLogicalColumns`:
+   `logicalCol(card) = max(stageIndex(card.type), max(logicalCol(pred) + 1))`.
+   This is the key trick — an intra-stage causal edge pushes its target
+   one column to the right, which cascades downstream so chains like
+   "Standardized Impact Reporting → Reduced Evaluation Burden" render
+   horizontally instead of stacking inside one stage column.
+5. **Pack columns vertically** using `calculateColumnYsFromHeights` —
+   each logical column is centered around `BASE_Y` and sorted by the
+   dagre-derived y so neighbours stay near their dagre neighbours.
+   Unknown-type cards (those without a stage) are kept in their own
+   bucket and retain their existing `x`.
+6. **Emit positions** — `x = START_X + HORIZONTAL_SPACING * col` for
+   cards with a known stage; `y` from the packing step.
+
+### Layout helpers (`lib/canvas/layout-helpers.ts`)
+
+| Symbol                                                                                | Role                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `STAGE_ORDER`                                                                         | Canonical stage sequence: activities → outputs → outcomes-short → outcomes-intermediate → impact. Used by `stageIndex` / `stageX`.                                                                      |
+| `NODE_WIDTH`, `HORIZONTAL_SPACING`, `START_X`, `BASE_Y`, `ROW_GAP`, `MIN_CARD_HEIGHT` | Spacing constants tuned to CardNode's actual rendered chrome.                                                                                                                                           |
+| `estimateCardHeight(metricsCount, hasDescription)`                                    | Pre-render height estimate used when `measuredSizes` is unavailable (AI generation flow). Values are tuned to match CardNode's actual header/footer/padding — earlier under-estimates produced overlap. |
+| `calculateColumnYsFromHeights(heights)`                                               | Packs pre-computed heights into a column centered on `BASE_Y`. Shared between the AI-generated layout path and the dagre post-pass so both paths produce identical vertical spacing.                    |
+| `calculateColumnYs(items)`                                                            | Convenience wrapper that derives heights from `(description, metrics.length)` and forwards to `calculateColumnYsFromHeights`.                                                                           |
+| `stageIndex(type)` / `stageX(type)`                                                   | Map a card type to its column index / canonical X. Returns `-1` / `START_X` for unknown types.                                                                                                          |
+
+### Tuning `estimateCardHeight`
+
+`estimateCardHeight` is invoked whenever `measuredSizes` lacks an entry
+(typically right after the agent emits a new canvas, before React Flow
+has measured the freshly-mounted nodes). The current weights are:
+
+```
+base                = 90
++ 100 if hasDescription
++ 40 + 24 * metricsCount   if metricsCount > 0
+clamped to >= MIN_CARD_HEIGHT (180)
+```
+
+These match CardNode's actual chrome (title padding + 100 for the
+description block + metric list header + 24 per metric row). If you
+add/remove a row, padding, or border in CardNode, retune these
+constants — visible regression mode is "cards overlap on first AI
+generation but spread out correctly after the next Auto Layout."
+
 ## File References
 
 ### Components
 
 - `components/canvas/ReactFlowCanvas.tsx` - Main canvas
+- `components/canvas/CanvasToolbar.tsx` - Toolbar (Auto Layout trigger)
+- `components/canvas/CardNode.tsx` - Card rendering incl. metrics list
+- `components/canvas/AddLogicSheet.tsx` - Card + metrics editing sheet
 - `components/canvas/EvidenceEdge.tsx:15` - Edge type registration
 - `components/canvas/EvidenceDialog.tsx` - Evidence modal
+- `components/canvas/context/CanvasContext.tsx` - `autoLayout`, `cardMetrics`, persistence
 
 ### Utilities
 
 - `lib/canvas/react-flow-utils.ts:42` - `arrowsToEdges()` function (three-tier color logic)
 - `lib/canvas/react-flow-utils.ts:70` - `edgesToArrows()` function (preserves externalPapers)
+- `lib/canvas/dagre-layout.ts` - `computeDagreLayout()` (hybrid dagre + longest-path DP)
+- `lib/canvas/layout-helpers.ts` - `estimateCardHeight`, `calculateColumnYsFromHeights`, stage constants
 - `lib/external-paper-search.ts` - External paper search orchestration
 - `lib/academic-apis/semantic-scholar.ts` - Semantic Scholar API client
 
@@ -353,6 +551,8 @@ Evidence with strength < 3 displays warning indicator (⚠️) in dialog to aler
 - `types/index.ts` - `CanvasData` interface
 - `types/index.ts` - `Arrow` interface (extended with `externalPapers`)
 - `types/index.ts` - `Card` interface
+- `types/index.ts` - `Metric` / `MetricSchema` (canvas metric shape)
+- `types/index.ts` - `Frequency` enum + `FREQUENCY_LABELS` / `FREQUENCY_OPTIONS`
 - `types/index.ts` - `ExternalPaper` interface (Semantic Scholar paper data)
 
 ## Styling Configuration
