@@ -10,7 +10,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { useNodesState, useEdgesState, useReactFlow } from "@xyflow/react";
+import { useNodesState, useEdgesState, useReactFlow, useNodesInitialized } from "@xyflow/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { CardNodeData } from "@/components/canvas/CardNode";
@@ -28,6 +28,7 @@ import {
   createCanvasOperations,
   getTypeFromColor,
   type CanvasOperations,
+  type LoadCanvasData,
 } from "./canvas-operations";
 import type { MetricFormInput, Metric, Card, Arrow, CanvasData, IPFSStorageResult } from "@/types";
 import type { OnNodesChange, OnEdgesChange, Node, Edge } from "@xyflow/react";
@@ -78,7 +79,7 @@ export interface StateReadingOperations {
   exportAsJSON: () => void;
   clearAllData: () => void;
   saveCanvasToIPFS: (ogImageCID?: string) => Promise<IPFSStorageResult | null>;
-  autoLayout: () => void;
+  autoLayout: (options?: { silent?: boolean }) => void;
 }
 
 /**
@@ -190,6 +191,9 @@ export function CanvasProvider({
   const edgesRef = useRef(edges);
   const cardMetricsRef = useRef(cardMetrics);
   const disableLocalStorageRef = useRef(disableLocalStorage);
+  // Set to true by loadGeneratedCanvas; consumed by the auto-fire effect once
+  // React Flow has measured the freshly-mounted nodes (useNodesInitialized → true).
+  const pendingAutoLayoutRef = useRef(false);
 
   // Keep refs in sync with state (single effect to minimize effects)
   useEffect(() => {
@@ -347,45 +351,65 @@ export function CanvasProvider({
     setClearConfirmOpen(true);
   }, []);
 
-  const autoLayout = useCallback(() => {
-    if (nodesRef.current.length === 0) {
-      toast.error(t("autoLayoutEmptyError"), { duration: 3000 });
-      return;
-    }
-
-    const cards = nodesToCards(nodesRef.current);
-    const arrows = edgesToArrows(edgesRef.current);
-    // Use real DOM-measured dimensions from React Flow so dagre spacing matches
-    // what the user actually sees, eliminating overlap from height estimation.
-    const measuredSizes: Record<string, { width: number; height: number }> = {};
-    for (const n of nodesRef.current) {
-      const w = n.measured?.width;
-      const h = n.measured?.height;
-      if (w && h) {
-        measuredSizes[n.id] = { width: w, height: h };
+  const autoLayout = useCallback(
+    (options?: { silent?: boolean }) => {
+      if (nodesRef.current.length === 0) {
+        if (!options?.silent) {
+          toast.error(t("autoLayoutEmptyError"), { duration: 3000 });
+        }
+        return;
       }
-    }
-    const newCards = computeDagreLayout({
-      cards,
-      arrows,
-      cardMetrics: cardMetricsRef.current,
-      measuredSizes,
-    });
-    const positionById = new Map(newCards.map((c) => [c.id, { x: c.x, y: c.y }]));
 
-    setNodes((prev) =>
-      prev.map((n) => {
-        const pos = positionById.get(n.id);
-        return pos ? { ...n, position: pos } : n;
-      }),
-    );
+      const cards = nodesToCards(nodesRef.current);
+      const arrows = edgesToArrows(edgesRef.current);
+      // Use real DOM-measured dimensions from React Flow so dagre spacing matches
+      // what the user actually sees, eliminating overlap from height estimation.
+      const measuredSizes: Record<string, { width: number; height: number }> = {};
+      for (const n of nodesRef.current) {
+        const w = n.measured?.width;
+        const h = n.measured?.height;
+        if (w && h) {
+          measuredSizes[n.id] = { width: w, height: h };
+        }
+      }
+      const newCards = computeDagreLayout({
+        cards,
+        arrows,
+        cardMetrics: cardMetricsRef.current,
+        measuredSizes,
+      });
+      const positionById = new Map(newCards.map((c) => [c.id, { x: c.x, y: c.y }]));
 
-    // Wait one frame so React Flow commits the new positions before fitView
-    // computes bounds — otherwise it zooms to the pre-layout viewport.
-    requestAnimationFrame(() => fitView({ padding: 0.1, duration: 300 }));
+      setNodes((prev) =>
+        prev.map((n) => {
+          const pos = positionById.get(n.id);
+          return pos ? { ...n, position: pos } : n;
+        }),
+      );
 
-    toast.success(t("autoLayoutApplied"), { duration: 2000 });
-  }, [setNodes, fitView, t]);
+      // Wait one frame so React Flow commits the new positions before fitView
+      // computes bounds — otherwise it zooms to the pre-layout viewport.
+      requestAnimationFrame(() => fitView({ padding: 0.1, duration: 300 }));
+
+      if (!options?.silent) {
+        toast.success(t("autoLayoutApplied"), { duration: 2000 });
+      }
+    },
+    [setNodes, fitView, t],
+  );
+
+  // Auto-fire auto-layout once after AI generation, when React Flow has
+  // measured all newly-mounted nodes. Without this, the initial render uses
+  // estimateCardHeight (text-blind) and visibly differs from the result of
+  // clicking the Auto Layout button — see docs/react-flow-architecture.md.
+  const nodesInitialized = useNodesInitialized();
+  useEffect(() => {
+    if (!pendingAutoLayoutRef.current) return;
+    if (!nodesInitialized) return;
+    if (nodesRef.current.length === 0) return;
+    pendingAutoLayoutRef.current = false;
+    autoLayout({ silent: true });
+  }, [nodesInitialized, autoLayout]);
 
   // 8. Create operations (memoized - now only depends on stable setters)
   const operations = useMemo(
@@ -399,6 +423,16 @@ export function CanvasProvider({
         createNodeCallbacks,
       }),
     [setNodes, setEdges, setCardMetrics, createNodeCallbacks],
+  );
+
+  // Wrap loadGeneratedCanvas so that the auto-fire effect knows a fresh AI
+  // generation just landed and should re-layout once nodes are measured.
+  const loadGeneratedCanvas = useCallback(
+    (data: LoadCanvasData) => {
+      pendingAutoLayoutRef.current = true;
+      operations.loadGeneratedCanvas(data);
+    },
+    [operations],
   );
 
   // 8. Derived state: editingNodeData (memoized)
@@ -441,6 +475,7 @@ export function CanvasProvider({
   const operationsValue = useMemo(
     () => ({
       ...operations,
+      loadGeneratedCanvas,
       setNodes,
       setEdges,
       onNodesChange,
@@ -453,6 +488,7 @@ export function CanvasProvider({
     }),
     [
       operations,
+      loadGeneratedCanvas,
       setNodes,
       setEdges,
       onNodesChange,
