@@ -100,6 +100,82 @@ Error codes specific to the multipart path:
 The JSON path still returns `400 Invalid JSON` / `400 Invalid request`
 as before.
 
+## Workflow error handling
+
+Both `/api/workflow/stream` (SSE) and `/api/compact` (REST) funnel Mastra
+workflow failures through `lib/workflow-errors.ts` so the UI can render
+locale-aware messages instead of a generic "Workflow failed".
+
+### Pipeline
+
+1. **`extractErrorMessage(payload)`** — pulls the deepest `Error.message`
+   out of a Mastra step-failure payload. It walks `payload.error.cause`
+   recursively, then falls back to `payload.output.error`, then to
+   `"Step failed"`. This is needed because Mastra spreads thrown errors
+   onto `payload.error` rather than nesting them under `payload.output`.
+2. **`categorizeError(rawMessage)`** — keyword-matches the raw message
+   and returns one of the seven `ErrorCategory` values below. Categories
+   correspond 1:1 to keys in the `workflowErrors` namespace of
+   `messages/{en,ja}.json`.
+
+### Error categories
+
+| Category       | Trigger keywords (case-insensitive)             | i18n key                      |
+| -------------- | ----------------------------------------------- | ----------------------------- |
+| `highDemand`   | `"high demand"`, `"overloaded"`, `"503"`        | `workflowErrors.highDemand`   |
+| `rateLimit`    | `"rate limit"`, `"429"`, `"too many requests"`  | `workflowErrors.rateLimit`    |
+| `timeout`      | `"timeout"`, `"timed out"`, `"deadline"`        | `workflowErrors.timeout`      |
+| `authError`    | `"unauthorized"`, `"forbidden"`, `"api key"`    | `workflowErrors.authError`    |
+| `invalidInput` | `"validation"`, `"invalid"`, `"zod"`            | `workflowErrors.invalidInput` |
+| `modelError`   | `"model"`, `"provider"`, `"gemini"`, `"openai"` | `workflowErrors.modelError`   |
+| `unknown`      | Default fallback when none of the above match.  | `workflowErrors.unknown`      |
+
+### SSE event shape (`/api/workflow/stream`)
+
+Step-level and workflow-level failures emit:
+
+```jsonc
+// type: "step-error" — fired when a single step fails
+{ "type": "step-error", "stepId": "...", "error": "<raw message>", "errorCategory": "rateLimit" }
+
+// type: "workflow-error" — fired when the workflow as a whole fails
+{
+  "type": "workflow-error",
+  "error": "<raw message>",
+  "errorCategory": "highDemand",
+  "rawError": "<deepest message from failed step, if any>",
+  "failedStepId": "step-id-or-null"
+}
+```
+
+`errorCategory` is the contract — the client (`GenerateLogicModelDialog`,
+`useWorkflowStream`) looks up the matching `tErrors(category)` translation
+to render a user-facing message, while `error` / `rawError` are kept for
+logs and the "show details" affordance.
+
+### REST shape (`/api/compact`)
+
+Returns `5xx` JSON of the form `{ error, errorCategory }` where
+`errorCategory` is the same enum. Callers (e.g. the bot integration) can
+choose to translate or surface the raw message.
+
+### UI wiring
+
+- `components/canvas/GenerateLogicModelDialog.tsx` listens for
+  `step-error` / `workflow-error` SSE events and maps `errorCategory`
+  through `useTranslations("workflowErrors")`.
+- The dialog shows the localised category message in the main view and
+  reveals the raw `error` / `rawError` only when the user expands the
+  details disclosure.
+
+### Adding a new category
+
+1. Add the new value to `ErrorCategory` in `lib/workflow-errors.ts` and
+   a matching branch in `categorizeError()`.
+2. Add the translation in `messages/en.json` and `messages/ja.json` under
+   `workflowErrors`.
+3. Cover the new keyword(s) in `lib/workflow-errors.test.ts`.
+
 ## Timeouts
 
 - `/api/workflow/stream` and `/api/compact` both declare `maxDuration = 300`
