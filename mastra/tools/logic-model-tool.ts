@@ -2,12 +2,7 @@ import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import type { Card, Arrow, Metric, CanvasData, StageInput, ConnectionInput } from "@/types";
 import { computeDagreLayout } from "@/lib/canvas/dagre-layout";
-import {
-  calculateColumnYs,
-  estimateCardHeight,
-  HORIZONTAL_SPACING,
-  START_X,
-} from "@/lib/canvas/layout-helpers";
+import { calculateColumnYs, HORIZONTAL_SPACING, START_X } from "@/lib/canvas/layout-helpers";
 import { createLogger } from "@/lib/logger";
 import {
   CanvasDataSchema,
@@ -17,9 +12,6 @@ import {
 } from "@/types";
 
 const logger = createLogger({ module: "tool:logic-model" });
-
-// Re-export for backwards compatibility with existing tests/callers
-export { calculateColumnYs, estimateCardHeight };
 
 export const logicModelTool = createTool({
   id: "generate-logic-model",
