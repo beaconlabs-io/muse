@@ -1,6 +1,7 @@
 import { getAllEvidenceMeta } from "@beaconlabs-io/evidence/content";
 import type { EvidenceMatch } from "@/types";
 import type { Agent } from "@mastra/core/agent";
+import type { MastraScorers } from "@mastra/core/evals";
 import { EVIDENCE_MATCH_THRESHOLD, MAX_MATCHES_PER_EDGE } from "@/lib/constants";
 import { createLogger } from "@/lib/logger";
 
@@ -15,6 +16,7 @@ export interface EdgeInput {
 export interface BatchSearchOptions {
   maxMatchesPerEdge?: number;
   minScore?: number;
+  scorers?: MastraScorers;
 }
 
 /**
@@ -31,7 +33,11 @@ export async function searchEvidenceForAllEdges(
   edges: EdgeInput[],
   options: BatchSearchOptions = {},
 ): Promise<Record<string, EvidenceMatch[]>> {
-  const { maxMatchesPerEdge = MAX_MATCHES_PER_EDGE, minScore = EVIDENCE_MATCH_THRESHOLD } = options;
+  const {
+    maxMatchesPerEdge = MAX_MATCHES_PER_EDGE,
+    minScore = EVIDENCE_MATCH_THRESHOLD,
+    scorers = {},
+  } = options;
 
   if (edges.length === 0) {
     return {};
@@ -93,7 +99,7 @@ Return JSON with this structure:
 Include ALL arrow IDs in results, even if they have empty match arrays.`,
         },
       ],
-      { maxSteps: 5 },
+      { maxSteps: 5, scorers },
     );
 
     logger.debug({ responseLength: result.text?.length || 0 }, "Agent response received");

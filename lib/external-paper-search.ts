@@ -1,4 +1,5 @@
 import type { ExternalPaper } from "@/types";
+import type { MastraScorers } from "@mastra/core/evals";
 import { extractSearchKeywords } from "@/lib/academic-apis/extract-search-keywords";
 import { searchSemanticScholar } from "@/lib/academic-apis/semantic-scholar";
 import {
@@ -128,13 +129,15 @@ function isPrimarilyEnglish(text: string): boolean {
  * Uses the same AI SDK pattern as extract-search-keywords.ts.
  * Falls back to the original query on failure.
  */
-async function translateToEnglishQuery(query: string): Promise<string> {
+async function translateToEnglishQuery(
+  query: string,
+  scorers: MastraScorers = {},
+): Promise<string> {
   if (isPrimarilyEnglish(query)) return query;
 
   try {
-    const result = await queryTranslationAgent.generate(
-      `Translate the following search query into English academic search keywords suitable for Semantic Scholar. Return ONLY the English search query, nothing else.\n\nQuery: ${query}`,
-    );
+    const prompt = `Translate the following search query into English academic search keywords suitable for Semantic Scholar. Return ONLY the English search query, nothing else.\n\nQuery: ${query}`;
+    const result = await queryTranslationAgent.generate(prompt, { scorers });
 
     const translated = result.text.trim();
     if (!translated) {
@@ -167,6 +170,7 @@ async function translateToEnglishQuery(query: string): Promise<string> {
 export async function searchExternalPapersForEdge(
   fromContent: string,
   toContent: string,
+  scorers: MastraScorers = {},
 ): Promise<ExternalPaper[]> {
   if (!EXTERNAL_SEARCH_ENABLED) return [];
 
@@ -187,6 +191,7 @@ export async function searchExternalPapersForEdge(
     to.title,
     from.description,
     to.description,
+    scorers,
   );
 
   if (!keywords && !causal) return [];
