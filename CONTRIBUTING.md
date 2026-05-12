@@ -37,11 +37,10 @@ This project uses [husky](https://typicode.github.io/husky/) with [lint-staged](
 1. Linted with ESLint (`--fix`)
 2. Formatted with Prettier
 
-You can also run these manually:
+You can also run ESLint manually:
 
 ```bash
 bun lint      # ESLint with auto-fix
-bun format    # Prettier formatting
 ```
 
 ### Commit Messages
@@ -64,10 +63,10 @@ refactor: extract evidence search into batch processor
    git checkout -b feature/your-feature dev
    ```
 
-2. **Make your changes** and ensure code passes linting and formatting:
+2. **Make your changes** and ensure ESLint passes (`bun lint`). Prettier runs on staged files when you commit.
 
    ```bash
-   bun lint && bun format
+   bun lint
    ```
 
 3. **Commit** with a descriptive message following the conventional commit format.

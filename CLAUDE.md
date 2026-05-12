@@ -12,7 +12,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun run test` - Run Vitest in watch mode
 - `bun run test:run` - Run Vitest once (CI-equivalent)
 - `bun run test:coverage` - Run Vitest with v8 coverage report
-- `bun format` - Format code with Prettier (required before commits via husky pre-commit hook)
 - `bun clean` - Clean build artifacts and reinstall dependencies
 
 ### Mastra Development

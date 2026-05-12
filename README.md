@@ -112,7 +112,6 @@ See [docs/setup.md](./docs/setup.md#docker) for build args vs runtime env, persi
 | `bun lint`              | Run ESLint with auto-fix              |
 | `bun run test:run`      | Run unit tests once                   |
 | `bun run test:coverage` | Run unit tests with coverage          |
-| `bun format`            | Format code with Prettier             |
 | `bun clean`             | Clean build artifacts and reinstall   |
 | `bun dev:mastra`        | Start Mastra agent development server |
 | `bun build:mastra`      | Build Mastra agent system             |
