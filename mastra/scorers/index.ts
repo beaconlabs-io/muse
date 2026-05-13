@@ -1,4 +1,9 @@
-import { createAnswerRelevancyScorer, createToxicityScorer } from "@mastra/evals/scorers/prebuilt";
+import {
+  createAnswerRelevancyScorer,
+  createFaithfulnessScorer,
+  createHallucinationScorer,
+  createPromptAlignmentScorerLLM,
+} from "@mastra/evals/scorers/prebuilt";
 import type { MastraScorers } from "@mastra/core/evals";
 import type { Mastra } from "@mastra/core/mastra";
 import { createLogger } from "@/lib/logger";
@@ -9,7 +14,12 @@ const MODEL = process.env.MODEL || "google/gemini-2.5-flash";
 
 export const SCORERS = {
   answerRelevancy: createAnswerRelevancyScorer({ model: MODEL }),
-  toxicity: createToxicityScorer({ model: MODEL }),
+  faithfulness: createFaithfulnessScorer({ model: MODEL }),
+  hallucination: createHallucinationScorer({ model: MODEL }),
+  promptAlignment: createPromptAlignmentScorerLLM({
+    model: MODEL,
+    options: { evaluationMode: "system" },
+  }),
 };
 
 export function buildScorers(mastra: Mastra): MastraScorers {
