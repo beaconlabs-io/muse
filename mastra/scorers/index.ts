@@ -4,8 +4,7 @@ import {
   createHallucinationScorer,
   createPromptAlignmentScorerLLM,
 } from "@mastra/evals/scorers/prebuilt";
-
-const FLASH_MODEL = process.env.FLASH_MODEL || "google/gemini-2.5-flash";
+import { FLASH_MODEL } from "../config/models";
 
 export const SCORERS = {
   answerRelevancy: createAnswerRelevancyScorer({ model: FLASH_MODEL }),

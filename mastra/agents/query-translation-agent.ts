@@ -1,6 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-
-const FLASH_MODEL = process.env.FLASH_MODEL || "google/gemini-2.5-flash";
+import { FLASH_MODEL } from "../config/models";
 
 /**
  * Query Translation Agent
