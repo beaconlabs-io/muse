@@ -5,14 +5,14 @@ import {
   createPromptAlignmentScorerLLM,
 } from "@mastra/evals/scorers/prebuilt";
 
-const MODEL = process.env.MODEL || "google/gemini-2.5-flash";
+const FLASH_MODEL = process.env.FLASH_MODEL || "google/gemini-2.5-flash";
 
 export const SCORERS = {
-  answerRelevancy: createAnswerRelevancyScorer({ model: MODEL }),
-  faithfulness: createFaithfulnessScorer({ model: MODEL }),
-  hallucination: createHallucinationScorer({ model: MODEL }),
+  answerRelevancy: createAnswerRelevancyScorer({ model: FLASH_MODEL }),
+  faithfulness: createFaithfulnessScorer({ model: FLASH_MODEL }),
+  hallucination: createHallucinationScorer({ model: FLASH_MODEL }),
   promptAlignment: createPromptAlignmentScorerLLM({
-    model: MODEL,
+    model: FLASH_MODEL,
     options: { evaluationMode: "system" },
   }),
 };
