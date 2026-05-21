@@ -7,7 +7,7 @@ import {
 import { logicModelTool } from "../tools/logic-model-tool";
 
 const MODEL = process.env.MODEL || "google/gemini-2.5-pro";
-const SCORER_MODEL = process.env.SCORER_MODEL || "google/gemini-2.5-flash";
+const FLASH_MODEL = process.env.FLASH_MODEL || "google/gemini-2.5-flash";
 
 export const logicModelAgent = new Agent({
   id: "logic-model-agent",
@@ -38,13 +38,13 @@ MANDATORY: You MUST call the logicModelTool as your final action. Activating ski
     },
     promptAlignment: {
       scorer: createPromptAlignmentScorerLLM({
-        model: SCORER_MODEL,
+        model: FLASH_MODEL,
         options: { evaluationMode: "system" },
       }),
       sampling: { type: "ratio", rate: 1 },
     },
     answerRelevancy: {
-      scorer: createAnswerRelevancyScorer({ model: SCORER_MODEL }),
+      scorer: createAnswerRelevancyScorer({ model: FLASH_MODEL }),
       sampling: { type: "ratio", rate: 1 },
     },
   },

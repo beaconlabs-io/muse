@@ -842,12 +842,11 @@ Traces are stored locally in LibSQL (`mastra.db`) via `DefaultExporter` and view
 
 ### Environment Variables
 
-| Variable                              | Required | Description                                                          |
-| ------------------------------------- | -------- | -------------------------------------------------------------------- |
-| `MASTRA_STORAGE_URL`                  | No       | LibSQL storage URL (default: `file:./mastra.db`)                     |
-| `SCORER_MODEL`                        | No       | Model used by LLM-based scorers (default: `google/gemini-2.5-flash`) |
-| `SEMANTIC_SCHOLAR_API_KEY`            | No       | Semantic Scholar API key for higher rate limits (optional)           |
-| `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` | No       | Set to `true` to show external paper search toggle in the UI         |
+| Variable                              | Required | Description                                                  |
+| ------------------------------------- | -------- | ------------------------------------------------------------ |
+| `MASTRA_STORAGE_URL`                  | No       | LibSQL storage URL (default: `file:./mastra.db`)             |
+| `SEMANTIC_SCHOLAR_API_KEY`            | No       | Semantic Scholar API key for higher rate limits (optional)   |
+| `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` | No       | Set to `true` to show external paper search toggle in the UI |
 
 ### Relationship with lib/logger.ts
 
@@ -876,7 +875,6 @@ Configured directly on the agent constructor — every `agent.generate()` call s
 
 Notes:
 
-- Use `SCORER_MODEL` env var (default `google/gemini-2.5-flash`) to swap the model used by LLM-based scorers without changing code.
 - Text-based scorers (`promptAlignment`, `answerRelevancy`) can return `score=0` for tool-call-only agents because the agent's text channel is empty. Treat that score as a known limitation rather than a real signal — a custom structured-output scorer for `logicModelAgent` is a follow-up item.
 - Other agents (`evidenceSearchAgent`, `keywordExtractionAgent`, `queryTranslationAgent`) currently have no live scorers attached.
 
