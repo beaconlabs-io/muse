@@ -46,7 +46,7 @@ in parentheses.
 
 muse ships with Gemini as the default LLM provider. Required:
 
-- `GOOGLE_API_KEY` — used by every agent; required
+- `GOOGLE_GENERATIVE_AI_API_KEY` — used by every agent; required
 - `MODEL` — primary reasoning model (default `google/gemini-2.5-pro`; used
   by logic-model, evidence-search, and conversation-bot agents)
 - `FLASH_MODEL` — lightweight model for translation/keyword extraction
@@ -136,7 +136,7 @@ Multi-stage build (`Dockerfile`):
 
 Because `NEXT_PUBLIC_*` values are baked in at build time, they must be
 passed as **build args** (not runtime env). Server-only secrets
-(`PINATA_JWT`, `GOOGLE_API_KEY`, `MODEL`) are injected at
+(`PINATA_JWT`, `GOOGLE_GENERATIVE_AI_API_KEY`, `MODEL`) are injected at
 runtime.
 
 ### docker-compose
