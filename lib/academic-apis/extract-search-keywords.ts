@@ -1,4 +1,3 @@
-import type { MastraScorers } from "@mastra/core/evals";
 import { createLogger } from "@/lib/logger";
 import { keywordExtractionAgent } from "@/mastra/agents/keyword-extraction-agent";
 
@@ -23,7 +22,6 @@ export async function extractSearchKeywords(
   toTitle: string,
   fromDescription?: string,
   toDescription?: string,
-  scorers: MastraScorers = {},
 ): Promise<SearchQueries> {
   const fallback: SearchQueries = {
     keywords: `${fromTitle} ${toTitle}`.trim(),
@@ -37,7 +35,7 @@ export async function extractSearchKeywords(
 
   try {
     const prompt = `From: ${fromContext}\nTo: ${toContext}`;
-    const result = await keywordExtractionAgent.generate(prompt, { scorers });
+    const result = await keywordExtractionAgent.generate(prompt);
 
     const cleaned = result.text
       .trim()
