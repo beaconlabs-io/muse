@@ -7,7 +7,6 @@ import { MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL } from "@/lib/constants";
 import { searchEvidenceForAllEdges, type EdgeInput } from "@/lib/evidence-search-batch";
 import { searchExternalPapersForEdge } from "@/lib/external-paper-search";
 import { createLogger } from "@/lib/logger";
-import { buildScorers } from "@/mastra/scorers";
 import {
   CanvasDataSchema,
   EvidenceMatchSchema,
@@ -46,13 +45,12 @@ const generateLogicModelStep = createStep({
   outputSchema: z.object({
     canvasData: CanvasDataSchema,
   }),
-  execute: async ({ inputData, getInitData, mastra }) => {
+  execute: async ({ inputData, getInitData }) => {
     const { goal, fileInput } = inputData;
     const MAX_RETRIES = 2;
 
     const initData = getInitData<{ enableMetrics?: boolean }>();
     const enableMetrics = initData?.enableMetrics === true;
-    const scorers = buildScorers(mastra);
 
     if (!goal && !fileInput) {
       throw new Error("Either goal text or fileInput must be provided");
@@ -110,7 +108,6 @@ const generateLogicModelStep = createStep({
           [userMessage] as unknown as Parameters<typeof logicModelAgent.generate>[0],
           {
             maxSteps: 12,
-            scorers,
           },
         );
 
@@ -255,9 +252,8 @@ const searchEvidenceStep = createStep({
     canvasData: CanvasDataSchema,
     evidenceByArrow: z.record(z.string(), z.array(EvidenceMatchSchema)),
   }),
-  execute: async ({ inputData, mastra }) => {
+  execute: async ({ inputData }) => {
     const { canvasData } = inputData;
-    const scorers = buildScorers(mastra);
 
     logger.info(
       {
@@ -313,9 +309,7 @@ const searchEvidenceStep = createStep({
     );
 
     // Single batch call for all edges
-    const evidenceByArrow = await searchEvidenceForAllEdges(evidenceSearchAgent, edges, {
-      scorers,
-    });
+    const evidenceByArrow = await searchEvidenceForAllEdges(evidenceSearchAgent, edges);
 
     // Ensure all arrows have entries (even if empty)
     for (const arrow of canvasData.arrows) {
@@ -356,7 +350,7 @@ const searchExternalPapersStep = createStep({
     evidenceByArrow: z.record(z.string(), z.array(EvidenceMatchSchema)),
     externalPapersByArrow: z.record(z.string(), z.array(ExternalPaperSchema)),
   }),
-  execute: async ({ inputData, getInitData, mastra }) => {
+  execute: async ({ inputData, getInitData }) => {
     const { canvasData, evidenceByArrow } = inputData;
 
     const initData = getInitData<{ enableExternalSearch?: boolean }>();
@@ -366,8 +360,6 @@ const searchExternalPapersStep = createStep({
       logger.debug("External search not opted in, skipping step 2.5");
       return { canvasData, evidenceByArrow, externalPapersByArrow: {} };
     }
-
-    const scorers = buildScorers(mastra);
 
     logger.info("Step 2.5: Searching external academic papers");
 
@@ -399,7 +391,7 @@ const searchExternalPapersStep = createStep({
           ? `${toCard.title}. ${toCard.description}`
           : toCard.title;
 
-        const papers = await searchExternalPapersForEdge(fromContent, toContent, scorers);
+        const papers = await searchExternalPapersForEdge(fromContent, toContent);
         return { arrowId: arrow.id, papers };
       }),
     );
