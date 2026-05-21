@@ -842,11 +842,12 @@ Traces are stored locally in LibSQL (`mastra.db`) via `DefaultExporter` and view
 
 ### Environment Variables
 
-| Variable                              | Required | Description                                                  |
-| ------------------------------------- | -------- | ------------------------------------------------------------ |
-| `MASTRA_STORAGE_URL`                  | No       | LibSQL storage URL (default: `file:./mastra.db`)             |
-| `SEMANTIC_SCHOLAR_API_KEY`            | No       | Semantic Scholar API key for higher rate limits (optional)   |
-| `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` | No       | Set to `true` to show external paper search toggle in the UI |
+| Variable                              | Required | Description                                                          |
+| ------------------------------------- | -------- | -------------------------------------------------------------------- |
+| `MASTRA_STORAGE_URL`                  | No       | LibSQL storage URL (default: `file:./mastra.db`)                     |
+| `SCORER_MODEL`                        | No       | Model used by LLM-based scorers (default: `google/gemini-2.5-flash`) |
+| `SEMANTIC_SCHOLAR_API_KEY`            | No       | Semantic Scholar API key for higher rate limits (optional)           |
+| `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` | No       | Set to `true` to show external paper search toggle in the UI         |
 
 ### Relationship with lib/logger.ts
 
@@ -856,6 +857,39 @@ The custom logger (`lib/logger.ts`) and Mastra observability serve complementary
 - **Mastra Observability**: Distributed tracing (spans, trace context, LLM token tracking, Mastra Studio)
 
 Both coexist without interference.
+
+## Scorers & Evaluation
+
+The application uses two distinct scorer wiring patterns. Choose the right one based on whether you need live, continuous evaluation or retrospective trace scoring.
+
+### 1. Agent-level live evaluation (`Agent({ scorers })`)
+
+Configured directly on the agent constructor — every `agent.generate()` call streams its result through the attached scorers, results land in the `mastra_scorers` table, and `sampling.rate` lets you throttle LLM-based scorers in production.
+
+`logicModelAgent` (defined in `mastra/agents/logic-model-agent.ts`) currently attaches three scorers:
+
+| Scorer key         | Factory                                   | Cost | Sampling | Purpose                                                                                              |
+| ------------------ | ----------------------------------------- | ---- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `toolCallAccuracy` | `createToolCallAccuracyScorerCode`        | none | 1.0      | Deterministically verify `logicModelTool` is called exactly once (`strictMode: true`). Always on.    |
+| `promptAlignment`  | `createPromptAlignmentScorerLLM` (system) | LLM  | tunable  | Multi-dimensional alignment check against the system prompt (language, tool requirement, structure). |
+| `answerRelevancy`  | `createAnswerRelevancyScorer`             | LLM  | tunable  | Relevancy of the response to the user goal / attached document.                                      |
+
+Notes:
+
+- Use `SCORER_MODEL` env var (default `google/gemini-2.5-flash`) to swap the model used by LLM-based scorers without changing code.
+- Text-based scorers (`promptAlignment`, `answerRelevancy`) can return `score=0` for tool-call-only agents because the agent's text channel is empty. Treat that score as a known limitation rather than a real signal — a custom structured-output scorer for `logicModelAgent` is a follow-up item.
+- Other agents (`evidenceSearchAgent`, `keywordExtractionAgent`, `queryTranslationAgent`) currently have no live scorers attached.
+
+### 2. Studio registry (`Mastra({ scorers: SCORERS })`)
+
+`mastra/scorers/index.ts` exports a `SCORERS` constant containing four prebuilt LLM scorers (`answerRelevancy`, `faithfulness`, `hallucination`, `promptAlignment`). It is registered on the `Mastra` instance in `mastra/index.ts` so they show up in **Mastra Studio's Scorers tab**, where you can run them retroactively against any saved trace.
+
+This path does **not** affect runtime — it exists purely so engineers can score historical interactions on demand from Studio. Add/remove scorers in `mastra/scorers/index.ts` to change what is available for manual evaluation.
+
+### When to use which
+
+- **Live evaluation**: choose when you need continuous quality monitoring with sampling control. Add the scorer to the agent's constructor.
+- **Studio registry**: choose for ad-hoc experiments, A/B comparisons of prompts, or evaluating an agent that doesn't yet need automatic scoring overhead. No code changes per run.
 
 ## Future Enhancements
 
