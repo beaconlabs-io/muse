@@ -12,6 +12,7 @@ import { evidenceSearchAgent } from "./agents/evidence-search-agent";
 import { keywordExtractionAgent } from "./agents/keyword-extraction-agent";
 import { logicModelAgent } from "./agents/logic-model-agent";
 import { queryTranslationAgent } from "./agents/query-translation-agent";
+import { SCORERS } from "./scorers";
 import { logicModelWithEvidenceWorkflow } from "./workflows/logic-model-with-evidence";
 
 // TODO: validate CONNECTION_URL for production
@@ -54,7 +55,7 @@ const observability = new Observability({
   configSelector: () => (process.env.NODE_ENV === "production" ? "production" : "development"),
 });
 
-export const mastra = new Mastra({
+export const mastra: Mastra = new Mastra({
   agents: {
     logicModelAgent,
     evidenceSearchAgent,
@@ -66,5 +67,6 @@ export const mastra = new Mastra({
   workspace,
   storage,
   observability,
+  scorers: SCORERS,
   // vectors: { libSqlVector },
 });

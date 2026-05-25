@@ -80,12 +80,12 @@ export const logicModelTool = createTool({
       intervention,
       context: targetContext,
       evidenceIds,
-      activities,
-      outputs,
-      outcomesShort,
-      outcomesIntermediate,
-      impact,
-      connections,
+      activities: activities as StageInput[],
+      outputs: outputs as StageInput[],
+      outcomesShort: outcomesShort as StageInput[],
+      outcomesIntermediate: outcomesIntermediate as StageInput[],
+      impact: impact as StageInput[],
+      connections: connections as ConnectionInput[] | undefined,
     });
   },
 });
