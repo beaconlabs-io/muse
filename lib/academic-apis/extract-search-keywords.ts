@@ -34,7 +34,8 @@ export async function extractSearchKeywords(
   const toContext = toDescription ? `${toTitle} - ${toDescription}` : toTitle;
 
   try {
-    const result = await keywordExtractionAgent.generate(`From: ${fromContext}\nTo: ${toContext}`);
+    const prompt = `From: ${fromContext}\nTo: ${toContext}`;
+    const result = await keywordExtractionAgent.generate(prompt);
 
     const cleaned = result.text
       .trim()

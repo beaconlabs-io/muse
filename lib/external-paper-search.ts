@@ -132,9 +132,8 @@ async function translateToEnglishQuery(query: string): Promise<string> {
   if (isPrimarilyEnglish(query)) return query;
 
   try {
-    const result = await queryTranslationAgent.generate(
-      `Translate the following search query into English academic search keywords suitable for Semantic Scholar. Return ONLY the English search query, nothing else.\n\nQuery: ${query}`,
-    );
+    const prompt = `Translate the following search query into English academic search keywords suitable for Semantic Scholar. Return ONLY the English search query, nothing else.\n\nQuery: ${query}`;
+    const result = await queryTranslationAgent.generate(prompt);
 
     const translated = result.text.trim();
     if (!translated) {

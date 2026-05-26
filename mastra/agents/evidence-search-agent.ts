@@ -1,7 +1,6 @@
 import { Agent } from "@mastra/core/agent";
+import { MODEL } from "../config/models";
 import { getAllEvidenceTool } from "../tools/get-all-evidence-tool";
-
-const MODEL = process.env.MODEL || "google/gemini-2.5-pro";
 
 /**
  * Evidence Search Agent

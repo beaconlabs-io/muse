@@ -1,7 +1,11 @@
 import { Agent } from "@mastra/core/agent";
+import {
+  createAnswerRelevancyScorer,
+  createPromptAlignmentScorerLLM,
+  createToolCallAccuracyScorerCode,
+} from "@mastra/evals/scorers/prebuilt";
+import { FLASH_MODEL, MODEL } from "../config/models";
 import { logicModelTool } from "../tools/logic-model-tool";
-
-const MODEL = process.env.MODEL || "google/gemini-2.5-pro";
 
 export const logicModelAgent = new Agent({
   id: "logic-model-agent",
@@ -21,5 +25,25 @@ MANDATORY: You MUST call the logicModelTool as your final action. Activating ski
   model: MODEL,
   tools: {
     logicModelTool,
+  },
+  scorers: {
+    toolCallAccuracy: {
+      scorer: createToolCallAccuracyScorerCode({
+        expectedTool: "logicModelTool",
+        strictMode: true,
+      }),
+      sampling: { type: "ratio", rate: 1 },
+    },
+    promptAlignment: {
+      scorer: createPromptAlignmentScorerLLM({
+        model: FLASH_MODEL,
+        options: { evaluationMode: "system" },
+      }),
+      sampling: { type: "ratio", rate: 0.3 },
+    },
+    answerRelevancy: {
+      scorer: createAnswerRelevancyScorer({ model: FLASH_MODEL }),
+      sampling: { type: "ratio", rate: 0.3 },
+    },
   },
 });
