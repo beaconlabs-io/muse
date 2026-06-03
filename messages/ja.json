@@ -32,6 +32,7 @@
     "uploading": "アップロード中...",
     "exportImage": "画像エクスポート",
     "exportJSON": "JSONエクスポート",
+    "downloadRecipe": "レシピをダウンロード (HTML)",
     "clearAll": "すべてクリア",
     "autoLayout": "自動レイアウト",
     "autoLayoutApplied": "レイアウトを更新しました",
@@ -328,5 +329,24 @@
     "siteDescription": "エビデンスを活用したインタラクティブなロジックモデルの作成と編集",
     "canvasTitle": "MUSEキャンバス - インタラクティブなロジックモデル",
     "canvasDescription": "エビデンスを活用したインタラクティブなロジックモデルの作成と編集 - MUSE by BeaconLabs"
+  },
+  "recipe": {
+    "defaultTitle": "ロジックモデル",
+    "title": "実行レシピ",
+    "description": "アウトプットとアウトカムの各メトリクスについて、測定手順・データ収集方法・必要リソース・頻度・注意点をまとめたHTMLをダウンロードします。",
+    "noMetricsTitle": "対象のメトリクスがありません",
+    "noMetricsBody": "レシピを生成するには、アウトプットまたはアウトカムのカードにメトリクスを追加してください。",
+    "noTargetCards": "アウトプットまたはアウトカムのカード（メトリクス付き）を追加してからレシピを生成してください。",
+    "targetSummary": "アウトプット／アウトカムのメトリクス {count} 件をレシピに含めます。",
+    "statusGenerating": "AIで測定方法を生成しています…",
+    "statusRendering": "HTMLを生成しています…",
+    "statusReady": "レシピのHTMLをダウンロードしました。",
+    "errorTitle": "レシピの生成に失敗しました",
+    "errorBody": "予期しないエラーが発生しました。もう一度お試しください。",
+    "retry": "再試行",
+    "downloadAgain": "もう一度ダウンロード",
+    "downloaded": "レシピのHTMLをダウンロードしました",
+    "downloadFailed": "HTMLの生成に失敗しました",
+    "close": "閉じる"
   }
 }

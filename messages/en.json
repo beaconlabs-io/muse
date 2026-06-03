@@ -32,6 +32,7 @@
     "uploading": "Uploading...",
     "exportImage": "Export Image",
     "exportJSON": "Export JSON",
+    "downloadRecipe": "Download Recipe (HTML)",
     "clearAll": "Clear All",
     "autoLayout": "Auto Layout",
     "autoLayoutApplied": "Layout updated",
@@ -328,5 +329,24 @@
     "siteDescription": "Create and edit interactive logic models with evidence",
     "canvasTitle": "MUSE Canvas - Interactive Logic Models",
     "canvasDescription": "Create and edit interactive logic models with evidence - MUSE by BeaconLabs"
+  },
+  "recipe": {
+    "defaultTitle": "Logic Model",
+    "title": "Recipe",
+    "description": "Generate a downloadable measurement recipe (HTML) covering each Output and Outcome metric — including measurement steps, data collection methods, required resources, frequency, and cautions.",
+    "noMetricsTitle": "No metrics to include",
+    "noMetricsBody": "Add metrics to your Output and Outcome cards before generating a recipe.",
+    "noTargetCards": "Add Output or Outcome cards (with metrics) before generating a recipe.",
+    "targetSummary": "{count} Output / Outcome metrics will be included in the recipe.",
+    "statusGenerating": "Generating measurement guidance with AI…",
+    "statusRendering": "Generating HTML…",
+    "statusReady": "Recipe HTML downloaded.",
+    "errorTitle": "Recipe generation failed",
+    "errorBody": "An unexpected error occurred. Please try again.",
+    "retry": "Retry",
+    "downloadAgain": "Download again",
+    "downloaded": "Recipe HTML downloaded",
+    "downloadFailed": "Failed to generate the HTML",
+    "close": "Close"
   }
 }
