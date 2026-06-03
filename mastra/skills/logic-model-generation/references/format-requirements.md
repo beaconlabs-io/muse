@@ -75,13 +75,12 @@ Wrong (missing required fields):
 
 Each connection requires:
 
-| Field         | Type             | Required                      |
-| ------------- | ---------------- | ----------------------------- |
-| fromCardIndex | number (0-based) | Yes                           |
-| fromCardType  | enum             | Yes                           |
-| toCardIndex   | number (0-based) | Yes                           |
-| toCardType    | enum             | Yes                           |
-| reasoning     | string           | No (but strongly recommended) |
+| Field         | Type             | Required |
+| ------------- | ---------------- | -------- |
+| fromCardIndex | number (0-based) | Yes      |
+| fromCardType  | enum             | Yes      |
+| toCardIndex   | number (0-based) | Yes      |
+| toCardType    | enum             | Yes      |
 
 Valid card type values for fromCardType and toCardType:
 

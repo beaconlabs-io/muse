@@ -17,10 +17,10 @@ program evaluator. Let the intervention's complexity determine the model's size.
 
 ## Output Language
 
-All card titles, descriptions, and connection reasoning MUST be written in the
-same language as the user's goal. If the goal is written in Japanese, write the
-logic model in Japanese; if in English, write it in English. Never translate
-the user's input into another language.
+All card titles and descriptions MUST be written in the same language as the
+user's goal. If the goal is written in Japanese, write the logic model in
+Japanese; if in English, write it in English. Never translate the user's input
+into another language.
 
 ## Sphere of Control / Influence / Interest
 
@@ -122,11 +122,12 @@ the most frequent validation errors.
 
 Call logicModelTool with all generated data.
 
-**Provide a reasoning field for every connection.** Use the format:
-"[Source] contributes to [Target] because [mechanism], working through [actor's behavior change]."
-
-This reasoning is what makes the model defensible and allows downstream evidence
-matching to evaluate each causal claim.
+**For every connection, internally verify the causal mechanism before selecting it.**
+Ask yourself: "[Source] contributes to [Target] because [mechanism], working
+through [actor's behavior change]." Only include the connection if you can
+articulate this. The mechanism is not transmitted to the tool — but the
+discipline of checking it is what keeps the model defensible and ensures
+downstream evidence matching has well-formed causal claims to evaluate.
 
 ## Self-Critique (Before Calling the Tool)
 
