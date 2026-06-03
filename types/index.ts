@@ -161,12 +161,6 @@ export const ConnectionInputSchema = z.object({
   toCardType: z
     .enum(["activities", "outputs", "outcomesShort", "outcomesIntermediate", "impact"])
     .describe("Type of the target card"),
-  reasoning: z
-    .string()
-    .optional()
-    .describe(
-      "Brief explanation of why this connection represents a plausible causal relationship",
-    ),
 });
 
 // Infer TypeScript types

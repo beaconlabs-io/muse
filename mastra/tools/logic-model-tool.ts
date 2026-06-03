@@ -55,8 +55,7 @@ export const logicModelTool = createTool({
       .optional()
       .describe(
         "Array of causal connections between cards. Each connection should represent " +
-          "a defensible causal contribution with an articulated mechanism. Include a " +
-          "reasoning field explaining why the source contributes to the target. " +
+          "a defensible causal contribution with an articulated mechanism. " +
           "If omitted, a simple sequential 1:1 connection pattern will be used as fallback.",
       ),
   }),
@@ -271,7 +270,7 @@ const generateLogicModel = async (params: {
     const outgoingCounts = new Map<string, number>();
 
     for (const conn of validatedConnections) {
-      const { fromCardIndex, fromCardType, toCardIndex, toCardType, reasoning } = conn;
+      const { fromCardIndex, fromCardType, toCardIndex, toCardType } = conn;
 
       // Validate indices
       const fromIds = cardIdsByType[fromCardType];
@@ -329,17 +328,6 @@ const generateLogicModel = async (params: {
       });
 
       outgoingCounts.set(fromCardId, currentOutgoing + 1);
-
-      if (reasoning) {
-        logger.debug(
-          {
-            from: `${fromCardType}[${fromCardIndex}]`,
-            to: `${toCardType}[${toCardIndex}]`,
-            reasoning,
-          },
-          "Created connection",
-        );
-      }
     }
 
     logger.info({ connectionsCount: arrows.length }, "Created validated connections");
