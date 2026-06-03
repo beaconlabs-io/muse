@@ -11,11 +11,15 @@ import {
   type EdgeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { AlertTriangle } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddLogicSheet } from "./AddLogicSheet";
 import { CanvasToolbar } from "./CanvasToolbar";
 import { CardNode } from "./CardNode";
-import { CanvasProvider, useCanvas } from "./context";
+import { CanvasProvider, RecipeProvider, useCanvas, useRecipe } from "./context";
 import { EvidenceEdge } from "./EvidenceEdge";
+import { RecipePanel } from "./RecipePanel";
 import type { CardFormData } from "./context/canvas-operations";
 import type { Card, Arrow, Metric } from "@/types";
 
@@ -33,24 +37,31 @@ export function ReactFlowCanvas({
   disableLocalStorage = false,
 }: ReactFlowCanvasProps) {
   return (
-    // ReactFlowProvider must wrap CanvasProvider so autoLayout can call
-    // useReactFlow().fitView() after repositioning nodes.
+    // Provider order matters:
+    //   ReactFlowProvider  → required by useReactFlow() inside CanvasProvider
+    //   RecipeProvider     → must wrap CanvasProvider because CanvasContext
+    //                        consumes useRecipe() to wire stale + auto-start
+    //   CanvasProvider     → owns nodes/edges/metrics
     <ReactFlowProvider>
-      <CanvasProvider
-        initialCards={initialCards}
-        initialArrows={initialArrows}
-        initialCardMetrics={initialCardMetrics}
-        disableLocalStorage={disableLocalStorage}
-      >
-        <ReactFlowCanvasInner />
-      </CanvasProvider>
+      <RecipeProvider>
+        <CanvasProvider
+          initialCards={initialCards}
+          initialArrows={initialArrows}
+          initialCardMetrics={initialCardMetrics}
+          disableLocalStorage={disableLocalStorage}
+        >
+          <ReactFlowCanvasInner />
+        </CanvasProvider>
+      </RecipeProvider>
     </ReactFlowProvider>
   );
 }
 
 function ReactFlowCanvasInner() {
+  const t = useTranslations("recipe");
   // Get state and operations from Context
   const { state, operations } = useCanvas();
+  const recipe = useRecipe();
   const { nodes, edges, editingNodeData, editSheetOpen, editingNodeId } = state;
   const { onNodesChange, onEdgesChange, onConnect, updateCard, closeEditSheet } = operations;
 
@@ -93,12 +104,43 @@ function ReactFlowCanvasInner() {
     [],
   );
 
+  const recipeBadge = (() => {
+    if (recipe.phase === "running" || recipe.phase === "waiting-for-logic-model") {
+      return (
+        <span className="bg-primary/15 text-primary ml-2 inline-flex h-2 w-2 animate-pulse rounded-full" />
+      );
+    }
+    if (recipe.stale) {
+      return (
+        <AlertTriangle className="ml-2 inline-block h-3 w-3 text-amber-600 dark:text-amber-400" />
+      );
+    }
+    return null;
+  })();
+
   return (
     <div className="flex h-screen w-full flex-col">
       <CanvasToolbar />
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="relative flex-1">
+      <Tabs defaultValue="canvas" className="flex flex-1 flex-col overflow-hidden">
+        <TabsList className="bg-background m-2 self-start">
+          <TabsTrigger value="canvas" className="cursor-pointer">
+            {t("canvasTabLabel")}
+          </TabsTrigger>
+          <TabsTrigger value="recipe" className="cursor-pointer">
+            {t("tabLabel")}
+            {recipeBadge}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* forceMount + data-[state=inactive]:hidden keeps React Flow mounted
+            when the user switches to the Recipe tab. Without this, the
+            viewport / measured-node-size state would be lost every time. */}
+        <TabsContent
+          value="canvas"
+          forceMount
+          className="relative mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden"
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -118,8 +160,12 @@ function ReactFlowCanvasInner() {
               maskColor="rgb(240, 240, 240, 0.6)"
             />
           </ReactFlow>
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="recipe" className="mt-0 flex-1 overflow-auto">
+          <RecipePanel />
+        </TabsContent>
+      </Tabs>
 
       {/* Edit node sheet */}
       {editingNodeData && (

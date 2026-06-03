@@ -6,7 +6,7 @@ import {
   Trash2,
   MoreVertical,
   LayoutDashboard,
-  BookOpen,
+  RefreshCw,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -19,13 +19,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AddLogicSheet } from "./AddLogicSheet";
-import { useCanvasOperations, useCanvasState } from "./context";
+import { useCanvasOperations, useCanvasState, useRecipe } from "./context";
 import { ExportImageDialog } from "./ExportImageDialog";
 import { GenerateLogicModelDialog } from "./GenerateLogicModelDialog";
 import { IPFSSaveDialog } from "./IPFSSaveDialog";
-import { RecipeDialog } from "./RecipeDialog";
 import type { CanvasImageResult } from "@/lib/generate-canvas-image";
 import { useCanvasImage } from "@/hooks/useCanvasImage";
+import { collectMetricContexts } from "@/lib/recipe-helpers";
 import { uploadImageToIPFS } from "@/utils/ipfs";
 
 export const CanvasToolbar = memo(() => {
@@ -34,11 +34,10 @@ export const CanvasToolbar = memo(() => {
   const [uploadingToIPFS, setUploadingToIPFS] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [ipfsDialogOpen, setIpfsDialogOpen] = useState(false);
-  const [recipeDialogOpen, setRecipeDialogOpen] = useState(false);
   const [ipfsHash, setIpfsHash] = useState<string | null>(null);
   const [preGeneratedImage, setPreGeneratedImage] = useState<CanvasImageResult | null>(null);
 
-  const { nodes } = useCanvasState();
+  const { nodes, cardMetrics } = useCanvasState();
   const {
     addCard,
     saveLogicModel,
@@ -49,6 +48,11 @@ export const CanvasToolbar = memo(() => {
     autoLayout,
   } = useCanvasOperations();
   const { generate: generateImage } = useCanvasImage();
+  const recipe = useRecipe();
+
+  const canGenerateRecipe = collectMetricContexts(nodes, cardMetrics).length > 0;
+  const canDownloadRecipe =
+    recipe.phase === "success" && recipe.recipe !== null && !recipe.downloadingHtml;
 
   const handleClearAll = useCallback(() => {
     // Close dropdown first to avoid modal stacking conflict
@@ -71,14 +75,19 @@ export const CanvasToolbar = memo(() => {
     setExportDialogOpen(true);
   }, [nodes.length, t]);
 
-  const handleDownloadRecipe = useCallback(() => {
-    if (nodes.length === 0) {
-      toast.error(t("exportEmptyError"), { duration: 3000 });
+  const handleRegenerateRecipe = useCallback(() => {
+    if (!canGenerateRecipe) {
+      toast.error(t("recipeNoMetricsError"), { duration: 3000 });
       return;
     }
     setDropdownOpen(false);
-    setRecipeDialogOpen(true);
-  }, [nodes.length, t]);
+    recipe.triggerGeneration({ nodes, cardMetrics });
+  }, [canGenerateRecipe, recipe, nodes, cardMetrics, t]);
+
+  const handleDownloadRecipeHtml = useCallback(() => {
+    setDropdownOpen(false);
+    void recipe.downloadHtml(nodes);
+  }, [recipe, nodes]);
 
   const handleUploadToIPFS = useCallback(async () => {
     if (nodes.length === 0) {
@@ -174,9 +183,23 @@ export const CanvasToolbar = memo(() => {
                 {t("exportJSON")}
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={handleDownloadRecipe} className="cursor-pointer">
-                <BookOpen className="mr-2 h-4 w-4" />
-                {t("downloadRecipe")}
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={handleRegenerateRecipe}
+                disabled={!canGenerateRecipe || recipe.phase === "running"}
+                className="cursor-pointer"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                {t("regenerateRecipe")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleDownloadRecipeHtml}
+                disabled={!canDownloadRecipe}
+                className="cursor-pointer"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {t("downloadRecipeHtml")}
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
@@ -193,8 +216,6 @@ export const CanvasToolbar = memo(() => {
       </div>
 
       <ExportImageDialog open={exportDialogOpen} onOpenChange={setExportDialogOpen} nodes={nodes} />
-
-      <RecipeDialog open={recipeDialogOpen} onOpenChange={setRecipeDialogOpen} />
 
       <IPFSSaveDialog
         open={ipfsDialogOpen}
