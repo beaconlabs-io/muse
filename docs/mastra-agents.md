@@ -475,6 +475,18 @@ JSON vs `FormData` transport accordingly.
 - Collapsible "Options" section with:
   - `enableExternalSearch` toggle (visible when `EXTERNAL_SEARCH_ENABLED=true`)
   - `enableMetrics` toggle (default OFF) — controls whether the agent generates metrics for cards
+  - `enableRecipe` toggle (default OFF) — when ON, the recipe stream
+    auto-fires after the canvas is rendered and settled (see
+    [Recipe Workflow](#recipe-workflow) below). Force-disabled while
+    `enableMetrics` is OFF — the recipe takes per-card metrics as its
+    input, so empty metrics would guarantee failure.
+
+On submit, if `enableRecipe` is true the dialog calls
+`recipe.setWaitingForLogicModel()` so the Recipe tab on the canvas page
+flips to its "waiting" state immediately. The flag is then forwarded to
+`onGenerate({ ..., enableRecipe })`, which `loadGeneratedCanvas` uses to
+arm `pendingRecipeAutoStartRef` and chain the recipe stream after
+auto-layout — see [react-flow-architecture.md → Recipe Tab](./react-flow-architecture.md#recipe-tab).
 
 ### logic-model-with-evidence.ts
 
@@ -513,6 +525,55 @@ Production workflow with 4 steps (including Step 2.5):
 
 Returns simplified output: `{ canvasData }` (stats derived from data, no separate tracking)
 Comprehensive logging with module prefix and detailed debug info
+
+### Recipe Workflow
+
+**Location**: `mastra/workflows/recipe-workflow.ts`
+
+A second, **independent** workflow that turns Output / Outcome metrics
+into actionable measurement guidance. It runs on demand from the canvas
+page (Recipe tab "Generate" button, toolbar "Regenerate Recipe", or
+auto-chained after the logic-model workflow when `enableRecipe` was ON in
+the generate dialog).
+
+**Shape**:
+
+|        |                                                                                            |
+| ------ | ------------------------------------------------------------------------------------------ |
+| Input  | `{ logicModelTitle: string, metrics: RecipeMetricContext[] (1–30), locale: "en" \| "ja" }` |
+| Output | `{ recipe: Recipe }` (per-metric guidance grouped by parent card type)                     |
+| Steps  | Single step `generate-recipe` with up to 3 attempts                                        |
+
+The single step prompts `recipeAgent` (`mastra/agents/recipe-agent.ts`),
+which **must** call `recipeTool` (`mastra/tools/recipe-tool.ts`) to emit
+a structured `items[]` array. Retries cover the case where the agent
+forgets to call the tool or the tool returns an empty list.
+
+**Per-item shape** (`RecipeMetricGuidance`):
+
+- `measurementSteps: string[]` — ordered, concrete steps
+- `dataCollectionMethod: string`
+- `requiredResources: string[]`
+- `frequency: string`
+- `targetValue?: string`
+- `cautions: string[]`
+- `stakeholders: string[]`
+- Plus parent-card breadcrumbs (`parentCardId`, `parentCardTitle`,
+  `parentCardType ∈ { outputs, outcomes-short, outcomes-intermediate }`)
+
+**SSE event shape** (`types/recipe-events.ts`): same step-start /
+step-finish / step-error / recipe-complete / recipe-error union as the
+logic-model stream — `useRecipeStream` decodes it the same way.
+
+**Why a separate workflow**: the recipe is a derivative artefact. Logic
+models get edited heavily after generation, so the recipe is regularly
+out of sync — keeping the two workflows independent lets the Recipe tab
+re-run cheaply without re-running evidence search / external papers.
+
+**Locale handling**: `locale` is a Recipe-workflow-only knob; the agent
+prompt explicitly switches output language ("Output language: Japanese /
+English"). UI strings around the recipe (`recipe.*` namespace in
+`messages/{en,ja}.json`) flow through `next-intl` as usual.
 
 ### evidence-search-batch.ts
 
@@ -763,6 +824,7 @@ bun build:mastra
 ### Workflows
 
 - `mastra/workflows/logic-model-with-evidence.ts` - Production workflow with 4 steps (including Step 2.5)
+- `mastra/workflows/recipe-workflow.ts` - Recipe generation workflow (single step, on-demand from canvas)
 
 ### Agents
 
@@ -771,11 +833,13 @@ bun build:mastra
 - `mastra/agents/conversation-bot-agent.ts` - Conversational evidence search (used by `/api/evidence/search`)
 - `mastra/agents/keyword-extraction-agent.ts` - Semantic Scholar query extraction from edge text
 - `mastra/agents/query-translation-agent.ts` - Non-English → English query translation
+- `mastra/agents/recipe-agent.ts` - Measurement recipe generation agent
 
 ### Tools
 
 - `mastra/tools/logic-model-tool.ts` - Logic model structure generation tool
 - `mastra/tools/get-all-evidence-tool.ts` - Loads the full internal evidence library for batch matching
+- `mastra/tools/recipe-tool.ts` - Emits the structured recipe items[] array
 - `lib/evidence-search-batch.ts` - Batch evidence matching (single LLM call for all arrows)
 - `lib/external-paper-search.ts` - External paper search orchestration with caching
 - `lib/academic-apis/semantic-scholar.ts` - Semantic Scholar Graph API client
@@ -783,9 +847,16 @@ bun build:mastra
 
 ### Components
 
-- `components/canvas/GenerateLogicModelDialog.tsx` - UI with 4-step process
+- `components/canvas/GenerateLogicModelDialog.tsx` - UI with 4-step process (incl. `enableRecipe` option)
+- `components/canvas/RecipePanel.tsx` - Recipe tab state machine
+- `components/canvas/RecipeView.tsx` - In-tab JSX recipe renderer
+- `components/canvas/context/RecipeContext.tsx` - `useRecipe` + `RecipeProvider`
 - `app/api/workflow/stream/route.ts` - SSE route handler for workflow streaming
+- `app/api/recipe/stream/route.ts` - SSE route handler for recipe streaming
 - `hooks/useWorkflowStream.ts` - Client hook for consuming SSE events
+- `hooks/useRecipeStream.ts` - Client hook for the recipe SSE stream
+- `lib/recipe-helpers.ts` - Recipe metric collection / parent-type guard
+- `lib/generate-recipe-html.ts` - Self-contained downloadable HTML
 
 ### Skills
 
@@ -805,6 +876,8 @@ bun build:mastra
 ### Types
 
 - `types/index.ts` - CanvasData, Arrow, Card, EvidenceMatch, ExternalPaper interfaces
+- `types/index.ts` - `Recipe`, `RecipeMetricGuidance`, `RecipeMetricContext`, `RecipeLocale`, `RECIPE_TARGET_CARD_TYPES`
+- `types/recipe-events.ts` - `RecipeSSEEvent` union for `/api/recipe/stream`
 
 ## Observability & Tracing
 

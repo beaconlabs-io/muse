@@ -26,6 +26,29 @@ const edgeTypes = {
 - Registers custom edge types
 - Manages node and edge interactions
 - Handles canvas controls and minimap
+- Hosts the **Canvas / Recipe tabs** (shadcn `Tabs`). The Canvas tab uses
+  `forceMount` + `data-[state=inactive]:hidden` so React Flow stays
+  mounted across tab switches — switching to "Recipe" would otherwise
+  reset the viewport and re-measure every node.
+
+**Provider tree**:
+
+```
+ReactFlowProvider                ← required by useReactFlow() in CanvasProvider
+  └─ RecipeProvider              ← owns recipe stream state + stale flag
+       └─ CanvasProvider         ← owns nodes / edges / cardMetrics
+            └─ ReactFlowCanvasInner
+                 ├─ CanvasToolbar
+                 └─ Tabs
+                      ├─ TabsContent value="canvas" forceMount → ReactFlow
+                      └─ TabsContent value="recipe"           → RecipePanel
+```
+
+`RecipeProvider` sits **outside** `CanvasProvider` so `CanvasContext` can
+call `useRecipe()` to wire stale detection and auto-start without
+creating a circular import. `RecipeProvider` never reads canvas state
+directly — callers pass `{ nodes, cardMetrics }` into
+`recipe.triggerGeneration(args)`.
 
 ### EvidenceEdge.tsx
 
@@ -525,17 +548,104 @@ add/remove a row, padding, or border in CardNode, retune these
 constants — visible regression mode is "cards overlap on first AI
 generation but spread out correctly after the next Auto Layout."
 
+## Recipe Tab
+
+The canvas page surfaces a measurement **Recipe** alongside the React Flow
+canvas via a second tab. Recipes are LLM-generated, step-by-step
+measurement guidance for every Output / Outcome metric on the canvas.
+
+### State machine
+
+`RecipePanel` (in `components/canvas/RecipePanel.tsx`) renders one of
+seven phases derived from `useRecipe()`:
+
+| Phase                     | Trigger                                          | UI                                                   |
+| ------------------------- | ------------------------------------------------ | ---------------------------------------------------- |
+| `empty-canvas`            | `nodes.length === 0`                             | "Create a logic model first" call-to-action          |
+| `no-targets`              | No Output / Outcome cards                        | Localized hint                                       |
+| `no-metrics`              | Target cards exist but no metrics                | Localized hint                                       |
+| `idle`                    | Ready to generate                                | "Generate recipe" button                             |
+| `waiting-for-logic-model` | Generate dialog submit with `enableRecipe: true` | Spinner + "Waiting for the logic model"              |
+| `running`                 | `useRecipeStream.status === "running"`           | Spinner + current step id                            |
+| `success`                 | Recipe received                                  | `<RecipeView />` + "Regenerate" + "Download HTML"    |
+| `success` (with `stale`)  | Logic model edited after generation              | Same + amber stale banner + badge on the tab trigger |
+| `error`                   | Stream error                                     | Error message + "Retry"                              |
+
+### Stale detection
+
+Stale is set by **semantic mutations**, not by raw React Flow callbacks:
+
+| Mutation entry point                                                                   | Marks stale  |
+| -------------------------------------------------------------------------------------- | ------------ |
+| `operations.addCard` / `updateCard` / `deleteCard` / `onConnect`                       | yes          |
+| `createNodeCallbacks.onContentChange` / `onDeleteCard` (in-card inline edits)          | yes          |
+| `onEdgesChange` with at least one `{ type: "remove" }` change                          | yes          |
+| `executeClearAllData`                                                                  | yes (resets) |
+| Plain `onNodesChange` (position / dimensions / select churn from React Flow internals) | **no**       |
+
+The deliberate carve-out for `onNodesChange` is important: React Flow
+fires it during measurement and selection, so wrapping it would mark the
+recipe stale every time the layout settled. Dragging a card does **not**
+mark the recipe stale.
+
+### Direct chain after generate-with-recipe
+
+When `GenerateLogicModelDialog` submits with `enableRecipe: true`, the
+canvas runs the recipe stream right after the logic model finishes:
+
+1. `recipe.setWaitingForLogicModel()` flips the panel to `waiting-for-logic-model`.
+2. The logic-model workflow completes → `loadGeneratedCanvas(data, { enableRecipe: true })`.
+3. The wrapper arms `pendingAutoLayoutRef` and `pendingRecipeAutoStartRef`.
+4. `useNodesInitialized()` reports the freshly-mounted nodes have been
+   measured; the auto-fire effect runs `autoLayout({ silent: true })`.
+5. Same effect then calls `recipe.triggerGeneration({ nodes, cardMetrics })`
+   — the recipe workflow only needs card content + metrics, not final
+   positions, so it does not wait for `fitView` to finish.
+
+### Components
+
+- `components/canvas/RecipePanel.tsx` — state machine + toolbar (regenerate
+  / download HTML) for the success state.
+- `components/canvas/RecipeView.tsx` — pure JSX renderer (`Card` /
+  `Badge` / `Separator`) that integrates with the site's Tailwind theme
+  and dark mode. Output is **distinct** from the downloadable HTML —
+  both formats are kept side-by-side intentionally so they can be
+  compared before any consolidation.
+- `components/canvas/context/RecipeContext.tsx` — wraps
+  `useRecipeStream`; exposes `phase`, `recipe`, `stale`,
+  `triggerGeneration`, `setWaitingForLogicModel`, `markStale`,
+  `resetAll`, `downloadHtml`.
+- `lib/recipe-helpers.ts` — `collectMetricContexts`,
+  `deriveLogicModelTitle`, `countRecipeTargetCards`, `isRecipeTargetType`
+  (single source of truth for "what metric belongs in the recipe").
+- `lib/generate-recipe-html.ts` — self-contained downloadable HTML
+  (inline CSS, base64 image) — unchanged by the tab-UI refactor.
+
+### Toolbar wiring
+
+`CanvasToolbar` exposes recipe actions as two **separate** dropdown
+items (previously one combined entry):
+
+- "Regenerate Recipe" → `recipe.triggerGeneration({ nodes, cardMetrics })`,
+  disabled until at least one target metric exists or while
+  `recipe.phase === "running"`.
+- "Download Recipe (HTML)" → `recipe.downloadHtml(nodes)`, disabled
+  until the recipe is in the `success` phase.
+
 ## File References
 
 ### Components
 
-- `components/canvas/ReactFlowCanvas.tsx` - Main canvas
-- `components/canvas/CanvasToolbar.tsx` - Toolbar (Auto Layout trigger)
+- `components/canvas/ReactFlowCanvas.tsx` - Main canvas (incl. Tabs layout)
+- `components/canvas/CanvasToolbar.tsx` - Toolbar (Auto Layout, Recipe actions)
 - `components/canvas/CardNode.tsx` - Card rendering incl. metrics list
 - `components/canvas/AddLogicSheet.tsx` - Card + metrics editing sheet
 - `components/canvas/EvidenceEdge.tsx:15` - Edge type registration
 - `components/canvas/EvidenceDialog.tsx` - Evidence modal
-- `components/canvas/context/CanvasContext.tsx` - `autoLayout`, `cardMetrics`, persistence
+- `components/canvas/RecipePanel.tsx` - Recipe tab state machine
+- `components/canvas/RecipeView.tsx` - In-tab JSX recipe renderer
+- `components/canvas/context/CanvasContext.tsx` - `autoLayout`, `cardMetrics`, persistence, stale wiring
+- `components/canvas/context/RecipeContext.tsx` - Recipe stream + stale + download
 
 ### Utilities
 
@@ -545,6 +655,8 @@ generation but spread out correctly after the next Auto Layout."
 - `lib/canvas/layout-helpers.ts` - `estimateCardHeight`, `calculateColumnYsFromHeights`, stage constants
 - `lib/external-paper-search.ts` - External paper search orchestration
 - `lib/academic-apis/semantic-scholar.ts` - Semantic Scholar API client
+- `lib/recipe-helpers.ts` - Recipe metric collection / title derivation / target-type guard
+- `lib/generate-recipe-html.ts` - Self-contained downloadable HTML
 
 ### Types
 
