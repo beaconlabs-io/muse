@@ -9,6 +9,7 @@ import type { Recipe, RecipeMetricGuidance, RecipeTargetCardType } from "@/types
 
 interface RecipeViewProps {
   recipe: Recipe;
+  stale?: boolean;
 }
 
 const SECTION_ORDER: RecipeTargetCardType[] = [
@@ -17,7 +18,7 @@ const SECTION_ORDER: RecipeTargetCardType[] = [
   "outcomes-intermediate",
 ];
 
-export function RecipeView({ recipe }: RecipeViewProps) {
+export function RecipeView({ recipe, stale = false }: RecipeViewProps) {
   const t = useTranslations("recipe");
 
   const grouped = SECTION_ORDER.map((type) => ({
@@ -53,11 +54,29 @@ export function RecipeView({ recipe }: RecipeViewProps) {
           {t("documentTitle")}
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">{recipe.logicModelTitle}</h1>
-        <p className="text-muted-foreground text-xs">
-          {t("generatedAt")}: {generatedAtLabel} ·{" "}
-          {t("metricsCount", { count: recipe.items.length })}
+        <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+          <span>
+            {t("generatedAt")}: {generatedAtLabel} ·{" "}
+            {t("metricsCount", { count: recipe.items.length })}
+          </span>
+          {stale && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+              <AlertTriangle className="h-2.5 w-2.5" />
+              {t("staleBadge")}
+            </span>
+          )}
         </p>
       </header>
+
+      {stale && (
+        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="space-y-1 text-xs">
+            <p className="font-medium">{t("staleTitle")}</p>
+            <p>{t("staleBody")}</p>
+          </div>
+        </div>
+      )}
 
       <Separator />
 
