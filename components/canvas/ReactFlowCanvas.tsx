@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -11,23 +11,23 @@ import {
   type EdgeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { AlertTriangle } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AddLogicSheet } from "./AddLogicSheet";
-import { CanvasToolbar } from "./CanvasToolbar";
 import { CardNode } from "./CardNode";
-import { CanvasProvider, RecipeProvider, useCanvas, useRecipe } from "./context";
+import { CanvasProvider, RecipeProvider, useCanvas } from "./context";
 import { EvidenceEdge } from "./EvidenceEdge";
 import { RecipePanel } from "./RecipePanel";
+import { UnifiedHeader } from "./UnifiedHeader";
 import type { CardFormData } from "./context/canvas-operations";
 import type { Card, Arrow, Metric } from "@/types";
+
+type CanvasTab = "canvas" | "recipe";
 
 interface ReactFlowCanvasProps {
   initialCards?: Card[];
   initialArrows?: Arrow[];
   initialCardMetrics?: Record<string, Metric[]>;
-  disableLocalStorage?: boolean; // Don't use localStorage when viewing IPFS canvas
+  disableLocalStorage?: boolean;
 }
 
 export function ReactFlowCanvas({
@@ -58,26 +58,21 @@ export function ReactFlowCanvas({
 }
 
 function ReactFlowCanvasInner() {
-  const t = useTranslations("recipe");
-  // Get state and operations from Context
+  const [activeTab, setActiveTab] = useState<CanvasTab>("canvas");
   const { state, operations } = useCanvas();
-  const recipe = useRecipe();
   const { nodes, edges, editingNodeData, editSheetOpen, editingNodeId } = state;
   const { onNodesChange, onEdgesChange, onConnect, updateCard, closeEditSheet } = operations;
 
-  // Wrapper to handle boolean parameter from Sheet component
   const handleEditSheetOpenChange = (open: boolean) => {
     if (!open) {
       closeEditSheet();
     }
   };
 
-  // Wrapper to pass editingNodeId to updateCard
   const handleUpdateCard = (formData: CardFormData) => {
     updateCard(formData, editingNodeId);
   };
 
-  // Define custom node types
   const nodeTypes: NodeTypes = useMemo(
     () => ({
       cardNode: CardNode,
@@ -85,7 +80,6 @@ function ReactFlowCanvasInner() {
     [],
   );
 
-  // Define custom edge types
   const edgeTypes: EdgeTypes = useMemo(
     () => ({
       evidence: EvidenceEdge,
@@ -93,7 +87,6 @@ function ReactFlowCanvasInner() {
     [],
   );
 
-  // Default edge options for smoother interaction and appearance
   const defaultEdgeOptions = useMemo(
     () => ({
       type: "default",
@@ -104,34 +97,14 @@ function ReactFlowCanvasInner() {
     [],
   );
 
-  const recipeBadge = (() => {
-    if (recipe.phase === "running" || recipe.phase === "waiting-for-logic-model") {
-      return (
-        <span className="bg-primary/15 text-primary ml-2 inline-flex h-2 w-2 animate-pulse rounded-full" />
-      );
-    }
-    if (recipe.stale) {
-      return (
-        <AlertTriangle className="ml-2 inline-block h-3 w-3 text-amber-600 dark:text-amber-400" />
-      );
-    }
-    return null;
-  })();
-
   return (
     <div className="flex h-screen w-full flex-col">
-      <CanvasToolbar />
-
-      <Tabs defaultValue="canvas" className="flex flex-1 flex-col overflow-hidden">
-        <TabsList className="bg-background m-2 self-start">
-          <TabsTrigger value="canvas" className="cursor-pointer">
-            {t("canvasTabLabel")}
-          </TabsTrigger>
-          <TabsTrigger value="recipe" className="cursor-pointer">
-            {t("tabLabel")}
-            {recipeBadge}
-          </TabsTrigger>
-        </TabsList>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as CanvasTab)}
+        className="flex flex-1 flex-col overflow-hidden"
+      >
+        <UnifiedHeader activeTab={activeTab} />
 
         {/* forceMount + data-[state=inactive]:hidden keeps React Flow mounted
             when the user switches to the Recipe tab. Without this, the
@@ -167,7 +140,6 @@ function ReactFlowCanvasInner() {
         </TabsContent>
       </Tabs>
 
-      {/* Edit node sheet */}
       {editingNodeData && (
         <AddLogicSheet
           editMode

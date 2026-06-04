@@ -1,12 +1,13 @@
-import { memo, useState, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import {
-  Save,
+  AlertTriangle,
   CloudCheck,
   Download,
-  Trash2,
-  MoreVertical,
   LayoutDashboard,
+  MoreVertical,
   RefreshCw,
+  Save,
+  Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -15,21 +16,28 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AddLogicSheet } from "./AddLogicSheet";
+import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCanvasOperations, useCanvasState, useRecipe } from "./context";
+import { ContextActions } from "./ContextActions";
 import { ExportImageDialog } from "./ExportImageDialog";
-import { GenerateLogicModelDialog } from "./GenerateLogicModelDialog";
 import { IPFSSaveDialog } from "./IPFSSaveDialog";
 import type { CanvasImageResult } from "@/lib/generate-canvas-image";
 import { useCanvasImage } from "@/hooks/useCanvasImage";
 import { collectMetricContexts } from "@/lib/recipe-helpers";
 import { uploadImageToIPFS } from "@/utils/ipfs";
 
-export const CanvasToolbar = memo(() => {
-  const t = useTranslations("canvas");
+interface UnifiedHeaderProps {
+  activeTab: "canvas" | "recipe";
+}
+
+export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
+  const tCanvas = useTranslations("canvas");
+  const tRecipe = useTranslations("recipe");
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [uploadingToIPFS, setUploadingToIPFS] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -38,15 +46,8 @@ export const CanvasToolbar = memo(() => {
   const [preGeneratedImage, setPreGeneratedImage] = useState<CanvasImageResult | null>(null);
 
   const { nodes, cardMetrics } = useCanvasState();
-  const {
-    addCard,
-    saveLogicModel,
-    exportAsJSON,
-    clearAllData,
-    loadGeneratedCanvas,
-    saveCanvasToIPFS,
-    autoLayout,
-  } = useCanvasOperations();
+  const { saveLogicModel, exportAsJSON, clearAllData, saveCanvasToIPFS, autoLayout } =
+    useCanvasOperations();
   const { generate: generateImage } = useCanvasImage();
   const recipe = useRecipe();
 
@@ -55,9 +56,7 @@ export const CanvasToolbar = memo(() => {
     recipe.phase === "success" && recipe.recipe !== null && !recipe.downloadingHtml;
 
   const handleClearAll = useCallback(() => {
-    // Close dropdown first to avoid modal stacking conflict
     setDropdownOpen(false);
-    // Open alert dialog after dropdown closes
     clearAllData();
   }, [clearAllData]);
 
@@ -66,32 +65,29 @@ export const CanvasToolbar = memo(() => {
     autoLayout();
   }, [autoLayout]);
 
-  const handleExportImage = useCallback(() => {
-    if (nodes.length === 0) {
-      toast.error(t("exportEmptyError"), { duration: 3000 });
-      return;
-    }
-    setDropdownOpen(false);
-    setExportDialogOpen(true);
-  }, [nodes.length, t]);
-
   const handleRegenerateRecipe = useCallback(() => {
-    if (!canGenerateRecipe) {
-      toast.error(t("recipeNoMetricsError"), { duration: 3000 });
-      return;
-    }
+    if (!canGenerateRecipe) return;
     setDropdownOpen(false);
     recipe.triggerGeneration({ nodes, cardMetrics });
-  }, [canGenerateRecipe, recipe, nodes, cardMetrics, t]);
+  }, [canGenerateRecipe, recipe, nodes, cardMetrics]);
 
   const handleDownloadRecipeHtml = useCallback(() => {
     setDropdownOpen(false);
     void recipe.downloadHtml(nodes);
   }, [recipe, nodes]);
 
+  const handleExportImage = useCallback(() => {
+    if (nodes.length === 0) {
+      toast.error(tCanvas("exportEmptyError"), { duration: 3000 });
+      return;
+    }
+    setDropdownOpen(false);
+    setExportDialogOpen(true);
+  }, [nodes.length, tCanvas]);
+
   const handleUploadToIPFS = useCallback(async () => {
     if (nodes.length === 0) {
-      toast.error(t("uploadEmptyError"), { duration: 3000 });
+      toast.error(tCanvas("uploadEmptyError"), { duration: 3000 });
       return;
     }
 
@@ -102,68 +98,89 @@ export const CanvasToolbar = memo(() => {
     setUploadingToIPFS(true);
 
     try {
-      // Step 1: Generate the OG image
       const imageResult = await generateImage(nodes);
 
-      // Store pre-generated image for dialog display
       if (imageResult) {
         setPreGeneratedImage(imageResult);
       }
 
-      // Step 2: Upload image to IPFS (non-blocking - continue even if this fails)
       let ogImageCID: string | undefined;
       if (imageResult?.blob) {
         try {
           ogImageCID = await uploadImageToIPFS(imageResult.blob, `canvas-og-${Date.now()}.png`);
         } catch (imageUploadError) {
-          // Log but don't fail the entire operation
           console.warn("Failed to upload OG image to IPFS:", imageUploadError);
         }
       }
 
-      // Step 3: Save canvas data with ogImageCID (if available)
       const result = await saveCanvasToIPFS(ogImageCID);
       setUploadingToIPFS(false);
 
       if (result?.hash) {
         setIpfsHash(result.hash);
       } else {
-        // Close dialog on failure (error toast shown by context)
         setIpfsDialogOpen(false);
       }
     } catch (error) {
       console.error("Failed to upload to IPFS:", error);
       setUploadingToIPFS(false);
       setIpfsDialogOpen(false);
-      toast.error(t("uploadFailed"), { duration: 3000 });
+      toast.error(tCanvas("uploadFailed"), { duration: 3000 });
     }
-  }, [nodes, saveCanvasToIPFS, generateImage, t]);
+  }, [nodes, saveCanvasToIPFS, generateImage, tCanvas]);
+
+  const recipeTabBadge = (() => {
+    if (recipe.phase === "running" || recipe.phase === "waiting-for-logic-model") {
+      return (
+        <span className="bg-primary/15 text-primary ml-1.5 inline-flex h-2 w-2 animate-pulse rounded-full" />
+      );
+    }
+    if (recipe.stale) {
+      return (
+        <AlertTriangle className="ml-1.5 inline-block h-3 w-3 text-amber-600 dark:text-amber-400" />
+      );
+    }
+    return null;
+  })();
 
   return (
     <>
-      <div className="bg-background flex items-center justify-between border-b p-3 sm:p-4">
-        <div className="flex items-center gap-3">
-          <GenerateLogicModelDialog onGenerate={loadGeneratedCanvas} />
-          <AddLogicSheet onSubmit={addCard} />
-        </div>
+      <div className="bg-background flex items-center justify-between gap-3 border-b px-3 py-2 sm:px-4">
+        <TabsList className="bg-muted/60">
+          <TabsTrigger value="canvas" className="cursor-pointer">
+            {tRecipe("canvasTabLabel")}
+          </TabsTrigger>
+          <TabsTrigger value="recipe" className="cursor-pointer">
+            {tRecipe("tabLabel")}
+            {recipeTabBadge}
+          </TabsTrigger>
+        </TabsList>
 
         <div className="flex items-center gap-2">
+          <ContextActions activeTab={activeTab} />
+
           <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="cursor-pointer gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={tCanvas("more")}
+                className="cursor-pointer"
+              >
                 <MoreVertical className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("more")}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="min-w-[12rem]">
+              <DropdownMenuLabel className="text-muted-foreground text-[10px] tracking-wider uppercase">
+                {tRecipe("canvasTabLabel")}
+              </DropdownMenuLabel>
               <DropdownMenuItem onClick={handleAutoLayout} className="cursor-pointer">
                 <LayoutDashboard className="mr-2 h-4 w-4" />
-                {t("autoLayout")}
+                {tCanvas("autoLayout")}
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem disabled={true} onClick={saveLogicModel} className="cursor-pointer">
+              <DropdownMenuItem disabled onClick={saveLogicModel} className="cursor-pointer">
                 <Save className="mr-2 h-4 w-4" />
-                {t("mintHypercert")}
+                {tCanvas("mintHypercert")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleUploadToIPFS}
@@ -171,27 +188,29 @@ export const CanvasToolbar = memo(() => {
                 className="cursor-pointer"
               >
                 <CloudCheck className="mr-2 h-4 w-4" />
-                {uploadingToIPFS ? t("uploading") : t("saveToIPFS")}
+                {uploadingToIPFS ? tCanvas("uploading") : tCanvas("saveToIPFS")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportImage} className="cursor-pointer">
                 <Download className="mr-2 h-4 w-4" />
-                {t("exportImage")}
+                {tCanvas("exportImage")}
               </DropdownMenuItem>
-
               <DropdownMenuItem onClick={exportAsJSON} className="cursor-pointer">
                 <Download className="mr-2 h-4 w-4" />
-                {t("exportJSON")}
+                {tCanvas("exportJSON")}
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
 
+              <DropdownMenuLabel className="text-muted-foreground text-[10px] tracking-wider uppercase">
+                {tRecipe("tabLabel")}
+              </DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={handleRegenerateRecipe}
                 disabled={!canGenerateRecipe || recipe.phase === "running"}
                 className="cursor-pointer"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
-                {t("regenerateRecipe")}
+                {tRecipe("regenerate")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleDownloadRecipeHtml}
@@ -199,16 +218,20 @@ export const CanvasToolbar = memo(() => {
                 className="cursor-pointer"
               >
                 <Download className="mr-2 h-4 w-4" />
-                {t("downloadRecipeHtml")}
+                {tRecipe("downloadHtml")}
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
+
+              <DropdownMenuLabel className="text-muted-foreground text-[10px] tracking-wider uppercase">
+                {tCanvas("dangerZone")}
+              </DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={handleClearAll}
                 className="text-destructive focus:text-destructive cursor-pointer"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                {t("clearAll")}
+                {tCanvas("clearAll")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -229,4 +252,4 @@ export const CanvasToolbar = memo(() => {
   );
 });
 
-CanvasToolbar.displayName = "CanvasToolbar";
+UnifiedHeader.displayName = "UnifiedHeader";
