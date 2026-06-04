@@ -532,7 +532,8 @@ Comprehensive logging with module prefix and detailed debug info
 
 A second, **independent** workflow that turns Output / Outcome metrics
 into actionable measurement guidance. It runs on demand from the canvas
-page (Recipe tab "Generate" button, toolbar "Regenerate Recipe", or
+page (unified header "Generate recipe" / "Regenerate" buttons on the
+Recipe tab, the "Recipe → Regenerate" item in the More dropdown, or
 auto-chained after the logic-model workflow when `enableRecipe` was ON in
 the generate dialog).
 

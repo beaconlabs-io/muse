@@ -84,8 +84,8 @@ ESLint for that reason).
   `deriveLogicModelTitle`, `countRecipeTargetCards`, `isRecipeTargetType`.
   Single source of truth for "what metric belongs in a recipe".
 - `lib/generate-recipe-html.ts` — self-contained HTML document (inline
-  CSS + optional base64 image) used by the toolbar's "Download Recipe (HTML)"
-  action.
+  CSS + optional base64 image) used by the unified header's "Download HTML"
+  button and the Recipe section of the More dropdown.
 
 ## Where to go next
 

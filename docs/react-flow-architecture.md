@@ -38,8 +38,8 @@ ReactFlowProvider                ← required by useReactFlow() in CanvasProvide
   └─ RecipeProvider              ← owns recipe stream state + stale flag
        └─ CanvasProvider         ← owns nodes / edges / cardMetrics
             └─ ReactFlowCanvasInner
-                 ├─ CanvasToolbar
-                 └─ Tabs
+                 └─ Tabs (controlled, value=activeTab)
+                      ├─ UnifiedHeader                          ← tabs + context actions + More dropdown
                       ├─ TabsContent value="canvas" forceMount → ReactFlow
                       └─ TabsContent value="recipe"           → RecipePanel
 ```
@@ -455,12 +455,12 @@ left to right and columns stay tightly packed.
 
 ### Trigger
 
-**Location**: `components/canvas/CanvasToolbar.tsx`
+**Location**: `components/canvas/UnifiedHeader.tsx`
 
-The toolbar exposes an **Auto Layout** menu item
-(`t("autoLayout")`) that calls `autoLayout()` on the canvas context.
-There is no automatic trigger — layout always runs in response to an
-explicit user action.
+The unified header's "More ⋮" dropdown exposes an **Auto Layout** menu
+item (`t("autoLayout")`, Canvas section) that calls `autoLayout()` on
+the canvas context. There is no automatic trigger — layout always runs
+in response to an explicit user action.
 
 ### Pipeline
 
@@ -559,17 +559,21 @@ measurement guidance for every Output / Outcome metric on the canvas.
 `RecipePanel` (in `components/canvas/RecipePanel.tsx`) renders one of
 seven phases derived from `useRecipe()`:
 
-| Phase                     | Trigger                                          | UI                                                   |
-| ------------------------- | ------------------------------------------------ | ---------------------------------------------------- |
-| `empty-canvas`            | `nodes.length === 0`                             | "Create a logic model first" call-to-action          |
-| `no-targets`              | No Output / Outcome cards                        | Localized hint                                       |
-| `no-metrics`              | Target cards exist but no metrics                | Localized hint                                       |
-| `idle`                    | Ready to generate                                | "Generate recipe" button                             |
-| `waiting-for-logic-model` | Generate dialog submit with `enableRecipe: true` | Spinner + "Waiting for the logic model"              |
-| `running`                 | `useRecipeStream.status === "running"`           | Spinner + current step id                            |
-| `success`                 | Recipe received                                  | `<RecipeView />` + "Regenerate" + "Download HTML"    |
-| `success` (with `stale`)  | Logic model edited after generation              | Same + amber stale banner + badge on the tab trigger |
-| `error`                   | Stream error                                     | Error message + "Retry"                              |
+The panel renders the document content only; primary recipe actions
+(Generate / Regenerate / Download / Retry) live in `UnifiedHeader`
+(`ContextActions` swaps them based on `recipe.phase`).
+
+| Phase                     | Trigger                                          | Panel UI                                            | Header action                         |
+| ------------------------- | ------------------------------------------------ | --------------------------------------------------- | ------------------------------------- |
+| `empty-canvas`            | `nodes.length === 0`                             | "Create a logic model first" hint                   | (none — `canGenerate` is false)       |
+| `no-targets`              | No Output / Outcome cards                        | Localized hint                                      | (none)                                |
+| `no-metrics`              | Target cards exist but no metrics                | Localized hint                                      | (none)                                |
+| `idle`                    | Ready to generate                                | Summary card with metric count                      | "✨ Generate recipe"                  |
+| `waiting-for-logic-model` | Generate dialog submit with `enableRecipe: true` | Spinner + "Waiting for the logic model"             | (hidden)                              |
+| `running`                 | `useRecipeStream.status === "running"`           | Spinner + current step id                           | Disabled "Generating…" indicator      |
+| `success`                 | Recipe received                                  | `<RecipeView stale={false} />`                      | "⟳ Regenerate" + "⬇ Download HTML"    |
+| `success` (with `stale`)  | Logic model edited after generation              | `<RecipeView stale />` (chip in meta + alert below) | Same as `success` + tab-trigger badge |
+| `error`                   | Stream error                                     | Error message only                                  | "↻ Retry"                             |
 
 ### Stale detection
 
@@ -604,8 +608,20 @@ canvas runs the recipe stream right after the logic model finishes:
 
 ### Components
 
-- `components/canvas/RecipePanel.tsx` — state machine + toolbar (regenerate
-  / download HTML) for the success state.
+- `components/canvas/RecipePanel.tsx` — state machine; renders only
+  document content (waiting / running / error message / `<RecipeView />`
+  for success). All recipe actions moved to `UnifiedHeader`.
+- `components/canvas/UnifiedHeader.tsx` — top bar combining tabs +
+  context-aware action buttons + a sectioned "More" dropdown
+  (Canvas / Recipe / Danger). Regenerate / Download HTML appear both as
+  primary header buttons (via `ContextActions`) and inside the dropdown's
+  Recipe section, sharing identical enabled-state logic
+  (`canGenerateRecipe`, `canDownloadRecipe`).
+- `components/canvas/ContextActions.tsx` — phase-aware action group
+  rendered in the header. Switches between Canvas tab actions
+  (Generate logic model / Add card) and Recipe tab actions
+  (Generate / Regenerate + Download / Retry / disabled spinner) based
+  on `activeTab` and `recipe.phase`.
 - `components/canvas/RecipeView.tsx` — pure JSX renderer (`Card` /
   `Badge` / `Separator`) that integrates with the site's Tailwind theme
   and dark mode. Output is **distinct** from the downloadable HTML —
@@ -621,23 +637,33 @@ canvas runs the recipe stream right after the logic model finishes:
 - `lib/generate-recipe-html.ts` — self-contained downloadable HTML
   (inline CSS, base64 image) — unchanged by the tab-UI refactor.
 
-### Toolbar wiring
+### Header wiring
 
-`CanvasToolbar` exposes recipe actions as two **separate** dropdown
-items (previously one combined entry):
+Recipe actions are reachable from **two places** in `UnifiedHeader`:
 
-- "Regenerate Recipe" → `recipe.triggerGeneration({ nodes, cardMetrics })`,
-  disabled until at least one target metric exists or while
-  `recipe.phase === "running"`.
-- "Download Recipe (HTML)" → `recipe.downloadHtml(nodes)`, disabled
-  until the recipe is in the `success` phase.
+1. **Header primary buttons** (`ContextActions`, only on the Recipe tab):
+   phase-aware. On `success` shows "⟳ Regenerate" (outline) plus
+   "⬇ Download HTML" (primary). On `idle` shows "✨ Generate recipe".
+   On `error` shows "↻ Retry". On `running` shows a disabled spinner.
+2. **"More ⋮" dropdown → Recipe section** (always available, regardless
+   of active tab):
+   - "Regenerate" → `recipe.triggerGeneration({ nodes, cardMetrics })`,
+     disabled when `!canGenerateRecipe` or `recipe.phase === "running"`.
+   - "Download HTML" → `recipe.downloadHtml(nodes)`, disabled until
+     `canDownloadRecipe` (success phase with a recipe and no in-flight
+     download).
+
+Both paths share the same `canGenerateRecipe` /
+`canDownloadRecipe` derivations so a disabled state in one place is
+disabled in the other.
 
 ## File References
 
 ### Components
 
-- `components/canvas/ReactFlowCanvas.tsx` - Main canvas (incl. Tabs layout)
-- `components/canvas/CanvasToolbar.tsx` - Toolbar (Auto Layout, Recipe actions)
+- `components/canvas/ReactFlowCanvas.tsx` - Main canvas (controlled Tabs + UnifiedHeader)
+- `components/canvas/UnifiedHeader.tsx` - Top bar (tabs + context actions + sectioned More dropdown)
+- `components/canvas/ContextActions.tsx` - Phase-aware action group in the header
 - `components/canvas/CardNode.tsx` - Card rendering incl. metrics list
 - `components/canvas/AddLogicSheet.tsx` - Card + metrics editing sheet
 - `components/canvas/EvidenceEdge.tsx:15` - Edge type registration
