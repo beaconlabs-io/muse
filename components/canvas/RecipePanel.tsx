@@ -32,7 +32,7 @@ export function RecipePanel() {
         <CenteredMessage
           icon={<Loader2 className="h-5 w-5 animate-spin" />}
           title={t("statusGenerating")}
-          body={recipe.currentStepId ? t("stepCurrent", { step: recipe.currentStepId }) : undefined}
+          body={metricCount > 0 ? t("runningSubtitle", { count: metricCount }) : undefined}
         />
       </PanelShell>
     );

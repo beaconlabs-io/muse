@@ -356,7 +356,7 @@
     "waitingForLogicModelTitle": "ロジックモデルを待機中",
     "waitingForLogicModel": "ロジックモデルの生成が完了すると、自動でレシピの生成を開始します。",
     "statusGenerating": "レシピを生成しています…",
-    "stepCurrent": "現在のステップ: {step}",
+    "runningSubtitle": "{count} 件のメトリクスを処理しています",
     "statusRendering": "HTMLを生成しています…",
     "statusReady": "レシピを生成しました。",
     "staleBadge": "古い内容",

@@ -356,7 +356,7 @@
     "waitingForLogicModelTitle": "Waiting for the logic model",
     "waitingForLogicModel": "The recipe will start generating automatically once the logic model is ready.",
     "statusGenerating": "Generating the recipe…",
-    "stepCurrent": "Current step: {step}",
+    "runningSubtitle": "Processing {count} metrics",
     "statusRendering": "Rendering HTML…",
     "statusReady": "Recipe ready.",
     "staleBadge": "Stale",
