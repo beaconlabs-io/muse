@@ -412,11 +412,9 @@ export const RecipeMetricGuidanceSchema = z.object({
     .array(z.string())
     .describe("Ordered, concrete steps a practitioner can follow"),
   dataCollectionMethod: z.string(),
-  requiredResources: z.array(z.string()),
   frequency: z.string(),
   targetValue: z.string().optional(),
   cautions: z.array(z.string()),
-  stakeholders: z.array(z.string()),
 });
 
 export type RecipeMetricGuidance = z.infer<typeof RecipeMetricGuidanceSchema>;

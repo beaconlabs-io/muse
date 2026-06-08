@@ -342,7 +342,7 @@
     "title": "実行レシピ",
     "tabLabel": "レシピ",
     "canvasTabLabel": "キャンバス",
-    "description": "アウトプットとアウトカムの各メトリクスについて、測定手順・データ収集方法・必要リソース・頻度・注意点をまとめたHTMLをダウンロードします。",
+    "description": "アウトプットとアウトカムの各メトリクスについて、測定手順・データ収集方法・頻度・注意点をまとめたHTMLをダウンロードします。",
     "emptyCanvasTitle": "ロジックモデルがまだありません",
     "emptyCanvasBody": "まずロジックモデルを作成または生成してから、ここで測定レシピを作成してください。",
     "noMetricsTitle": "対象のメトリクスがありません",
@@ -376,11 +376,9 @@
     "sectionIntermediate": "中期アウトカム",
     "measurementSteps": "測定手順",
     "dataCollectionMethod": "データ収集方法",
-    "requiredResources": "必要リソース",
     "frequency": "頻度",
     "targetValue": "目標値",
     "cautions": "注意点",
-    "stakeholders": "ステークホルダー",
     "parentLabel": "対象カード"
   }
 }

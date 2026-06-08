@@ -1,8 +1,7 @@
 "use client";
 
-import { AlertTriangle, ClipboardList, Users } from "lucide-react";
+import { AlertTriangle, ClipboardList } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { Recipe, RecipeMetricGuidance, RecipeTargetCardType } from "@/types";
@@ -100,16 +99,11 @@ function RecipeItemCard({ item }: { item: RecipeMetricGuidance }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="space-y-1">
-            <CardTitle className="text-base">{item.metricName}</CardTitle>
-            <p className="text-muted-foreground text-xs">
-              {t("parentLabel")}: {item.parentCardTitle}
-            </p>
-          </div>
-          <Badge variant="secondary" className="shrink-0">
-            {item.frequency}
-          </Badge>
+        <div className="space-y-1">
+          <CardTitle className="text-base">{item.metricName}</CardTitle>
+          <p className="text-muted-foreground text-xs">
+            {t("parentLabel")}: {item.parentCardTitle}
+          </p>
         </div>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
@@ -142,33 +136,6 @@ function RecipeItemCard({ item }: { item: RecipeMetricGuidance }) {
           </p>
           <p>{item.dataCollectionMethod}</p>
         </div>
-
-        {item.requiredResources.length > 0 && (
-          <div>
-            <p className="text-muted-foreground mb-1 text-xs font-medium uppercase">
-              {t("requiredResources")}
-            </p>
-            <ul className="ml-5 list-disc space-y-0.5">
-              {item.requiredResources.map((res, idx) => (
-                <li key={idx}>{res}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {item.stakeholders.length > 0 && (
-          <div>
-            <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs font-medium uppercase">
-              <Users className="h-3.5 w-3.5" />
-              {t("stakeholders")}
-            </p>
-            <ul className="ml-5 list-disc space-y-0.5">
-              {item.stakeholders.map((s, idx) => (
-                <li key={idx}>{s}</li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         {item.cautions.length > 0 && (
           <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/40 dark:bg-amber-950/30">

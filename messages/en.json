@@ -342,7 +342,7 @@
     "title": "Recipe",
     "tabLabel": "Recipe",
     "canvasTabLabel": "Canvas",
-    "description": "Generate a downloadable measurement recipe (HTML) covering each Output and Outcome metric — including measurement steps, data collection methods, required resources, frequency, and cautions.",
+    "description": "Generate a downloadable measurement recipe (HTML) covering each Output and Outcome metric — including measurement steps, data collection methods, frequency, and cautions.",
     "emptyCanvasTitle": "No logic model yet",
     "emptyCanvasBody": "Create or generate a logic model first, then come back here to build a measurement recipe.",
     "noMetricsTitle": "No metrics to include",
@@ -376,11 +376,9 @@
     "sectionIntermediate": "Intermediate Outcomes",
     "measurementSteps": "Measurement steps",
     "dataCollectionMethod": "Data collection method",
-    "requiredResources": "Required resources",
     "frequency": "Frequency",
     "targetValue": "Target value",
     "cautions": "Cautions",
-    "stakeholders": "Stakeholders",
     "parentLabel": "From"
   }
 }

@@ -11,11 +11,9 @@ function makeMetric(overrides: Partial<RecipeMetricGuidance> = {}): RecipeMetric
     parentCardType: "outputs",
     measurementSteps: ["Step 1", "Step 2"],
     dataCollectionMethod: "Manual log review",
-    requiredResources: ["Spreadsheet"],
     frequency: "Monthly",
     targetValue: "100 events",
     cautions: ["Selection bias"],
-    stakeholders: ["Program manager"],
     ...overrides,
   };
 }
@@ -161,14 +159,10 @@ describe("generateRecipeHtml", () => {
   it("skips empty bullet sections", () => {
     const items = [
       makeMetric({
-        requiredResources: [],
-        stakeholders: [],
         cautions: [],
       }),
     ];
     const html = generateRecipeHtml({ recipe: makeRecipe({ items }) });
-    expect(html).not.toContain("Required resources");
-    expect(html).not.toContain("Stakeholders");
     expect(html).not.toContain("Cautions");
   });
 });

@@ -19,11 +19,9 @@ const RecipeAgentInputItemSchema = z.object({
   parentCardType: z.enum(RECIPE_TARGET_CARD_TYPES),
   measurementSteps: z.array(z.string()).min(1),
   dataCollectionMethod: z.string().min(1),
-  requiredResources: z.array(z.string()).default([]),
   frequency: z.string().min(1),
   targetValue: z.string().optional(),
   cautions: z.array(z.string()).default([]),
-  stakeholders: z.array(z.string()).default([]),
 });
 
 export const recipeTool = createTool({

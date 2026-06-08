@@ -27,11 +27,9 @@ const labels = {
     sectionIntermediate: "Intermediate Outcomes",
     measurementSteps: "Measurement steps",
     dataCollectionMethod: "Data collection method",
-    requiredResources: "Required resources",
     frequency: "Frequency",
     targetValue: "Target value",
     cautions: "Cautions",
-    stakeholders: "Stakeholders",
     parentLabel: "From",
     none: "—",
     imageAlt: "Logic model diagram",
@@ -45,11 +43,9 @@ const labels = {
     sectionIntermediate: "中期アウトカム",
     measurementSteps: "測定手順",
     dataCollectionMethod: "データ収集方法",
-    requiredResources: "必要リソース",
     frequency: "頻度",
     targetValue: "目標値",
     cautions: "注意点",
-    stakeholders: "ステークホルダー",
     parentLabel: "対象カード",
     none: "—",
     imageAlt: "ロジックモデル図",
@@ -116,18 +112,6 @@ function renderMetricCard(item: Recipe["items"][number], t: (typeof labels)[Reci
           <p>${item.targetValue ? htmlEscape(item.targetValue) : t.none}</p>
         </div>
       </div>
-
-      ${
-        item.requiredResources.length > 0
-          ? `<section class="field"><h4>${htmlEscape(t.requiredResources)}</h4>${renderList(item.requiredResources)}</section>`
-          : ""
-      }
-
-      ${
-        item.stakeholders.length > 0
-          ? `<section class="field"><h4>${htmlEscape(t.stakeholders)}</h4>${renderList(item.stakeholders)}</section>`
-          : ""
-      }
 
       ${
         item.cautions.length > 0
