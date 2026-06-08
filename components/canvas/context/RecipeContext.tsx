@@ -18,6 +18,7 @@ import type { Metric, Recipe, RecipeLocale } from "@/types";
 import type { Node } from "@xyflow/react";
 import { useCanvasImage } from "@/hooks/useCanvasImage";
 import { useRecipeStream } from "@/hooks/useRecipeStream";
+import { clearRecipeState, loadRecipeState, saveRecipeState } from "@/lib/recipe/storage";
 import { collectMetricContexts, deriveLogicModelTitle } from "@/lib/recipe-helpers";
 
 export type RecipePhase = "idle" | "waiting-for-logic-model" | "running" | "success" | "error";
@@ -91,6 +92,7 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
     stream.reset();
     setWaitingFlag(false);
     setStale(false);
+    clearRecipeState();
   }, [stream]);
 
   const triggerGeneration = useCallback(
@@ -146,6 +148,24 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
     }
     prevStatusRef.current = stream.status;
   }, [stream.status]);
+
+  const hasHydrated = useRef(false);
+  useEffect(() => {
+    if (hasHydrated.current) return;
+    hasHydrated.current = true;
+    const persisted = loadRecipeState();
+    if (persisted) {
+      stream.hydrateRecipe(persisted.recipe);
+      setStale(persisted.stale);
+    }
+  }, [stream]);
+
+  useEffect(() => {
+    if (!hasHydrated.current) return;
+    if (stream.status === "success" && stream.recipe) {
+      saveRecipeState({ recipe: stream.recipe, stale });
+    }
+  }, [stream.status, stream.recipe, stale]);
 
   const value = useMemo<RecipeContextValue>(
     () => ({

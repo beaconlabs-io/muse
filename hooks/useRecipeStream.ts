@@ -144,5 +144,9 @@ export function useRecipeStream() {
     setState(initialState);
   }, []);
 
-  return { ...state, start, reset };
+  const hydrateRecipe = useCallback((recipe: Recipe) => {
+    setState({ ...initialState, status: "success", recipe });
+  }, []);
+
+  return { ...state, start, reset, hydrateRecipe };
 }
