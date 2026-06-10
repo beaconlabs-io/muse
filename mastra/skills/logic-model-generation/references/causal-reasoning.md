@@ -163,5 +163,5 @@ Rate each connection before including it in the model:
 **Guideline**: A defensible logic model should have mostly Strong and
 Plausible connections. If more than one-third of connections are
 Speculative, the model needs revision. Speculative connections should
-be acknowledged in the reasoning field and may indicate where
-additional evidence or intermediate cards are needed.
+be flagged in your internal review and may indicate where additional
+evidence or intermediate cards are needed.

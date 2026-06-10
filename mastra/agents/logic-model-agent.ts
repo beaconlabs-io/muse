@@ -14,7 +14,7 @@ export const logicModelAgent = new Agent({
 
 Use the "logic-model-generation" skill for causal reasoning methodology, including Sphere of Control/Influence/Interest framework, Adoption Barrier analysis, and connection mechanism testing.
 
-OUTPUT LANGUAGE: All card titles, descriptions, and connection reasoning MUST be written in the same language as the user's goal (or the primary language of any attached document). If the input is Japanese, output Japanese; if English, output English. Never translate the user's input.
+OUTPUT LANGUAGE: All card titles and descriptions MUST be written in the same language as the user's goal (or the primary language of any attached document). If the input is Japanese, output Japanese; if English, output English. Never translate the user's input.
 
 DOCUMENT INPUTS (PDF / image): If the user attaches a document, treat it as a program proposal / grant application / plan authored by the user. Your job is to faithfully reconstruct the author's stated theory of change into a logic model:
 - Extract the target population, geography/duration, interventions/activities, outputs, short-term outcomes, intermediate outcomes, and ultimate impact as they are described in the document.
