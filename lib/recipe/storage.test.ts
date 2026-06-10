@@ -64,6 +64,27 @@ describe("recipe storage", () => {
     expect(errorSpy).toHaveBeenCalled();
   });
 
+  it("persists with a version field and rejects unknown shapes", () => {
+    saveRecipeState({ recipe: sampleRecipe, stale: false });
+    const raw = localStorage.getItem("recipeState");
+    expect(raw).not.toBeNull();
+    expect(JSON.parse(raw!)).toMatchObject({ version: 1 });
+  });
+
+  it("returns null and clears storage when the persisted shape is invalid", () => {
+    localStorage.setItem("recipeState", JSON.stringify({ foo: 1 }));
+    expect(loadRecipeState()).toBeNull();
+    expect(localStorage.getItem("recipeState")).toBeNull();
+  });
+
+  it("returns null when the persisted version does not match", () => {
+    localStorage.setItem(
+      "recipeState",
+      JSON.stringify({ version: 999, recipe: sampleRecipe, stale: false }),
+    );
+    expect(loadRecipeState()).toBeNull();
+  });
+
   it("swallows errors from localStorage.setItem", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { AlertTriangle, ClipboardList } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,10 +21,14 @@ const SECTION_ORDER: RecipeTargetCardType[] = [
 export function RecipeView({ recipe, stale = false }: RecipeViewProps) {
   const t = useTranslations("recipe");
 
-  const grouped = SECTION_ORDER.map((type) => ({
-    type,
-    items: recipe.items.filter((item) => item.parentCardType === type),
-  })).filter((g) => g.items.length > 0);
+  const grouped = useMemo(
+    () =>
+      SECTION_ORDER.map((type) => ({
+        type,
+        items: recipe.items.filter((item) => item.parentCardType === type),
+      })).filter((g) => g.items.length > 0),
+    [recipe.items],
+  );
 
   const sectionLabel = (type: RecipeTargetCardType): string => {
     switch (type) {
@@ -36,7 +41,7 @@ export function RecipeView({ recipe, stale = false }: RecipeViewProps) {
     }
   };
 
-  const generatedAtLabel = (() => {
+  const generatedAtLabel = useMemo(() => {
     try {
       return new Date(recipe.generatedAt).toLocaleString(
         recipe.locale === "ja" ? "ja-JP" : "en-US",
@@ -44,7 +49,7 @@ export function RecipeView({ recipe, stale = false }: RecipeViewProps) {
     } catch {
       return recipe.generatedAt;
     }
-  })();
+  }, [recipe.generatedAt, recipe.locale]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
@@ -124,7 +129,7 @@ function RecipeItemCard({ item }: { item: RecipeMetricGuidance }) {
             </p>
             <ol className="ml-5 list-decimal space-y-1">
               {item.measurementSteps.map((step, idx) => (
-                <li key={idx}>{step}</li>
+                <li key={`${idx}-${step.slice(0, 40)}`}>{step}</li>
               ))}
             </ol>
           </div>
@@ -145,7 +150,7 @@ function RecipeItemCard({ item }: { item: RecipeMetricGuidance }) {
             </p>
             <ul className="ml-5 list-disc space-y-0.5 text-amber-900 dark:text-amber-200">
               {item.cautions.map((c, idx) => (
-                <li key={idx}>{c}</li>
+                <li key={`${idx}-${c.slice(0, 40)}`}>{c}</li>
               ))}
             </ul>
           </div>

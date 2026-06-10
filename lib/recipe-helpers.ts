@@ -49,5 +49,25 @@ export function deriveLogicModelTitle(nodes: Node<CardNodeData>[], fallback: str
 }
 
 export function countRecipeTargetCards(nodes: Node<CardNodeData>[]): number {
-  return nodes.filter((n) => isRecipeTargetType(n.data.type)).length;
+  let count = 0;
+  for (const node of nodes) {
+    if (isRecipeTargetType(node.data.type)) count++;
+  }
+  return count;
+}
+
+export function countRecipeMetricContexts(
+  nodes: Node<CardNodeData>[],
+  cardMetrics: Record<string, Metric[]>,
+): number {
+  let count = 0;
+  for (const node of nodes) {
+    if (!isRecipeTargetType(node.data.type)) continue;
+    const metrics = cardMetrics[node.id];
+    if (!metrics) continue;
+    for (const metric of metrics) {
+      if (metric.name?.trim()) count++;
+    }
+  }
+  return count;
 }

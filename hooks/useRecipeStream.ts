@@ -71,6 +71,7 @@ export function useRecipeStream() {
         let buffer = "";
 
         while (true) {
+          if (abortController.signal.aborted) break;
           const { done, value } = await reader.read();
           if (done) break;
 

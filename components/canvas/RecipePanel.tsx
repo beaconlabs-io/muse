@@ -1,18 +1,22 @@
 "use client";
 
+import { useMemo } from "react";
 import { AlertCircle, BookOpen, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCanvasState, useRecipe } from "./context";
 import { RecipeView } from "./RecipeView";
-import { collectMetricContexts, countRecipeTargetCards } from "@/lib/recipe-helpers";
+import { countRecipeMetricContexts, countRecipeTargetCards } from "@/lib/recipe-helpers";
 
 export function RecipePanel() {
   const t = useTranslations("recipe");
   const { nodes, cardMetrics } = useCanvasState();
   const recipe = useRecipe();
 
-  const targetCards = countRecipeTargetCards(nodes);
-  const metricCount = collectMetricContexts(nodes, cardMetrics).length;
+  const targetCards = useMemo(() => countRecipeTargetCards(nodes), [nodes]);
+  const metricCount = useMemo(
+    () => countRecipeMetricContexts(nodes, cardMetrics),
+    [nodes, cardMetrics],
+  );
 
   if (recipe.phase === "waiting-for-logic-model") {
     return (
