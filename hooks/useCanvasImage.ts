@@ -36,11 +36,33 @@ export function useCanvasImage(): UseCanvasImageResult {
       setStatus("generating");
       setError(null);
 
+      // If the canvas Tabs panel is `display: none` (e.g. user is on the Recipe
+      // tab), React Flow children collapse to 0×0 and html-to-image emits a
+      // broken capture. Briefly force-layout the panel offscreen so children
+      // measure correctly, then restore on the way out. We avoid
+      // `visibility: hidden` because edge SVG paths inherit it (nodes override
+      // it on their own root) and would render as invisible in the capture.
+      let restorePanel: (() => void) | null = null;
+
       try {
         // Get the React Flow viewport element
         const viewportElement = document.querySelector(".react-flow__viewport") as HTMLElement;
         if (!viewportElement) {
           throw new Error("React Flow viewport not found");
+        }
+
+        const tabPanel = viewportElement.closest('[role="tabpanel"]') as HTMLElement | null;
+        if (tabPanel && getComputedStyle(tabPanel).display === "none") {
+          const originalStyle = tabPanel.getAttribute("style");
+          tabPanel.style.cssText =
+            "display: block !important; position: fixed !important; left: -100000px !important; top: 0 !important; width: 100vw !important; height: 100vh !important; pointer-events: none !important;";
+          restorePanel = () => {
+            if (originalStyle === null) tabPanel.removeAttribute("style");
+            else tabPanel.setAttribute("style", originalStyle);
+          };
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          );
         }
 
         // Calculate bounds and viewport for optimal capture
@@ -86,6 +108,8 @@ export function useCanvasImage(): UseCanvasImageResult {
         setStatus("error");
         console.error("Failed to generate canvas image:", err);
         return null;
+      } finally {
+        restorePanel?.();
       }
     },
     [],

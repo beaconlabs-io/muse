@@ -54,6 +54,7 @@ const generateLogicModelSchema = z
     file: z.instanceof(File).nullable(),
     enableExternalSearch: z.boolean(),
     enableMetrics: z.boolean(),
+    enableRecipe: z.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.mode === "goal") {
@@ -100,6 +101,7 @@ interface GenerateLogicModelDialogProps {
     cards: Card[];
     arrows: Arrow[];
     cardMetrics: Record<string, Metric[]>;
+    enableRecipe: boolean;
   }) => void;
 }
 
@@ -227,11 +229,21 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
       file: null,
       enableExternalSearch: false,
       enableMetrics: false,
+      enableRecipe: false,
     },
   });
 
   const mode = form.watch("mode");
   const selectedFile = form.watch("file");
+  const enableMetricsValue = form.watch("enableMetrics");
+
+  // Recipe generation requires metrics — if the user turns metrics off, force
+  // enableRecipe off as well so the submit payload stays consistent.
+  useEffect(() => {
+    if (!enableMetricsValue) {
+      form.setValue("enableRecipe", false);
+    }
+  }, [enableMetricsValue, form]);
 
   // Track the last processed event index to avoid re-processing
   const processedEventCountRef = useRef(0);
@@ -267,6 +279,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
         cards: canvasData.cards,
         arrows: canvasData.arrows,
         cardMetrics: canvasData.cardMetrics,
+        enableRecipe: form.getValues("enableRecipe"),
       });
 
       // Auto-close after brief delay
@@ -559,6 +572,35 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
                       </FormControl>
                     </FormItem>
                   )}
+                />
+                <FormField
+                  control={form.control}
+                  name="enableRecipe"
+                  render={({ field }) => {
+                    const recipeDisabled = isRunning || !enableMetricsValue;
+                    return (
+                      <FormItem className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <FormLabel className="text-sm font-normal">{t("recipeLabel")}</FormLabel>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="text-muted-foreground h-4 w-4 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[260px]">
+                              {enableMetricsValue ? t("recipeTooltip") : t("recipeMetricsRequired")}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={recipeDisabled}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    );
+                  }}
                 />
               </CollapsibleContent>
             </Collapsible>

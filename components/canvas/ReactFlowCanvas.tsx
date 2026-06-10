@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -11,19 +11,23 @@ import {
   type EdgeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AddLogicSheet } from "./AddLogicSheet";
-import { CanvasToolbar } from "./CanvasToolbar";
 import { CardNode } from "./CardNode";
-import { CanvasProvider, useCanvas } from "./context";
+import { CanvasProvider, RecipeProvider, useCanvas } from "./context";
 import { EvidenceEdge } from "./EvidenceEdge";
+import { RecipePanel } from "./RecipePanel";
+import { UnifiedHeader } from "./UnifiedHeader";
 import type { CardFormData } from "./context/canvas-operations";
 import type { Card, Arrow, Metric } from "@/types";
+
+type CanvasTab = "canvas" | "recipe";
 
 interface ReactFlowCanvasProps {
   initialCards?: Card[];
   initialArrows?: Arrow[];
   initialCardMetrics?: Record<string, Metric[]>;
-  disableLocalStorage?: boolean; // Don't use localStorage when viewing IPFS canvas
+  disableLocalStorage?: boolean;
 }
 
 export function ReactFlowCanvas({
@@ -33,40 +37,42 @@ export function ReactFlowCanvas({
   disableLocalStorage = false,
 }: ReactFlowCanvasProps) {
   return (
-    // ReactFlowProvider must wrap CanvasProvider so autoLayout can call
-    // useReactFlow().fitView() after repositioning nodes.
+    // Provider order matters:
+    //   ReactFlowProvider  → required by useReactFlow() inside CanvasProvider
+    //   RecipeProvider     → must wrap CanvasProvider because CanvasContext
+    //                        consumes useRecipe() to wire stale + auto-start
+    //   CanvasProvider     → owns nodes/edges/metrics
     <ReactFlowProvider>
-      <CanvasProvider
-        initialCards={initialCards}
-        initialArrows={initialArrows}
-        initialCardMetrics={initialCardMetrics}
-        disableLocalStorage={disableLocalStorage}
-      >
-        <ReactFlowCanvasInner />
-      </CanvasProvider>
+      <RecipeProvider>
+        <CanvasProvider
+          initialCards={initialCards}
+          initialArrows={initialArrows}
+          initialCardMetrics={initialCardMetrics}
+          disableLocalStorage={disableLocalStorage}
+        >
+          <ReactFlowCanvasInner />
+        </CanvasProvider>
+      </RecipeProvider>
     </ReactFlowProvider>
   );
 }
 
 function ReactFlowCanvasInner() {
-  // Get state and operations from Context
+  const [activeTab, setActiveTab] = useState<CanvasTab>("canvas");
   const { state, operations } = useCanvas();
   const { nodes, edges, editingNodeData, editSheetOpen, editingNodeId } = state;
   const { onNodesChange, onEdgesChange, onConnect, updateCard, closeEditSheet } = operations;
 
-  // Wrapper to handle boolean parameter from Sheet component
   const handleEditSheetOpenChange = (open: boolean) => {
     if (!open) {
       closeEditSheet();
     }
   };
 
-  // Wrapper to pass editingNodeId to updateCard
   const handleUpdateCard = (formData: CardFormData) => {
     updateCard(formData, editingNodeId);
   };
 
-  // Define custom node types
   const nodeTypes: NodeTypes = useMemo(
     () => ({
       cardNode: CardNode,
@@ -74,7 +80,6 @@ function ReactFlowCanvasInner() {
     [],
   );
 
-  // Define custom edge types
   const edgeTypes: EdgeTypes = useMemo(
     () => ({
       evidence: EvidenceEdge,
@@ -82,7 +87,6 @@ function ReactFlowCanvasInner() {
     [],
   );
 
-  // Default edge options for smoother interaction and appearance
   const defaultEdgeOptions = useMemo(
     () => ({
       type: "default",
@@ -95,10 +99,21 @@ function ReactFlowCanvasInner() {
 
   return (
     <div className="flex h-screen w-full flex-col">
-      <CanvasToolbar />
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as CanvasTab)}
+        className="flex flex-1 flex-col overflow-hidden"
+      >
+        <UnifiedHeader activeTab={activeTab} />
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="relative flex-1">
+        {/* forceMount + data-[state=inactive]:hidden keeps React Flow mounted
+            when the user switches to the Recipe tab. Without this, the
+            viewport / measured-node-size state would be lost every time. */}
+        <TabsContent
+          value="canvas"
+          forceMount
+          className="relative mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden"
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -118,10 +133,13 @@ function ReactFlowCanvasInner() {
               maskColor="rgb(240, 240, 240, 0.6)"
             />
           </ReactFlow>
-        </div>
-      </div>
+        </TabsContent>
 
-      {/* Edit node sheet */}
+        <TabsContent value="recipe" className="mt-0 flex-1 overflow-auto">
+          <RecipePanel />
+        </TabsContent>
+      </Tabs>
+
       {editingNodeData && (
         <AddLogicSheet
           editMode
