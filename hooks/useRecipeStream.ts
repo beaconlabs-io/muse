@@ -29,6 +29,10 @@ const initialState: RecipeStreamState = {
 export function useRecipeStream() {
   const [state, setState] = useState<RecipeStreamState>(initialState);
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Synchronous in-flight guard. React state ("running") updates asynchronously,
+  // so consecutive callers within the same render tick can bypass a status check
+  // before setState reflects. A ref is updated synchronously and stops the race.
+  const isStartingRef = useRef(false);
 
   const start = useCallback(
     async (input: {
@@ -36,6 +40,9 @@ export function useRecipeStream() {
       metrics: RecipeMetricContext[];
       locale: RecipeLocale;
     }) => {
+      if (isStartingRef.current) return;
+      isStartingRef.current = true;
+
       abortControllerRef.current?.abort();
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
@@ -61,7 +68,18 @@ export function useRecipeStream() {
 
         if (!response.ok) {
           const errorBody = await response.json().catch(() => ({}));
-          throw new Error((errorBody as Record<string, string>).error || `HTTP ${response.status}`);
+          const errorMessage = (errorBody as Record<string, string>).error;
+          // The API route's in-flight de-dup returns 429 for the *same* input
+          // already being processed. That's our own request bouncing back as a
+          // duplicate, not a real error to surface to the user — silently
+          // discard so the in-progress / success state is preserved.
+          if (
+            response.status === 429 &&
+            errorMessage?.toLowerCase().includes("already in progress")
+          ) {
+            return;
+          }
+          throw new Error(errorMessage || `HTTP ${response.status}`);
         }
 
         const reader = response.body?.getReader();
@@ -133,6 +151,7 @@ export function useRecipeStream() {
       } finally {
         clearTimeout(timeoutId);
         abortControllerRef.current = null;
+        isStartingRef.current = false;
       }
     },
     [],
@@ -141,6 +160,7 @@ export function useRecipeStream() {
   const reset = useCallback(() => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+    isStartingRef.current = false;
     setState(initialState);
   }, []);
 

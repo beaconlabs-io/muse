@@ -97,6 +97,7 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
 
   const triggerGeneration = useCallback(
     ({ nodes, cardMetrics }: TriggerGenerationArgs) => {
+      if (stream.status === "running") return;
       const metrics = collectMetricContexts(nodes, cardMetrics);
       if (metrics.length === 0) {
         toast.error(t("noMetricsBody"));

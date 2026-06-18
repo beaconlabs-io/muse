@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { RecipeSSEEvent } from "@/types/recipe-events";
 import { WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
@@ -18,6 +19,12 @@ const RequestSchema = z.object({
   metrics: z.array(RecipeMetricContextSchema).min(1).max(30),
   locale: RecipeLocaleSchema.default("en"),
 });
+
+// In-flight de-dup: same-process guard against duplicate parallel requests
+// from button mashing / unstable useEffect deps. Effective on a single Node
+// instance (dev, single-container deploys). For multi-instance production
+// (Vercel serverless), an external store like Upstash Redis is needed.
+const inFlight = new Map<string, ReturnType<typeof setTimeout>>();
 
 function formatSSE(event: RecipeSSEEvent): string {
   return `data: ${JSON.stringify(event)}\n\n`;
@@ -43,6 +50,23 @@ export async function POST(request: NextRequest) {
   }
 
   const workflowInput = parsed.data;
+
+  const inFlightKey = createHash("sha256").update(JSON.stringify(workflowInput)).digest("hex");
+
+  if (inFlight.has(inFlightKey)) {
+    return new Response(
+      JSON.stringify({ error: "Recipe generation already in progress for this input" }),
+      { status: 429, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const inFlightTtl = setTimeout(() => inFlight.delete(inFlightKey), WORKFLOW_TIMEOUT_MS + 10_000);
+  inFlight.set(inFlightKey, inFlightTtl);
+
+  const releaseInFlight = () => {
+    clearTimeout(inFlightTtl);
+    inFlight.delete(inFlightKey);
+  };
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -152,6 +176,7 @@ export async function POST(request: NextRequest) {
         send({ type: "recipe-error", error: message, errorCategory: category });
       } finally {
         clearTimeout(timeoutId);
+        releaseInFlight();
         try {
           controller.close();
         } catch {
