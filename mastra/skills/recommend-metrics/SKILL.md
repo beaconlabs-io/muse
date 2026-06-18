@@ -1,91 +1,52 @@
 ---
-name: recommend-logic-model-metrics
-description: Recommend beginner-friendly, low-burden metrics and measurement methods from a logic model's outputs and outcomes. Use when Codex needs to help a non-expert quickly start measuring whether a program is being delivered and whether early or intermediate changes are happening, prioritizing simple first-step KPIs, easy data collection, lightweight surveys, basic logs, and practical review habits over strict evaluation design.
+name: recommend-metrics
+description: Make a measurement recipe (steps, data-collection method, frequency, target, cautions) that an M&E beginner can actually execute. Use when generating recipe items for a metric, prioritizing simple first-step procedures, lightweight data collection, plain language, and a realistic first measurement cycle over methodological rigor.
 ---
 
-# Recommend Logic Model Metrics
+# Recommend Metrics
 
 ## Overview
 
-Use this skill to recommend metrics that a complete beginner can start measuring immediately from a logic model. Optimize for a usable first step, not methodological perfection.
+Use this skill when turning a metric into a measurement recipe for a program operator who is new to monitoring & evaluation (M&E). The goal is a recipe that the user can actually run this month with basic tools (a spreadsheet, an attendance log, a short survey), not an ideal evaluation design.
 
-Treat the logic model as a simple learning tool: measure enough to see whether the program is being delivered, whether people are reached, and whether early signs of intended change appear. Keep definitions plain, collection methods lightweight, and the first version small.
+Treat the metric as a learning tool: measure enough to see whether the program is being delivered, whether people are reached, and whether early signs of intended change appear. Keep the steps plain, the data collection lightweight, and the first version small. When details are missing, make practical assumptions and label them inside the recipe so the user can adjust them later.
 
-When details are missing, make practical assumptions and label them. Ask only when the missing detail blocks even a simple recommendation, such as not knowing who the target participants are.
+## Accessibility Workflow
 
-## Beginner-First Workflow
+For each metric you receive, design the recipe so that every field below stays beginner-runnable.
 
-1. Extract only the essential logic-model elements:
-   - Outputs: what the program directly provides or produces.
-   - Outcomes: what should change for participants or the target group.
-   - Target group: who should receive the program.
-   - Timing: when change might reasonably be visible.
-2. Recommend a small starter set before a full KPI system:
-   - 1-2 output metrics: "Did we do it?" and "Did it reach people?"
-   - 1-2 early outcome metrics: "Did people understand, feel ready, or intend to act?"
-   - 1-2 intermediate outcome metrics: "Did people try or continue the intended behavior?"
-   - 0-1 negative-effect or burden check when relevant.
-3. Prefer metrics that can be measured with existing records, a simple count, a one-question survey, a 3-5 question mini-survey, a short checklist, or a simple follow-up message.
-4. Define each metric in everyday language. Avoid complex formulas unless the user needs them.
-5. Give the easiest measurement method first. Mention a more rigorous option only as an upgrade path.
-6. Recommend a first measurement cycle the user can actually run: for example, "record every session, ask one question at the end, and follow up after one month."
-7. Include how to interpret the first results without overclaiming causality.
+1. **measurementSteps** — Write 3-6 ordered, imperative steps a beginner can follow without prior M&E experience.
+   - Start from existing records, a simple count, a one-question check, a 3-5 question mini-survey, a short checklist, or a follow-up message before reaching for anything more complex.
+   - Each step names what to record, who is included, and when it happens. Avoid vague verbs like "evaluate" or "analyze" without a concrete artifact.
+   - If a step uses a statistical concept (baseline, denominator, segment), add one short clause that explains it in plain language.
 
-For quick examples and beginner-safe metric patterns, read `references/metric-design-rubric.md` when you need concrete metric ideas.
+2. **dataCollectionMethod** — Describe the lightest method that produces usable data. Refer to generic categories ("a spreadsheet tracker", "a one-question end-of-session survey", "an attendance log", "a follow-up message") rather than specific products or brands.
 
-## Recommendation Rules
+3. **frequency** — Recommend a cadence the team can actually sustain. Prefer "Per session", "Per cohort", "Monthly", or "Quarterly". Avoid asking for weekly multi-question surveys unless the user has already committed to that cadence. If the user supplied a frequency, preserve it verbatim.
 
-- Start with "minimum viable metrics." Do not overwhelm the user with a large measurement framework.
-- Favor actionability over precision. A simple metric collected consistently is better than an ideal metric nobody collects.
-- Keep metric definitions short:
-  - Name the thing to count or ask.
-  - Name who is included.
-  - Name when it is measured.
-  - Name what result would prompt review.
-- Avoid advanced terms unless needed. If you use terms such as baseline, denominator, validity, or comparison group, explain them in plain language.
-- Do not require control groups, validated scales, complex sampling, or statistical analysis for the first recommendation.
-- Use pre/post comparison only when it is easy, such as the same 1-3 questions before and after a workshop.
-- Use target values gently. If the user has no prior data, suggest "first collect one cycle as a baseline, then set a target."
-- Include a simple check for unintended burden, exclusion, or dissatisfaction when the program asks participants for meaningful time, effort, money, or sensitive information.
+4. **targetValue** — When the user has prior data, build the target around it. When there is no baseline, write something like "Collect one cycle as a baseline, then set a target" instead of inventing a number. Keep targets gentle and revisable.
 
-## Output Format
+5. **cautions** — Surface 1-3 practical caveats the beginner is most likely to hit: response bias from a tiny sample, self-selection of who answers, missing follow-up data, exclusion of harder-to-reach groups, or the temptation to overclaim causality from monitoring data. Keep each caveat to one or two sentences in everyday language.
 
-Respond in the user's language. For Japanese requests, use concise Japanese.
+For concrete starter patterns you can adapt for measurementSteps and dataCollectionMethod, consult `references/metric-design-rubric.md`.
 
-Start with a short note:
+## Compatibility Rules
 
-- What can be measured immediately.
-- Which 3-5 metrics should be started first.
-- Which assumptions you made.
+Stay aligned with the recipe-agent's existing CRITICAL RULES so that beginner accessibility does not override them.
 
-Then provide a beginner-friendly table:
-
-| Logic-model part | What to learn | Starter metric | How to measure simply | When to measure | How to read the result |
-| ---------------- | ------------- | -------------- | --------------------- | --------------- | ---------------------- |
-
-Use plain metric names such as:
-
-- Number of sessions delivered
-- Number of target participants reached
-- Share of participants who say they understood
-- Share of participants who tried the action once
-- Number of people still continuing after one month
-- Number of participants who felt burdened
-
-After the table, add:
-
-- `Start with these`: 3-5 metrics to begin this month.
-- `Simple setup`: exactly what the user should prepare, such as a spreadsheet, attendance log, mini-survey, or follow-up template.
-- `Upgrade later`: optional improvements after the first cycle, such as clearer baseline, segment comparison, or more reliable questionnaire items.
-- `Review habit`: when to look at the results and what kind of decision each metric should support.
+- **Concrete and beginner-runnable together.** Do not retreat to vague instructions in the name of simplicity. "Send a 3-question online form within 48 hours of the session and require a participant ID" is still beginner-friendly and is preferred over "Survey participants".
+- **Respect existing user input.** If the metric arrives with a non-empty `existingMeasurementMethod`, `existingFrequency`, or `existingTargetValue`, treat those as authoritative — do not simplify them away. Build the rest of the recipe around what the user already chose.
+- **Stay grounded in the parent card.** The recipe must measure the Output or Outcome the metric belongs to. Do not generalize to other parts of the logic model.
+- **No brand names.** Always use generic categories (a spreadsheet, a CRM, a survey form, a project-management tool) instead of specific products.
+- **Preserve language.** Write the entire recipe in the language the user worked in (English or Japanese). Never translate or mix.
 
 ## Quality Checks
 
-Before finishing, verify that:
+Before finalizing the recipe, verify that:
 
-- A beginner could collect the recommended starter metrics without special tools.
-- The first recommendation has no more than 5 priority metrics unless the user asks for more.
-- Every starter metric has a simple collection method.
-- Output metrics and outcome metrics are both included when possible.
-- The metric definitions are understandable without evaluation expertise.
-- The answer avoids implying strict causal proof from simple monitoring data.
+- A program operator with no prior M&E experience could carry out `measurementSteps` using only basic tools.
+- `dataCollectionMethod` matches the method implied by the steps (no contradictions).
+- `frequency` is something the team could realistically sustain through one full cycle.
+- `targetValue` does not invent a number when the user has no baseline data.
+- `cautions` warn against the most likely beginner mistakes without overwhelming the user.
+- No required step demands a control group, validated scale, complex sampling, or specialist analysis unless the user explicitly asked for them.

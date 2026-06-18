@@ -1,121 +1,139 @@
 # Beginner Metric Design Rubric
 
-Use this reference to recommend simple first-step metrics from a logic model.
+Use this reference when filling in a recipe (measurementSteps, dataCollectionMethod, frequency, targetValue, cautions) for an M&E beginner. The patterns here are starting points — adapt the wording to the specific metric you received.
 
-## 1. Beginner Metric Principles
+## 1. Beginner Recipe Principles
 
 Prioritize:
 
-- Easy to start this week.
-- Easy to explain to non-experts.
-- Easy to collect repeatedly.
-- Useful for deciding what to improve next.
+- Easy to start this week with no special tools.
+- Easy to explain to non-experts (frontline staff, volunteers, community members).
+- Easy to collect repeatedly through one full cycle.
+- Useful for deciding what to improve next, not for proving causality.
 
 Do not prioritize:
 
-- Perfect definitions.
-- Strict causal proof.
-- Large dashboards.
+- Perfect operational definitions.
+- Strict causal proof or counterfactual estimation.
+- Large dashboards or many KPIs at once.
 - Complex statistical comparisons.
-- Many indicators at once.
+- Tools that need procurement, IT support, or specialist analysis.
 
 The first goal is to build a measurement habit. Precision can improve after one or two cycles.
 
-## 2. Starter Metric Set
+## 2. Recipe Coverage by Logic-Model Part
 
-Recommend a small mix:
+When the metric belongs to one of these parent cards, lean toward the matching patterns below.
 
-- Delivery metric: Did the program activity happen?
-- Reach metric: Did the intended people receive it?
-- Early change metric: Did participants understand, feel ready, or intend to act?
-- Intermediate change metric: Did participants try, continue, or apply the behavior?
-- Burden or negative-effect metric: Did the program create difficulty, exclusion, dissatisfaction, or stress?
+- Output (delivery): "Did we run the program?" Measure activity counts and reach.
+- Output (reach): "Did the intended people receive it?" Measure who participated.
+- Early outcome: "Did people understand, feel ready, or intend to act?" Use a one-question check or 3-5 question mini-survey.
+- Intermediate outcome: "Did people try, continue, or apply the behavior?" Use a follow-up message after 2-4 weeks.
+- Burden / negative effect: "Did the program create difficulty, exclusion, or dissatisfaction?" Use a short open question or a 1-5 burden item.
 
-If the logic model is very early-stage, prioritize delivery, reach, and early change first.
+If the logic model is very early-stage, lean toward delivery, reach, and early-change recipes first.
 
-## 3. Simple Metric Patterns
+## 3. Starter measurementSteps Patterns
 
-Output patterns:
+Use these as templates and rewrite them to fit the specific metric.
 
-- Count delivered: "Number of sessions delivered this month."
-- Count provided: "Number of materials, consultations, cases, or supports provided."
-- Count reached: "Number of target participants who participated at least once."
-- Simple completion: "Number of participants who completed the program."
-- Basic quality: "Share of participants who rated the session useful."
+Delivery patterns:
 
-Early outcome patterns:
+- "Record the date, location, and staff for every session in a shared spreadsheet."
+- "Count how many materials, consultations, cases, or supports were delivered each month."
+- "At the end of each session, mark on a checklist whether each required activity was completed."
 
-- Understanding: "Share of participants who say they understood the key point."
-- Confidence: "Share of participants who feel ready to try the next action."
-- Intention: "Share of participants who plan to take the action within one week."
-- Satisfaction: "Share of participants who would recommend the program."
+Reach patterns:
 
-Intermediate outcome patterns:
+- "Keep an attendance log with one row per participant per session, including a participant ID."
+- "Note how many unique people attended at least once during the cohort."
+- "Track which target groups are present and which are not showing up."
 
-- First action: "Share of participants who tried the target behavior once."
-- Continued action: "Share of participants still doing the behavior after one month."
-- Application: "Number of participants who used the learned skill in a real situation."
-- Next-step completion: "Share of participants who completed the next required step."
+Early-outcome patterns:
 
-Negative-effect patterns:
+- "Ask one closing question at the end of the session: 'Did you understand the main point? (Yes / Somewhat / No)'."
+- "Use a 3-5 question mini-survey after the session covering understanding, confidence, and intention."
+- "Compare answers to the same 1-3 questions before and after the workshop."
 
-- Burden: "Share of participants who felt the program was too time-consuming or difficult."
-- Dropout: "Number of people who stopped before completion."
-- Exclusion: "Which target groups are not showing up or not completing."
-- Dissatisfaction: "Number of participants reporting confusion, stress, or low usefulness."
+Intermediate-outcome patterns:
 
-## 4. Simple Measurement Methods
+- "Send a follow-up message 2-4 weeks after the program asking whether the participant tried the recommended action at least once."
+- "One month after the workshop, ask the participant whether they are still doing the behavior, in a one-question check."
+- "Record in the spreadsheet whether the participant completed the agreed next step."
 
-Prefer these methods first:
+Burden / negative-effect patterns:
 
-- Attendance sheet: record who came and when.
-- Delivery log: record activity date, type, location, and staff.
-- Spreadsheet tracker: one row per session, participant, case, or event.
-- One-question survey: ask one key question at the end of the activity.
-- Mini-survey: 3-5 questions using yes/no or a 1-5 scale.
-- Before/after question: ask the same simple question before and after a session.
-- Follow-up message: ask after 2-4 weeks whether the participant tried or continued the action.
-- Short checklist: staff mark whether required steps were completed.
+- "Include one open question: 'Was anything about this program difficult, confusing, or stressful?'"
+- "Track dropouts: count people who stopped before completion and note the reason if they share it."
+- "Watch which target groups are not showing up or not completing, and review monthly."
 
-Avoid starting with methods that require complex survey design, long interviews, external datasets, or specialist analysis unless the user already has them.
+## 4. Starter dataCollectionMethod Patterns
 
-## 5. Plain Metric Definition Template
+Prefer these methods first. Always describe them generically — no brand names.
 
-Use this template when defining a metric:
+- An attendance log: record who came and when.
+- A delivery log: record activity date, type, location, and staff.
+- A shared spreadsheet tracker: one row per session, participant, case, or event.
+- A one-question end-of-session check: ask one key question in person or via a short form.
+- A 3-5 question mini-survey: yes/no items or a 1-5 scale.
+- A before/after mini-survey: the same simple questions before and after a session.
+- A follow-up message: a short message or call after 2-4 weeks.
+- A short checklist: staff mark whether required steps were completed.
 
-- Metric: What will be counted or asked?
-- Who: Which participants or target group are included?
-- When: When will it be recorded?
-- How: What tool or record will capture it?
-- Review trigger: What result would make the team discuss improvement?
+Avoid starting with methods that require complex survey design, long interviews, external datasets, or specialist analysis unless the user already has them in place.
 
-Example:
+## 5. Frequency Choices
 
-- Metric: Participants who tried the recommended action once.
-- Who: People who attended the workshop.
-- When: Two weeks after the workshop.
-- How: One follow-up message asking "Did you try it at least once?"
-- Review trigger: If fewer than half tried it, review whether the workshop gave enough practical support.
+Match the cadence to what the team can actually sustain.
 
-## 6. Simple Comparison Options
+- Per session: for delivery checklists and one-question end-of-session checks.
+- Per cohort: when participants flow through the program in cohorts and intermediate change is what matters.
+- Monthly: for rolling delivery counts, dropout tracking, and burden review.
+- Quarterly: for intermediate outcomes that take time to show.
 
-Use the lightest comparison that helps interpretation:
+If the user already supplied a frequency on the metric, preserve it as-is even when these patterns would suggest a different cadence.
 
-- First cycle as baseline: collect once before setting a target.
-- Before/after: compare the same simple question before and after the activity.
-- Month-to-month: compare this month with last month.
-- Target: compare with a realistic goal after baseline data exists.
-- Segment check: compare major groups only when it helps identify access or burden.
+## 6. Target Value Guidance
 
-Do not require nonparticipant comparison groups for beginner recommendations.
+Use targets gently. Beginners often have no prior data, so the first cycle is the baseline.
 
-## 7. Upgrade Path
+- No prior data: write "Collect one cycle as a baseline, then set a target" instead of inventing a number.
+- Some prior data: anchor the target to last cycle's value (e.g., "match last cohort's understanding share" or "increase by a small, realistic amount").
+- Reach metrics: tie the target to the program's planned reach (e.g., "at least X percent of registered participants attended at least once").
+- Never fabricate precise percentages that imply a level of certainty the user does not have.
 
-After the first measurement cycle, suggest improvements such as:
+## 7. Caution Patterns
 
-- Make the question wording more consistent.
-- Add one baseline question.
-- Separate results by target group.
-- Track follow-up after one month instead of only immediately after.
+Surface 1-3 of the most likely beginner pitfalls for the specific metric. Common ones:
+
+- Small samples make percentages misleading; report counts alongside shares.
+- Self-selection: only the most engaged people answer follow-ups — read the results as a floor, not a population average.
+- Survey fatigue: keep the same form short across cycles, even when it's tempting to add questions.
+- Missing follow-up data: agree on how to mark non-responses so they are not silently treated as "no".
+- Monitoring data shows whether things happened, not why they happened — avoid claiming the program caused a change.
+- If the program asks participants for meaningful time, money, or sensitive information, watch for unintended burden or exclusion.
+
+## 8. Plain Step Definition Template
+
+When in doubt, fill each measurementStep with these elements:
+
+- What to do (imperative verb).
+- What to record or ask.
+- Who is included.
+- When it happens.
+- Where it is stored (which tracker / log / form).
+
+Example, rewritten as a single step:
+
+"Two weeks after the workshop, send a follow-up message to every attendee asking 'Did you try the recommended action at least once? (Yes / No / Started but stopped)'. Record each answer in the participant tracker spreadsheet."
+
+## 9. Upgrade Path
+
+After the first cycle, the recipe can grow. When the user is ready, suggest:
+
+- Make the question wording more consistent across sessions.
+- Add one baseline question before the program starts.
+- Separate results by target group to spot access gaps.
+- Track follow-up after one month and three months instead of only immediately after.
 - Replace a vague satisfaction question with a more specific usefulness or behavior question.
-- Add qualitative comments only if the team can actually read and use them.
+- Add qualitative comments only if the team can actually read and act on them.

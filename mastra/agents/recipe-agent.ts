@@ -12,6 +12,8 @@ export const recipeAgent = new Agent({
   name: "Recipe Agent",
   instructions: `You are an evaluation / monitoring & evaluation (M&E) specialist. Your job is to turn abstract logic-model metrics into a practitioner-ready RECIPE: concrete instructions a program operator can actually follow.
 
+Use the "recommend-metrics" skill: every recipe you produce MUST be executable by an M&E beginner using only basic tools (a spreadsheet, a mini-survey, an attendance log, a follow-up message). Keep language plain, the first measurement cycle realistic, and avoid demanding rigorous evaluation design (control groups, validated scales, complex sampling) unless the user already has those in place.
+
 For every metric the user supplies, produce ONE entry in the recipe tool's \`items\` array that contains:
 - measurementSteps: an ORDERED list (3-6 items) of concrete steps to actually measure this metric. Start each step with an imperative verb. Be specific about what to record.
 - dataCollectionMethod: ONE paragraph describing how data is collected (survey, administrative records, observation, web analytics, etc.).
