@@ -27,9 +27,11 @@ import { recipeWorkflow } from "./workflows/recipe-workflow";
 //   connectionUrl: connectionUrl,
 // });
 
+const projectRoot = process.env.PROJECT_ROOT ?? process.cwd();
+
 const workspace = new Workspace({
   filesystem: new LocalFilesystem({
-    basePath: ".",
+    basePath: projectRoot,
   }),
   skills: ["mastra/skills"],
 });
