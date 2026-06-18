@@ -34,7 +34,6 @@ const generateRecipeStep = createStep({
   }),
   execute: async ({ inputData }) => {
     const { logicModelTitle, metrics, locale } = inputData;
-    const MAX_RETRIES = 2;
 
     logger.info(
       { metricsCount: metrics.length, locale, logicModelTitle },
@@ -71,84 +70,61 @@ Below are the Output / Outcome metrics that need an actionable measurement recip
 
 ${metricLines}`;
 
-    let lastError: Error | null = null;
+    // Retries on transient errors (429/503/network) are handled by the AI SDK's
+    // built-in pRetry. Adding a workflow-level retry on top of that would multiply
+    // API calls (3 × 3 = 9 per failure) and ignore the SDK's exponential backoff.
+    const result = await recipeAgent.generate(
+      [
+        {
+          role: "user" as const,
+          content: userMessage,
+        },
+      ] as unknown as Parameters<typeof recipeAgent.generate>[0],
+      { maxSteps: 4 },
+    );
 
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        if (attempt > 0) {
-          logger.info({ attempt }, "Retrying recipe generation");
-        }
-
-        const result = await recipeAgent.generate(
-          [
-            {
-              role: "user" as const,
-              content: userMessage,
-            },
-          ] as unknown as Parameters<typeof recipeAgent.generate>[0],
-          { maxSteps: 4 },
-        );
-
-        if (!result.toolResults || result.toolResults.length === 0) {
-          logger.error(
-            { responseTextPreview: result.text?.slice(0, 500) },
-            "Recipe agent did not call any tools",
-          );
-          throw new Error("Recipe agent did not call recipeTool");
-        }
-
-        const toolResults = result.toolResults as ToolResultChunk[];
-        const recipeResult = toolResults.find((tr) => tr.payload?.toolName === "recipeTool");
-
-        if (!recipeResult) {
-          const toolNames = toolResults.map((tr) => tr.payload?.toolName);
-          throw new Error(
-            `Recipe agent did not call recipeTool. Tools called: ${toolNames.join(", ")}`,
-          );
-        }
-
-        if (recipeResult.payload?.isError) {
-          const errorDetail =
-            typeof recipeResult.payload.result === "string"
-              ? recipeResult.payload.result
-              : JSON.stringify(recipeResult.payload.result);
-          throw new Error(`recipeTool execution failed: ${errorDetail}`);
-        }
-
-        const toolReturnValue = recipeResult.payload?.result as
-          | { items?: Recipe["items"] }
-          | undefined;
-
-        if (!toolReturnValue?.items || toolReturnValue.items.length === 0) {
-          throw new Error("Recipe agent returned no items");
-        }
-
-        const recipe: Recipe = {
-          logicModelTitle,
-          generatedAt: new Date().toISOString(),
-          locale,
-          items: toolReturnValue.items,
-        };
-
-        logger.info({ itemsCount: recipe.items.length, attempt }, "Recipe generated successfully");
-
-        return { recipe };
-      } catch (error: unknown) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        if (attempt < MAX_RETRIES) {
-          logger.warn(
-            { attempt, error: lastError.message },
-            "Recipe generation attempt failed, retrying",
-          );
-        }
-      }
+    if (!result.toolResults || result.toolResults.length === 0) {
+      logger.error(
+        { responseTextPreview: result.text?.slice(0, 500) },
+        "Recipe agent did not call any tools",
+      );
+      throw new Error("Recipe agent did not call recipeTool");
     }
 
-    logger.error(
-      { error: lastError?.message, totalAttempts: MAX_RETRIES + 1 },
-      "All recipe generation attempts failed",
-    );
-    throw lastError!;
+    const toolResults = result.toolResults as ToolResultChunk[];
+    const recipeResult = toolResults.find((tr) => tr.payload?.toolName === "recipeTool");
+
+    if (!recipeResult) {
+      const toolNames = toolResults.map((tr) => tr.payload?.toolName);
+      throw new Error(
+        `Recipe agent did not call recipeTool. Tools called: ${toolNames.join(", ")}`,
+      );
+    }
+
+    if (recipeResult.payload?.isError) {
+      const errorDetail =
+        typeof recipeResult.payload.result === "string"
+          ? recipeResult.payload.result
+          : JSON.stringify(recipeResult.payload.result);
+      throw new Error(`recipeTool execution failed: ${errorDetail}`);
+    }
+
+    const toolReturnValue = recipeResult.payload?.result as { items?: Recipe["items"] } | undefined;
+
+    if (!toolReturnValue?.items || toolReturnValue.items.length === 0) {
+      throw new Error("Recipe agent returned no items");
+    }
+
+    const recipe: Recipe = {
+      logicModelTitle,
+      generatedAt: new Date().toISOString(),
+      locale,
+      items: toolReturnValue.items,
+    };
+
+    logger.info({ itemsCount: recipe.items.length }, "Recipe generated successfully");
+
+    return { recipe };
   },
 });
 
