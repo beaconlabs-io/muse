@@ -432,25 +432,41 @@ export function CanvasProvider({
   // measured all newly-mounted nodes. Without this, the initial render uses
   // estimateCardHeight (text-blind) and visibly differs from the result of
   // clicking the Auto Layout button — see docs/react-flow-architecture.md.
+  //
+  // `autoLayout` and `triggerRecipeGeneration` are routed through refs so the
+  // effect's dependency array stays minimal. Otherwise the effect re-evaluates
+  // on every render (their references change because upstream `stream` /
+  // `fitView` are recreated each render), and async setState chains can let the
+  // ref guards leak — observed empirically as 200–4000 redundant fires per
+  // logic-model completion.
+  const autoLayoutRef = useRef(autoLayout);
+  const triggerRecipeGenerationRef = useRef(triggerRecipeGeneration);
+  useEffect(() => {
+    autoLayoutRef.current = autoLayout;
+  });
+  useEffect(() => {
+    triggerRecipeGenerationRef.current = triggerRecipeGeneration;
+  });
+
   const nodesInitialized = useNodesInitialized();
   useEffect(() => {
     if (!pendingAutoLayoutRef.current) return;
     if (!nodesInitialized) return;
     if (nodesRef.current.length === 0) return;
     pendingAutoLayoutRef.current = false;
-    autoLayout({ silent: true });
+    autoLayoutRef.current({ silent: true });
 
     // If the generation request opted into recipe creation, kick it off now
     // that the canvas is settled. The recipe workflow only reads card content
     // and metrics, so it does not need to wait for fitView to finish.
     if (pendingRecipeAutoStartRef.current) {
       pendingRecipeAutoStartRef.current = false;
-      triggerRecipeGeneration({
+      triggerRecipeGenerationRef.current({
         nodes: nodesRef.current,
         cardMetrics: cardMetricsRef.current,
       });
     }
-  }, [nodesInitialized, autoLayout, triggerRecipeGeneration]);
+  }, [nodesInitialized]);
 
   // 8. Create operations (memoized - now only depends on stable setters)
   const operations = useMemo(

@@ -270,9 +270,19 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     }
   }, [stepEvents, setDialogStep]);
 
-  // React to workflow completion or error
+  // React to workflow completion or error.
+  // Refs guard against the effect re-firing on every parent re-render. The
+  // dependency array contains unstable references (onGenerate, form, etc.)
+  // because they're recreated each render, so the success/error branches must
+  // be idempotent — observed empirically as ~144 redundant onGenerate calls
+  // per single workflow success when guards were absent.
+  const hasHandledSuccessRef = useRef(false);
+  const hasHandledErrorRef = useRef(false);
   useEffect(() => {
     if (status === "success" && canvasData) {
+      if (hasHandledSuccessRef.current) return;
+      hasHandledSuccessRef.current = true;
+
       setDialogStep("complete", "completed");
 
       onGenerate({
@@ -288,16 +298,27 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
         setOpen(false);
         form.reset();
         processedEventCountRef.current = 0;
+        // Reset for the next flow so a follow-up generation re-fires the handler.
+        hasHandledSuccessRef.current = false;
+        hasHandledErrorRef.current = false;
       }, 500);
       return () => clearTimeout(timeoutId);
     }
 
     if (status === "error") {
+      if (hasHandledErrorRef.current) return;
+      hasHandledErrorRef.current = true;
       const errorStepId = failedStepId || "generate-logic-model";
       const userMessage = errorCategory ? tErrors(errorCategory) : error || tErrors("unknown");
       const fullMessage =
         rawError && rawError !== userMessage ? `${userMessage}\n---\n${rawError}` : userMessage;
       setDialogStep(errorStepId, "error", fullMessage);
+    }
+
+    if (status !== "success" && status !== "error") {
+      // A new workflow run is starting — re-arm the handlers.
+      hasHandledSuccessRef.current = false;
+      hasHandledErrorRef.current = false;
     }
   }, [
     status,
