@@ -12,8 +12,10 @@ import { evidenceSearchAgent } from "./agents/evidence-search-agent";
 import { keywordExtractionAgent } from "./agents/keyword-extraction-agent";
 import { logicModelAgent } from "./agents/logic-model-agent";
 import { queryTranslationAgent } from "./agents/query-translation-agent";
+import { recipeAgent } from "./agents/recipe-agent";
 import { SCORERS } from "./scorers";
 import { logicModelWithEvidenceWorkflow } from "./workflows/logic-model-with-evidence";
+import { recipeWorkflow } from "./workflows/recipe-workflow";
 
 // TODO: validate CONNECTION_URL for production
 // const connectionUrl = process.env.CONNECTION_URL
@@ -25,9 +27,11 @@ import { logicModelWithEvidenceWorkflow } from "./workflows/logic-model-with-evi
 //   connectionUrl: connectionUrl,
 // });
 
+const projectRoot = process.env.PROJECT_ROOT ?? process.cwd();
+
 const workspace = new Workspace({
   filesystem: new LocalFilesystem({
-    basePath: ".",
+    basePath: projectRoot,
   }),
   skills: ["mastra/skills"],
 });
@@ -62,8 +66,9 @@ export const mastra: Mastra = new Mastra({
     conversationBotAgent,
     queryTranslationAgent,
     keywordExtractionAgent,
+    recipeAgent,
   },
-  workflows: { logicModelWithEvidenceWorkflow },
+  workflows: { logicModelWithEvidenceWorkflow, recipeWorkflow },
   workspace,
   storage,
   observability,

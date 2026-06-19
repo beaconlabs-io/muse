@@ -30,8 +30,9 @@ import {
   type CanvasOperations,
   type LoadCanvasData,
 } from "./canvas-operations";
+import { useRecipe } from "./RecipeContext";
 import type { MetricFormInput, Metric, Card, Arrow, CanvasData, IPFSStorageResult } from "@/types";
-import type { OnNodesChange, OnEdgesChange, Node, Edge } from "@xyflow/react";
+import type { OnNodesChange, OnEdgesChange, Node, Edge, EdgeChange } from "@xyflow/react";
 import { useRouter } from "@/i18n/routing";
 import { computeDagreLayout } from "@/lib/canvas/dagre-layout";
 import {
@@ -85,12 +86,18 @@ export interface StateReadingOperations {
 /**
  * Operations context value (stable, never changes)
  * Includes all operations from createCanvasOperations + React Flow setters + state-reading operations
+ *
+ * `loadGeneratedCanvas` is overridden here to accept an extra `enableRecipe`
+ * flag — the wrapper in CanvasProvider arms `pendingRecipeAutoStartRef` and
+ * the underlying operation still receives the original `LoadCanvasData`.
  */
-export interface CanvasOperationsContextValue extends CanvasOperations, StateReadingOperations {
+export interface CanvasOperationsContextValue
+  extends Omit<CanvasOperations, "loadGeneratedCanvas">, StateReadingOperations {
   setNodes: React.Dispatch<React.SetStateAction<Node<CardNodeData>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   onNodesChange: OnNodesChange<Node<CardNodeData>>;
   onEdgesChange: OnEdgesChange<Edge>;
+  loadGeneratedCanvas: (data: LoadCanvasData & { enableRecipe?: boolean }) => void;
 }
 
 /**
@@ -129,6 +136,9 @@ export function CanvasProvider({
 }: CanvasProviderProps) {
   const t = useTranslations("canvas");
   const tCommon = useTranslations("common");
+  const recipe = useRecipe();
+  const markStale = recipe.markStale;
+  const triggerRecipeGeneration = recipe.triggerGeneration;
 
   // 1. Initialize React Flow state with server-safe values (no localStorage during SSR/hydration)
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<CardNodeData>>(
@@ -140,7 +150,20 @@ export function CanvasProvider({
       },
     })),
   );
-  const [edges, setEdges, onEdgesChange] = useEdgesState(arrowsToEdges(initialArrows));
+  const [edges, setEdges, baseOnEdgesChange] = useEdgesState(arrowsToEdges(initialArrows));
+
+  // Wrap edge changes so explicit removals (right-click / select+delete) mark
+  // the recipe stale. Position/select churn never goes through edges, so
+  // anything other than "add" / "remove" is safe to ignore.
+  const onEdgesChange = useCallback<OnEdgesChange<Edge>>(
+    (changes) => {
+      if (changes.some((c: EdgeChange<Edge>) => c.type === "remove")) {
+        markStale();
+      }
+      baseOnEdgesChange(changes);
+    },
+    [baseOnEdgesChange, markStale],
+  );
   const [cardMetrics, setCardMetrics] = useState<Record<string, Metric[]>>(initialCardMetrics);
   const { fitView } = useReactFlow();
 
@@ -194,6 +217,10 @@ export function CanvasProvider({
   // Set to true by loadGeneratedCanvas; consumed by the auto-fire effect once
   // React Flow has measured the freshly-mounted nodes (useNodesInitialized → true).
   const pendingAutoLayoutRef = useRef(false);
+  // Set to true when loadGeneratedCanvas is called with { enableRecipe: true }.
+  // Fired after auto-layout so the canvas finishes settling before we kick off
+  // the recipe stream.
+  const pendingRecipeAutoStartRef = useRef(false);
 
   // Keep refs in sync with state (single effect to minimize effects)
   useEffect(() => {
@@ -212,6 +239,7 @@ export function CanvasProvider({
             n.id === nodeId ? { ...n, data: { ...n.data, title, description } } : n,
           ),
         );
+        markStale();
       },
       onDeleteCard: () => {
         setNodes((nds: Node<CardNodeData>[]) =>
@@ -225,13 +253,14 @@ export function CanvasProvider({
           delete newMetrics[nodeId];
           return newMetrics;
         });
+        markStale();
       },
       onEdit: () => {
         setEditingNodeId(nodeId);
         setEditSheetOpen(true);
       },
     }),
-    [setNodes, setEdges, setCardMetrics],
+    [setNodes, setEdges, setCardMetrics, markStale],
   );
 
   // 7. State-reading callbacks (use refs to avoid dependency on state)
@@ -336,6 +365,7 @@ export function CanvasProvider({
     setNodes([]);
     setEdges([]);
     setCardMetrics({});
+    recipe.resetAll();
 
     if (!disableLocalStorageRef.current && typeof window !== "undefined") {
       localStorage.removeItem("canvasState");
@@ -344,7 +374,7 @@ export function CanvasProvider({
 
     setClearConfirmOpen(false);
     toast.success(t("canvasCleared"), { duration: 3000 });
-  }, [setNodes, setEdges, setCardMetrics, t]);
+  }, [setNodes, setEdges, setCardMetrics, recipe, t]);
 
   // Public API - opens confirmation dialog
   const clearAllData = useCallback(() => {
@@ -402,14 +432,41 @@ export function CanvasProvider({
   // measured all newly-mounted nodes. Without this, the initial render uses
   // estimateCardHeight (text-blind) and visibly differs from the result of
   // clicking the Auto Layout button — see docs/react-flow-architecture.md.
+  //
+  // `autoLayout` and `triggerRecipeGeneration` are routed through refs so the
+  // effect's dependency array stays minimal. Otherwise the effect re-evaluates
+  // on every render (their references change because upstream `stream` /
+  // `fitView` are recreated each render), and async setState chains can let the
+  // ref guards leak — observed empirically as 200–4000 redundant fires per
+  // logic-model completion.
+  const autoLayoutRef = useRef(autoLayout);
+  const triggerRecipeGenerationRef = useRef(triggerRecipeGeneration);
+  useEffect(() => {
+    autoLayoutRef.current = autoLayout;
+  });
+  useEffect(() => {
+    triggerRecipeGenerationRef.current = triggerRecipeGeneration;
+  });
+
   const nodesInitialized = useNodesInitialized();
   useEffect(() => {
     if (!pendingAutoLayoutRef.current) return;
     if (!nodesInitialized) return;
     if (nodesRef.current.length === 0) return;
     pendingAutoLayoutRef.current = false;
-    autoLayout({ silent: true });
-  }, [nodesInitialized, autoLayout]);
+    autoLayoutRef.current({ silent: true });
+
+    // If the generation request opted into recipe creation, kick it off now
+    // that the canvas is settled. The recipe workflow only reads card content
+    // and metrics, so it does not need to wait for fitView to finish.
+    if (pendingRecipeAutoStartRef.current) {
+      pendingRecipeAutoStartRef.current = false;
+      triggerRecipeGenerationRef.current({
+        nodes: nodesRef.current,
+        cardMetrics: cardMetricsRef.current,
+      });
+    }
+  }, [nodesInitialized]);
 
   // 8. Create operations (memoized - now only depends on stable setters)
   const operations = useMemo(
@@ -427,12 +484,58 @@ export function CanvasProvider({
 
   // Wrap loadGeneratedCanvas so that the auto-fire effect knows a fresh AI
   // generation just landed and should re-layout once nodes are measured.
+  // The optional `enableRecipe` flag arms the auto-fire effect to also kick
+  // off the recipe stream after the canvas settles.
   const loadGeneratedCanvas = useCallback(
-    (data: LoadCanvasData) => {
+    (data: LoadCanvasData & { enableRecipe?: boolean }) => {
       pendingAutoLayoutRef.current = true;
-      operations.loadGeneratedCanvas(data);
+      pendingRecipeAutoStartRef.current = data.enableRecipe ?? false;
+      if (data.enableRecipe) {
+        // Make sure the Recipe tab shows "waiting" even if the caller forgot
+        // to flip the flag manually before submit.
+        recipe.setWaitingForLogicModel();
+      }
+      operations.loadGeneratedCanvas({
+        cards: data.cards,
+        arrows: data.arrows,
+        cardMetrics: data.cardMetrics,
+      });
     },
-    [operations],
+    [operations, recipe],
+  );
+
+  // Wrap mutation operations so user-initiated edits flag the recipe as stale.
+  // We deliberately do NOT wrap onNodesChange (React Flow fires it for
+  // position / measure / select churn — false positives). The functions
+  // wrapped here are the semantic entry points used by toolbar forms, the
+  // edit sheet, and the connection handler.
+  const wrappedAddCard = useCallback<CanvasOperations["addCard"]>(
+    (formData) => {
+      operations.addCard(formData);
+      markStale();
+    },
+    [operations, markStale],
+  );
+  const wrappedUpdateCard = useCallback<CanvasOperations["updateCard"]>(
+    (formData, id) => {
+      operations.updateCard(formData, id);
+      markStale();
+    },
+    [operations, markStale],
+  );
+  const wrappedDeleteCard = useCallback<CanvasOperations["deleteCard"]>(
+    (id) => {
+      operations.deleteCard(id);
+      markStale();
+    },
+    [operations, markStale],
+  );
+  const wrappedOnConnect = useCallback<CanvasOperations["onConnect"]>(
+    (connection) => {
+      operations.onConnect(connection);
+      markStale();
+    },
+    [operations, markStale],
   );
 
   // 8. Derived state: editingNodeData (memoized)
@@ -472,9 +575,13 @@ export function CanvasProvider({
     ],
   );
 
-  const operationsValue = useMemo(
+  const operationsValue = useMemo<CanvasOperationsContextValue>(
     () => ({
       ...operations,
+      addCard: wrappedAddCard,
+      updateCard: wrappedUpdateCard,
+      deleteCard: wrappedDeleteCard,
+      onConnect: wrappedOnConnect,
       loadGeneratedCanvas,
       setNodes,
       setEdges,
@@ -488,6 +595,10 @@ export function CanvasProvider({
     }),
     [
       operations,
+      wrappedAddCard,
+      wrappedUpdateCard,
+      wrappedDeleteCard,
+      wrappedOnConnect,
       loadGeneratedCanvas,
       setNodes,
       setEdges,

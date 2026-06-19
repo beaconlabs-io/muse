@@ -9,6 +9,7 @@ matching), see [mastra-agents.md](./mastra-agents.md).
 | Method | Path                             | Purpose                                                                                                                                                                                                                         | Entry file                                   |
 | ------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | POST   | `/api/workflow/stream`           | Streams logic-model generation events over SSE. Accepts JSON `{goal}` **or** multipart/form-data with an uploaded PDF/image (≤4 MB) forwarded to Gemini 2.5 Pro as multimodal input (see [File upload path](#file-upload-path)) | `app/api/workflow/stream/route.ts`           |
+| POST   | `/api/recipe/stream`             | Streams measurement-recipe generation events over SSE. Input: `{ logicModelTitle, metrics[], locale }`. Wraps `recipeWorkflow` (single-step LLM call) and emits the same step-start / step-finish / _-error / _-complete shape  | `app/api/recipe/stream/route.ts`             |
 | POST   | `/api/compact`                   | Turns a chat history into a logic model, uploads canvas JSON to IPFS, returns canvas URL                                                                                                                                        | `app/api/compact/route.ts`                   |
 | POST   | `/api/evidence/search`           | Natural-language evidence search backed by the Conversation Bot Agent; optional external paper lookup                                                                                                                           | `app/api/evidence/search/route.ts`           |
 | GET    | `/api/hypercerts/[hypercert-id]` | Proxies a hypercert image with 30-minute edge cache                                                                                                                                                                             | `app/api/hypercerts/[hypercert-id]/route.ts` |
@@ -32,8 +33,11 @@ Request bodies are validated with Zod; the canonical schemas live next to
 the shared types:
 
 - `types/` — `CanvasDataSchema`, `CompactRequestSchema`,
-  `EvidenceSearchRequestSchema`, `CompactResponse`, `EvidenceSearchResponse`
+  `EvidenceSearchRequestSchema`, `CompactResponse`, `EvidenceSearchResponse`,
+  `RecipeSchema`, `RecipeMetricContextSchema`, `RecipeWorkflowInputSchema`,
+  `RecipeLocaleSchema`, `RECIPE_TARGET_CARD_TYPES`
 - `types/workflow-events.ts` — `WorkflowSSEEvent` union for streaming events
+- `types/recipe-events.ts` — `RecipeSSEEvent` union for `/api/recipe/stream`
 
 ## File upload path
 

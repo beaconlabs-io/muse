@@ -380,3 +380,67 @@ export const CompactResponseSchema = z.object({
 });
 
 export type CompactResponse = z.infer<typeof CompactResponseSchema>;
+
+// =============================================================================
+// RECIPE SCHEMAS (Actionable measurement guidance for Outputs / Outcomes)
+// =============================================================================
+
+export const RECIPE_TARGET_CARD_TYPES = [
+  "outputs",
+  "outcomes-short",
+  "outcomes-intermediate",
+] as const;
+
+export type RecipeTargetCardType = (typeof RECIPE_TARGET_CARD_TYPES)[number];
+
+export const RecipeLocaleSchema = z.enum(["en", "ja"]);
+export type RecipeLocale = z.infer<typeof RecipeLocaleSchema>;
+
+export const RecipeMetricGuidanceSchema = z.object({
+  metricId: z.string(),
+  metricName: z.string(),
+  parentCardId: z.string(),
+  parentCardTitle: z.string(),
+  parentCardType: z.enum(RECIPE_TARGET_CARD_TYPES),
+  measurementSteps: z
+    .array(z.string())
+    .describe("Ordered, concrete steps a practitioner can follow"),
+  dataCollectionMethod: z.string(),
+  frequency: z.string(),
+  targetValue: z.string().optional(),
+  cautions: z.array(z.string()),
+});
+
+export type RecipeMetricGuidance = z.infer<typeof RecipeMetricGuidanceSchema>;
+
+export const RecipeSchema = z.object({
+  logicModelTitle: z.string(),
+  generatedAt: z.string(),
+  locale: RecipeLocaleSchema,
+  items: z.array(RecipeMetricGuidanceSchema),
+});
+
+export type Recipe = z.infer<typeof RecipeSchema>;
+
+export const RecipeMetricContextSchema = z.object({
+  metricId: z.string(),
+  metricName: z.string(),
+  metricDescription: z.string().optional(),
+  existingMeasurementMethod: z.string().optional(),
+  existingFrequency: z.string().optional(),
+  existingTargetValue: z.string().optional(),
+  parentCardId: z.string(),
+  parentCardTitle: z.string(),
+  parentCardDescription: z.string().optional(),
+  parentCardType: z.enum(RECIPE_TARGET_CARD_TYPES),
+});
+
+export type RecipeMetricContext = z.infer<typeof RecipeMetricContextSchema>;
+
+export const RecipeWorkflowInputSchema = z.object({
+  logicModelTitle: z.string(),
+  metrics: z.array(RecipeMetricContextSchema).min(1).max(30),
+  locale: RecipeLocaleSchema.default("en"),
+});
+
+export type RecipeWorkflowInput = z.infer<typeof RecipeWorkflowInputSchema>;

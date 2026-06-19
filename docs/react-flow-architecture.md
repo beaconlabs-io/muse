@@ -26,6 +26,29 @@ const edgeTypes = {
 - Registers custom edge types
 - Manages node and edge interactions
 - Handles canvas controls and minimap
+- Hosts the **Canvas / Recipe tabs** (shadcn `Tabs`). The Canvas tab uses
+  `forceMount` + `data-[state=inactive]:hidden` so React Flow stays
+  mounted across tab switches — switching to "Recipe" would otherwise
+  reset the viewport and re-measure every node.
+
+**Provider tree**:
+
+```
+ReactFlowProvider                ← required by useReactFlow() in CanvasProvider
+  └─ RecipeProvider              ← owns recipe stream state + stale flag
+       └─ CanvasProvider         ← owns nodes / edges / cardMetrics
+            └─ ReactFlowCanvasInner
+                 └─ Tabs (controlled, value=activeTab)
+                      ├─ UnifiedHeader                          ← tabs + context actions + More dropdown
+                      ├─ TabsContent value="canvas" forceMount → ReactFlow
+                      └─ TabsContent value="recipe"           → RecipePanel
+```
+
+`RecipeProvider` sits **outside** `CanvasProvider` so `CanvasContext` can
+call `useRecipe()` to wire stale detection and auto-start without
+creating a circular import. `RecipeProvider` never reads canvas state
+directly — callers pass `{ nodes, cardMetrics }` into
+`recipe.triggerGeneration(args)`.
 
 ### EvidenceEdge.tsx
 
@@ -432,12 +455,12 @@ left to right and columns stay tightly packed.
 
 ### Trigger
 
-**Location**: `components/canvas/CanvasToolbar.tsx`
+**Location**: `components/canvas/UnifiedHeader.tsx`
 
-The toolbar exposes an **Auto Layout** menu item
-(`t("autoLayout")`) that calls `autoLayout()` on the canvas context.
-There is no automatic trigger — layout always runs in response to an
-explicit user action.
+The unified header's "More ⋮" dropdown exposes an **Auto Layout** menu
+item (`t("autoLayout")`, Canvas section) that calls `autoLayout()` on
+the canvas context. There is no automatic trigger — layout always runs
+in response to an explicit user action.
 
 ### Pipeline
 
@@ -525,17 +548,152 @@ add/remove a row, padding, or border in CardNode, retune these
 constants — visible regression mode is "cards overlap on first AI
 generation but spread out correctly after the next Auto Layout."
 
+## Recipe Tab
+
+The canvas page surfaces a measurement **Recipe** alongside the React Flow
+canvas via a second tab. Recipes are LLM-generated, step-by-step
+measurement guidance for every Output / Outcome metric on the canvas.
+
+### State machine
+
+`RecipePanel` (in `components/canvas/RecipePanel.tsx`) renders one of
+seven phases derived from `useRecipe()`:
+
+The panel renders the document content only; primary recipe actions
+(Generate / Regenerate / Download / Retry) live in `UnifiedHeader`
+(`ContextActions` swaps them based on `recipe.phase`).
+
+| Phase                     | Trigger                                          | Panel UI                                            | Header action                         |
+| ------------------------- | ------------------------------------------------ | --------------------------------------------------- | ------------------------------------- |
+| `empty-canvas`            | `nodes.length === 0`                             | "Create a logic model first" hint                   | (none — `canGenerate` is false)       |
+| `no-targets`              | No Output / Outcome cards                        | Localized hint                                      | (none)                                |
+| `no-metrics`              | Target cards exist but no metrics                | Localized hint                                      | (none)                                |
+| `idle`                    | Ready to generate                                | Summary card with metric count                      | "✨ Generate recipe"                  |
+| `waiting-for-logic-model` | Generate dialog submit with `enableRecipe: true` | Spinner + "Waiting for the logic model"             | (hidden)                              |
+| `running`                 | `useRecipeStream.status === "running"`           | Spinner + current step id                           | Disabled "Generating…" indicator      |
+| `success`                 | Recipe received                                  | `<RecipeView stale={false} />`                      | "⟳ Regenerate" + "⬇ Download HTML"    |
+| `success` (with `stale`)  | Logic model edited after generation              | `<RecipeView stale />` (chip in meta + alert below) | Same as `success` + tab-trigger badge |
+| `error`                   | Stream error                                     | Error message only                                  | "↻ Retry"                             |
+
+### Stale detection
+
+Stale is set by **semantic mutations**, not by raw React Flow callbacks:
+
+| Mutation entry point                                                                   | Marks stale  |
+| -------------------------------------------------------------------------------------- | ------------ |
+| `operations.addCard` / `updateCard` / `deleteCard` / `onConnect`                       | yes          |
+| `createNodeCallbacks.onContentChange` / `onDeleteCard` (in-card inline edits)          | yes          |
+| `onEdgesChange` with at least one `{ type: "remove" }` change                          | yes          |
+| `executeClearAllData`                                                                  | yes (resets) |
+| Plain `onNodesChange` (position / dimensions / select churn from React Flow internals) | **no**       |
+
+The deliberate carve-out for `onNodesChange` is important: React Flow
+fires it during measurement and selection, so wrapping it would mark the
+recipe stale every time the layout settled. Dragging a card does **not**
+mark the recipe stale.
+
+### Persistence across reloads
+
+Recipe state is persisted to `localStorage` under the key `recipeState`
+(value shape: `{ recipe, stale }`) so it survives full page reloads —
+without this, navigating away from the canvas would silently throw the
+LLM-generated recipe away while the canvas itself (which lives in its own
+autosave key) would reappear.
+
+| Operation                               | Storage call                                      |
+| --------------------------------------- | ------------------------------------------------- |
+| Mount of `RecipeProvider`               | `loadRecipeState()` → `stream.hydrateRecipe(...)` |
+| Recipe stream completes / stale toggles | `saveRecipeState({ recipe, stale })`              |
+| `recipe.resetAll()` / Danger → Clear    | `clearRecipeState()`                              |
+
+`hasHydrated` (a ref) gates the save effect so the hydration read cannot
+immediately race back as a write before the stream status settles. The
+recipe is **independent of the canvas autosave** — the canvas can be
+edited (and the recipe marked stale) without touching `recipeState`, and
+conversely a stored recipe will hydrate even on a canvas that has not
+been autosaved yet (e.g. fresh IPFS view). Implementation lives in
+`lib/recipe/storage.ts`.
+
+### Direct chain after generate-with-recipe
+
+When `GenerateLogicModelDialog` submits with `enableRecipe: true`, the
+canvas runs the recipe stream right after the logic model finishes:
+
+1. `recipe.setWaitingForLogicModel()` flips the panel to `waiting-for-logic-model`.
+2. The logic-model workflow completes → `loadGeneratedCanvas(data, { enableRecipe: true })`.
+3. The wrapper arms `pendingAutoLayoutRef` and `pendingRecipeAutoStartRef`.
+4. `useNodesInitialized()` reports the freshly-mounted nodes have been
+   measured; the auto-fire effect runs `autoLayout({ silent: true })`.
+5. Same effect then calls `recipe.triggerGeneration({ nodes, cardMetrics })`
+   — the recipe workflow only needs card content + metrics, not final
+   positions, so it does not wait for `fitView` to finish.
+
+### Components
+
+- `components/canvas/RecipePanel.tsx` — state machine; renders only
+  document content (waiting / running / error message / `<RecipeView />`
+  for success). All recipe actions moved to `UnifiedHeader`.
+- `components/canvas/UnifiedHeader.tsx` — top bar combining tabs +
+  context-aware action buttons + a sectioned "More" dropdown
+  (Canvas / Recipe / Danger). Regenerate / Download HTML appear both as
+  primary header buttons (via `ContextActions`) and inside the dropdown's
+  Recipe section, sharing identical enabled-state logic
+  (`canGenerateRecipe`, `canDownloadRecipe`).
+- `components/canvas/ContextActions.tsx` — phase-aware action group
+  rendered in the header. Switches between Canvas tab actions
+  (Generate logic model / Add card) and Recipe tab actions
+  (Generate / Regenerate + Download / Retry / disabled spinner) based
+  on `activeTab` and `recipe.phase`.
+- `components/canvas/RecipeView.tsx` — pure JSX renderer (`Card` /
+  `Badge` / `Separator`) that integrates with the site's Tailwind theme
+  and dark mode. Output is **distinct** from the downloadable HTML —
+  both formats are kept side-by-side intentionally so they can be
+  compared before any consolidation.
+- `components/canvas/context/RecipeContext.tsx` — wraps
+  `useRecipeStream`; exposes `phase`, `recipe`, `stale`,
+  `triggerGeneration`, `setWaitingForLogicModel`, `markStale`,
+  `resetAll`, `downloadHtml`.
+- `lib/recipe-helpers.ts` — `collectMetricContexts`,
+  `deriveLogicModelTitle`, `countRecipeTargetCards`, `isRecipeTargetType`
+  (single source of truth for "what metric belongs in the recipe").
+- `lib/generate-recipe-html.ts` — self-contained downloadable HTML
+  (inline CSS, base64 image) — unchanged by the tab-UI refactor.
+
+### Header wiring
+
+Recipe actions are reachable from **two places** in `UnifiedHeader`:
+
+1. **Header primary buttons** (`ContextActions`, only on the Recipe tab):
+   phase-aware. On `success` shows "⟳ Regenerate" (outline) plus
+   "⬇ Download HTML" (primary). On `idle` shows "✨ Generate recipe".
+   On `error` shows "↻ Retry". On `running` shows a disabled spinner.
+2. **"More ⋮" dropdown → Recipe section** (always available, regardless
+   of active tab):
+   - "Regenerate" → `recipe.triggerGeneration({ nodes, cardMetrics })`,
+     disabled when `!canGenerateRecipe` or `recipe.phase === "running"`.
+   - "Download HTML" → `recipe.downloadHtml(nodes)`, disabled until
+     `canDownloadRecipe` (success phase with a recipe and no in-flight
+     download).
+
+Both paths share the same `canGenerateRecipe` /
+`canDownloadRecipe` derivations so a disabled state in one place is
+disabled in the other.
+
 ## File References
 
 ### Components
 
-- `components/canvas/ReactFlowCanvas.tsx` - Main canvas
-- `components/canvas/CanvasToolbar.tsx` - Toolbar (Auto Layout trigger)
+- `components/canvas/ReactFlowCanvas.tsx` - Main canvas (controlled Tabs + UnifiedHeader)
+- `components/canvas/UnifiedHeader.tsx` - Top bar (tabs + context actions + sectioned More dropdown)
+- `components/canvas/ContextActions.tsx` - Phase-aware action group in the header
 - `components/canvas/CardNode.tsx` - Card rendering incl. metrics list
 - `components/canvas/AddLogicSheet.tsx` - Card + metrics editing sheet
 - `components/canvas/EvidenceEdge.tsx:15` - Edge type registration
 - `components/canvas/EvidenceDialog.tsx` - Evidence modal
-- `components/canvas/context/CanvasContext.tsx` - `autoLayout`, `cardMetrics`, persistence
+- `components/canvas/RecipePanel.tsx` - Recipe tab state machine
+- `components/canvas/RecipeView.tsx` - In-tab JSX recipe renderer
+- `components/canvas/context/CanvasContext.tsx` - `autoLayout`, `cardMetrics`, persistence, stale wiring
+- `components/canvas/context/RecipeContext.tsx` - Recipe stream + stale + download
 
 ### Utilities
 
@@ -545,6 +703,9 @@ generation but spread out correctly after the next Auto Layout."
 - `lib/canvas/layout-helpers.ts` - `estimateCardHeight`, `calculateColumnYsFromHeights`, stage constants
 - `lib/external-paper-search.ts` - External paper search orchestration
 - `lib/academic-apis/semantic-scholar.ts` - Semantic Scholar API client
+- `lib/recipe-helpers.ts` - Recipe metric collection / title derivation / target-type guard
+- `lib/recipe/storage.ts` - localStorage hydrate/save/clear for `recipeState`
+- `lib/generate-recipe-html.ts` - Self-contained downloadable HTML
 
 ### Types
 

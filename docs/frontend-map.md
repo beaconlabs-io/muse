@@ -33,6 +33,20 @@ Generic table primitives shared by evidence and effects list views.
 - `table-column.tsx` — column factory helpers
 - `TableDropdown.tsx` — per-row action menu
 
+### `components/canvas/` (recipe tab pieces)
+
+The recipe tab on the canvas page is built from a few small modules
+described in detail in
+[react-flow-architecture.md → Recipe Tab](./react-flow-architecture.md#recipe-tab).
+Quick map:
+
+- `RecipePanel.tsx` — tab state machine (empty / waiting / running /
+  success / stale / error).
+- `RecipeView.tsx` — pure JSX recipe renderer used inside the tab. The
+  downloadable HTML in `lib/generate-recipe-html.ts` is intentionally a
+  separate format — keep both until we decide whether to unify.
+- `context/RecipeContext.tsx` — `RecipeProvider` + `useRecipe()` hook.
+
 ### `components/tooltip/`, `components/mastra/`
 
 Thin wrappers — open the folder directly when touching these.
@@ -54,11 +68,29 @@ ESLint for that reason).
 - `hooks/useWorkflowStream.ts` — subscribes to `/api/workflow/stream` SSE,
   exposes phased state (structure → evidence → external → merge) to the
   canvas. See [mastra-agents.md](./mastra-agents.md) for event schema.
+- `hooks/useRecipeStream.ts` — subscribes to `/api/recipe/stream` SSE,
+  exposes recipe state (`idle` / `running` / `success` / `error`). Wrapped
+  by `RecipeContext` so most callers should use `useRecipe()` instead.
 - `hooks/useEAS.ts` — GraphQL client against the EAS indexer; returns
   decoded attestation data for an evidence ID or attestation UID.
 - `hooks/useCanvasImage.ts` — generates a PNG from the current React Flow
-  canvas (used by `ExportImageDialog` and IPFS image upload flow).
+  canvas (used by `ExportImageDialog`, IPFS image upload, and the recipe
+  HTML download for the embedded logic-model diagram).
 - `hooks/use-mobile.ts` — viewport helper from shadcn.
+
+## Recipe helpers
+
+- `lib/recipe-helpers.ts` — `collectMetricContexts`,
+  `deriveLogicModelTitle`, `countRecipeTargetCards`, `isRecipeTargetType`.
+  Single source of truth for "what metric belongs in a recipe".
+- `lib/generate-recipe-html.ts` — self-contained HTML document (inline
+  CSS + optional base64 image) used by the unified header's "Download HTML"
+  button and the Recipe section of the More dropdown.
+- `lib/recipe/storage.ts` — `loadRecipeState` / `saveRecipeState` /
+  `clearRecipeState` against `localStorage["recipeState"]`. `RecipeProvider`
+  hydrates from it once on mount and persists on every `success` →
+  recipes survive reloads independently of the canvas autosave. See
+  [react-flow-architecture.md → Persistence across reloads](./react-flow-architecture.md#persistence-across-reloads).
 
 ## Where to go next
 
