@@ -592,6 +592,28 @@ fires it during measurement and selection, so wrapping it would mark the
 recipe stale every time the layout settled. Dragging a card does **not**
 mark the recipe stale.
 
+### Persistence across reloads
+
+Recipe state is persisted to `localStorage` under the key `recipeState`
+(value shape: `{ recipe, stale }`) so it survives full page reloads —
+without this, navigating away from the canvas would silently throw the
+LLM-generated recipe away while the canvas itself (which lives in its own
+autosave key) would reappear.
+
+| Operation                               | Storage call                                      |
+| --------------------------------------- | ------------------------------------------------- |
+| Mount of `RecipeProvider`               | `loadRecipeState()` → `stream.hydrateRecipe(...)` |
+| Recipe stream completes / stale toggles | `saveRecipeState({ recipe, stale })`              |
+| `recipe.resetAll()` / Danger → Clear    | `clearRecipeState()`                              |
+
+`hasHydrated` (a ref) gates the save effect so the hydration read cannot
+immediately race back as a write before the stream status settles. The
+recipe is **independent of the canvas autosave** — the canvas can be
+edited (and the recipe marked stale) without touching `recipeState`, and
+conversely a stored recipe will hydrate even on a canvas that has not
+been autosaved yet (e.g. fresh IPFS view). Implementation lives in
+`lib/recipe/storage.ts`.
+
 ### Direct chain after generate-with-recipe
 
 When `GenerateLogicModelDialog` submits with `enableRecipe: true`, the
@@ -682,6 +704,7 @@ disabled in the other.
 - `lib/external-paper-search.ts` - External paper search orchestration
 - `lib/academic-apis/semantic-scholar.ts` - Semantic Scholar API client
 - `lib/recipe-helpers.ts` - Recipe metric collection / title derivation / target-type guard
+- `lib/recipe/storage.ts` - localStorage hydrate/save/clear for `recipeState`
 - `lib/generate-recipe-html.ts` - Self-contained downloadable HTML
 
 ### Types

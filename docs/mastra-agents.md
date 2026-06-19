@@ -790,6 +790,8 @@ Skills follow the [Agent Skills specification](https://agentskills.io/specificat
   - `references/common-mistakes.md` - Top 5 error patterns and fixes
 - **`evidence-matching/SKILL.md`** - Evidence-to-intervention matching methodology: chain-of-thought scoring, STRONG/MODERATE/WEAK/NONE labels, borderline handling. Activated by the Evidence Search Agent during batch matching.
 - **`evidence-presentation/SKILL.md`** - Evidence presentation methodology: Maryland Scientific Methods Scale explanations, citation formatting, accessible-language summaries. Activated by the Conversation Bot Agent when presenting results.
+- **`recommend-metrics/SKILL.md`** - Beginner-runnable measurement recipe design: 3-6 imperative steps, lightweight data-collection methods, sustainable frequency, baseline-aware targets, practical caveats. Activated by the Recipe Agent for every metric in the recipe workflow.
+  - `references/metric-design-rubric.md` - Starter patterns for measurement steps and data-collection methods
 
 ### Agent Instructions
 
@@ -865,6 +867,8 @@ bun build:mastra
 - `mastra/skills/logic-model-generation/references/causal-reasoning.md` - Connection evaluation and failure patterns
 - `mastra/skills/evidence-matching/SKILL.md` - Evidence matching methodology (scoring, language policy)
 - `mastra/skills/evidence-presentation/SKILL.md` - Evidence presentation methodology (Maryland SMS, citations)
+- `mastra/skills/recommend-metrics/SKILL.md` - Beginner-runnable recipe authoring skill (activated by `recipe-agent`)
+- `mastra/skills/recommend-metrics/references/metric-design-rubric.md` - Starter patterns for measurement steps and data-collection methods
 - `mastra/skills/logic-model-generation/references/stage-definitions.md` - Stage definitions and boundary tests
 - `mastra/skills/logic-model-generation/references/format-requirements.md` - Format rules and connection patterns
 - `mastra/skills/logic-model-generation/references/common-mistakes.md` - Top 5 error patterns

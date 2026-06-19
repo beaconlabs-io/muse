@@ -86,6 +86,11 @@ ESLint for that reason).
 - `lib/generate-recipe-html.ts` — self-contained HTML document (inline
   CSS + optional base64 image) used by the unified header's "Download HTML"
   button and the Recipe section of the More dropdown.
+- `lib/recipe/storage.ts` — `loadRecipeState` / `saveRecipeState` /
+  `clearRecipeState` against `localStorage["recipeState"]`. `RecipeProvider`
+  hydrates from it once on mount and persists on every `success` →
+  recipes survive reloads independently of the canvas autosave. See
+  [react-flow-architecture.md → Persistence across reloads](./react-flow-architecture.md#persistence-across-reloads).
 
 ## Where to go next
 
