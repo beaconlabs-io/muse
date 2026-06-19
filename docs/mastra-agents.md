@@ -554,11 +554,9 @@ forgets to call the tool or the tool returns an empty list.
 
 - `measurementSteps: string[]` — ordered, concrete steps
 - `dataCollectionMethod: string`
-- `requiredResources: string[]`
 - `frequency: string`
 - `targetValue?: string`
 - `cautions: string[]`
-- `stakeholders: string[]`
 - Plus parent-card breadcrumbs (`parentCardId`, `parentCardTitle`,
   `parentCardType ∈ { outputs, outcomes-short, outcomes-intermediate }`)
 

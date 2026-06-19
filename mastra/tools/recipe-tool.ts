@@ -7,8 +7,8 @@ import { RECIPE_TARGET_CARD_TYPES, RecipeMetricGuidanceSchema, type Recipe } fro
  * each Output / Outcome metric the user has placed on the canvas.
  *
  * The agent's job is to turn abstract metric names into a practitioner-ready
- * recipe: concrete measurement steps, data collection methods, resources,
- * cadence, cautions, and the stakeholders involved.
+ * recipe: concrete measurement steps, a data collection method, cadence
+ * (frequency), an optional target value, and cautions to watch for.
  */
 
 const RecipeAgentInputItemSchema = z.object({
