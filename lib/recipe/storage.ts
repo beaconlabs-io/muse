@@ -1,9 +1,12 @@
-import type { Recipe } from "@/types";
+import { z } from "zod";
+import { RecipeSchema } from "@/types";
 
-export interface PersistedRecipeState {
-  recipe: Recipe;
-  stale: boolean;
-}
+const PersistedRecipeStateSchema = z.object({
+  recipe: RecipeSchema,
+  stale: z.boolean(),
+});
+
+export type PersistedRecipeState = z.infer<typeof PersistedRecipeStateSchema>;
 
 const STORAGE_KEY = "recipeState";
 
@@ -20,7 +23,13 @@ export function loadRecipeState(): PersistedRecipeState | null {
   try {
     if (typeof window === "undefined") return null;
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? (JSON.parse(saved) as PersistedRecipeState) : null;
+    if (!saved) return null;
+    const parsed = PersistedRecipeStateSchema.safeParse(JSON.parse(saved));
+    if (!parsed.success) {
+      console.error("Persisted recipe failed schema validation:", parsed.error);
+      return null;
+    }
+    return parsed.data;
   } catch (error) {
     console.error("Failed to load recipe state:", error);
     return null;

@@ -64,6 +64,16 @@ describe("recipe storage", () => {
     expect(errorSpy).toHaveBeenCalled();
   });
 
+  it("returns null and logs when the stored value passes JSON parse but fails schema validation", () => {
+    localStorage.setItem(
+      "recipeState",
+      JSON.stringify({ recipe: { missing: "fields" }, stale: false }),
+    );
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(loadRecipeState()).toBeNull();
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
   it("swallows errors from localStorage.setItem", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
