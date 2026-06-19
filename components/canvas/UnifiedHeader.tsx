@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CloudCheck,
@@ -51,7 +51,11 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
   const { generate: generateImage } = useCanvasImage();
   const recipe = useRecipe();
 
-  const canGenerateRecipe = collectMetricContexts(nodes, cardMetrics).length > 0;
+  const metricContexts = useMemo(
+    () => collectMetricContexts(nodes, cardMetrics),
+    [nodes, cardMetrics],
+  );
+  const canGenerateRecipe = metricContexts.length > 0;
   const canDownloadRecipe =
     recipe.phase === "success" && recipe.recipe !== null && !recipe.downloadingHtml;
 

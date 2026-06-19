@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Download, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,11 @@ export function ContextActions({ activeTab }: ContextActionsProps) {
   const { addCard, loadGeneratedCanvas } = useCanvasOperations();
   const recipe = useRecipe();
 
-  const canGenerate = collectMetricContexts(nodes, cardMetrics).length > 0;
+  const metricContexts = useMemo(
+    () => collectMetricContexts(nodes, cardMetrics),
+    [nodes, cardMetrics],
+  );
+  const canGenerate = metricContexts.length > 0;
 
   const handleGenerate = useCallback(() => {
     recipe.triggerGeneration({ nodes, cardMetrics });
