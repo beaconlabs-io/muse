@@ -880,8 +880,7 @@ bun build:mastra
 
 ### Types
 
-- `types/index.ts` - CanvasData, Arrow, Card, EvidenceMatch, ExternalPaper interfaces
-- `types/index.ts` - `Recipe`, `RecipeMetricGuidance`, `RecipeMetricContext`, `RecipeLocale`, `RECIPE_TARGET_CARD_TYPES`
+- `types/index.ts` - CanvasData, Arrow, Card, EvidenceMatch, ExternalPaper interfaces; `Recipe`, `RecipeMetricGuidance`, `RecipeMetricContext`, `RecipeLocale`, `RECIPE_TARGET_CARD_TYPES`
 - `types/recipe-events.ts` - `RecipeSSEEvent` union for `/api/recipe/stream`
 
 ## Observability & Tracing
