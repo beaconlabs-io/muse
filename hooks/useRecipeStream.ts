@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { ErrorCategory } from "@/lib/workflow-errors";
 import type { Recipe, RecipeMetricContext, RecipeLocale } from "@/types";
 import type { RecipeSSEEvent } from "@/types/recipe-events";
@@ -168,5 +168,14 @@ export function useRecipeStream() {
     setState({ ...initialState, status: "success", recipe });
   }, []);
 
-  return { ...state, start, reset, hydrateRecipe };
+  // Memoize the return value so its identity is stable across renders. Without
+  // this, `{ ...state, start, reset, hydrateRecipe }` creates a fresh object on
+  // every render, which busts every `useCallback`/`useMemo` in RecipeContext
+  // (and cascades into CanvasContext's wrapped operations via the markStale
+  // dependency). `state` is a single useState reference; the callbacks have
+  // empty deps and are themselves stable.
+  return useMemo(
+    () => ({ ...state, start, reset, hydrateRecipe }),
+    [state, start, reset, hydrateRecipe],
+  );
 }
