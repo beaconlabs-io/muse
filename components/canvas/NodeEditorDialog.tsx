@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { useFieldArray, useForm, useWatch, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, Pencil, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -133,8 +133,29 @@ export function NodeEditorDialog({
     setPendingExpandNewest(true);
   };
 
-  const typeValue = form.watch("type");
-  const titleValue = form.watch("title");
+  // Stable handlers so `MetricRow`'s memo can skip re-renders. We read `fields`
+  // and `expandedFieldId` through refs so the callbacks never change identity
+  // when unrelated form values (title, description) update.
+  const fieldsRef = useRef(fields);
+  fieldsRef.current = fields;
+  const expandedFieldIdRef = useRef(expandedFieldId);
+  expandedFieldIdRef.current = expandedFieldId;
+  const handleExpandRow = useCallback(
+    (index: number) => setExpandedFieldId(fieldsRef.current[index]?.id ?? null),
+    [],
+  );
+  const handleCollapseRow = useCallback(() => setExpandedFieldId(null), []);
+  const handleRemoveRow = useCallback(
+    (index: number) => {
+      const id = fieldsRef.current[index]?.id;
+      remove(index);
+      if (expandedFieldIdRef.current === id) setExpandedFieldId(null);
+    },
+    [remove],
+  );
+
+  const typeValue = useWatch({ control: form.control, name: "type" });
+  const titleValue = useWatch({ control: form.control, name: "title" });
   const typeLabel = typeValue
     ? tNodeTypes(NODE_TYPE_MAP[typeValue as NodeTypeValue]?.i18nKey ?? "node")
     : null;
@@ -261,129 +282,17 @@ export function NodeEditorDialog({
                     </div>
                   ) : (
                     <ul className="space-y-2">
-                      {fields.map((field, index) => {
-                        const isExpanded = expandedFieldId === field.id;
-                        const name = form.watch(`metrics.${index}.name`);
-                        const description = form.watch(`metrics.${index}.description`);
-
-                        if (isExpanded) {
-                          return (
-                            <li key={field.id} className="space-y-3 rounded-md border bg-white p-3">
-                              <FormField
-                                control={form.control}
-                                name={`metrics.${index}.name`}
-                                render={({ field: f }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-xs">
-                                      {tMetrics("metricName")}
-                                    </FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder={tMetrics("metricNamePlaceholder")}
-                                        autoFocus
-                                        {...f}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name={`metrics.${index}.description`}
-                                render={({ field: f }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-xs">
-                                      {tMetrics("descriptionOptional")}
-                                    </FormLabel>
-                                    <FormControl>
-                                      <Textarea
-                                        placeholder={tMetrics("descriptionPlaceholder")}
-                                        rows={2}
-                                        {...f}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <div className="flex justify-between gap-2">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive cursor-pointer"
-                                  onClick={() => {
-                                    remove(index);
-                                    setExpandedFieldId(null);
-                                  }}
-                                >
-                                  <Trash2 className="mr-1 h-3 w-3" />
-                                  {tCommon("delete")}
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  onClick={() => setExpandedFieldId(null)}
-                                  className="cursor-pointer"
-                                >
-                                  <Check className="mr-1 h-3 w-3" />
-                                  {tMetrics("doneEditing")}
-                                </Button>
-                              </div>
-                            </li>
-                          );
-                        }
-
-                        return (
-                          <li
-                            key={field.id}
-                            className="group flex items-start gap-2 rounded-md border bg-white p-2 transition-shadow hover:shadow-sm"
-                          >
-                            <button
-                              type="button"
-                              className="min-w-0 flex-1 cursor-pointer rounded px-1 py-1 text-left"
-                              onClick={() => setExpandedFieldId(field.id)}
-                              aria-label={tMetrics("editMetric")}
-                            >
-                              <p className="text-sm font-medium break-words">
-                                {name || (
-                                  <span className="text-muted-foreground italic">
-                                    {tMetrics("metricNamePlaceholder")}
-                                  </span>
-                                )}
-                              </p>
-                              {description && (
-                                <p className="text-muted-foreground mt-0.5 text-xs break-words whitespace-pre-wrap">
-                                  {description}
-                                </p>
-                              )}
-                            </button>
-                            <div className="flex shrink-0 items-center gap-1">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 cursor-pointer"
-                                onClick={() => setExpandedFieldId(field.id)}
-                                aria-label={tMetrics("editMetric")}
-                              >
-                                <Pencil className="h-3 w-3" aria-hidden="true" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:text-destructive h-7 w-7 cursor-pointer"
-                                onClick={() => remove(index)}
-                                aria-label={tCommon("delete")}
-                              >
-                                <Trash2 className="h-3 w-3" aria-hidden="true" />
-                              </Button>
-                            </div>
-                          </li>
-                        );
-                      })}
+                      {fields.map((field, index) => (
+                        <MetricRow
+                          key={field.id}
+                          control={form.control}
+                          index={index}
+                          isExpanded={expandedFieldId === field.id}
+                          onExpand={handleExpandRow}
+                          onCollapse={handleCollapseRow}
+                          onRemove={handleRemoveRow}
+                        />
+                      ))}
                     </ul>
                   )}
                 </div>
@@ -409,3 +318,123 @@ export function NodeEditorDialog({
     </Dialog>
   );
 }
+
+interface MetricRowProps {
+  control: Control<NodeEditorFormData>;
+  index: number;
+  isExpanded: boolean;
+  onExpand: (index: number) => void;
+  onCollapse: () => void;
+  onRemove: (index: number) => void;
+}
+
+// Sub-component so `useWatch` subscriptions scope to the single row that owns
+// them — a keystroke in row N re-renders only row N, not the whole dialog.
+const MetricRow = memo(function MetricRow({
+  control,
+  index,
+  isExpanded,
+  onExpand,
+  onCollapse,
+  onRemove,
+}: MetricRowProps) {
+  const tMetrics = useTranslations("metrics");
+  const tCommon = useTranslations("common");
+  const name = useWatch({ control, name: `metrics.${index}.name` });
+  const description = useWatch({ control, name: `metrics.${index}.description` });
+
+  if (isExpanded) {
+    return (
+      <li className="space-y-3 rounded-md border bg-white p-3">
+        <FormField
+          control={control}
+          name={`metrics.${index}.name`}
+          render={({ field: f }) => (
+            <FormItem>
+              <FormLabel className="text-xs">{tMetrics("metricName")}</FormLabel>
+              <FormControl>
+                <Input placeholder={tMetrics("metricNamePlaceholder")} autoFocus {...f} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`metrics.${index}.description`}
+          render={({ field: f }) => (
+            <FormItem>
+              <FormLabel className="text-xs">{tMetrics("descriptionOptional")}</FormLabel>
+              <FormControl>
+                <Textarea placeholder={tMetrics("descriptionPlaceholder")} rows={2} {...f} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex justify-between gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:text-destructive cursor-pointer"
+            onClick={() => onRemove(index)}
+          >
+            <Trash2 className="mr-1 h-3 w-3" />
+            {tCommon("delete")}
+          </Button>
+          <Button type="button" size="sm" onClick={onCollapse} className="cursor-pointer">
+            <Check className="mr-1 h-3 w-3" />
+            {tMetrics("doneEditing")}
+          </Button>
+        </div>
+      </li>
+    );
+  }
+
+  return (
+    <li className="group flex items-start gap-2 rounded-md border bg-white p-2 transition-shadow hover:shadow-sm">
+      <button
+        type="button"
+        className="min-w-0 flex-1 cursor-pointer rounded px-1 py-1 text-left"
+        onClick={() => onExpand(index)}
+        aria-label={tMetrics("editMetric")}
+      >
+        <p className="text-sm font-medium break-words">
+          {name || (
+            <span className="text-muted-foreground italic">
+              {tMetrics("metricNamePlaceholder")}
+            </span>
+          )}
+        </p>
+        {description && (
+          <p className="text-muted-foreground mt-0.5 text-xs break-words whitespace-pre-wrap">
+            {description}
+          </p>
+        )}
+      </button>
+      <div className="flex shrink-0 items-center gap-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 cursor-pointer"
+          onClick={() => onExpand(index)}
+          aria-label={tMetrics("editMetric")}
+        >
+          <Pencil className="h-3 w-3" aria-hidden="true" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="text-destructive hover:text-destructive h-7 w-7 cursor-pointer"
+          onClick={() => onRemove(index)}
+          aria-label={tCommon("delete")}
+        >
+          <Trash2 className="h-3 w-3" aria-hidden="true" />
+        </Button>
+      </div>
+    </li>
+  );
+});
