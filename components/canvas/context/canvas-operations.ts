@@ -135,9 +135,6 @@ export function createCanvasOperations(params: CreateOperationsParams) {
       id: `${nodeId}-metric-${idx}`,
       name: m.name,
       description: m.description,
-      measurementMethod: m.measurementMethod,
-      targetValue: m.targetValue,
-      frequency: m.frequency,
     }));
 
     const newNode: Node<CardNodeData> = {
@@ -179,9 +176,6 @@ export function createCanvasOperations(params: CreateOperationsParams) {
       id: `${editingNodeId}-metric-${idx}`,
       name: m.name,
       description: m.description,
-      measurementMethod: m.measurementMethod,
-      targetValue: m.targetValue,
-      frequency: m.frequency,
     }));
 
     setNodes((nds) =>

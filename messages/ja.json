@@ -74,7 +74,7 @@
     "externalSearchLabel": "外部の学術論文を検索",
     "externalSearchTooltip": "有効にすると、外部APIを使用して学術論文を検索し、エビデンスを補完します。生成時間が長くなる場合があります。",
     "metricsLabel": "各カードのメトリクスを生成",
-    "metricsTooltip": "各カードに測定指標を生成します。後から手動で追加することもできます。",
+    "metricsTooltip": "各カードのメトリクス名を生成します。具体的な測定手順・頻度・目標値はレシピ生成時に詰めます。",
     "recipeLabel": "レシピも生成する",
     "recipeTooltip": "ロジックモデルの描画後、アウトプット／アウトカムの各メトリクスについて手順付きの測定レシピを自動生成します。生成時間が長くなります。",
     "recipeMetricsRequired": "先にメトリクス生成を有効にしてください。レシピはメトリクスの内容から作成されます。",
@@ -123,22 +123,7 @@
     "metricName": "メトリクス名",
     "metricNamePlaceholder": "例：参加率",
     "descriptionOptional": "説明（任意）",
-    "descriptionPlaceholder": "このメトリクスが測定する内容",
-    "measurementMethod": "測定方法（任意）",
-    "measurementPlaceholder": "調査、観察など",
-    "frequency": "頻度（任意）",
-    "frequencyPlaceholder": "頻度を選択",
-    "targetValue": "目標値（任意）",
-    "targetPlaceholder": "例：50%改善",
-    "target": "目標: {value}"
-  },
-  "frequency": {
-    "daily": "毎日",
-    "weekly": "毎週",
-    "monthly": "毎月",
-    "quarterly": "四半期ごと",
-    "annually": "毎年",
-    "other": "その他"
+    "descriptionPlaceholder": "このメトリクスが測定する内容"
   },
   "exportDialog": {
     "title": "画像エクスポート",

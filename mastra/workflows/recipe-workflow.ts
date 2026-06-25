@@ -54,11 +54,6 @@ const generateRecipeStep = createStep({
         if (m.parentCardDescription) {
           lines.push(`  parentCardDescription: ${m.parentCardDescription}`);
         }
-        if (m.existingMeasurementMethod && m.existingMeasurementMethod !== "To be defined") {
-          lines.push(`  existingMeasurementMethod: ${m.existingMeasurementMethod}`);
-        }
-        if (m.existingFrequency) lines.push(`  existingFrequency: ${m.existingFrequency}`);
-        if (m.existingTargetValue) lines.push(`  existingTargetValue: ${m.existingTargetValue}`);
         return lines.join("\n");
       })
       .join("\n\n");

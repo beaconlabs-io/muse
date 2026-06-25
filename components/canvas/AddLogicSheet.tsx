@@ -38,7 +38,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { Frequency, MetricFormInputSchema } from "@/types";
+import { MetricFormInputSchema } from "@/types";
 
 // Use centralized schema from types
 const metricsSchema = MetricFormInputSchema;
@@ -73,15 +73,6 @@ const LOGIC_TYPE_KEYS = [
   { value: "impact", key: "impact" as const },
 ];
 
-const FREQUENCY_KEYS: Record<string, string> = {
-  [Frequency.DAILY]: "daily",
-  [Frequency.WEEKLY]: "weekly",
-  [Frequency.MONTHLY]: "monthly",
-  [Frequency.QUARTERLY]: "quarterly",
-  [Frequency.ANNUALLY]: "annually",
-  [Frequency.OTHER]: "other",
-};
-
 export function AddLogicSheet({
   onSubmit,
   editMode = false,
@@ -93,7 +84,6 @@ export function AddLogicSheet({
   const tAddNode = useTranslations("addNode");
   const tNodeTypes = useTranslations("nodeTypes");
   const tMetrics = useTranslations("metrics");
-  const tFrequency = useTranslations("frequency");
   const tCommon = useTranslations("common");
   const [internalOpen, setInternalOpen] = useState(false);
   const [metrics, setMetrics] = useState<Metrics[]>([]);
@@ -117,9 +107,6 @@ export function AddLogicSheet({
     defaultValues: {
       name: "",
       description: "",
-      measurementMethod: "",
-      targetValue: "",
-      frequency: Frequency.MONTHLY,
     },
   });
 
@@ -292,20 +279,6 @@ export function AddLogicSheet({
                                       {metric.description}
                                     </p>
                                   )}
-                                  <div className="text-muted-foreground mt-2 flex flex-wrap gap-2 text-xs">
-                                    {metric.frequency && (
-                                      <span className="bg-muted rounded px-2 py-1">
-                                        {tFrequency(
-                                          FREQUENCY_KEYS[metric.frequency] || metric.frequency,
-                                        )}
-                                      </span>
-                                    )}
-                                    {metric.targetValue && (
-                                      <span className="bg-muted rounded px-2 py-1">
-                                        {tMetrics("target", { value: metric.targetValue })}
-                                      </span>
-                                    )}
-                                  </div>
                                 </div>
                                 <div className="ml-2 flex gap-1">
                                   <Button
@@ -357,49 +330,6 @@ export function AddLogicSheet({
                               rows={2}
                               value={metricsForm.watch("description") || ""}
                               onChange={(e) => metricsForm.setValue("description", e.target.value)}
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">
-                              {tMetrics("measurementMethod")}
-                            </label>
-                            <Input
-                              placeholder={tMetrics("measurementPlaceholder")}
-                              value={metricsForm.watch("measurementMethod") || ""}
-                              onChange={(e) =>
-                                metricsForm.setValue("measurementMethod", e.target.value)
-                              }
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{tMetrics("frequency")}</label>
-                            <Select
-                              onValueChange={(value) =>
-                                metricsForm.setValue("frequency", value as Frequency)
-                              }
-                              value={metricsForm.watch("frequency")}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder={tMetrics("frequencyPlaceholder")} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.values(Frequency).map((value) => (
-                                  <SelectItem key={value} value={value}>
-                                    {tFrequency(FREQUENCY_KEYS[value] || value)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{tMetrics("targetValue")}</label>
-                            <Input
-                              placeholder={tMetrics("targetPlaceholder")}
-                              value={metricsForm.watch("targetValue") || ""}
-                              onChange={(e) => metricsForm.setValue("targetValue", e.target.value)}
                             />
                           </div>
 
