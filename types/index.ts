@@ -98,6 +98,7 @@ export const ToolMetricInputSchema = z.object({
   name: z.string().describe("A concise metric name (3-8 words)"),
   description: z
     .string()
+    .optional()
     .describe(
       "A one-sentence description of what this metric captures and why it matters for the parent card. This is later used as a hint by the recipe agent when generating concrete measurement steps.",
     ),
