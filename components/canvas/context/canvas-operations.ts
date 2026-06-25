@@ -19,7 +19,7 @@ export interface CreateOperationsParams {
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   setCardMetrics: React.Dispatch<React.SetStateAction<Record<string, Metric[]>>>;
   setEditingNodeId: React.Dispatch<React.SetStateAction<string | null>>;
-  setEditSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setEditDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   createNodeCallbacks: (nodeId: string) => NodeCallbacks;
 }
 
@@ -117,7 +117,7 @@ export function createCanvasOperations(params: CreateOperationsParams) {
     setEdges,
     setCardMetrics,
     setEditingNodeId,
-    setEditSheetOpen,
+    setEditDialogOpen,
     createNodeCallbacks,
   } = params;
 
@@ -232,19 +232,19 @@ export function createCanvasOperations(params: CreateOperationsParams) {
   };
 
   /**
-   * Open the edit sheet for a specific node
+   * Open the edit dialog for a specific node
    */
-  const openEditSheet = (nodeId: string) => {
+  const openEditDialog = (nodeId: string) => {
     setEditingNodeId(nodeId);
-    setEditSheetOpen(true);
+    setEditDialogOpen(true);
   };
 
   /**
-   * Close the edit sheet
+   * Close the edit dialog
    */
-  const closeEditSheet = () => {
+  const closeEditDialog = () => {
     setEditingNodeId(null);
-    setEditSheetOpen(false);
+    setEditDialogOpen(false);
   };
 
   /**
@@ -295,8 +295,8 @@ export function createCanvasOperations(params: CreateOperationsParams) {
     addCard,
     updateCard,
     deleteCard,
-    openEditSheet,
-    closeEditSheet,
+    openEditDialog,
+    closeEditDialog,
     loadGeneratedCanvas,
     onConnect,
   };

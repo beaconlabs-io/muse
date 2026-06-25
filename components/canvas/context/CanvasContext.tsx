@@ -66,7 +66,7 @@ export interface CanvasStateContextValue {
   edges: Edge[];
   cardMetrics: Record<string, Metric[]>;
   editingNodeId: string | null;
-  editSheetOpen: boolean;
+  editDialogOpen: boolean;
   editingNodeData: EditingNodeData | null;
   disableLocalStorage: boolean;
   clearConfirmOpen: boolean;
@@ -188,9 +188,9 @@ export function CanvasProvider({
     }
   }, [disableLocalStorage, setNodes, setEdges]);
 
-  // 3. Edit sheet state
+  // 3. Edit dialog state
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
-  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
   // 4. Get router for saveLogicModel
@@ -257,7 +257,7 @@ export function CanvasProvider({
       },
       onEdit: () => {
         setEditingNodeId(nodeId);
-        setEditSheetOpen(true);
+        setEditDialogOpen(true);
       },
     }),
     [setNodes, setEdges, setCardMetrics, markStale],
@@ -476,7 +476,7 @@ export function CanvasProvider({
         setEdges,
         setCardMetrics,
         setEditingNodeId,
-        setEditSheetOpen,
+        setEditDialogOpen,
         createNodeCallbacks,
       }),
     [setNodes, setEdges, setCardMetrics, createNodeCallbacks],
@@ -508,7 +508,7 @@ export function CanvasProvider({
   // We deliberately do NOT wrap onNodesChange (React Flow fires it for
   // position / measure / select churn — false positives). The functions
   // wrapped here are the semantic entry points used by toolbar forms, the
-  // edit sheet, and the connection handler.
+  // edit dialog, and the connection handler.
   const wrappedAddCard = useCallback<CanvasOperations["addCard"]>(
     (formData) => {
       operations.addCard(formData);
@@ -558,7 +558,7 @@ export function CanvasProvider({
       edges,
       cardMetrics,
       editingNodeId,
-      editSheetOpen,
+      editDialogOpen,
       editingNodeData,
       disableLocalStorage,
       clearConfirmOpen,
@@ -568,7 +568,7 @@ export function CanvasProvider({
       edges,
       cardMetrics,
       editingNodeId,
-      editSheetOpen,
+      editDialogOpen,
       editingNodeData,
       disableLocalStorage,
       clearConfirmOpen,

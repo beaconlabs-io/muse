@@ -31,7 +31,7 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
   const tMetrics = useTranslations("metrics");
   const tAddNode = useTranslations("addNode");
   // Get operations from context
-  const { deleteCard, openEditSheet } = useCanvasOperations();
+  const { deleteCard, openEditDialog } = useCanvasOperations();
 
   // Get type config (label and icon)
   const typeConfig = data.type ? TYPE_CONFIG[data.type] : null;
@@ -40,7 +40,7 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
 
   const handleDoubleClick = () => {
     // Open edit dialog
-    openEditSheet(data.id);
+    openEditDialog(data.id);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -121,7 +121,7 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
       <button
         onClick={(e) => {
           e.stopPropagation();
-          openEditSheet(data.id);
+          openEditDialog(data.id);
         }}
         className="absolute -top-3 -right-3 hidden h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gray-500 text-white group-hover:flex hover:bg-gray-600"
         title={tAddNode("editTitle")}

@@ -21,7 +21,8 @@
     "clearAll": "Clear all",
     "loading": "Loading...",
     "success": "Success",
-    "error": "Error"
+    "error": "Error",
+    "delete": "Delete"
   },
   "canvas": {
     "generateFromIntent": "Generate Logic Model",
@@ -120,6 +121,7 @@
     "editMetric": "Edit Metric",
     "addMetric": "Add Metric",
     "updateMetric": "Update Metric",
+    "doneEditing": "Done",
     "metricName": "Metric Name",
     "metricNamePlaceholder": "e.g., Participation Rate",
     "descriptionOptional": "Description (optional)",

@@ -4,9 +4,9 @@ import { useCallback, useMemo } from "react";
 import { Download, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { AddLogicSheet } from "./AddLogicSheet";
 import { useCanvasOperations, useCanvasState, useRecipe } from "./context";
 import { GenerateLogicModelDialog } from "./GenerateLogicModelDialog";
+import { NodeEditorDialog } from "./NodeEditorDialog";
 import { collectMetricContexts } from "@/lib/recipe-helpers";
 
 interface ContextActionsProps {
@@ -37,7 +37,7 @@ export function ContextActions({ activeTab }: ContextActionsProps) {
     return (
       <div className="flex items-center gap-2">
         <GenerateLogicModelDialog onGenerate={loadGeneratedCanvas} />
-        <AddLogicSheet onSubmit={addCard} />
+        <NodeEditorDialog onSubmit={addCard} />
       </div>
     );
   }
