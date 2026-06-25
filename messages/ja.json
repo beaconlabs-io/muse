@@ -120,7 +120,6 @@
     "noMetrics": "メトリクスがまだ追加されていません",
     "editMetric": "メトリクスを編集",
     "addMetric": "メトリクスを追加",
-    "updateMetric": "メトリクスを更新",
     "doneEditing": "完了",
     "metricName": "メトリクス名",
     "metricNamePlaceholder": "例：参加率",

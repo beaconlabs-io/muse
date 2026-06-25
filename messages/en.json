@@ -120,7 +120,6 @@
     "noMetrics": "No metrics added yet",
     "editMetric": "Edit Metric",
     "addMetric": "Add Metric",
-    "updateMetric": "Update Metric",
     "doneEditing": "Done",
     "metricName": "Metric Name",
     "metricNamePlaceholder": "e.g., Participation Rate",
