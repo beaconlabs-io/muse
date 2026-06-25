@@ -2,11 +2,11 @@
 
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Pencil, Zap, Package, Target, Sparkles, BarChart3 } from "lucide-react";
+import { Pencil, BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCanvasOperations } from "./context";
 import type { Metric } from "@/types";
-import type { LucideIcon } from "lucide-react";
+import { NODE_TYPE_MAP, type NodeTypeValue } from "@/lib/canvas/node-types";
 
 export interface CardNodeData extends Record<string, unknown> {
   id: string;
@@ -17,15 +17,6 @@ export interface CardNodeData extends Record<string, unknown> {
   metrics?: Metric[];
 }
 
-// Map types to translation keys and icons
-const TYPE_CONFIG: Record<string, { key: string; icon: LucideIcon }> = {
-  activities: { key: "activities", icon: Zap },
-  outputs: { key: "outputs", icon: Package },
-  "outcomes-short": { key: "outcomesShort", icon: Target },
-  "outcomes-intermediate": { key: "outcomesIntermediate", icon: Target },
-  impact: { key: "impact", icon: Sparkles },
-};
-
 export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeData }) => {
   const tNodeTypes = useTranslations("nodeTypes");
   const tMetrics = useTranslations("metrics");
@@ -34,8 +25,8 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
   const { deleteCard, openEditDialog } = useCanvasOperations();
 
   // Get type config (label and icon)
-  const typeConfig = data.type ? TYPE_CONFIG[data.type] : null;
-  const typeLabel = typeConfig ? tNodeTypes(typeConfig.key) : tNodeTypes("node");
+  const typeConfig = data.type ? NODE_TYPE_MAP[data.type as NodeTypeValue] : null;
+  const typeLabel = typeConfig ? tNodeTypes(typeConfig.i18nKey) : tNodeTypes("node");
   const TypeIcon = typeConfig?.icon;
 
   const handleDoubleClick = () => {

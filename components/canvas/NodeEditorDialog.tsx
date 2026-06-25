@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { NODE_TYPE_MAP, NODE_TYPES, type NodeTypeValue } from "@/lib/canvas/node-types";
 import { MetricFormInputSchema } from "@/types";
 
 const nodeEditorFormSchema = z.object({
@@ -52,14 +53,6 @@ interface NodeEditorDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
-
-const LOGIC_TYPE_KEYS = [
-  { value: "activities", key: "activities" as const },
-  { value: "outputs", key: "outputs" as const },
-  { value: "outcomes-short", key: "outcomesShort" as const },
-  { value: "outcomes-intermediate", key: "outcomesIntermediate" as const },
-  { value: "impact", key: "impact" as const },
-];
 
 export function NodeEditorDialog({
   onSubmit,
@@ -143,7 +136,7 @@ export function NodeEditorDialog({
   const typeValue = form.watch("type");
   const titleValue = form.watch("title");
   const typeLabel = typeValue
-    ? tNodeTypes(LOGIC_TYPE_KEYS.find((t) => t.value === typeValue)?.key ?? "node")
+    ? tNodeTypes(NODE_TYPE_MAP[typeValue as NodeTypeValue]?.i18nKey ?? "node")
     : null;
 
   return (
@@ -194,9 +187,9 @@ export function NodeEditorDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {LOGIC_TYPE_KEYS.map((type) => (
+                            {NODE_TYPES.map((type) => (
                               <SelectItem key={type.value} value={type.value}>
-                                {tNodeTypes(type.key)}
+                                {tNodeTypes(type.i18nKey)}
                               </SelectItem>
                             ))}
                           </SelectContent>
