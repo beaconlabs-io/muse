@@ -371,18 +371,17 @@ type Metric = {
   id: string;
   name: string;
   description?: string;
-  measurementMethod?: string;
-  targetValue?: string;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other";
 };
 ```
 
 - `id` is stable per metric (so React keys and edit/delete operations
   survive re-renders).
-- All other fields are optional — the agent emits whatever subset the
-  Stage 2 prompt yields, and form inputs can leave them blank.
-- `frequency` is constrained to the `Frequency` enum (see
-  `FREQUENCY_LABELS`, `FREQUENCY_OPTIONS` in `types/index.ts`).
+- `description` is optional — the user may leave it blank, and the Stage
+  2 LLM may omit it when token-pressured.
+- Logic-model metrics are intentionally lightweight: measurement method,
+  frequency, target value, and cautions are not stored here. They are
+  elaborated later by the recipe agent using the metric `name` +
+  `description` and the parent card context.
 
 Storage on the canvas lives in `CanvasContext` as
 `cardMetrics: Record<cardId, Metric[]>`, kept separate from the card's
@@ -397,28 +396,50 @@ CardNode displays metrics as a bulleted list under the card body,
 separated from the description by a thin border. The badge uses a
 `BarChart3` icon and the localised label from
 `useTranslations("metrics").title`. Only `metric.name` is shown in the
-card itself — full details (description, measurement method, frequency,
-target) are reachable through the edit sheet.
+card itself — the `description` is reachable through the edit dialog.
 
 If `data.metrics` is empty or `undefined` the metric block is omitted
 entirely; the same is true when the workflow was run with
 `enableMetrics: false` (the default), so cards render compactly.
 
-### Editing in AddLogicSheet
+### Editing in NodeEditorDialog
 
-**Location**: `components/canvas/AddLogicSheet.tsx`
+**Location**: `components/canvas/NodeEditorDialog.tsx`
 
-The card editing sheet hosts a sub-form (`metricsForm`) built with
-`react-hook-form` + `MetricFormInputSchema` for metric CRUD:
+A centered Dialog (`sm:max-w-3xl`) with a 2-column layout (basic info /
+metrics) driven by container queries. Replaces the older right-side
+`Sheet` drawer to give metrics editing real horizontal space without
+forcing a viewport-wide media query.
 
-1. **Add** — empty form pushes a new metric with a fresh `id`.
-2. **Edit** — `metricsForm.reset(metric)` loads the selected metric;
-   submitting replaces it in place by `id`.
-3. **Delete** — removes by `id` from the card's metrics array.
+Metrics editing runs on a **single** `react-hook-form` instance via
+`useFieldArray`, not a separate sub-form. Each metric is an inline-
+expanding card (one expanded at a time), and "Add metric" appends a new
+card that auto-expands on the next render.
 
-Submission mutates `CanvasContext.cardMetrics` for the card being edited
-(not the agent output), and `CardNode` re-renders via React Flow's
-node-data subscription.
+1. **Add** — `append({ name: "", description: "" })` pushes a new field;
+   a `pendingExpandNewest` flag drives a follow-up effect that expands
+   the freshly appended card once RHF has assigned its `field.id`.
+2. **Edit** — clicking a collapsed card sets `expandedFieldId` to that
+   row's `field.id`; the row re-renders as an editable form.
+3. **Delete** — `remove(index)` from `useFieldArray`; if the deleted row
+   was expanded, `expandedFieldId` is reset to `null`.
+
+Per-row re-renders are scoped via a memoized `MetricRow` sub-component
+that calls `useWatch({ control, name: "metrics.${index}.name" })` (and
+the same for `description`) — typing in one row re-renders only that
+row, not the parent dialog or sibling rows.
+
+Dialog state is held in `CanvasContext` as
+`editDialogOpen` + `editingNodeId`, mutated through
+`openEditDialog(nodeId)` / `closeEditDialog()`. Submission mutates
+`CanvasContext.cardMetrics` for the card being edited (not the agent
+output), and `CardNode` re-renders via React Flow's node-data
+subscription.
+
+Node-type config (the 5 logic-model stages and their icons / i18n keys)
+is the single source of truth in `lib/canvas/node-types.ts`
+(`NODE_TYPES` ordered list for the dropdown, `NODE_TYPE_MAP` for O(1)
+lookup by value). Both `NodeEditorDialog` and `CardNode` import from it.
 
 ### Layout coupling
 
@@ -582,7 +603,6 @@ Stale is set by **semantic mutations**, not by raw React Flow callbacks:
 | Mutation entry point                                                                   | Marks stale  |
 | -------------------------------------------------------------------------------------- | ------------ |
 | `operations.addCard` / `updateCard` / `deleteCard` / `onConnect`                       | yes          |
-| `createNodeCallbacks.onContentChange` / `onDeleteCard` (in-card inline edits)          | yes          |
 | `onEdgesChange` with at least one `{ type: "remove" }` change                          | yes          |
 | `executeClearAllData`                                                                  | yes (resets) |
 | Plain `onNodesChange` (position / dimensions / select churn from React Flow internals) | **no**       |
@@ -687,7 +707,7 @@ disabled in the other.
 - `components/canvas/UnifiedHeader.tsx` - Top bar (tabs + context actions + sectioned More dropdown)
 - `components/canvas/ContextActions.tsx` - Phase-aware action group in the header
 - `components/canvas/CardNode.tsx` - Card rendering incl. metrics list
-- `components/canvas/AddLogicSheet.tsx` - Card + metrics editing sheet
+- `components/canvas/NodeEditorDialog.tsx` - Card + metrics editing dialog (`useFieldArray` + per-row memoized `MetricRow`)
 - `components/canvas/EvidenceEdge.tsx:15` - Edge type registration
 - `components/canvas/EvidenceDialog.tsx` - Evidence modal
 - `components/canvas/RecipePanel.tsx` - Recipe tab state machine
@@ -713,7 +733,7 @@ disabled in the other.
 - `types/index.ts` - `Arrow` interface (extended with `externalPapers`)
 - `types/index.ts` - `Card` interface
 - `types/index.ts` - `Metric` / `MetricSchema` (canvas metric shape)
-- `types/index.ts` - `Frequency` enum + `FREQUENCY_LABELS` / `FREQUENCY_OPTIONS`
+- `lib/canvas/node-types.ts` - `NODE_TYPES` / `NODE_TYPE_MAP` / `NodeTypeValue` / `NodeTypeConfig` (SSOT for the 5 logic-model stages)
 - `types/index.ts` - `ExternalPaper` interface (Semantic Scholar paper data)
 
 ## Styling Configuration

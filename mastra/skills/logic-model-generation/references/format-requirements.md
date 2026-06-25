@@ -33,29 +33,27 @@ Each card (in activities, outputs, outcomesShort, outcomesIntermediate, impact) 
 
 Every metric must be an object with these fields:
 
-| Field             | Type        | Required |
-| ----------------- | ----------- | -------- |
-| name              | string      | Yes      |
-| description       | string      | No       |
-| measurementMethod | string      | Yes      |
-| frequency         | enum string | Yes      |
+| Field       | Type   | Required                      |
+| ----------- | ------ | ----------------------------- |
+| name        | string | Yes                           |
+| description | string | No (but strongly recommended) |
 
-Valid frequency values (exact strings):
+Logic-model metrics are intentionally lightweight: only `name` (3-8
+words) and a one-sentence `description` explaining what the metric
+captures and why it matters for the parent card. Measurement method,
+frequency, target value, and cautions are NOT produced at this stage —
+they are elaborated later by the recipe agent.
 
-- `"daily"`
-- `"weekly"`
-- `"monthly"`
-- `"quarterly"`
-- `"annually"`
-- `"other"`
+The `description` is later used as a hint by the recipe agent when
+generating concrete measurement steps. Skip it only when you genuinely
+cannot infer a meaningful intent from the card context.
 
 Correct metric:
 
 ```json
 {
   "name": "Number of participants",
-  "measurementMethod": "Registration count from platform database",
-  "frequency": "monthly"
+  "description": "Unique people who completed registration this period — captures reach for the activity."
 }
 ```
 
@@ -65,10 +63,14 @@ Wrong (string instead of object):
 "Number of participants"
 ```
 
-Wrong (missing required fields):
+Wrong (extra fields that are no longer part of the schema):
 
 ```json
-{ "name": "Number of participants" }
+{
+  "name": "Number of participants",
+  "measurementMethod": "Registration query",
+  "frequency": "monthly"
+}
 ```
 
 ## Connections

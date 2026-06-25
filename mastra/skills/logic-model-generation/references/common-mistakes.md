@@ -1,11 +1,12 @@
 # Common Mistakes Reference
 
-The five most frequent errors when calling logicModelTool, ordered by
-frequency. Each mistake causes a tool validation failure.
+The most frequent errors when calling logicModelTool, ordered by
+frequency. Each mistake causes a tool validation failure (or silently
+strips fields).
 
-## Mistake #1: targetContext as Object (50% of errors)
+## Mistake #1: targetContext as Object
 
-The most common error. targetContext must be a plain string.
+targetContext must be a plain string.
 
 Wrong:
 
@@ -22,11 +23,13 @@ Fix:
 "targetContext": "Teachers in rural schools, aiming to improve formative assessment practices"
 ```
 
-## Mistake #2: Metrics as Strings (30% of errors)
+## Mistake #2: Metrics as Strings or Missing Description
 
 **Note:** When metrics generation is disabled, an empty array `[]` is valid for the metrics field. The following applies only when metrics are being generated.
 
-Each metric must be an object with name, measurementMethod, and frequency.
+Each metric must be an object with a concise `name` and a one-sentence
+`description`. The description is later used as a hint by the recipe
+agent, so a name-only metric loses signal.
 
 Wrong:
 
@@ -34,7 +37,7 @@ Wrong:
 "metrics": ["Participant count", "Satisfaction score"]
 ```
 
-Also wrong:
+Discouraged (name only, no description):
 
 ```json
 "metrics": [{ "name": "Participant count" }]
@@ -45,10 +48,13 @@ Fix:
 ```json
 "metrics": [{
   "name": "Participant count",
-  "measurementMethod": "Registration database query",
-  "frequency": "monthly"
+  "description": "Unique people who completed registration this period — captures reach for the activity."
 }]
 ```
+
+Do **not** add `measurementMethod`, `frequency`, or `targetValue` —
+those fields are no longer part of the schema; they are elaborated later
+by the recipe agent.
 
 ## Mistake #3: Invalid Connection Density
 
@@ -70,26 +76,7 @@ Fix: Let the causal structure determine density. Each card should have
 1-2 outgoing connections to the next stage. Only create connections where
 you can articulate the mechanism. See `causal-reasoning.md` for guidance.
 
-## Mistake #4: Invalid Frequency Values
-
-The frequency field only accepts exact enum values.
-
-Wrong:
-
-```json
-"frequency": "Monthly"     // wrong case
-"frequency": "biweekly"    // not in enum
-"frequency": "every month" // not in enum
-"frequency": "yearly"      // use "annually"
-```
-
-Fix -- use exactly one of:
-
-```
-"daily" | "weekly" | "monthly" | "quarterly" | "annually" | "other"
-```
-
-## Mistake #5: Exceeding Character Limits
+## Mistake #4: Exceeding Character Limits
 
 The tool enforces strict character limits on card text.
 
