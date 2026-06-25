@@ -8,19 +8,12 @@ import { Card, Arrow, TYPE_COLOR_MAP, Metric, type MetricFormInput } from "@/typ
 // TYPES
 // =============================================================================
 
-export interface NodeCallbacks {
-  onContentChange: (title: string, description?: string) => void;
-  onDeleteCard: () => void;
-  onEdit: () => void;
-}
-
 export interface CreateOperationsParams {
   setNodes: React.Dispatch<React.SetStateAction<Node<CardNodeData>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   setCardMetrics: React.Dispatch<React.SetStateAction<Record<string, Metric[]>>>;
   setEditingNodeId: React.Dispatch<React.SetStateAction<string | null>>;
   setEditDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  createNodeCallbacks: (nodeId: string) => NodeCallbacks;
 }
 
 export interface CardFormData {
@@ -112,14 +105,7 @@ export function getTypeFromColor(color: string): string {
 // =============================================================================
 
 export function createCanvasOperations(params: CreateOperationsParams) {
-  const {
-    setNodes,
-    setEdges,
-    setCardMetrics,
-    setEditingNodeId,
-    setEditDialogOpen,
-    createNodeCallbacks,
-  } = params;
+  const { setNodes, setEdges, setCardMetrics, setEditingNodeId, setEditDialogOpen } = params;
 
   /**
    * Add a new card to the canvas
@@ -127,8 +113,6 @@ export function createCanvasOperations(params: CreateOperationsParams) {
   const addCard = (formData: CardFormData) => {
     const position = getSectionPosition(formData.type, true);
     const nodeId = Date.now().toString();
-
-    const callbacks = createNodeCallbacks(nodeId);
 
     // Generate metrics with IDs
     const metricsWithIds = formData.metrics?.map((m, idx) => ({
@@ -148,7 +132,6 @@ export function createCanvasOperations(params: CreateOperationsParams) {
         color: position.color,
         type: formData.type,
         metrics: metricsWithIds,
-        ...callbacks,
       },
     };
 
@@ -181,8 +164,6 @@ export function createCanvasOperations(params: CreateOperationsParams) {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === editingNodeId) {
-          const callbacks = createNodeCallbacks(editingNodeId);
-
           return {
             ...node,
             data: {
@@ -192,7 +173,6 @@ export function createCanvasOperations(params: CreateOperationsParams) {
               color: position.color,
               type: formData.type,
               metrics: metricsWithIds,
-              ...callbacks,
             },
           };
         }
@@ -254,22 +234,16 @@ export function createCanvasOperations(params: CreateOperationsParams) {
     const newNodes = cardsToNodes(data.cards);
     const newEdges = arrowsToEdges(data.arrows);
 
-    // Add callbacks to nodes
-    const nodesWithCallbacks = newNodes.map((node) => {
-      const callbacks = createNodeCallbacks(node.id);
+    const nodesWithType = newNodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        type: node.data.type || getTypeFromColor(node.data.color),
+        metrics: data.cardMetrics[node.id],
+      },
+    }));
 
-      return {
-        ...node,
-        data: {
-          ...node.data,
-          type: node.data.type || getTypeFromColor(node.data.color),
-          metrics: data.cardMetrics[node.id],
-          ...callbacks,
-        },
-      };
-    });
-
-    setNodes(nodesWithCallbacks);
+    setNodes(nodesWithType);
     setEdges(newEdges);
     setCardMetrics(data.cardMetrics);
   };
