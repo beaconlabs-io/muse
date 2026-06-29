@@ -7,7 +7,7 @@ import {
   isRecipeTargetType,
 } from "./recipe-helpers";
 import type { Node } from "@xyflow/react";
-import { Frequency, type Metric } from "@/types";
+import { type Metric } from "@/types";
 
 function makeNode(overrides: Partial<CardNodeData> & { id: string }): Node<CardNodeData> {
   return {
@@ -30,9 +30,6 @@ function makeMetric(overrides: Partial<Metric> & { id: string; name: string }): 
     id: overrides.id,
     name: overrides.name,
     description: overrides.description,
-    measurementMethod: overrides.measurementMethod,
-    targetValue: overrides.targetValue,
-    frequency: overrides.frequency,
   };
 }
 
@@ -122,9 +119,6 @@ describe("collectMetricContexts", () => {
           id: "m1",
           name: "Attendance",
           description: "How many showed up",
-          measurementMethod: "Sign-in sheet",
-          targetValue: "80%",
-          frequency: Frequency.MONTHLY,
         }),
       ],
     };
@@ -133,9 +127,6 @@ describe("collectMetricContexts", () => {
       metricId: "m1",
       metricName: "Attendance",
       metricDescription: "How many showed up",
-      existingMeasurementMethod: "Sign-in sheet",
-      existingFrequency: Frequency.MONTHLY,
-      existingTargetValue: "80%",
       parentCardId: "o1",
       parentCardTitle: "Workshops",
       parentCardDescription: "All workshops in pilot",
@@ -162,9 +153,6 @@ describe("collectMetricContexts", () => {
       metricId: "m1",
       metricName: "Minimal",
       metricDescription: undefined,
-      existingMeasurementMethod: undefined,
-      existingFrequency: undefined,
-      existingTargetValue: undefined,
       parentCardId: "o1",
       parentCardTitle: "Bare card",
       parentCardDescription: undefined,

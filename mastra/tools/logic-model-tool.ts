@@ -129,8 +129,6 @@ const generateLogicModel = async (params: {
       id: `metric-${timestamp}-activity-${index}-${metricIndex}`,
       name: metric.name,
       description: metric.description,
-      measurementMethod: metric.measurementMethod,
-      frequency: metric.frequency,
     }));
   });
 
@@ -154,8 +152,6 @@ const generateLogicModel = async (params: {
       id: `metric-${timestamp}-output-${index}-${metricIndex}`,
       name: metric.name,
       description: metric.description,
-      measurementMethod: metric.measurementMethod,
-      frequency: metric.frequency,
     }));
   });
 
@@ -179,8 +175,6 @@ const generateLogicModel = async (params: {
       id: `metric-${timestamp}-outcome-short-${index}-${metricIndex}`,
       name: metric.name,
       description: metric.description,
-      measurementMethod: metric.measurementMethod,
-      frequency: metric.frequency,
     }));
   });
 
@@ -204,8 +198,6 @@ const generateLogicModel = async (params: {
       id: `metric-${timestamp}-outcome-intermediate-${index}-${metricIndex}`,
       name: metric.name,
       description: metric.description,
-      measurementMethod: metric.measurementMethod,
-      frequency: metric.frequency,
     }));
   });
 
@@ -229,8 +221,6 @@ const generateLogicModel = async (params: {
       id: `metric-${timestamp}-impact-${index}-${metricIndex}`,
       name: metric.name,
       description: metric.description,
-      measurementMethod: metric.measurementMethod,
-      frequency: metric.frequency,
     }));
   });
 

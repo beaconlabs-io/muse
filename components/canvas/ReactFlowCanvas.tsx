@@ -12,10 +12,10 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { AddLogicSheet } from "./AddLogicSheet";
 import { CardNode } from "./CardNode";
 import { CanvasProvider, RecipeProvider, useCanvas } from "./context";
 import { EvidenceEdge } from "./EvidenceEdge";
+import { NodeEditorDialog } from "./NodeEditorDialog";
 import { RecipePanel } from "./RecipePanel";
 import { UnifiedHeader } from "./UnifiedHeader";
 import type { CardFormData } from "./context/canvas-operations";
@@ -60,12 +60,12 @@ export function ReactFlowCanvas({
 function ReactFlowCanvasInner() {
   const [activeTab, setActiveTab] = useState<CanvasTab>("canvas");
   const { state, operations } = useCanvas();
-  const { nodes, edges, editingNodeData, editSheetOpen, editingNodeId } = state;
-  const { onNodesChange, onEdgesChange, onConnect, updateCard, closeEditSheet } = operations;
+  const { nodes, edges, editingNodeData, editDialogOpen, editingNodeId } = state;
+  const { onNodesChange, onEdgesChange, onConnect, updateCard, closeEditDialog } = operations;
 
-  const handleEditSheetOpenChange = (open: boolean) => {
+  const handleEditDialogOpenChange = (open: boolean) => {
     if (!open) {
-      closeEditSheet();
+      closeEditDialog();
     }
   };
 
@@ -141,11 +141,11 @@ function ReactFlowCanvasInner() {
       </Tabs>
 
       {editingNodeData && (
-        <AddLogicSheet
+        <NodeEditorDialog
           editMode
           initialData={editingNodeData}
-          open={editSheetOpen}
-          onOpenChange={handleEditSheetOpenChange}
+          open={editDialogOpen}
+          onOpenChange={handleEditDialogOpenChange}
           onSubmit={handleUpdateCard}
         />
       )}

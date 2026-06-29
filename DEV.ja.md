@@ -220,7 +220,7 @@ strength: 4 (Maryland Scale)
 - **Stage 2: カードを生成**
   - ステージごとに1-2枚のカードを作成、タイトル（最大100文字）、説明（最大200文字）、メトリクス付き
   - ステージ: Activities → Outputs → Outcomes-Short（0-6ヶ月） → Outcomes-Intermediate（6-18ヶ月） → Impact（18ヶ月以上）
-  - 各カードにはname、measurementMethod、frequencyフィールドを持つ1つのメトリクスオブジェクトが必要
+  - 各カードには簡潔な`name` (3-8語) と1文の `description` を持つメトリクスオブジェクトが1つ含まれる。`description` はレシピエージェントが具体的な測定手順を生成する際のヒントとして使われる。測定方法・頻度・目標値はここでは出さず、レシピステップで詳細化される
 
 - **Stage 3: 4-Test Frameworkで接続をデザイン**
   - **Directness Test**: 明確で即座の因果経路（1-2ステップ）

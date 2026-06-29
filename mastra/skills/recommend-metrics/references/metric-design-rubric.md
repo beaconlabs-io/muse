@@ -91,8 +91,6 @@ Match the cadence to what the team can actually sustain.
 - Monthly: for rolling delivery counts, dropout tracking, and burden review.
 - Quarterly: for intermediate outcomes that take time to show.
 
-If the user already supplied a frequency on the metric, preserve it as-is even when these patterns would suggest a different cadence.
-
 ## 6. Target Value Guidance
 
 Use targets gently. Beginners often have no prior data, so the first cycle is the baseline.

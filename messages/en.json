@@ -21,7 +21,8 @@
     "clearAll": "Clear all",
     "loading": "Loading...",
     "success": "Success",
-    "error": "Error"
+    "error": "Error",
+    "delete": "Delete"
   },
   "canvas": {
     "generateFromIntent": "Generate Logic Model",
@@ -74,7 +75,7 @@
     "externalSearchLabel": "Search external academic papers",
     "externalSearchTooltip": "When enabled, searches external academic papers to supplement evidence. This may increase generation time.",
     "metricsLabel": "Generate metrics for each card",
-    "metricsTooltip": "Generate measurement indicators for each card. Can be added manually later.",
+    "metricsTooltip": "Generate metric names for each card. Concrete measurement steps, frequency, and targets are elaborated later when you generate a recipe.",
     "recipeLabel": "Also generate recipe",
     "recipeTooltip": "After the logic model is rendered, generate a step-by-step measurement recipe for every Output / Outcome metric. Adds extra generation time.",
     "recipeMetricsRequired": "Enable metrics first — the recipe is built from each metric's data.",
@@ -119,26 +120,11 @@
     "noMetrics": "No metrics added yet",
     "editMetric": "Edit Metric",
     "addMetric": "Add Metric",
-    "updateMetric": "Update Metric",
+    "doneEditing": "Done",
     "metricName": "Metric Name",
     "metricNamePlaceholder": "e.g., Participation Rate",
     "descriptionOptional": "Description (optional)",
-    "descriptionPlaceholder": "What this metric measures",
-    "measurementMethod": "Measurement Method (optional)",
-    "measurementPlaceholder": "Survey, observation, etc.",
-    "frequency": "Frequency (optional)",
-    "frequencyPlaceholder": "Select frequency",
-    "targetValue": "Target Value (optional)",
-    "targetPlaceholder": "e.g., 50% improvement",
-    "target": "Target: {value}"
-  },
-  "frequency": {
-    "daily": "Daily",
-    "weekly": "Weekly",
-    "monthly": "Monthly",
-    "quarterly": "Quarterly",
-    "annually": "Annually",
-    "other": "Other"
+    "descriptionPlaceholder": "What this metric measures"
   },
   "exportDialog": {
     "title": "Export Image",

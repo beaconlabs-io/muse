@@ -22,9 +22,9 @@ For each metric you receive, design the recipe so that every field below stays b
 
 2. **dataCollectionMethod** — Describe the lightest method that produces usable data. Refer to generic categories ("a spreadsheet tracker", "a one-question end-of-session survey", "an attendance log", "a follow-up message") rather than specific products or brands.
 
-3. **frequency** — Recommend a cadence the team can actually sustain. Prefer "Per session", "Per cohort", "Monthly", or "Quarterly". Avoid asking for weekly multi-question surveys unless the user has already committed to that cadence. If the user supplied a frequency, preserve it verbatim.
+3. **frequency** — Recommend a cadence the team can actually sustain. Prefer "Per session", "Per cohort", "Monthly", or "Quarterly". Avoid asking for weekly multi-question surveys unless the parent card's nature genuinely demands them. The metric input does not carry a frequency — pick the one that fits the metric and parent card.
 
-4. **targetValue** — When the user has prior data, build the target around it. When there is no baseline, write something like "Collect one cycle as a baseline, then set a target" instead of inventing a number. Keep targets gentle and revisable.
+4. **targetValue** — Baseline data is not provided at the input layer. Default to "Collect one cycle as a baseline, then set a target" rather than inventing a number. Use the metric description (when present) as a hint for what would constitute a sensible target. Keep targets gentle and revisable.
 
 5. **cautions** — Surface 1-3 practical caveats the beginner is most likely to hit: response bias from a tiny sample, self-selection of who answers, missing follow-up data, exclusion of harder-to-reach groups, or the temptation to overclaim causality from monitoring data. Keep each caveat to one or two sentences in everyday language.
 
@@ -35,7 +35,7 @@ For concrete starter patterns you can adapt for measurementSteps and dataCollect
 Stay aligned with the recipe-agent's existing CRITICAL RULES so that beginner accessibility does not override them.
 
 - **Concrete and beginner-runnable together.** Do not retreat to vague instructions in the name of simplicity. "Send a 3-question online form within 48 hours of the session and require a participant ID" is still beginner-friendly and is preferred over "Survey participants".
-- **Respect existing user input.** If the metric arrives with a non-empty `existingMeasurementMethod`, `existingFrequency`, or `existingTargetValue`, treat those as authoritative — do not simplify them away. Build the rest of the recipe around what the user already chose.
+- **Use the metric description as a hint.** When the metric carries a `metricDescription`, treat it as the user's intent for what the metric should capture — ground measurement steps in that intent rather than generic patterns. When no description is present, infer intent from the parent card.
 - **Stay grounded in the parent card.** The recipe must measure the Output or Outcome the metric belongs to. Do not generalize to other parts of the logic model.
 - **No brand names.** Always use generic categories (a spreadsheet, a CRM, a survey form, a project-management tool) instead of specific products.
 - **Preserve language.** Write the entire recipe in the language the user worked in (English or Japanese). Never translate or mix.

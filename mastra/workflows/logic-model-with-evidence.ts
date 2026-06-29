@@ -69,7 +69,7 @@ const generateLogicModelStep = createStep({
     );
 
     const metricsInstruction = enableMetrics
-      ? "\n\nGenerate meaningful metrics for each card, including name, measurementMethod, and frequency."
+      ? "\n\nGenerate metrics for each card. Every metric MUST include BOTH a concise name (3-8 words) AND a one-sentence description that explains what the metric captures and why it matters for that card. The description is required — it is later used as a hint by the recipe step when generating concrete measurement steps. Do NOT generate measurement methods, frequencies, or target values — those are elaborated later in the recipe step."
       : "\n\nDo NOT generate metrics. Pass empty arrays for all metrics fields.";
 
     const textInstruction = fileInput

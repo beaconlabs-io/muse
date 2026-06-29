@@ -66,7 +66,7 @@ export interface CanvasStateContextValue {
   edges: Edge[];
   cardMetrics: Record<string, Metric[]>;
   editingNodeId: string | null;
-  editSheetOpen: boolean;
+  editDialogOpen: boolean;
   editingNodeData: EditingNodeData | null;
   disableLocalStorage: boolean;
   clearConfirmOpen: boolean;
@@ -188,9 +188,9 @@ export function CanvasProvider({
     }
   }, [disableLocalStorage, setNodes, setEdges]);
 
-  // 3. Edit sheet state
+  // 3. Edit dialog state
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
-  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
   // 4. Get router for saveLogicModel
@@ -230,40 +230,7 @@ export function CanvasProvider({
     disableLocalStorageRef.current = disableLocalStorage;
   }, [nodes, edges, cardMetrics, disableLocalStorage]);
 
-  // 6. Callback factory (memoized with useCallback)
-  const createNodeCallbacks = useCallback(
-    (nodeId: string) => ({
-      onContentChange: (title: string, description?: string) => {
-        setNodes((nds: Node<CardNodeData>[]) =>
-          nds.map((n: Node<CardNodeData>) =>
-            n.id === nodeId ? { ...n, data: { ...n.data, title, description } } : n,
-          ),
-        );
-        markStale();
-      },
-      onDeleteCard: () => {
-        setNodes((nds: Node<CardNodeData>[]) =>
-          nds.filter((n: Node<CardNodeData>) => n.id !== nodeId),
-        );
-        setEdges((eds: Edge[]) =>
-          eds.filter((edge: Edge) => edge.source !== nodeId && edge.target !== nodeId),
-        );
-        setCardMetrics((prev) => {
-          const newMetrics = { ...prev };
-          delete newMetrics[nodeId];
-          return newMetrics;
-        });
-        markStale();
-      },
-      onEdit: () => {
-        setEditingNodeId(nodeId);
-        setEditSheetOpen(true);
-      },
-    }),
-    [setNodes, setEdges, setCardMetrics, markStale],
-  );
-
-  // 7. State-reading callbacks (use refs to avoid dependency on state)
+  // 6. State-reading callbacks (use refs to avoid dependency on state)
   const saveLogicModel = useCallback(() => {
     try {
       const cards = nodesToCards(nodesRef.current);
@@ -468,7 +435,7 @@ export function CanvasProvider({
     }
   }, [nodesInitialized]);
 
-  // 8. Create operations (memoized - now only depends on stable setters)
+  // 7. Create operations (memoized - now only depends on stable setters)
   const operations = useMemo(
     () =>
       createCanvasOperations({
@@ -476,10 +443,9 @@ export function CanvasProvider({
         setEdges,
         setCardMetrics,
         setEditingNodeId,
-        setEditSheetOpen,
-        createNodeCallbacks,
+        setEditDialogOpen,
       }),
-    [setNodes, setEdges, setCardMetrics, createNodeCallbacks],
+    [setNodes, setEdges, setCardMetrics, setEditingNodeId, setEditDialogOpen],
   );
 
   // Wrap loadGeneratedCanvas so that the auto-fire effect knows a fresh AI
@@ -508,7 +474,7 @@ export function CanvasProvider({
   // We deliberately do NOT wrap onNodesChange (React Flow fires it for
   // position / measure / select churn — false positives). The functions
   // wrapped here are the semantic entry points used by toolbar forms, the
-  // edit sheet, and the connection handler.
+  // edit dialog, and the connection handler.
   const wrappedAddCard = useCallback<CanvasOperations["addCard"]>(
     (formData) => {
       operations.addCard(formData);
@@ -558,7 +524,7 @@ export function CanvasProvider({
       edges,
       cardMetrics,
       editingNodeId,
-      editSheetOpen,
+      editDialogOpen,
       editingNodeData,
       disableLocalStorage,
       clearConfirmOpen,
@@ -568,7 +534,7 @@ export function CanvasProvider({
       edges,
       cardMetrics,
       editingNodeId,
-      editSheetOpen,
+      editDialogOpen,
       editingNodeData,
       disableLocalStorage,
       clearConfirmOpen,

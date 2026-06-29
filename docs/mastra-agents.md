@@ -294,7 +294,7 @@ Theory of Change specialist with structured 5-stage workflow:
 
 - Creates 1-2 cards per stage with title (max 100 chars), description (max 200 chars), and optionally metrics
 - Stages: Activities → Outputs → Outcomes-Short (0-6 months) → Outcomes-Intermediate (6-18 months) → Impact (18+ months)
-- When `enableMetrics` is true, each card includes 1 metric object with name, measurementMethod, and frequency fields. When disabled (default), metrics arrays are empty.
+- When `enableMetrics` is true, each card includes 1 metric object with a concise `name` (3-8 words) and a one-sentence `description` that explains what the metric captures. The description is later used as a hint by the recipe agent when generating concrete measurement steps. Measurement method, frequency, and target value are intentionally not produced here — they are elaborated later in the recipe step. When disabled (default), metrics arrays are empty.
 
 #### Stage 3: Design Connections with 4-Test Framework
 
