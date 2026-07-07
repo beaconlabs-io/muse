@@ -33,7 +33,7 @@ export function ImagePreview({
   const tCommon = useTranslations("common");
   const defaultLoadingMessage = loadingMessage || t("generatingImage");
   return (
-    <div className="relative flex min-h-[300px] items-center justify-center rounded-lg border bg-gray-50">
+    <div className="relative flex min-h-[300px] items-center justify-center">
       {status === "generating" && (
         <div className="flex flex-col items-center gap-3 text-gray-500">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -62,7 +62,7 @@ export function ImagePreview({
           width={1200}
           height={630}
           unoptimized
-          className="max-h-[350px] max-w-full rounded-md shadow-sm"
+          className="max-h-[350px] max-w-full"
           style={{ width: "auto", height: "auto" }}
         />
       )}

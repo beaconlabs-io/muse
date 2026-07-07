@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { getNodesBounds, getViewportForBounds, type Node } from "@xyflow/react";
 import { toPng } from "html-to-image";
 import type { CanvasImageResult } from "@/lib/generate-canvas-image";
-import { generateCanvasImage } from "@/lib/generate-canvas-image";
+import { composeExportImage, generateCanvasImage } from "@/lib/generate-canvas-image";
 
 export type CanvasImageStatus = "idle" | "generating" | "ready" | "error";
 
@@ -90,10 +90,8 @@ export function useCanvasImage(): UseCanvasImageResult {
         let canvasImageResult: CanvasImageResult;
 
         if (isExport) {
-          // Export mode: use the high-res capture directly without OGP compositing
-          const res = await fetch(sourceDataUrl);
-          const blob = await res.blob();
-          canvasImageResult = { dataUrl: sourceDataUrl, blob };
+          // Export mode: add MUSE credit header/footer without scaling the capture
+          canvasImageResult = await composeExportImage({ sourceDataUrl });
         } else {
           // OGP mode: composite into 1200×630 branded image
           canvasImageResult = await generateCanvasImage({ sourceDataUrl });
