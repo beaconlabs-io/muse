@@ -210,9 +210,10 @@ export async function composeExportImage({
 
   ctx.font = "20px system-ui, -apple-system, sans-serif";
   ctx.fillStyle = "#64748b";
+  ctx.textAlign = "right";
   ctx.fillText(
     "muse.beaconlabs.io",
-    EXPORT_PADDING_X,
+    outputWidth - EXPORT_PADDING_X,
     EXPORT_HEADER_HEIGHT + sourceImg.height + EXPORT_FOOTER_HEIGHT / 2,
   );
 
