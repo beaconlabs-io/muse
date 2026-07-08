@@ -2,11 +2,11 @@
 
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Pencil, Zap, Package, Target, Sparkles, BarChart3 } from "lucide-react";
+import { Pencil, BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCanvasOperations } from "./context";
 import type { Metric } from "@/types";
-import type { LucideIcon } from "lucide-react";
+import { NODE_TYPE_MAP, type NodeTypeValue } from "@/lib/canvas/node-types";
 
 export interface CardNodeData extends Record<string, unknown> {
   id: string;
@@ -17,30 +17,21 @@ export interface CardNodeData extends Record<string, unknown> {
   metrics?: Metric[];
 }
 
-// Map types to translation keys and icons
-const TYPE_CONFIG: Record<string, { key: string; icon: LucideIcon }> = {
-  activities: { key: "activities", icon: Zap },
-  outputs: { key: "outputs", icon: Package },
-  "outcomes-short": { key: "outcomesShort", icon: Target },
-  "outcomes-intermediate": { key: "outcomesIntermediate", icon: Target },
-  impact: { key: "impact", icon: Sparkles },
-};
-
 export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeData }) => {
   const tNodeTypes = useTranslations("nodeTypes");
   const tMetrics = useTranslations("metrics");
   const tAddNode = useTranslations("addNode");
   // Get operations from context
-  const { deleteCard, openEditSheet } = useCanvasOperations();
+  const { deleteCard, openEditDialog } = useCanvasOperations();
 
   // Get type config (label and icon)
-  const typeConfig = data.type ? TYPE_CONFIG[data.type] : null;
-  const typeLabel = typeConfig ? tNodeTypes(typeConfig.key) : tNodeTypes("node");
+  const typeConfig = data.type ? NODE_TYPE_MAP[data.type as NodeTypeValue] : null;
+  const typeLabel = typeConfig ? tNodeTypes(typeConfig.i18nKey) : tNodeTypes("node");
   const TypeIcon = typeConfig?.icon;
 
   const handleDoubleClick = () => {
     // Open edit dialog
-    openEditSheet(data.id);
+    openEditDialog(data.id);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -121,7 +112,7 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
       <button
         onClick={(e) => {
           e.stopPropagation();
-          openEditSheet(data.id);
+          openEditDialog(data.id);
         }}
         className="absolute -top-3 -right-3 hidden h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gray-500 text-white group-hover:flex hover:bg-gray-600"
         title={tAddNode("editTitle")}

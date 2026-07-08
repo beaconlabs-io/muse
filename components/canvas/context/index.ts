@@ -4,3 +4,5 @@ export type {
   CanvasOperationsContextValue,
   CanvasContextValue,
 } from "./CanvasContext";
+export { RecipeProvider, useRecipe } from "./RecipeContext";
+export type { RecipeContextValue, RecipePhase, TriggerGenerationArgs } from "./RecipeContext";

@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { AlertCircle, Badge, BadgeCheck, Loader } from "lucide-react";
@@ -38,6 +39,12 @@ export type StepData = Pick<DialogStep, "id" | "description">;
 const ToastStepper = () => {
   const { dialogSteps, setOpen, open } = useStepProcessDialogContext();
   const t = useTranslations("stepProcess");
+  // Track which step IDs have already produced a toast for each phase, so the
+  // effect can re-evaluate (because dialogSteps gets a new array reference on
+  // every parent render) without re-firing toast.success/error/loading.
+  const lastActiveIdRef = useRef<string | null>(null);
+  const lastErrorIdRef = useRef<string | null>(null);
+  const lastCompletedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (open) return;
@@ -48,32 +55,43 @@ const ToastStepper = () => {
     const isComplete = lastStep?.state === "completed";
 
     if (activeStep) {
-      // Show toast while action is in progress
-      toast.loading(activeStep.description, {
-        duration: Infinity, // Keep toast visible until completes
-        action: {
-          label: t("viewProgress"),
-          onClick: () => setOpen(true),
-        },
-      });
+      if (lastActiveIdRef.current !== activeStep.id) {
+        lastActiveIdRef.current = activeStep.id;
+        toast.loading(activeStep.description, {
+          duration: Infinity, // Keep toast visible until completes
+          action: {
+            label: t("viewProgress"),
+            onClick: () => setOpen(true),
+          },
+        });
+      }
     } else if (errorStep) {
-      // Show error toast
-      toast.error(errorStep.description, {
-        duration: 5000,
-        action: {
-          label: t("viewDetails"),
-          onClick: () => setOpen(true),
-        },
-      });
-    } else if (isComplete) {
-      // Show success toast that auto-dismisses after 5 seconds
-      toast.success(lastStep.description, {
-        duration: 5000,
-        action: {
-          label: t("viewDetails"),
-          onClick: () => setOpen(true),
-        },
-      });
+      if (lastErrorIdRef.current !== errorStep.id) {
+        lastErrorIdRef.current = errorStep.id;
+        toast.error(errorStep.description, {
+          duration: 5000,
+          action: {
+            label: t("viewDetails"),
+            onClick: () => setOpen(true),
+          },
+        });
+      }
+    } else if (isComplete && lastStep) {
+      if (lastCompletedIdRef.current !== lastStep.id) {
+        lastCompletedIdRef.current = lastStep.id;
+        toast.success(lastStep.description, {
+          duration: 5000,
+          action: {
+            label: t("viewDetails"),
+            onClick: () => setOpen(true),
+          },
+        });
+      }
+    } else {
+      // Reset when no step is active/errored/completed (e.g. dialog reused for a new flow)
+      lastActiveIdRef.current = null;
+      lastErrorIdRef.current = null;
+      lastCompletedIdRef.current = null;
     }
   }, [dialogSteps, setOpen, open, t]);
 

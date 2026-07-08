@@ -56,48 +56,6 @@ export interface IPFSStorageResult {
   timestamp: string;
 }
 
-// =============================================================================
-// FREQUENCY CONSTANTS AND TYPES
-// =============================================================================
-
-/**
- * Frequency enum for metric measurement intervals
- * These values are stored in the database and used in API responses
- */
-export enum Frequency {
-  DAILY = "daily",
-  WEEKLY = "weekly",
-  MONTHLY = "monthly",
-  QUARTERLY = "quarterly",
-  ANNUALLY = "annually",
-  OTHER = "other",
-}
-
-/**
- * Human-readable labels for frequency values (used in UI)
- */
-export const FREQUENCY_LABELS: Record<Frequency, string> = {
-  [Frequency.DAILY]: "Daily",
-  [Frequency.WEEKLY]: "Weekly",
-  [Frequency.MONTHLY]: "Monthly",
-  [Frequency.QUARTERLY]: "Quarterly",
-  [Frequency.ANNUALLY]: "Annually",
-  [Frequency.OTHER]: "Other",
-} as const;
-
-/**
- * Frequency options array for Select components
- */
-export const FREQUENCY_OPTIONS = Object.values(Frequency).map((value) => ({
-  value,
-  label: FREQUENCY_LABELS[value],
-}));
-
-/**
- * Type for frequency option objects
- */
-export type FrequencyOption = (typeof FREQUENCY_OPTIONS)[number];
-
 // ZOD SCHEMAS FOR VALIDATION
 // =============================================================================
 
@@ -106,15 +64,16 @@ export type FrequencyOption = (typeof FREQUENCY_OPTIONS)[number];
 // =============================================================================
 
 /**
- * Base metric schema with ID (for storage)
+ * Base metric schema with ID (for storage).
+ *
+ * Metrics on the logic-model canvas are intentionally lightweight: only a name
+ * and an optional short description. Measurement method, frequency, target
+ * value, and cautions are elaborated later by the recipe agent.
  */
 export const MetricSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
-  measurementMethod: z.string().optional(),
-  targetValue: z.string().optional(),
-  frequency: z.enum(Object.values(Frequency) as [Frequency, ...Frequency[]]).optional(),
 });
 
 /**
@@ -132,15 +91,17 @@ export type MetricFormInput = z.infer<typeof MetricFormInputSchema>;
 // TOOL INPUT SCHEMAS (for Mastra agents)
 // =============================================================================
 
-// Metric schema for tool input validation (forgiving for LLM-generated content)
+// Metric schema for tool input validation (forgiving for LLM-generated content).
+// Concrete measurement details (method, frequency, target) are intentionally
+// excluded — those are elaborated later by the recipe agent.
 export const ToolMetricInputSchema = z.object({
-  name: z.string(),
-  description: z.string().optional(),
-  measurementMethod: z.string().optional().default("To be defined"),
-  frequency: z
-    .enum(Object.values(Frequency) as [Frequency, ...Frequency[]])
+  name: z.string().describe("A concise metric name (3-8 words)"),
+  description: z
+    .string()
     .optional()
-    .default(Frequency.QUARTERLY),
+    .describe(
+      "A one-sentence description of what this metric captures and why it matters for the parent card. This is later used as a hint by the recipe agent when generating concrete measurement steps.",
+    ),
 });
 
 // Reusable schema factory for logic model stages (relaxed for LLM output)
@@ -380,3 +341,64 @@ export const CompactResponseSchema = z.object({
 });
 
 export type CompactResponse = z.infer<typeof CompactResponseSchema>;
+
+// =============================================================================
+// RECIPE SCHEMAS (Actionable measurement guidance for Outputs / Outcomes)
+// =============================================================================
+
+export const RECIPE_TARGET_CARD_TYPES = [
+  "outputs",
+  "outcomes-short",
+  "outcomes-intermediate",
+] as const;
+
+export type RecipeTargetCardType = (typeof RECIPE_TARGET_CARD_TYPES)[number];
+
+export const RecipeLocaleSchema = z.enum(["en", "ja"]);
+export type RecipeLocale = z.infer<typeof RecipeLocaleSchema>;
+
+export const RecipeMetricGuidanceSchema = z.object({
+  metricId: z.string(),
+  metricName: z.string(),
+  parentCardId: z.string(),
+  parentCardTitle: z.string(),
+  parentCardType: z.enum(RECIPE_TARGET_CARD_TYPES),
+  measurementSteps: z
+    .array(z.string())
+    .describe("Ordered, concrete steps a practitioner can follow"),
+  dataCollectionMethod: z.string(),
+  frequency: z.string(),
+  targetValue: z.string().optional(),
+  cautions: z.array(z.string()),
+});
+
+export type RecipeMetricGuidance = z.infer<typeof RecipeMetricGuidanceSchema>;
+
+export const RecipeSchema = z.object({
+  logicModelTitle: z.string(),
+  generatedAt: z.string(),
+  locale: RecipeLocaleSchema,
+  items: z.array(RecipeMetricGuidanceSchema),
+});
+
+export type Recipe = z.infer<typeof RecipeSchema>;
+
+export const RecipeMetricContextSchema = z.object({
+  metricId: z.string(),
+  metricName: z.string(),
+  metricDescription: z.string().optional(),
+  parentCardId: z.string(),
+  parentCardTitle: z.string(),
+  parentCardDescription: z.string().optional(),
+  parentCardType: z.enum(RECIPE_TARGET_CARD_TYPES),
+});
+
+export type RecipeMetricContext = z.infer<typeof RecipeMetricContextSchema>;
+
+export const RecipeWorkflowInputSchema = z.object({
+  logicModelTitle: z.string(),
+  metrics: z.array(RecipeMetricContextSchema).min(1).max(30),
+  locale: RecipeLocaleSchema.default("en"),
+});
+
+export type RecipeWorkflowInput = z.infer<typeof RecipeWorkflowInputSchema>;
