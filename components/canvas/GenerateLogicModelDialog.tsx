@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown, FileText, Info, Upload, X } from "lucide-react";
+import { ChevronDown, FileText, Info, Sparkles, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -399,7 +399,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="cursor-pointer">
-          <span>🤖</span>
+          <Sparkles className="size-4" />
           <span className="hidden sm:inline">{tCanvas("generateFromIntent")}</span>
         </Button>
       </DialogTrigger>

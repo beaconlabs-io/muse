@@ -14,7 +14,7 @@ export function TooltipStrength({ className }: { className?: string }) {
       <TooltipTrigger>
         <Link href={"/strength-of-evidence"}>
           <CircleHelp
-            className={`${className} h-4 w-4 cursor-pointer items-center text-gray-400`}
+            className={`${className} text-muted-foreground h-4 w-4 cursor-pointer items-center`}
           />
         </Link>
       </TooltipTrigger>

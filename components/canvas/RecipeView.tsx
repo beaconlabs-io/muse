@@ -59,7 +59,7 @@ export function RecipeView({ recipe, stale = false }: RecipeViewProps) {
             {t("metricsCount", { count: recipe.items.length })}
           </span>
           {stale && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+            <span className="border-caution/40 bg-caution/10 text-foreground/80 inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium">
               <AlertTriangle className="h-2.5 w-2.5" />
               {t("staleBadge")}
             </span>
@@ -68,7 +68,7 @@ export function RecipeView({ recipe, stale = false }: RecipeViewProps) {
       </header>
 
       {stale && (
-        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="border-caution/40 bg-caution/10 text-foreground/80 flex items-start gap-2 rounded-md border p-3">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="space-y-1 text-xs">
             <p className="font-medium">{t("staleTitle")}</p>
@@ -138,12 +138,12 @@ function RecipeItemCard({ item }: { item: RecipeMetricGuidance }) {
         </div>
 
         {item.cautions.length > 0 && (
-          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/40 dark:bg-amber-950/30">
-            <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-amber-900 uppercase dark:text-amber-200">
+          <div className="border-caution/40 bg-caution/10 rounded-md border p-3">
+            <p className="text-foreground/80 mb-1 flex items-center gap-1.5 text-xs font-medium uppercase">
               <AlertTriangle className="h-3.5 w-3.5" />
               {t("cautions")}
             </p>
-            <ul className="ml-5 list-disc space-y-0.5 text-amber-900 dark:text-amber-200">
+            <ul className="text-foreground/80 ml-5 list-disc space-y-0.5">
               {item.cautions.map((c, idx) => (
                 <li key={idx}>{c}</li>
               ))}

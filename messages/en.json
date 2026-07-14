@@ -8,12 +8,25 @@
     "hypercertsDescription": "Explore Hypercerts created via MUSE.",
     "menu": "Menu"
   },
+  "footer": {
+    "explore": "Explore",
+    "about": "About",
+    "evidence": "Evidence",
+    "canvas": "Canvas",
+    "effects": "Effects",
+    "strengthOfEvidence": "Strength of Evidence",
+    "tagline": "An evidence layer for funding public goods.",
+    "copyright": "Modular Stack of Evidence"
+  },
   "hero": {
+    "eyebrow": "Modular Stack of Evidence",
     "title": "MUSE",
     "description": "Infrastructure for evolving, managing, and utilizing scientific evidence to bootstrap impact evaluation, enable fair and effective decision-making, and ensure accountability.",
     "learnMore": "Learn more",
     "tabEvidence": "Evidence",
-    "tabClaims": "Claims"
+    "tabClaims": "Claims",
+    "browseEvidence": "Browse evidence",
+    "latestEvidence": "Latest evidence"
   },
   "common": {
     "cancel": "Cancel",
@@ -180,7 +193,9 @@
     "filtering": "Filtering...",
     "results": "{filtered} of {total} results",
     "filterActive": "({count, plural, one {# filter active} other {# filters active}})",
-    "clearAllFilters": "Clear all filters"
+    "clearAllFilters": "Clear all filters",
+    "noResults": "No evidence found",
+    "noResultsDescription": "No evidence matches your search or filters. Try different keywords or clear the filters."
   },
   "filters": {
     "effects": "Effects",
@@ -190,6 +205,7 @@
     "clearAll": "Clear all"
   },
   "effects": {
+    "eyebrow": "Effect categories",
     "pageTitle": "About Effects",
     "pageDescription": "The results of each analysis are presented in five intuitive categories for easy understanding.",
     "unclear": "Unclear",
@@ -204,6 +220,7 @@
     "sideDescription": "Indicates that unintended effects other than the intervention's intended outcomes were observed. In many cases, these are statistically significant and represent practically undesirable effects of considerable magnitude."
   },
   "strengthOfEvidence": {
+    "eyebrow": "Scientific Maryland Scale",
     "pageTitle": "About the Strength of Evidence",
     "introText": "We evaluate the strength of evidence for analytical results presented in studies. We primarily use the Maryland Scientific Method Scale (SMS) for evidence strength evaluation criteria. Below, we provide explanations based on the What Works Center for Local Growth (<link>https://whatworksgrowth.org/resources/the-scientific-maryland-scale/</link>).",
     "additionalText": "Additionally, analyses that do not use rigorous causal inference methods based on experimental or quasi-experimental approaches are classified as \"Level 0.\"",

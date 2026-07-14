@@ -1,5 +1,7 @@
 import React from "react";
 import { getTranslations } from "next-intl/server";
+import { SectionLabel } from "@/components/section-label";
+import { Badge } from "@/components/ui/badge";
 
 interface EvidenceTagsProps {
   tags: string[] | undefined;
@@ -16,15 +18,15 @@ export async function EvidenceTags({ tags }: EvidenceTagsProps) {
   const t = await getTranslations("evidence");
 
   return (
-    <div className="mb-6">
-      <h3 className="mb-2 text-lg font-semibold">{t("tags")}</h3>
-      <div className="flex flex-wrap gap-2">
+    <section>
+      <SectionLabel>{t("tags")}</SectionLabel>
+      <div className="flex flex-wrap gap-1.5">
         {validTags.map((tag, index) => (
-          <span key={index} className="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800">
+          <Badge key={index} variant="secondary" className="rounded-full px-3 py-0.5 font-normal">
             {tag}
-          </span>
+          </Badge>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

@@ -71,7 +71,7 @@ export function EvidenceEdge(props: EdgeProps) {
             {hasExternalPapers && !hasEvidence && (
               <button
                 onClick={() => setDialogOpen(true)}
-                className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-colors hover:bg-blue-700"
+                className="bg-brand text-brand-foreground hover:bg-brand/90 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full shadow-lg transition-colors"
                 title={t("viewAcademicPapers")}
               >
                 <BookOpen className="h-3 w-3" />

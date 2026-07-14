@@ -1,4 +1,7 @@
 import { Suspense } from "react";
+import { SearchX } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+import { EmptyState } from "@/components/empty-state";
 import { EvidenceGrid } from "./evidence-grid";
 import { SearchFilters } from "./search-filters";
 import { getAllEvidenceMeta } from "@/lib/evidence";
@@ -14,6 +17,7 @@ interface SearchPageProps {
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
+  const t = await getTranslations("search");
   const allEvidence = getAllEvidenceMeta();
 
   const searchQuery = params.q ?? "";
@@ -47,9 +51,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <EvidenceGrid evidence={filteredEvidence} />
 
         {filteredEvidence.length === 0 && (
-          <div className="py-12 text-center">
-            <p className="text-muted-foreground">No evidence matches your filters.</p>
-          </div>
+          <EmptyState
+            icon={<SearchX />}
+            title={t("noResults")}
+            description={t("noResultsDescription")}
+          />
         )}
       </div>
     </main>

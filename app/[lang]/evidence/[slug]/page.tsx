@@ -10,7 +10,6 @@ import {
   EvidenceTags,
   AttestationHistory,
 } from "@/components/evidence";
-import { Separator } from "@/components/ui/separator";
 import { getEvidenceBySlug } from "@/lib/evidence";
 
 export default async function EvidencePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -20,7 +19,7 @@ export default async function EvidencePage({ params }: { params: Promise<{ slug:
   if (!evidence) notFound();
 
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-8">
+    <div className="container mx-auto max-w-4xl px-6 py-16">
       <EvidenceHeader
         title={evidence.meta.title}
         date={evidence.meta.date}
@@ -29,11 +28,9 @@ export default async function EvidencePage({ params }: { params: Promise<{ slug:
         strength={evidence.meta.strength}
       />
 
-      <div className="prose max-w-none">
-        <article>{evidence.content}</article>
+      <article className="prose prose-neutral max-w-none py-10">{evidence.content}</article>
 
-        <Separator className="my-2" />
-
+      <div className="space-y-12 border-t pt-10">
         <EvidenceResults results={evidence.meta.results || []} />
 
         <EvidenceMethodologies

@@ -48,7 +48,7 @@ export function EvidenceDialog({
               const metadata = evidenceMetadata?.find((m) => m.evidenceId === evidenceId);
 
               return (
-                <div key={evidenceId} className="rounded-lg border bg-white p-4 shadow-sm">
+                <div key={evidenceId} className="bg-card rounded-lg border p-4 shadow-sm">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Link
@@ -71,18 +71,16 @@ export function EvidenceDialog({
 
                     {metadata && (
                       <>
-                        {metadata.title && (
-                          <p className="text-sm font-medium text-gray-700">{metadata.title}</p>
-                        )}
+                        {metadata.title && <p className="text-sm font-medium">{metadata.title}</p>}
 
                         {metadata.reasoning && (
-                          <div className="text-sm text-gray-600">
+                          <div className="text-muted-foreground text-sm">
                             <span className="font-medium">{t("reasoning")}</span>{" "}
                             {metadata.reasoning}
                           </div>
                         )}
 
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="text-muted-foreground flex items-center gap-4 text-xs">
                           {metadata.strength && (
                             <span>
                               <strong>{t("strength")}</strong>{" "}
@@ -90,18 +88,18 @@ export function EvidenceDialog({
                             </span>
                           )}
                           {metadata.hasWarning && (
-                            <span className="font-medium text-amber-600">{t("hasWarning")}</span>
+                            <span className="text-caution font-medium">{t("hasWarning")}</span>
                           )}
                         </div>
 
                         {metadata.interventionText && (
-                          <div className="mt-2 text-xs text-gray-600">
+                          <div className="text-muted-foreground mt-2 text-xs">
                             <strong>{t("intervention")}</strong> {metadata.interventionText}
                           </div>
                         )}
 
                         {metadata.outcomeText && (
-                          <div className="text-xs text-gray-600">
+                          <div className="text-muted-foreground text-xs">
                             <strong>{t("outcome")}</strong> {metadata.outcomeText}
                           </div>
                         )}
@@ -116,12 +114,14 @@ export function EvidenceDialog({
           {hasExternalPapers && (
             <>
               <div className={hasEvidence ? "border-t pt-4" : ""}>
-                <h3 className="mb-3 text-sm font-semibold text-gray-500">{t("academicPapers")}</h3>
+                <h3 className="text-muted-foreground mb-3 text-sm font-semibold">
+                  {t("academicPapers")}
+                </h3>
               </div>
               {externalPapers.map((paper) => (
                 <div
                   key={paper.id}
-                  className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 shadow-sm"
+                  className="border-brand/20 bg-brand/5 rounded-lg border p-4 shadow-sm"
                 >
                   <div className="space-y-2">
                     {/* Title (full width, no source badge) */}
@@ -131,7 +131,7 @@ export function EvidenceDialog({
                           href={
                             paper.doi ? `https://doi.org/${paper.doi}` : (paper.url ?? undefined)
                           }
-                          className="inline-flex items-center gap-1 font-semibold text-blue-900 underline"
+                          className="text-brand inline-flex items-center gap-1 font-semibold underline"
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -139,13 +139,13 @@ export function EvidenceDialog({
                           <ExternalLink className="h-3 w-3 shrink-0" />
                         </a>
                       ) : (
-                        <span className="font-semibold text-blue-900">{paper.title}</span>
+                        <span className="text-brand font-semibold">{paper.title}</span>
                       )}
                     </div>
 
                     {/* Authors, year, venue */}
                     {(paper.authors?.length || paper.year) && (
-                      <p className="text-xs text-gray-600">
+                      <p className="text-muted-foreground text-xs">
                         {paper.authors && paper.authors.length > 0 && (
                           <>
                             {paper.authors.slice(0, 3).join(", ")}
@@ -154,7 +154,7 @@ export function EvidenceDialog({
                         )}
                         {paper.year && ` (${paper.year})`}
                         {paper.publicationVenue && (
-                          <span className="text-gray-400 italic">
+                          <span className="text-muted-foreground/70 italic">
                             {" "}
                             &mdash; {paper.publicationVenue}
                           </span>
@@ -165,11 +165,11 @@ export function EvidenceDialog({
                     {/* Metadata badges */}
                     <div className="flex flex-wrap items-center gap-1.5">
                       {paper.citationCount != null && paper.citationCount > 0 && (
-                        <span className="inline-flex items-center gap-0.5 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
+                        <span className="bg-muted text-muted-foreground inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs">
                           {t("cited", { count: paper.citationCount.toLocaleString() })}
                           {paper.influentialCitationCount != null &&
                             paper.influentialCitationCount > 0 && (
-                              <span className="text-gray-400">
+                              <span className="text-muted-foreground/70">
                                 {" "}
                                 ({t("influential", { count: paper.influentialCitationCount })})
                               </span>
@@ -180,17 +180,21 @@ export function EvidenceDialog({
 
                     {/* TLDR (preferred) or Abstract */}
                     {paper.tldr ? (
-                      <p className="line-clamp-3 text-sm text-gray-700">
-                        <span className="font-medium text-gray-500">{t("tldr")}</span>
+                      <p className="line-clamp-3 text-sm">
+                        <span className="text-muted-foreground font-medium">{t("tldr")}</span>
                         {paper.tldr}
                       </p>
                     ) : (
                       paper.abstract && (
-                        <p className="line-clamp-3 text-sm text-gray-600">{paper.abstract}</p>
+                        <p className="text-muted-foreground line-clamp-3 text-sm">
+                          {paper.abstract}
+                        </p>
                       )
                     )}
 
-                    {paper.doi && <p className="text-xs text-gray-400">DOI: {paper.doi}</p>}
+                    {paper.doi && (
+                      <p className="text-muted-foreground/70 text-xs">DOI: {paper.doi}</p>
+                    )}
                   </div>
                 </div>
               ))}

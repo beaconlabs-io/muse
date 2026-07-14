@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { EffectFilter } from "@/components/effect-filter";
 import { SearchFilter } from "@/components/search-filter";
 import { StrengthFilter } from "@/components/strength-filter";
+import { Button } from "@/components/ui/button";
 import { useRouter, usePathname } from "@/i18n/routing";
 
 interface SearchFiltersProps {
@@ -87,7 +88,7 @@ export function SearchFilters({
           </div>
         </div>
 
-        <div className="text-muted-foreground flex items-center justify-between text-sm">
+        <div className="text-muted-foreground flex items-center justify-between font-mono text-xs">
           <span>
             {isPending
               ? t("filtering")
@@ -95,9 +96,9 @@ export function SearchFilters({
             {activeFilterCount > 0 && ` ${t("filterActive", { count: activeFilterCount })}`}
           </span>
           {activeFilterCount > 0 && (
-            <button className="text-primary hover:underline" onClick={handleClearAll}>
+            <Button variant="link" size="sm" className="h-auto p-0" onClick={handleClearAll}>
               {t("clearAllFilters")}
-            </button>
+            </Button>
           )}
         </div>
       </div>

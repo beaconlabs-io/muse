@@ -91,7 +91,7 @@ function ReactFlowCanvasInner() {
     () => ({
       type: "default",
       animated: false,
-      style: { stroke: "#6b7280", strokeWidth: 2 },
+      style: { stroke: "var(--color-muted-foreground)", strokeWidth: 2 },
       interactionWidth: 75,
     }),
     [],
@@ -124,12 +124,14 @@ function ReactFlowCanvasInner() {
             edgeTypes={edgeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             fitView
-            className="bg-gray-50"
+            className="bg-muted/40"
           >
-            <Background color="#e5e7eb" gap={20} />
+            <Background color="var(--color-border)" gap={20} />
             <Controls />
             <MiniMap
-              nodeColor={(node): string => (node.data.color as string) || "#6b7280"}
+              nodeColor={(node): string =>
+                (node.data.color as string) || "var(--color-muted-foreground)"
+              }
               maskColor="rgb(240, 240, 240, 0.6)"
             />
           </ReactFlow>

@@ -259,7 +259,7 @@ export function createCanvasOperations(params: CreateOperationsParams) {
         target: connection.target,
         type: "default",
         animated: false,
-        style: { stroke: "#6b7280", strokeWidth: 2 },
+        style: { stroke: "var(--color-muted-foreground)", strokeWidth: 2 },
       };
       setEdges((eds) => addEdge(newEdge, eds));
     }

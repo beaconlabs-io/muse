@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { ErrorState } from "@/components/error-state";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/routing";
 
@@ -24,23 +25,18 @@ export default function Error({ error, reset }: ErrorProps) {
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="mb-4 text-2xl font-bold text-gray-900">{t("somethingWentWrong")}</h1>
-        <p className="mb-4 text-gray-600">{t("errorRenderingCanvas")}</p>
-        {error.digest && (
-          <p className="mb-4 font-mono text-xs text-gray-400">
-            {t("errorId", { digest: error.digest })}
-          </p>
-        )}
-        <div className="flex justify-center gap-3">
-          <Button variant="outline" onClick={reset}>
-            {tCommon("tryAgain")}
-          </Button>
-          <Button asChild>
-            <Link href="/canvas">{t("createNewCanvas")}</Link>
-          </Button>
-        </div>
-      </div>
+      <ErrorState
+        title={t("somethingWentWrong")}
+        description={t("errorRenderingCanvas")}
+        detail={error.digest ? t("errorId", { digest: error.digest }) : undefined}
+      >
+        <Button variant="outline" onClick={reset}>
+          {tCommon("tryAgain")}
+        </Button>
+        <Button asChild>
+          <Link href="/canvas">{t("createNewCanvas")}</Link>
+        </Button>
+      </ErrorState>
     </div>
   );
 }

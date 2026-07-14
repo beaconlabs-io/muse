@@ -140,9 +140,7 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
       );
     }
     if (recipe.stale) {
-      return (
-        <AlertTriangle className="ml-1.5 inline-block h-3 w-3 text-amber-600 dark:text-amber-400" />
-      );
+      return <AlertTriangle className="text-caution ml-1.5 inline-block h-3 w-3" />;
     }
     return null;
   })();

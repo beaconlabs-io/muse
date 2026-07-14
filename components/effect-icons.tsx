@@ -6,7 +6,7 @@ export const effectData = [
     title: "Unclear",
     description:
       "Classified as unclear when the sample size is insufficient or analytical methods are inadequate. Interventions judged as unclear require additional testing.",
-    bg: "bg-gray-500",
+    bg: "bg-neutral-effect",
     icon: <HelpCircle size={20} className="text-white" />,
   },
   {
@@ -14,7 +14,7 @@ export const effectData = [
     title: "Positive",
     description:
       "Indicates that the expected effect was found. In many cases, this is statistically significant and shows that a practically meaningful effect of considerable magnitude was observed.",
-    bg: "bg-green-500",
+    bg: "bg-positive",
     icon: <Plus size={20} className="text-white" />,
   },
   {
@@ -22,7 +22,7 @@ export const effectData = [
     title: "No",
     description:
       "Indicates that the expected effect was not observed. In many cases, this shows that the sample size was sufficient but the effect was not statistically significant. When the sample size is extremely large, even if statistically significant, it may represent a practically meaningless effect, which would be classified in this category.",
-    bg: "bg-red-500",
+    bg: "bg-negative",
     icon: <Minus size={20} className="text-white" />,
   },
   {
@@ -30,7 +30,7 @@ export const effectData = [
     title: "Mixed",
     description:
       "Intervention effects show heterogeneity in many cases. For example, effects were found for men but not for women, or effects were found for young people but not for elderly people. Results are classified as mixed when outcomes differ depending on various conditions.",
-    bg: "bg-gray-500",
+    bg: "bg-neutral-effect",
     icon: <Blend size={20} className="text-white" />,
   },
   {
@@ -38,7 +38,7 @@ export const effectData = [
     title: "Side",
     description:
       "Indicates that unintended effects other than the intervention's intended outcomes were observed. In many cases, these are statistically significant and represent practically undesirable effects of considerable magnitude.",
-    bg: "bg-orange-500",
+    bg: "bg-caution",
     icon: <AlertTriangle size={20} className="text-white" />,
   },
 ];
@@ -77,7 +77,7 @@ export function EffectIcons({ effectId, isShowTitle = true }: EffectIconsProps) 
       >
         {effect.icon}
       </div>
-      {isShowTitle && <div className="text-sm text-gray-500">{effect.title}</div>}
+      {isShowTitle && <div className="text-muted-foreground text-sm">{effect.title}</div>}
     </div>
   );
 }

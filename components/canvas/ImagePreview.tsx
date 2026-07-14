@@ -35,7 +35,7 @@ export function ImagePreview({
   return (
     <div className="relative flex min-h-[300px] items-center justify-center">
       {status === "generating" && (
-        <div className="flex flex-col items-center gap-3 text-gray-500">
+        <div className="text-muted-foreground flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin" />
           <span className="text-sm">{defaultLoadingMessage}</span>
         </div>
@@ -43,7 +43,7 @@ export function ImagePreview({
 
       {status === "error" && (
         <div className="flex flex-col items-center gap-3 text-center">
-          <span className="text-sm text-red-500">{error || t("failedToGenerate")}</span>
+          <span className="text-destructive text-sm">{error || t("failedToGenerate")}</span>
           {onRetry && (
             <Button variant="outline" size="sm" onClick={onRetry}>
               {tCommon("tryAgain")}

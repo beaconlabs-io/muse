@@ -345,7 +345,7 @@ const MetricRow = memo(function MetricRow({
 
   if (isExpanded) {
     return (
-      <li className="space-y-3 rounded-md border bg-white p-3">
+      <li className="bg-card space-y-3 rounded-md border p-3">
         <FormField
           control={control}
           name={`metrics.${index}.name`}
@@ -393,7 +393,7 @@ const MetricRow = memo(function MetricRow({
   }
 
   return (
-    <li className="group flex items-start gap-2 rounded-md border bg-white p-2 transition-shadow hover:shadow-sm">
+    <li className="group bg-card flex items-start gap-2 rounded-md border p-2 transition-shadow hover:shadow-sm">
       <button
         type="button"
         className="min-w-0 flex-1 cursor-pointer rounded px-1 py-1 text-left"

@@ -229,17 +229,17 @@ const stepStateIcons: Record<StepState, React.ElementType> = {
 };
 
 const stateSpecificIconClasses: Record<StepState, string> = {
-  idle: "text-slate-600",
-  active: "text-slate-700 animate-spin bg-white rounded-full",
-  completed: "text-slate-400",
-  error: "text-red-500",
+  idle: "text-muted-foreground",
+  active: "text-foreground/70 animate-spin bg-background rounded-full",
+  completed: "text-muted-foreground/60",
+  error: "text-destructive",
 };
 
 const stateSpecificTextClasses: Record<StepState, string> = {
-  idle: "text-slate-600 font-medium",
-  active: "text-slate-700 animate-pulse font-semibold",
-  completed: "text-slate-400 font-medium",
-  error: "text-red-500 font-medium",
+  idle: "text-muted-foreground font-medium",
+  active: "text-foreground animate-pulse font-semibold",
+  completed: "text-muted-foreground/60 font-medium",
+  error: "text-destructive font-medium",
 };
 
 const StepProcessModal = ({
@@ -273,13 +273,13 @@ const StepProcessModal = ({
             {steps.map((step) => (
               <div
                 key={step.id}
-                className="relative flex items-center border-l-2 border-slate-300 pb-6 pl-2 last-of-type:pb-0"
+                className="border-border relative flex items-center border-l-2 pb-6 pl-2 last-of-type:pb-0"
               >
                 <div
                   className={cn(
-                    "absolute top-[2px] -left-[14px] rounded-full bg-slate-100 p-1",
+                    "bg-muted absolute top-[2px] -left-[14px] rounded-full p-1",
                     stateSpecificIconClasses[step.state],
-                    step === lastStep && isLastStepCompleted && "bg-green-100 text-green-600",
+                    step === lastStep && isLastStepCompleted && "bg-positive/15 text-positive",
                   )}
                 >
                   {createElement(stepStateIcons[step.state], {
@@ -291,7 +291,7 @@ const StepProcessModal = ({
                     className={cn(
                       "text-lg",
                       stateSpecificTextClasses[step.state],
-                      step === lastStep && isLastStepCompleted && "text-green-600",
+                      step === lastStep && isLastStepCompleted && "text-positive",
                     )}
                   >
                     {step.description}
@@ -304,10 +304,10 @@ const StepProcessModal = ({
                       const rawDetail = parts[1];
                       return (
                         <div className="mt-1 space-y-1">
-                          <p className="text-sm font-medium text-red-600">{userMessage}</p>
+                          <p className="text-destructive text-sm font-medium">{userMessage}</p>
                           {rawDetail && (
-                            <ScrollArea className="h-16 w-96 rounded bg-red-50 p-2">
-                              <p className="text-xs text-red-400">{rawDetail}</p>
+                            <ScrollArea className="bg-destructive/5 h-16 w-96 rounded p-2">
+                              <p className="text-destructive/70 text-xs">{rawDetail}</p>
                               <ScrollBar orientation="horizontal" />
                             </ScrollArea>
                           )}

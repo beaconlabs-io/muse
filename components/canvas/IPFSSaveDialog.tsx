@@ -112,24 +112,24 @@ export function IPFSSaveDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-700">
+        <div className="bg-positive/10 text-positive rounded-md px-4 py-3 text-sm">
           <div className="flex items-center gap-2">
             <span className="font-medium">{t("ipfsHash")}</span>
             {isUploading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin text-green-600" />
-                <span className="text-green-600">{t("uploading")}</span>
+                <Loader2 className="text-positive h-4 w-4 animate-spin" />
+                <span className="text-positive">{t("uploading")}</span>
               </>
             ) : (
               <>
-                <code className="rounded bg-green-100 px-2 py-0.5 font-mono text-xs">
+                <code className="bg-positive/15 rounded px-2 py-0.5 font-mono text-xs">
                   {shortHash}
                 </code>
                 <a
                   href={`/canvas/${ipfsHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-1 text-green-600 hover:text-green-800"
+                  className="text-positive hover:text-positive/80 ml-1"
                   title={t("viewCanvas")}
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -156,11 +156,7 @@ export function IPFSSaveDialog({
             <Copy className="mr-2 h-4 w-4" />
             {t("copyUrl")}
           </Button>
-          <Button
-            onClick={handleShareX}
-            disabled={!ipfsHash || isUploading}
-            className="flex-1 bg-black text-white hover:bg-gray-800"
-          >
+          <Button onClick={handleShareX} disabled={!ipfsHash || isUploading} className="flex-1">
             <Image src="/x-logo-white.png" alt="X" width={16} height={16} className="mr-2" />
             {t("shareOnX")}
           </Button>

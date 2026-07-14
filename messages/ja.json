@@ -8,12 +8,25 @@
     "hypercertsDescription": "MUSEで作成されたインパクト証明書を閲覧します。",
     "menu": "メニュー"
   },
+  "footer": {
+    "explore": "コンテンツ",
+    "about": "運営",
+    "evidence": "エビデンス",
+    "canvas": "キャンバス",
+    "effects": "効果カテゴリ",
+    "strengthOfEvidence": "エビデンスの強さ",
+    "tagline": "公共財の資金調達を支えるエビデンスレイヤー。",
+    "copyright": "Modular Stack of Evidence"
+  },
   "hero": {
+    "eyebrow": "Modular Stack of Evidence",
     "title": "MUSE",
     "description": "インパクト評価の基盤構築・公正な意思決定の実現、および説明責任の保証のために、科学的エビデンスを進化・管理・活用するためのインフラ",
     "learnMore": "詳しく見る",
     "tabEvidence": "エビデンス",
-    "tabClaims": "クレーム"
+    "tabClaims": "クレーム",
+    "browseEvidence": "エビデンスを探す",
+    "latestEvidence": "最新のエビデンス"
   },
   "common": {
     "cancel": "キャンセル",
@@ -180,7 +193,9 @@
     "filtering": "フィルタリング中...",
     "results": "{total}件中{filtered}件を表示",
     "filterActive": "（{count}件のフィルターが有効）",
-    "clearAllFilters": "すべてのフィルターをクリア"
+    "clearAllFilters": "すべてのフィルターをクリア",
+    "noResults": "エビデンスが見つかりません",
+    "noResultsDescription": "検索条件やフィルターに一致するエビデンスがありません。キーワードを変えるか、フィルターをクリアしてください。"
   },
   "filters": {
     "effects": "効果",
@@ -190,6 +205,7 @@
     "clearAll": "すべてクリア"
   },
   "effects": {
+    "eyebrow": "EFFECT CATEGORIES",
     "pageTitle": "効果について",
     "pageDescription": "各分析の結果は、わかりやすい5つのカテゴリに分類して表示されます。",
     "unclear": "不明",
@@ -204,6 +220,7 @@
     "sideDescription": "介入の意図した成果以外の意図しない効果が観察されたことを示します。多くの場合、統計的に有意であり、実質的に望ましくない十分な大きさの効果を表します。"
   },
   "strengthOfEvidence": {
+    "eyebrow": "SCIENTIFIC MARYLAND SCALE",
     "pageTitle": "エビデンスの強さについて",
     "introText": "研究で示された分析結果に対するエビデンスの強さを評価します。エビデンスの強さの評価基準として、主にメリーランド科学的方法スケール（SMS）を使用しています。以下は、What Works Centre for Local Growth（<link>https://whatworksgrowth.org/resources/the-scientific-maryland-scale/</link>）に基づく説明です。",
     "additionalText": "また、実験的または準実験的アプローチに基づく厳密な因果推論手法を使用しない分析は、「レベル0」に分類されます。",

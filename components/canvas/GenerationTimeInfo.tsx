@@ -6,7 +6,7 @@ export function GenerationTimeInfo() {
   const t = useTranslations("generate");
 
   return (
-    <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+    <div className="border-brand/20 bg-brand/5 text-foreground/80 rounded-md border p-3 text-sm">
       <p className="font-medium">{t("estimatedTime")}</p>
       <p className="mt-1 text-xs">{t("estimatedTimeDescription")}</p>
     </div>

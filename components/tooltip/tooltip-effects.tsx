@@ -13,7 +13,7 @@ export function TooltipEffects({ className }: { className?: string }) {
     <Tooltip>
       <TooltipTrigger>
         <Link href={"/effects"}>
-          <CircleHelp className={`${className} h-4 w-4 cursor-pointer text-gray-400`} />
+          <CircleHelp className={`${className} text-muted-foreground h-4 w-4 cursor-pointer`} />
         </Link>
       </TooltipTrigger>
       <TooltipContent>{t("viewDefinitionEffects")}</TooltipContent>

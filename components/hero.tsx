@@ -1,74 +1,75 @@
-"use client";
+import { ArrowRight } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+import { StrengthIndicator } from "@/components/strength-indicator";
+import { Button } from "@/components/ui/button";
+import type { Evidence } from "@beaconlabs-io/evidence";
+import { Link } from "@/i18n/routing";
 
-import { useTranslations } from "next-intl";
+interface HeroProps {
+  latestEvidence: Evidence[];
+}
 
-const text = `{
-  "id": "0",
-  "title": "MUSE",
-  "description": "MUSE is a evidence layer for funding public goods.",
-  "author": "Beacon Labs",
-  "timestamp": "2025-05-01T10:00:00Z"
-}`;
-
-export function Hero() {
-  const t = useTranslations("hero");
+export async function Hero({ latestEvidence }: HeroProps) {
+  const t = await getTranslations("hero");
 
   return (
-    <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20">
-      <div className="container mx-auto px-4 pt-10 pb-24 sm:pb-32 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:py-40">
-        <div className="px-6 lg:px-0 lg:pt-4">
-          <div className="mx-auto max-w-2xl">
-            <div className="max-w-lg">
-              <h1 className="mt-10 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                {t("title")}
-              </h1>
-              {/* TODO: to be modified */}
-              <p className="mt-6 text-lg leading-8 text-gray-600">{t("description")}</p>
-              <div className="mt-10 flex items-center gap-x-6">
-                {/* TODO: replace to whitepaper */}
-                <a
-                  href="https://beaconlabs.io/reports/evidence-layer-for-digital-public-goods"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm leading-6 font-semibold text-gray-900"
-                >
-                  {t("learnMore")} <span aria-hidden="true">&rarr;</span>
-                </a>
-              </div>
-            </div>
+    <section className="border-b">
+      <div className="container mx-auto grid max-w-6xl gap-16 px-6 py-24 lg:grid-cols-[1fr_minmax(0,22rem)] lg:gap-24 lg:py-32">
+        <div className="max-w-xl">
+          <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
+            {t("eyebrow")}
+          </p>
+          <h1 className="font-display mt-6 text-6xl tracking-tight sm:text-7xl">{t("title")}</h1>
+          <p className="text-muted-foreground mt-6 text-lg leading-relaxed">{t("description")}</p>
+          <div className="mt-10 flex flex-wrap items-center gap-4">
+            <Button asChild size="lg">
+              <Link href="/search">
+                {t("browseEvidence")}
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="lg">
+              <a
+                href="https://beaconlabs.io/reports/evidence-layer-for-digital-public-goods"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t("learnMore")}
+              </a>
+            </Button>
           </div>
         </div>
-        <div className="mt-20 sm:mt-24 md:mx-auto md:max-w-2xl lg:mx-0 lg:mt-0 lg:w-screen">
-          <div className="absolute inset-y-0 right-1/2 -z-10 -mr-10 w-[200%] skew-x-[-30deg] bg-white shadow-xl ring-1 shadow-indigo-600/10 ring-indigo-50 md:-mr-20 lg:-mr-36" />
-          <div className="shadow-lg md:rounded-3xl">
-            <div className="bg-indigo-500 [clip-path:inset(0)] md:[clip-path:inset(0_round_theme(borderRadius.3xl))]">
-              <div className="absolute -inset-y-px left-1/2 -z-10 ml-10 w-[200%] skew-x-[-30deg] bg-indigo-100 opacity-20 ring-1 ring-white ring-inset md:ml-20 lg:ml-36" />
-              <div className="relative px-6 pt-8 sm:pt-16 md:pr-0 md:pl-16">
-                <div className="mx-auto max-w-2xl md:mx-0 md:max-w-none">
-                  <div className="w-screen overflow-hidden rounded-tl-xl bg-gray-900">
-                    <div className="flex bg-gray-800/40 ring-1 ring-white/5">
-                      <div className="-mb-px flex text-sm leading-6 font-medium text-gray-400">
-                        <div className="border-r border-b border-r-white/10 border-b-white/20 bg-white/5 px-4 py-2 text-white">
-                          {t("tabEvidence")}
-                        </div>
-                        <div className="border-r border-gray-600/10 px-4 py-2">
-                          {t("tabClaims")}
-                        </div>
-                      </div>
+
+        {latestEvidence.length > 0 && (
+          <aside className="lg:pt-2">
+            <p className="text-muted-foreground border-b pb-3 font-mono text-xs tracking-widest uppercase">
+              {t("latestEvidence")}
+            </p>
+            <ul className="divide-y">
+              {latestEvidence.map((evidence) => (
+                <li key={evidence.evidence_id}>
+                  <Link
+                    href={`/evidence/${evidence.evidence_id}`}
+                    className="group block space-y-1.5 py-5"
+                  >
+                    <p className="group-hover:text-brand text-sm leading-snug font-medium transition-colors">
+                      {evidence.title}
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <span className="text-muted-foreground font-mono text-xs">
+                        {evidence.date}
+                      </span>
+                      {evidence.strength && (
+                        <StrengthIndicator level={evidence.strength} size="sm" />
+                      )}
                     </div>
-                    <div className="px-6 pt-6 pb-14">
-                      <pre className="text-[0.8125rem] leading-6 text-gray-300">
-                        {/* TODO: to be fixed */}
-                        <code>{text}</code>
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
       </div>
-    </div>
+    </section>
   );
 }

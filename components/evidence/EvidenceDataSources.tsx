@@ -1,5 +1,6 @@
 import React from "react";
 import { getTranslations } from "next-intl/server";
+import { SectionLabel } from "@/components/section-label";
 
 interface EvidenceDataSourcesProps {
   datasets: string[] | undefined;
@@ -16,13 +17,13 @@ export async function EvidenceDataSources({ datasets }: EvidenceDataSourcesProps
   const t = await getTranslations("evidence");
 
   return (
-    <div className="mb-6">
-      <h3 className="mb-2 text-lg font-semibold">{t("dataSources")}</h3>
-      <ul className="list-inside list-disc text-gray-700">
+    <section>
+      <SectionLabel>{t("dataSources")}</SectionLabel>
+      <ul className="text-foreground/80 marker:text-border list-inside list-disc space-y-1 leading-relaxed">
         {validDatasets.map((source, index) => (
           <li key={index}>{source}</li>
         ))}
       </ul>
-    </div>
+    </section>
   );
 }

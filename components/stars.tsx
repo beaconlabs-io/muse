@@ -8,9 +8,9 @@ export function StarsComponent({ max }: { max: number }) {
     <div className="flex items-center gap-0.5">
       {stars.map((filled, i) =>
         filled ? (
-          <Star key={i} size={18} className="fill-yellow-400 text-yellow-400" />
+          <Star key={i} size={18} className="fill-star text-star" />
         ) : (
-          <Star key={i} size={18} className="text-gray-300" />
+          <Star key={i} size={18} className="text-border" />
         ),
       )}
     </div>

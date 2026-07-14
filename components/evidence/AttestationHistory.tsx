@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Shield, ArrowUpRight } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { SectionLabel } from "@/components/section-label";
 import { Badge } from "@/components/ui/badge";
 import type { EvidenceDeploymentHistory } from "@beaconlabs-io/evidence";
 import { formatDate } from "@/lib/format-date";
@@ -34,8 +35,8 @@ export function AttestationHistory({
   if (allAttestations.length === 0) return null;
 
   return (
-    <div className="mb-6">
-      <h3 className="mb-2 text-lg font-semibold">{t("changeLog")}</h3>
+    <section>
+      <SectionLabel>{t("changeLog")}</SectionLabel>
       <div className="space-y-3">
         {allAttestations.map((attestation, index) => (
           <Link
@@ -43,25 +44,25 @@ export function AttestationHistory({
             href={`https://base-sepolia.easscan.org/attestation/view/${attestation.attestationUID}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:bg-accent/40 flex items-center justify-between rounded-2xl border p-4 transition-colors"
+            className="hover:bg-accent/40 flex items-center justify-between rounded-xl border p-4 transition-colors"
           >
             <div className="flex items-center gap-4 overflow-hidden">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl">
-                <Shield className="h-5 w-5" />
+                <Shield className="text-muted-foreground h-5 w-5" />
               </div>
               <div className="flex min-w-0 items-center gap-2">
-                <div className="truncate text-base font-semibold text-gray-900">
+                <div className="truncate font-mono text-sm font-medium">
                   {formatDate(attestation.timestamp)}
                 </div>
                 {index === 0 && <Badge variant="secondary">{t("latest")}</Badge>}
               </div>
             </div>
             <div className="shrink-0">
-              <ArrowUpRight className="h-5 w-5 text-gray-600" />
+              <ArrowUpRight className="text-muted-foreground h-5 w-5" />
             </div>
           </Link>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

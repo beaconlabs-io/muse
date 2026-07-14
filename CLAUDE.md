@@ -112,6 +112,7 @@ For detailed technical information, see:
 
 - `docs/react-flow-architecture.md` - Canvas implementation, evidence edges, dialog UX
 - `docs/frontend-map.md` - Non-canvas components, server actions, custom hooks
+- `docs/design.md` - Design system: typography voices, color tokens, shared state components, hardcoded-color migration rules
 
 **Agents & Workflow**
 

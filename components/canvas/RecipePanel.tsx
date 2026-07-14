@@ -46,7 +46,7 @@ export function RecipePanel() {
     return (
       <PanelShell>
         <div className="mx-auto max-w-xl p-6">
-          <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-4 text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+          <div className="border-destructive/30 bg-destructive/5 text-destructive flex items-start gap-2 rounded-md border p-4">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <div className="space-y-1">
               <p className="font-medium">{t("errorTitle")}</p>

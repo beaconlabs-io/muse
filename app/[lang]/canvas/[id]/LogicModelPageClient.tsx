@@ -3,6 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ReactFlowCanvas } from "@/components/canvas/ReactFlowCanvas";
+import { ErrorState } from "@/components/error-state";
+import { LoadingState } from "@/components/loading-state";
 import { Button } from "@/components/ui/button";
 import type { CanvasData } from "@/types";
 import { Link } from "@/i18n/routing";
@@ -32,13 +34,11 @@ export function LogicModelPageClient({ id }: LogicModelPageClientProps) {
   if (!isValidCID(id)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-gray-900">{t("invalidCanvasId")}</h1>
-          <p className="mb-4 text-gray-600">{t("invalidCanvasIdDescription")}</p>
+        <ErrorState title={t("invalidCanvasId")} description={t("invalidCanvasIdDescription")}>
           <Button asChild>
             <Link href="/canvas">{t("createNewCanvas")}</Link>
           </Button>
-        </div>
+        </ErrorState>
       </div>
     );
   }
@@ -46,10 +46,7 @@ export function LogicModelPageClient({ id }: LogicModelPageClientProps) {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600"></div>
-          <p className="text-gray-600">{t("loadingCanvas")}</p>
-        </div>
+        <LoadingState label={t("loadingCanvas")} />
       </div>
     );
   }
@@ -58,13 +55,11 @@ export function LogicModelPageClient({ id }: LogicModelPageClientProps) {
     const errorMessage = error instanceof Error ? error.message : "Failed to load canvas";
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-gray-900">{t("canvasNotFound")}</h1>
-          <p className="mb-4 text-gray-600">{errorMessage}</p>
+        <ErrorState title={t("canvasNotFound")} description={errorMessage}>
           <Button asChild>
             <Link href="/canvas">{t("createNewCanvas")}</Link>
           </Button>
-        </div>
+        </ErrorState>
       </div>
     );
   }

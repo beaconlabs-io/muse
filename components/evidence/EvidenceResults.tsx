@@ -1,6 +1,7 @@
 import React from "react";
 import { getTranslations } from "next-intl/server";
 import { EffectIcons } from "@/components/effect-icons";
+import { SectionLabel } from "@/components/section-label";
 import { TooltipEffects } from "@/components/tooltip/tooltip-effects";
 import type { EvidenceResult } from "@beaconlabs-io/evidence";
 
@@ -14,21 +15,23 @@ export async function EvidenceResults({ results }: EvidenceResultsProps) {
   const t = await getTranslations("evidence");
 
   return (
-    <div className="mb-6">
+    <section>
       <div className="flex flex-row items-center gap-1">
-        <h3>{t("results")}</h3>
+        <SectionLabel>{t("results")}</SectionLabel>
         <TooltipEffects />
       </div>
-      <ul className="list-inside list-disc text-gray-700">
+      <ul className="divide-y">
         {results.map((result, idx) => (
-          <li key={idx} className="flex items-center gap-4">
-            {result.outcome && <EffectIcons effectId={result.outcome} />}
-            <div className="font-medium">{result.intervention}</div>
-            <div className="font-medium">→</div>
-            <div className="font-medium">{result.outcome_variable}</div>
+          <li key={idx} className="flex items-center gap-4 py-3">
+            {result.outcome && <EffectIcons effectId={result.outcome} isShowTitle={false} />}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="font-medium">{result.intervention}</span>
+              <span className="text-muted-foreground font-mono text-sm">→</span>
+              <span className="font-medium">{result.outcome_variable}</span>
+            </div>
           </li>
         ))}
       </ul>
-    </div>
+    </section>
   );
 }

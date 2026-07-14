@@ -21,7 +21,7 @@ export function StarRating({ level, size = 12, className = "" }: StarRatingProps
           key={i}
           size={size}
           className={`transition-colors ${
-            i < level ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
+            i < level ? "fill-star text-star" : "text-muted-foreground/30"
           }`}
         />
       ))}

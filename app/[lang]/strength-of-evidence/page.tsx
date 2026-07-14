@@ -1,92 +1,51 @@
 import React from "react";
 import { getTranslations } from "next-intl/server";
+import { PageHeader } from "@/components/page-header";
 import { StarsComponent } from "@/components/stars";
-import { Separator } from "@/components/ui/separator";
+
+const levels = [1, 2, 3, 4, 5, 0] as const;
 
 export default async function SMS() {
   const t = await getTranslations("strengthOfEvidence");
 
   return (
-    <div className="mx-auto max-w-4xl bg-white p-8">
-      <div className="text-center">
-        <h1 className="mb-8 text-2xl font-bold text-gray-800">{t("pageTitle")}</h1>
+    <main className="container mx-auto max-w-3xl px-6 py-16">
+      <PageHeader eyebrow={t("eyebrow")} title={t("pageTitle")} />
 
-        <div className="space-y-6 text-left leading-relaxed text-gray-700">
-          <p>
-            {t.rich("introText", {
-              link: (chunks) => (
-                <a
-                  href="https://whatworksgrowth.org/resources/the-scientific-maryland-scale/"
-                  className="text-blue-600 underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {chunks}
-                </a>
-              ),
-            })}
-          </p>
+      <div className="text-muted-foreground space-y-6 py-10 leading-relaxed">
+        <p>
+          {t.rich("introText", {
+            link: (chunks) => (
+              <a
+                href="https://whatworksgrowth.org/resources/the-scientific-maryland-scale/"
+                className="text-brand underline underline-offset-4"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {chunks}
+              </a>
+            ),
+          })}
+        </p>
 
-          <p>{t("additionalText")}</p>
-        </div>
-
-        <Separator className="my-8" />
-
-        <div className="space-y-6 text-left">
-          <div>
-            <div className="mb-2 flex items-center gap-3">
-              <span className="font-semibold text-gray-800">{t("level1")}</span>
-              <StarsComponent max={1} />
-            </div>
-            <p className="leading-relaxed text-gray-700">{t("level1Description")}</p>
-          </div>
-          <Separator className="my-4" />
-
-          <div>
-            <div className="mb-2 flex items-center gap-3">
-              <span className="font-semibold text-gray-800">{t("level2")}</span>
-              <StarsComponent max={2} />
-            </div>
-            <p className="leading-relaxed text-gray-700">{t("level2Description")}</p>
-          </div>
-          <Separator className="my-4" />
-
-          <div>
-            <div className="mb-2 flex items-center gap-3">
-              <span className="font-semibold text-gray-800">{t("level3")}</span>
-              <StarsComponent max={3} />
-            </div>
-            <p className="leading-relaxed text-gray-700">{t("level3Description")}</p>
-          </div>
-          <Separator className="my-4" />
-
-          <div>
-            <div className="mb-2 flex items-center gap-3">
-              <span className="font-semibold text-gray-800">{t("level4")}</span>
-              <StarsComponent max={4} />
-            </div>
-            <p className="leading-relaxed text-gray-700">{t("level4Description")}</p>
-          </div>
-          <Separator className="my-4" />
-
-          <div>
-            <div className="mb-2 flex items-center gap-3">
-              <span className="font-semibold text-gray-800">{t("level5")}</span>
-              <StarsComponent max={5} />
-            </div>
-            <p className="leading-relaxed text-gray-700">{t("level5Description")}</p>
-          </div>
-          <Separator className="my-4" />
-
-          <div className="pt-4">
-            <div className="mb-2 flex items-center gap-3">
-              <span className="font-semibold text-gray-800">{t("level0")}</span>
-              <StarsComponent max={0} />
-            </div>
-            <p className="leading-relaxed text-gray-700">{t("level0Description")}</p>
-          </div>
-        </div>
+        <p>{t("additionalText")}</p>
       </div>
-    </div>
+
+      <dl className="divide-y border-t">
+        {levels.map((level) => (
+          <div key={level} className="grid gap-x-8 gap-y-3 py-8 sm:grid-cols-[8rem_1fr]">
+            <dt className="space-y-2">
+              <span className="text-muted-foreground block font-mono text-xs tracking-widest uppercase">
+                {t(`level${level}`)}
+              </span>
+              <StarsComponent max={level} />
+            </dt>
+            <dd className="text-muted-foreground leading-relaxed">
+              {t(`level${level}Description`)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </main>
   );
 }
