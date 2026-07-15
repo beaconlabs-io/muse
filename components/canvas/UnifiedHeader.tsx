@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   CloudCheck,
   Download,
+  HelpCircle,
   LayoutDashboard,
   MoreVertical,
   RefreshCw,
@@ -10,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useOnborda } from "onborda";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +39,8 @@ interface UnifiedHeaderProps {
 export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
   const tCanvas = useTranslations("canvas");
   const tRecipe = useTranslations("recipe");
+  const tTour = useTranslations("tour");
+  const { startOnborda } = useOnborda();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [uploadingToIPFS, setUploadingToIPFS] = useState(false);
@@ -150,11 +154,11 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
   return (
     <>
       <div className="bg-background flex items-center justify-between gap-3 border-b px-3 py-2 sm:px-4">
-        <TabsList className="bg-muted/60">
+        <TabsList className="bg-muted/60" data-tour="canvas-tabs">
           <TabsTrigger value="canvas" className="cursor-pointer">
             {tRecipe("canvasTabLabel")}
           </TabsTrigger>
-          <TabsTrigger value="recipe" className="cursor-pointer">
+          <TabsTrigger value="recipe" className="cursor-pointer" data-tour="recipe-tab">
             {tRecipe("tabLabel")}
             {recipeTabBadge}
           </TabsTrigger>
@@ -163,6 +167,16 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
         <div className="flex items-center gap-2">
           <ContextActions activeTab={activeTab} />
 
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={tTour("restart")}
+            className="cursor-pointer"
+            onClick={() => startOnborda("canvas")}
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Button>
+
           <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button
@@ -170,6 +184,7 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
                 size="icon"
                 aria-label={tCanvas("more")}
                 className="cursor-pointer"
+                data-tour="more-menu"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>

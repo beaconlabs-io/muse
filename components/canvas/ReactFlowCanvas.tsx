@@ -17,6 +17,7 @@ import { CanvasProvider, RecipeProvider, useCanvas } from "./context";
 import { EvidenceEdge } from "./EvidenceEdge";
 import { NodeEditorDialog } from "./NodeEditorDialog";
 import { RecipePanel } from "./RecipePanel";
+import { CanvasTour } from "./tour/CanvasTour";
 import { UnifiedHeader } from "./UnifiedHeader";
 import type { CardFormData } from "./context/canvas-operations";
 import type { Card, Arrow, Metric } from "@/types";
@@ -50,7 +51,9 @@ export function ReactFlowCanvas({
           initialCardMetrics={initialCardMetrics}
           disableLocalStorage={disableLocalStorage}
         >
-          <ReactFlowCanvasInner />
+          <CanvasTour>
+            <ReactFlowCanvasInner />
+          </CanvasTour>
         </CanvasProvider>
       </RecipeProvider>
     </ReactFlowProvider>
