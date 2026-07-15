@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import {
@@ -99,20 +98,6 @@ export function Header() {
         </div>
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
-          <ConnectButton
-            chainStatus={{
-              smallScreen: "none",
-              largeScreen: "full",
-            }}
-            showBalance={{
-              smallScreen: false,
-              largeScreen: true,
-            }}
-            accountStatus={{
-              smallScreen: "avatar",
-              largeScreen: "full",
-            }}
-          />
         </div>
       </div>
     </header>

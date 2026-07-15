@@ -363,5 +363,46 @@
     "targetValue": "Target value",
     "cautions": "Cautions",
     "parentLabel": "From"
+  },
+  "tour": {
+    "restart": "Start tour",
+    "next": "Next",
+    "prev": "Back",
+    "finish": "Done",
+    "skip": "Skip tour",
+    "steps": {
+      "canvasTabs": {
+        "title": "Canvas & Recipe",
+        "content": "Switch between the Canvas, where you build your logic model, and the Recipe tab, where AI turns your metrics into a measurement plan."
+      },
+      "generateModel": {
+        "title": "Generate with AI",
+        "content": "This opens the AI generator — let's take a look inside."
+      },
+      "genModalInput": {
+        "title": "Describe your goal",
+        "content": "Type the goal you want to achieve, or switch to the File tab to upload a document. This is what the AI turns into a logic model."
+      },
+      "genModalOptions": {
+        "title": "Fine-tune the output",
+        "content": "Expand the options to add evidence search, metrics, and a measurement recipe to the generated model."
+      },
+      "genModalSubmit": {
+        "title": "Generate",
+        "content": "Hit Generate and the AI drafts a full logic model with evidence, right on the canvas."
+      },
+      "addNode": {
+        "title": "Add a card",
+        "content": "Add your own cards — activities, outputs, or outcomes — and connect them to map out your causal pathway."
+      },
+      "moreMenu": {
+        "title": "Save & export",
+        "content": "Auto-layout your canvas, export it as an image or JSON, or save it to IPFS to share a permanent link."
+      },
+      "recipeTab": {
+        "title": "Measurement recipe",
+        "content": "Once your model has metrics, open the Recipe tab to generate a step-by-step measurement plan you can download."
+      }
+    }
   }
 }

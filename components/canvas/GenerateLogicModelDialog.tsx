@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import * as z from "zod";
 import { GenerationTimeInfo } from "@/components/canvas/GenerationTimeInfo";
+import { useTourController } from "@/components/canvas/tour/TourController";
 import { useStepProcessDialogContext } from "@/components/step-process-dialog";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -186,6 +187,11 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
 
   const [open, setOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  // While the product tour is walking through the modal steps it forces the
+  // dialog open. `modal={false}` in that mode keeps Radix from locking body
+  // pointer-events / trapping focus, so the Onborda tour card stays clickable.
+  const { generateModalOpen } = useTourController();
 
   const acceptFile = (file: File | null | undefined, onChange: (f: File) => void) => {
     if (!file) return;
@@ -396,9 +402,17 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   })();
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open || generateModalOpen}
+      onOpenChange={(next) => {
+        // Ignore user-initiated close while the tour holds the modal open.
+        if (generateModalOpen) return;
+        setOpen(next);
+      }}
+      modal={!generateModalOpen}
+    >
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="cursor-pointer">
+        <Button variant="outline" size="sm" className="cursor-pointer" data-tour="generate-model">
           <span>🤖</span>
           <span className="hidden sm:inline">{tCanvas("generateFromIntent")}</span>
         </Button>
@@ -411,7 +425,12 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <Tabs value={mode} onValueChange={handleModeChange} className="w-full">
+            <Tabs
+              value={mode}
+              onValueChange={handleModeChange}
+              className="w-full"
+              data-tour="gen-modal-input"
+            >
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="goal" disabled={isRunning} className="cursor-pointer">
                   {t("tabGoal")}
@@ -533,7 +552,10 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
             </Tabs>
 
             <Collapsible>
-              <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors [&[data-state=open]>svg]:rotate-180">
+              <CollapsibleTrigger
+                data-tour="gen-modal-options"
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors [&[data-state=open]>svg]:rotate-180"
+              >
                 <ChevronDown className="h-4 w-4 transition-transform" />
                 {t("optionsLabel")}
               </CollapsibleTrigger>
@@ -636,7 +658,12 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
               >
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" className="cursor-pointer" disabled={isRunning}>
+              <Button
+                type="submit"
+                className="cursor-pointer"
+                disabled={isRunning}
+                data-tour="gen-modal-submit"
+              >
                 {t("generateButton")}
               </Button>
             </DialogFooter>

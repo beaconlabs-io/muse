@@ -164,7 +164,12 @@ export function NodeEditorDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       {!editMode && (
         <DialogTrigger asChild>
-          <Button size="sm" variant="outline" className="flex cursor-pointer items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex cursor-pointer items-center gap-2"
+            data-tour="add-node"
+          >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">{tCanvas("addNode")}</span>
           </Button>
