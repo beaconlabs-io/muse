@@ -59,7 +59,7 @@ sequenceDiagram
     participant Canvas as ReactFlowCanvas
     participant Edge as EvidenceEdge コンポーネント
     participant Dialog as EvidenceDialog
-    participant Workflow as Mastra Workflow
+    participant Workflow as Backend Workflow
     participant Agent as Logic Model Agent
     participant Tool as Logic Model Tool
     participant Search as Evidence Search
@@ -67,7 +67,7 @@ sequenceDiagram
     participant LLM
     participant SS as Semantic Scholar API
 
-    Note over User, SS: ロジックモデル生成とエビデンス検証 (Mastra Workflow)
+    Note over User, SS: ロジックモデル生成とエビデンス検証 (muse-backend のワークフロー)
 
     User->>FE: 目標を提供（例：「EthereumへのOSSの影響」）
 
@@ -204,11 +204,14 @@ strength: 4 (Maryland Scale)
 
 ### 技術実装
 
+> AI 層の実装は、別リポジトリの `muse-backend`（Cloudflare Workers 上の Hono サービス）に移設済みである。
+> 以下のファイルパスはそのリポジトリ内のものを指す。このアプリは `NEXT_PUBLIC_API_BASE_URL` 経由で HTTP で呼び出す。
+
 **エージェントアーキテクチャと品質管理:**
 
 システムは、包括的な品質管理を備えた2つの専門AIエージェントを使用します:
 
-**1. Logic Model Agent** (`mastra/agents/logic-model-agent.ts`)
+**1. Logic Model Agent** (`muse-backend` の `src/ai/agents/logic-model.ts`)
 
 構造化された5段階ワークフローを持つTheory of Change専門家:
 
@@ -259,7 +262,7 @@ Semantic Scholar APIを使用した外部学術論文検索:
 - **並列実行**: `Promise.allSettled` で1つのエッジの失敗が他に影響しないよう保証
 - **スコアリングなし**: 外部論文はLLMスコアリングなしの参考資料として表示
 
-**2. Evidence Search Agent** (`mastra/agents/evidence-search-agent.ts`)
+**2. Evidence Search Agent** (`muse-backend` の `src/lib/evidence-search-batch.ts`)
 
 Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 
@@ -323,7 +326,7 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
   - `useWorkflowStream`フックとSSEルート（`/api/workflow/stream`）によるリアルタイムステップ進捗
   - Zodでフォーム検証
 
-- `mastra/workflows/logic-model-with-evidence.ts`: 4ステップのプロダクションワークフロー（Step 2.5を含む）:
+- `muse-backend` の `src/ai/workflows/logic-model-with-evidence.ts`: 4ステップのプロダクションワークフロー（Step 2.5を含む）:
 
   **Step 1: ロジックモデル構造を生成**
   - ツール検証エラーのリトライロジックを含む（メトリクスフォーマット失敗時に自動的により厳格なプロンプトで再試行）
@@ -357,7 +360,7 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
   - `Record<arrowId, EvidenceMatch[]>`マップを返す
   - エラー処理は失敗時にすべてのエッジに対して空の結果を返す
 
-- `mastra/tools/logic-model-tool.ts`: ロジックモデル構造生成のためのツール
+- `muse-backend` の `src/ai/tools/logic-model-tool.ts`: ロジックモデル構造生成のためのツール
   - 入力フォーマットを検証（targetContext、metrics、connections）
   - 配置を含むcanvasレイアウトを生成
   - スキーマに準拠したCanvasDataを返す

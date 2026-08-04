@@ -180,8 +180,8 @@ React Flow automatically uses the registered `EvidenceEdge` component when `type
 
 ### How Arrows Get Evidence
 
-1. **User generates logic model** via Mastra-powered AI agent
-2. **Batch evidence search** executes single LLM call (see `docs/mastra-agents.md`)
+1. **User generates logic model** via the backend's AI agent
+2. **Batch evidence search** executes a single LLM call in the backend
 3. **Evidence matching results** are merged into arrow data, **external papers** attached to under-matched arrows:
    ```typescript
    arrow.evidenceIds = [matchingEvidenceId];
@@ -450,7 +450,7 @@ See [Auto Layout](#auto-layout) for the full picture.
 
 ### Agent contract
 
-`mastra/workflows/logic-model-with-evidence.ts` reads `enableMetrics`
+The backend workflow (`src/ai/workflows/logic-model-with-evidence.ts`) reads `enableMetrics`
 from workflow init data:
 
 - `enableMetrics: false` (default): the agent emits cards with
@@ -460,7 +460,7 @@ from workflow init data:
   against `ToolMetricInputSchema` (forgiving variant of `MetricSchema`
   for LLM output).
 
-See `docs/mastra-agents.md` for the agent-side specification.
+See the `muse-backend` repository for the agent-side specification.
 
 ### Persistence
 

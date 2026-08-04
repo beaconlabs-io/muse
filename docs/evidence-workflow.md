@@ -220,18 +220,18 @@ Evidence is semantically matched to logic model arrows (causal relationships) us
 ### Batch search pipeline
 
 `lib/evidence-search-batch.ts` is the single entry point used by both the
-workflow (`mastra/workflows/logic-model-with-evidence.ts`) and the
+workflow (`muse-backend`, `src/ai/workflows/logic-model-with-evidence.ts`) and the
 Conversation Bot Agent's tooling. It:
 
 1. Loads the full internal evidence library via
-   `mastra/tools/get-all-evidence-tool.ts`.
+   the backend's evidence access helpers (`src/lib/evidence-search-batch.ts`).
 2. Sends all arrows + library to the Evidence Search Agent in a single LLM
    call (the Agent activates the `evidence-matching` skill for scoring).
 3. Returns structured JSON (arrowId → matches) that is then fed into
    `evidence-presentation` when surfacing results to users.
 
-See [mastra-agents.md](./mastra-agents.md#3-supporting-agents) for the
-individual agent responsibilities and [mastra-agents.md](./mastra-agents.md#output-language-handling)
+See the `muse-backend` repository for the
+individual agent responsibilities and
 for the multilingual output policy.
 
 ## Evidence Search Philosophy

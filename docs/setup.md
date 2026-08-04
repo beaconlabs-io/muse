@@ -19,42 +19,32 @@ cp .env.example .env.local   # fill in values per the sections below
 bun dev                      # Next.js on http://localhost:3000
 ```
 
-Mastra Studio (agent/workflow traces):
-
-```bash
-bun dev:mastra               # http://localhost:4111
-```
-
 Other common commands:
 
-| Command                 | Purpose                       |
-| ----------------------- | ----------------------------- |
-| `bun run build`         | Production build              |
-| `bun start`             | Start built server            |
-| `bun lint`              | ESLint (auto-fix)             |
-| `bun run test:run`      | Run unit tests once           |
-| `bun run test:coverage` | Run unit tests with coverage  |
-| `bun build:mastra`      | Build the Mastra agent bundle |
-| `bun clean`             | Clean artifacts + reinstall   |
+| Command                 | Purpose                      |
+| ----------------------- | ---------------------------- |
+| `bun run build`         | Production build             |
+| `bun start`             | Start built server           |
+| `bun lint`              | ESLint (auto-fix)            |
+| `bun run test:run`      | Run unit tests once          |
+| `bun run test:coverage` | Run unit tests with coverage |
+| `bun clean`             | Clean artifacts + reinstall  |
 
 ## Environment variables
 
 Grouped by concern. Names match `.env.example`; defaults in code are shown
 in parentheses.
 
-### LLM keys
+### Backend service
 
-muse ships with Gemini as the default LLM provider. Required:
+- `NEXT_PUBLIC_API_BASE_URL` — base URL of the `muse-backend` service that
+  serves logic model generation, recipes, evidence search and IPFS uploads.
+  Unset means same-origin, which no longer resolves: those routes were
+  removed from this app
 
-- `GOOGLE_GENERATIVE_AI_API_KEY` — used by every agent; required
-- `MODEL` — primary reasoning model (default `google/gemini-2.5-pro`; used
-  by logic-model, evidence-search, and conversation-bot agents)
-- `FLASH_MODEL` — lightweight model for translation/keyword extraction
-  (default `google/gemini-2.5-flash`)
-- `SEMANTIC_SCHOLAR_API_KEY` — optional; raises the Semantic Scholar rate
-  limit for external paper search
-
-See [mastra-agents.md](./mastra-agents.md) for how each agent picks its model.
+LLM keys (`GOOGLE_GENERATIVE_AI_API_KEY`, `MODEL`, `FLASH_MODEL`,
+`SEMANTIC_SCHOLAR_API_KEY`) and `PINATA_JWT` now belong to that service, not
+to this app.
 
 ### IPFS (Pinata)
 
@@ -82,10 +72,8 @@ See [mastra-agents.md](./mastra-agents.md) for how each agent picks its model.
 - `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` — set to `"true"` to enable the
   Step 2.5 Semantic Scholar external paper search in the canvas UI
 
-### Mastra runtime
+### Runtime
 
-- `MASTRA_STORAGE_URL` — override Mastra's LibSQL storage URL. Defaults to
-  `:memory:` on Vercel and `file:./mastra.db` locally (`mastra/index.ts`)
 - `NODE_ENV` — used by `lib/logger.ts` and a few dev-only log verbosity
   toggles
 
@@ -149,7 +137,7 @@ runtime.
 - Runtime `environment:` for server-side secrets plus `NODE_ENV=production`.
 - `env_file: .env.local` — any additional variables in `.env.local` are
   also loaded at runtime (e.g. `BOT_API_KEY`, `SEMANTIC_SCHOLAR_API_KEY`,
-  `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED`, `MASTRA_STORAGE_URL`).
+  `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED`).
 - Port `3000:3000`, `restart: unless-stopped`.
 
 ### Typical flow
@@ -169,12 +157,6 @@ docker compose logs -f app
 - **`.env.local` is a runtime-only file** for this setup. Do not expect
   values listed there to influence the client bundle unless they are
   also passed as build args.
-- **Mastra storage on ephemeral containers** — the default local fallback
-  is `file:./mastra.db`, which is inside the container and lost on
-  restart. For production set `MASTRA_STORAGE_URL` to a durable LibSQL
-  endpoint (or `:memory:` if you do not need persistence).
-- **Running Mastra Studio in Docker** is not wired up — use
-  `bun dev:mastra` on the host against the same data.
 
 ## i18n
 

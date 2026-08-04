@@ -14,10 +14,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun run test:coverage` - Run Vitest with v8 coverage report
 - `bun clean` - Clean build artifacts and reinstall dependencies
 
-### Mastra Development
+### Backend Service
 
-- `bun dev:mastra` - Start Mastra development server (includes Mastra Studio for viewing traces at http://localhost:4111)
-- `bun build:mastra` - Build Mastra agent system
+AI processing (logic model generation, recipes, evidence search) lives in the separate
+`muse-backend` service (Hono on Cloudflare Workers), not in this repository. Point the frontend at
+it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 
 ### Docker
 
@@ -29,7 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Testing Policy
 
-- **Add tests alongside implementation** — not strict TDD, but any new pure function, utility, API handler, or Mastra tool should land with Vitest coverage in the same PR.
+- **Add tests alongside implementation** — not strict TDD, but any new pure function, utility, or API handler should land with Vitest coverage in the same PR.
 - Place `*.test.ts` next to the source file (e.g., `lib/foo.ts` → `lib/foo.test.ts`); shared setup lives in `tests/setup.ts`.
 - Run `bun run test:run` before pushing; CI (`.github/workflows/quality.yml`) also runs it on every PR.
 - See [docs/testing.md](./docs/testing.md) for patterns, fixtures, and troubleshooting.
@@ -59,13 +60,11 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `components/canvas/` - React Flow canvas components (nodes, edges, controls)
 - `components/evidence/` - Evidence-specific UI components
 - `components/hypercerts/` - Hypercerts integration components
-- `components/mastra/` - Mastra/AI-related components
 - `components/table/` - Table components
 - `components/tooltip/` - Tooltip components
 - `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
 - `hooks/` - Custom React hooks including blockchain integration and SSE workflow streaming (`useWorkflowStream`)
 - `lib/` - Shared utilities, configuration, and academic API clients (`lib/academic-apis/`)
-- `mastra/` - AI agent system (agents, workflows, tools, skills)
 - `types/` - TypeScript definitions for Evidence, Attestation, graph structures
 - `utils/` - Configuration and helper functions
 - `tests/` - Vitest global setup (e.g., `@testing-library/jest-dom` extensions)
@@ -87,8 +86,7 @@ Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS 4, Radix UI + shadcn/ui
 - **i18n**: next-intl (locales: en, ja)
 - **Canvas & Graphs**: React Flow (@xyflow/react) for interactive logic model visualization
-- **AI & Agents**: Mastra framework, Google Gemini API, Semantic Scholar API
-- **Observability**: Mastra Observability with DefaultExporter (Mastra Studio)
+- **AI & Agents**: none in this repository — served by the `muse-backend` service over HTTP
 - **Blockchain**: viem, EAS (Ethereum Attestation Service), Hypercerts SDK, RainbowKit
 - **State Management**: TanStack Query for server state
 - **Content**: MDX with rehype/remark plugins (math, syntax highlighting, TOC)
@@ -115,7 +113,6 @@ For detailed technical information, see:
 
 **Agents & Workflow**
 
-- `docs/mastra-agents.md` - AI agent architecture, workflows, skills, output language policy, observability
 - `docs/evidence-workflow.md` - Evidence submission, attestation, batch matching pipeline
 
 **Operations**

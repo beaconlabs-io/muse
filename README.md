@@ -18,7 +18,7 @@ Built as part of the [Beacon Labs](https://beaconlabs.io) ecosystem for supporti
 
 ### AI-Powered Logic Models
 
-Mastra-based AI agents generate complete Theory of Change logic models through a 5-stage process: analyze context, generate structure, design visual layout, self-critique, and produce canvas-ready output. The result is a fully connected pathway from Activities → Outputs → Short-term Outcomes → Intermediate Outcomes → Impact.
+AI agents in the `muse-backend` service generate complete Theory of Change logic models through a 5-stage process: analyze context, generate structure, design visual layout, self-critique, and produce canvas-ready output. The result is a fully connected pathway from Activities → Outputs → Short-term Outcomes → Intermediate Outcomes → Impact.
 
 ### Evidence-Based Validation
 
@@ -42,7 +42,7 @@ A React Flow-powered visual builder for creating and editing logic models. Evide
 │  Evidence Repository          MUSE Application                  │
 │  ┌──────────────┐            ┌──────────────────────────────┐  │
 │  │ MDX Research  │  npm pkg  │                              │  │
-│  │ Files         ├──────────►│  AI Agents (Mastra)          │  │
+│  │ Files         ├──────────►│  AI Agents (muse-backend)    │  │
 │  │              │            │    ├─ Logic Model Agent      │  │
 │  │ Zod          │            │    └─ Evidence Search Agent  │  │
 │  │ Validation   │            │           │                  │  │
@@ -104,17 +104,15 @@ See [docs/setup.md](./docs/setup.md#docker) for build args vs runtime env, persi
 
 ## Scripts
 
-| Command                 | Description                           |
-| ----------------------- | ------------------------------------- |
-| `bun dev`               | Start Next.js development server      |
-| `bun run build`         | Build for production                  |
-| `bun start`             | Start production server               |
-| `bun lint`              | Run ESLint with auto-fix              |
-| `bun run test:run`      | Run unit tests once                   |
-| `bun run test:coverage` | Run unit tests with coverage          |
-| `bun clean`             | Clean build artifacts and reinstall   |
-| `bun dev:mastra`        | Start Mastra agent development server |
-| `bun build:mastra`      | Build Mastra agent system             |
+| Command                 | Description                         |
+| ----------------------- | ----------------------------------- |
+| `bun dev`               | Start Next.js development server    |
+| `bun run build`         | Build for production                |
+| `bun start`             | Start production server             |
+| `bun lint`              | Run ESLint with auto-fix            |
+| `bun run test:run`      | Run unit tests once                 |
+| `bun run test:coverage` | Run unit tests with coverage        |
+| `bun clean`             | Clean build artifacts and reinstall |
 
 ## Project Structure
 
@@ -138,11 +136,6 @@ See [docs/setup.md](./docs/setup.md#docker) for build args vs runtime env, persi
 ├── configs/              # EAS and Hypercerts SDK configuration
 ├── i18n/                 # next-intl routing and request config
 ├── messages/             # Translation files (en, ja)
-├── mastra/               # AI agent system
-│   ├── agents/           #   Logic model and evidence search agents
-│   ├── workflows/        #   Multi-step agent workflows
-│   ├── tools/            #   Agent tools (canvas data, evidence access)
-│   └── skills/           #   Domain knowledge for agents
 ├── lib/                  # Shared utilities and configuration
 ├── hooks/                # Custom React hooks
 ├── types/                # TypeScript type definitions
@@ -153,15 +146,14 @@ See [docs/setup.md](./docs/setup.md#docker) for build args vs runtime env, persi
 
 For detailed technical information, see:
 
-| Document                                                     | Description                                                      |
-| ------------------------------------------------------------ | ---------------------------------------------------------------- |
-| [AI Agent Architecture](./docs/mastra-agents.md)             | Agents, workflows, skills, output language policy, observability |
-| [Evidence Workflow](./docs/evidence-workflow.md)             | Submission, attestation, batch matching pipeline                 |
-| [React Flow Architecture](./docs/react-flow-architecture.md) | Canvas implementation, evidence edges, UI flow                   |
-| [Frontend Map](./docs/frontend-map.md)                       | Non-canvas components, server actions, custom hooks              |
-| [API Routes](./docs/api-routes.md)                           | HTTP endpoints (workflow/stream, compact, evidence, IPFS)        |
-| [Setup](./docs/setup.md)                                     | Local setup, environment variables, troubleshooting              |
-| [Internationalization](./docs/i18n.md)                       | next-intl wiring and agent output language                       |
+| Document                                                     | Description                                               |
+| ------------------------------------------------------------ | --------------------------------------------------------- |
+| [Evidence Workflow](./docs/evidence-workflow.md)             | Submission, attestation, batch matching pipeline          |
+| [React Flow Architecture](./docs/react-flow-architecture.md) | Canvas implementation, evidence edges, UI flow            |
+| [Frontend Map](./docs/frontend-map.md)                       | Non-canvas components, server actions, custom hooks       |
+| [API Routes](./docs/api-routes.md)                           | HTTP endpoints (workflow/stream, compact, evidence, IPFS) |
+| [Setup](./docs/setup.md)                                     | Local setup, environment variables, troubleshooting       |
+| [Internationalization](./docs/i18n.md)                       | next-intl wiring and agent output language                |
 
 ## Deployments
 
