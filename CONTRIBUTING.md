@@ -19,7 +19,7 @@ cp .env.example .env.local  # Fill in required values
 bun dev
 ```
 
-See [docs/setup.md](./docs/setup.md) for environment variables, Mastra Studio, and troubleshooting.
+See [docs/setup.md](./docs/setup.md) for environment variables and troubleshooting.
 
 ## Development Workflow
 

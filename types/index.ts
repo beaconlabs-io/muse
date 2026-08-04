@@ -88,8 +88,10 @@ export type Metric = z.infer<typeof MetricSchema>;
 export type MetricFormInput = z.infer<typeof MetricFormInputSchema>;
 
 // =============================================================================
-// TOOL INPUT SCHEMAS (for Mastra agents)
+// TOOL INPUT SCHEMAS
 // =============================================================================
+// Consumed by the muse-backend AI tools, not by this app. This file stays the
+// source of truth for the shape; backend keeps a copy under src/contracts/.
 
 // Metric schema for tool input validation (forgiving for LLM-generated content).
 // Concrete measurement details (method, frequency, target) are intentionally

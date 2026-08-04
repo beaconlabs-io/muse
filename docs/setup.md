@@ -19,49 +19,34 @@ cp .env.example .env.local   # fill in values per the sections below
 bun dev                      # Next.js on http://localhost:3000
 ```
 
-Mastra Studio (agent/workflow traces):
-
-```bash
-bun dev:mastra               # http://localhost:4111
-```
-
 Other common commands:
 
-| Command                 | Purpose                       |
-| ----------------------- | ----------------------------- |
-| `bun run build`         | Production build              |
-| `bun start`             | Start built server            |
-| `bun lint`              | ESLint (auto-fix)             |
-| `bun run test:run`      | Run unit tests once           |
-| `bun run test:coverage` | Run unit tests with coverage  |
-| `bun build:mastra`      | Build the Mastra agent bundle |
-| `bun clean`             | Clean artifacts + reinstall   |
+| Command                 | Purpose                      |
+| ----------------------- | ---------------------------- |
+| `bun run build`         | Production build             |
+| `bun start`             | Start built server           |
+| `bun lint`              | ESLint (auto-fix)            |
+| `bun run test:run`      | Run unit tests once          |
+| `bun run test:coverage` | Run unit tests with coverage |
+| `bun clean`             | Clean artifacts + reinstall  |
 
 ## Environment variables
 
 Grouped by concern. Names match `.env.example`; defaults in code are shown
 in parentheses.
 
-### LLM keys
+### Backend service
 
-muse ships with Gemini as the default LLM provider. Required:
+- `NEXT_PUBLIC_API_BASE_URL` — base URL of the `muse-backend` service that
+  serves logic model generation, recipes, evidence search and IPFS uploads.
+  Unset means same-origin, which no longer resolves: those routes were
+  removed from this app
 
-- `GOOGLE_GENERATIVE_AI_API_KEY` — used by every agent; required
-- `MODEL` — primary reasoning model (default `google/gemini-2.5-pro`; used
-  by logic-model, evidence-search, and conversation-bot agents)
-- `FLASH_MODEL` — lightweight model for translation/keyword extraction
-  (default `google/gemini-2.5-flash`)
-- `SEMANTIC_SCHOLAR_API_KEY` — optional; raises the Semantic Scholar rate
-  limit for external paper search
+LLM keys (`GOOGLE_GENERATIVE_AI_API_KEY`, `MODEL`, `FLASH_MODEL`,
+`SEMANTIC_SCHOLAR_API_KEY`) and `PINATA_JWT` now belong to that service, not
+to this app.
 
-See [mastra-agents.md](./mastra-agents.md) for how each agent picks its model.
-
-### IPFS (Pinata)
-
-- `PINATA_JWT` — required for `/api/upload-to-ipfs`,
-  `/api/upload-image-to-ipfs`, and the `/api/compact` canvas upload step
-
-### EAS + hypercerts (chain)
+### EAS (chain)
 
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` — RainbowKit/WalletConnect project
   ID (client-side)
@@ -69,23 +54,15 @@ See [mastra-agents.md](./mastra-agents.md) for how each agent picks its model.
   attestation workflows in the sibling `evidence/` repo; leave unset in
   `muse/` unless you are running attestation scripts locally
 - `NEXT_PUBLIC_ENV` — `development` or `production`; switches
-  hypercerts/EAS endpoints (see `configs/hypercerts.tsx`, `lib/wagmi.ts`)
-
-### API auth
-
-- `BOT_API_KEY` — when set, `/api/compact` and `/api/evidence/search`
-  require an `x-api-key: <key>` header (timing-safe compared in
-  `lib/api-auth.ts`). Leave unset for unauthenticated local dev.
+  EAS endpoints (see `configs/eas.ts`, `lib/wagmi.ts`)
 
 ### Feature flags
 
 - `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` — set to `"true"` to enable the
   Step 2.5 Semantic Scholar external paper search in the canvas UI
 
-### Mastra runtime
+### Runtime
 
-- `MASTRA_STORAGE_URL` — override Mastra's LibSQL storage URL. Defaults to
-  `:memory:` on Vercel and `file:./mastra.db` locally (`mastra/index.ts`)
 - `NODE_ENV` — used by `lib/logger.ts` and a few dev-only log verbosity
   toggles
 
@@ -144,12 +121,13 @@ runtime.
 `docker-compose.yml` wires all of the above together:
 
 - Build args sourced from the host shell:
-  `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`,
-  `NEXT_PUBLIC_ENV` (defaults to `production`).
-- Runtime `environment:` for server-side secrets plus `NODE_ENV=production`.
+  `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, `NEXT_PUBLIC_ENV` (defaults to
+  `production`) and `NEXT_PUBLIC_API_BASE_URL`. The last one has to be a build
+  arg: it is inlined into the client bundle, so setting it at runtime leaves
+  the image calling routes this app no longer serves.
+- Runtime `environment:` carries only `NODE_ENV=production`.
 - `env_file: .env.local` — any additional variables in `.env.local` are
-  also loaded at runtime (e.g. `BOT_API_KEY`, `SEMANTIC_SCHOLAR_API_KEY`,
-  `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED`, `MASTRA_STORAGE_URL`).
+  also loaded at runtime (e.g. `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED`).
 - Port `3000:3000`, `restart: unless-stopped`.
 
 ### Typical flow
@@ -169,12 +147,6 @@ docker compose logs -f app
 - **`.env.local` is a runtime-only file** for this setup. Do not expect
   values listed there to influence the client bundle unless they are
   also passed as build args.
-- **Mastra storage on ephemeral containers** — the default local fallback
-  is `file:./mastra.db`, which is inside the container and lost on
-  restart. For production set `MASTRA_STORAGE_URL` to a durable LibSQL
-  endpoint (or `:memory:` if you do not need persistence).
-- **Running Mastra Studio in Docker** is not wired up — use
-  `bun dev:mastra` on the host against the same data.
 
 ## i18n
 
@@ -184,11 +156,12 @@ interact.
 
 ## Troubleshooting
 
-- **401 on `/api/compact`** — `BOT_API_KEY` is set server-side but the
-  caller did not send the `x-api-key` header. Either unset the env var or
-  send the header.
-- **"PINATA_JWT environment variable not configured"** — IPFS routes
-  refuse to run without the JWT; set it or stub the upload path.
+- **404 on generation, recipe, evidence search or IPFS upload** —
+  `NEXT_PUBLIC_API_BASE_URL` was unset at build time, so the app is calling
+  same-origin routes that live in the backend now. Rebuild with the variable
+  set; changing it at runtime has no effect.
+- **401 from the backend** — `BOT_API_KEY` is set on the backend but the
+  caller did not send the `x-api-key` header.
 - **Workflow times out after 5 minutes** — raise `WORKFLOW_TIMEOUT_MS` in
-  `lib/constants.ts` (and the matching `maxDuration` in the route) if you
-  are adding longer-running steps.
+  `lib/constants.ts` if you are adding longer-running steps. The client abort
+  is the only limit now; Workers imposes no wall-clock cap.

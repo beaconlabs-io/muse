@@ -45,11 +45,6 @@ export function Header() {
       href: "/canvas",
       description: t("canvasDescription"),
     },
-    {
-      title: t("hypercerts"),
-      href: "/hypercerts",
-      description: t("hypercertsDescription"),
-    },
   ];
 
   return (

@@ -1,31 +1,33 @@
 # API Routes
 
-Reference map for `app/api/**` HTTP endpoints. For internals of the
-underlying Mastra workflow (SSE event schema, agent orchestration, evidence
-matching), see [mastra-agents.md](./mastra-agents.md).
+Reference map for the HTTP endpoints this app talks to.
+
+Logic model generation, recipes, evidence search and IPFS uploads are served
+by the separate `muse-backend` service (Hono on Cloudflare Workers), reached
+through `NEXT_PUBLIC_API_BASE_URL`. The request, response and SSE shapes
+documented here are the contract this app consumes; agent orchestration and
+evidence matching internals live in that repository. What remains under
+`app/api/**` is the two OG image routes.
 
 ## Routes
 
-| Method | Path                             | Purpose                                                                                                                                                                                                                         | Entry file                                   |
-| ------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| POST   | `/api/workflow/stream`           | Streams logic-model generation events over SSE. Accepts JSON `{goal}` **or** multipart/form-data with an uploaded PDF/image (≤4 MB) forwarded to Gemini 2.5 Pro as multimodal input (see [File upload path](#file-upload-path)) | `app/api/workflow/stream/route.ts`           |
-| POST   | `/api/recipe/stream`             | Streams measurement-recipe generation events over SSE. Input: `{ logicModelTitle, metrics[], locale }`. Wraps `recipeWorkflow` (single-step LLM call) and emits the same step-start / step-finish / _-error / _-complete shape  | `app/api/recipe/stream/route.ts`             |
-| POST   | `/api/compact`                   | Turns a chat history into a logic model, uploads canvas JSON to IPFS, returns canvas URL                                                                                                                                        | `app/api/compact/route.ts`                   |
-| POST   | `/api/evidence/search`           | Natural-language evidence search backed by the Conversation Bot Agent; optional external paper lookup                                                                                                                           | `app/api/evidence/search/route.ts`           |
-| GET    | `/api/hypercerts/[hypercert-id]` | Proxies a hypercert image with 30-minute edge cache                                                                                                                                                                             | `app/api/hypercerts/[hypercert-id]/route.ts` |
-| POST   | `/api/upload-to-ipfs`            | Uploads canvas JSON (Zod-validated) to Pinata IPFS                                                                                                                                                                              | `app/api/upload-to-ipfs/route.ts`            |
-| POST   | `/api/upload-image-to-ipfs`      | Uploads a ≤2 MB image (multipart) to Pinata IPFS                                                                                                                                                                                | `app/api/upload-image-to-ipfs/route.ts`      |
+| Method | Path                        | Purpose                                                                                                                                                                                                                         | Entry file                              |
+| ------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| POST   | `/api/workflow/stream`      | Streams logic-model generation events over SSE. Accepts JSON `{goal}` **or** multipart/form-data with an uploaded PDF/image (≤4 MB) forwarded to Gemini 2.5 Pro as multimodal input (see [File upload path](#file-upload-path)) | `muse-backend` `src/routes/workflow.ts` |
+| POST   | `/api/recipe/stream`        | Streams measurement-recipe generation events over SSE. Input: `{ logicModelTitle, metrics[], locale }`. Wraps `recipeWorkflow` (single-step LLM call) and emits the same step-start / step-finish / _-error / _-complete shape  | `muse-backend` `src/routes/recipe.ts`   |
+| POST   | `/api/compact`              | Turns a chat history into a logic model, uploads canvas JSON to IPFS, returns canvas URL                                                                                                                                        | `muse-backend` `src/routes/compact.ts`  |
+| POST   | `/api/evidence/search`      | Natural-language evidence search backed by the Conversation Bot Agent; optional external paper lookup                                                                                                                           | `muse-backend` `src/routes/evidence.ts` |
+| POST   | `/api/upload-to-ipfs`       | Uploads canvas JSON (Zod-validated) to Pinata IPFS                                                                                                                                                                              | `muse-backend` `src/routes/ipfs.ts`     |
+| POST   | `/api/upload-image-to-ipfs` | Uploads a ≤2 MB image (multipart) to Pinata IPFS                                                                                                                                                                                | `muse-backend` `src/routes/ipfs.ts`     |
 
 ## Auth
 
+Auth is enforced by the backend service, not by this app.
+
 - `/api/compact` and `/api/evidence/search` are gated by `BOT_API_KEY` when
-  it is set in the environment. Authenticated callers must send an
-  `x-api-key` header (timing-safe compared). The shared helpers live in
-  `lib/api-auth.ts` (`validateApiKey`, `isAuthEnabled`, `unauthorizedResponse`).
-- When `BOT_API_KEY` is unset, these routes accept unauthenticated requests
-  (useful for local development).
-- IPFS and hypercert routes are unauthenticated but require server-side
-  secrets (`PINATA_JWT`).
+  it is set there. Callers send an `x-api-key` header. Unset means the routes
+  accept unauthenticated requests.
+- The stream and IPFS routes are unauthenticated.
 
 ## Request / response schemas
 
@@ -69,7 +71,7 @@ the shared types:
 
 ### Server-side validation order
 
-Enforced in `parseRequest` in `app/api/workflow/stream/route.ts`:
+Enforced in the backend's `parseRequest` (`muse-backend` `src/routes/workflow.ts`):
 
 1. `request.formData()` must parse — otherwise `400 Invalid multipart payload`.
 2. `file` field must be a `File` — otherwise `400 Missing file field`.
@@ -106,21 +108,19 @@ as before.
 
 ## Workflow error handling
 
-Both `/api/workflow/stream` (SSE) and `/api/compact` (REST) funnel Mastra
-workflow failures through `lib/workflow-errors.ts` so the UI can render
-locale-aware messages instead of a generic "Workflow failed".
+`/api/workflow/stream` (SSE) and `/api/compact` (REST) report a category
+alongside every failure so the UI can render locale-aware messages instead of
+a generic "Workflow failed". Classification happens in the backend; this app
+holds the category union in `lib/workflow-errors.ts` and maps it to a
+message.
 
 ### Pipeline
 
-1. **`extractErrorMessage(payload)`** — pulls the deepest `Error.message`
-   out of a Mastra step-failure payload. It walks `payload.error.cause`
-   recursively, then falls back to `payload.output.error`, then to
-   `"Step failed"`. This is needed because Mastra spreads thrown errors
-   onto `payload.error` rather than nesting them under `payload.output`.
-2. **`categorizeError(rawMessage)`** — keyword-matches the raw message
-   and returns one of the seven `ErrorCategory` values below. Categories
-   correspond 1:1 to keys in the `workflowErrors` namespace of
-   `messages/{en,ja}.json`.
+1. The backend extracts the deepest error message from the failing step and
+   keyword-matches it into one of the seven `ErrorCategory` values below.
+2. The category rides along in the error event (`errorCategory`), and the UI
+   looks it up in the `workflowErrors` namespace of `messages/{en,ja}.json`.
+   Categories correspond 1:1 to keys in that namespace.
 
 ### Error categories
 
@@ -182,19 +182,17 @@ choose to translate or surface the raw message.
 
 ## Timeouts
 
-- `/api/workflow/stream` and `/api/compact` both declare `maxDuration = 300`
-  seconds on Vercel and honour `WORKFLOW_TIMEOUT_MS` from `lib/constants.ts`
-  for the underlying workflow.
+- Workers imposes no wall-clock limit on a request, so the backend is not
+  capped the way the Vercel routes were. The client still aborts at
+  `WORKFLOW_TIMEOUT_MS` from `lib/constants.ts`.
 
 ## Related implementation
 
-- Streaming workflow internals → `mastra/workflows/logic-model-with-evidence.ts`
-  (Step 1 accepts optional `fileInput` and builds a multi-part user message
-  with `{ type: "file", data, mediaType }` when present)
+- Streaming workflow internals → `muse-backend`, `src/ai/workflows/logic-model-with-evidence.ts`
 - File upload constants & MIME whitelist → `lib/constants.ts`
   (`FILE_UPLOAD_ALLOWED_MIME_TYPES`, `FILE_UPLOAD_MAX_BYTES`,
   `VERCEL_REQUEST_BODY_LIMIT_BYTES`)
-- Evidence search internals → `lib/evidence-search-batch.ts` + Conversation Bot Agent
-- External papers → `lib/external-paper-search.ts` + `lib/academic-apis/`
-- IPFS client → `lib/ipfs.ts`
+- Evidence search internals → `muse-backend`, `src/lib/evidence-search-batch.ts` + the conversation bot agent
+- External papers → `muse-backend`, `src/lib/external-paper-search.ts` + `src/lib/academic/`
+- IPFS client → `muse-backend`, `src/lib/pinata.ts` (this app posts through `utils/ipfs.ts`)
 - Error categorization → `lib/workflow-errors.ts`

@@ -20,11 +20,6 @@ Evidence detail & listing building blocks used by `/[lang]/evidence/**` and
 - `AttestationHistory.tsx` — EAS attestation timeline (reads via `useEAS`)
 - `index.ts` — re-exports
 
-### `components/hypercerts/`
-
-- `HypercertCard.tsx` — hypercert thumbnail + metadata card. Image source
-  is proxied through `/api/hypercerts/[hypercert-id]`.
-
 ### `components/table/`
 
 Generic table primitives shared by evidence and effects list views.
@@ -47,7 +42,7 @@ Quick map:
   separate format — keep both until we decide whether to unify.
 - `context/RecipeContext.tsx` — `RecipeProvider` + `useRecipe()` hook.
 
-### `components/tooltip/`, `components/mastra/`
+### `components/tooltip/`
 
 Thin wrappers — open the folder directly when touching these.
 
@@ -56,18 +51,11 @@ Thin wrappers — open the folder directly when touching these.
 shadcn/ui primitives. Auto-generated; avoid hand-editing (ignored by
 ESLint for that reason).
 
-## Server actions
-
-### `app/actions/hypercerts/`
-
-- `getAllHypercerts.ts` — fetches all hypercerts owned by the current
-  wallet. Called from server components; returns typed results for the UI.
-
 ## Custom hooks
 
 - `hooks/useWorkflowStream.ts` — subscribes to `/api/workflow/stream` SSE,
   exposes phased state (structure → evidence → external → merge) to the
-  canvas. See [mastra-agents.md](./mastra-agents.md) for event schema.
+  canvas. See [api-routes.md](./api-routes.md) for the event schema.
 - `hooks/useRecipeStream.ts` — subscribes to `/api/recipe/stream` SSE,
   exposes recipe state (`idle` / `running` / `success` / `error`). Wrapped
   by `RecipeContext` so most callers should use `useRecipe()` instead.
@@ -95,5 +83,5 @@ ESLint for that reason).
 ## Where to go next
 
 - Canvas + evidence edges → [react-flow-architecture.md](./react-flow-architecture.md)
-- Workflow / agents behind the UI → [mastra-agents.md](./mastra-agents.md)
+- Workflow / agents behind the UI → the `muse-backend` repository
 - API contracts the UI calls → [api-routes.md](./api-routes.md)

@@ -1,7 +1,7 @@
 # Testing
 
 Unit-test guide for `muse/`. Not strict TDD — but every PR that adds a
-pure function, utility, API handler, or Mastra tool should land with a
+pure function, utility, or API handler should land with a
 matching `*.test.ts` in the same PR. This doc captures the conventions
 that have emerged from the existing test suite so new tests stay
 consistent.
@@ -31,7 +31,6 @@ Config lives in `vitest.config.mts`. Key behaviors:
   - `lib/` — shared utilities, parsers, adapters
   - `utils/` — helper functions
   - `app/api/**/route.ts` — HTTP handlers (auth, validation, response shape)
-  - `mastra/tools/**` — agent-callable tools with deterministic IO
 - **Optional** (test when logic is non-trivial):
   - React components in `components/` — especially those with branching
     rendering, derived state, or a11y-critical interactions
@@ -69,7 +68,7 @@ tests/
 | `bun run test:run`      | One-shot run; what CI runs                    |
 | `bun run test:coverage` | Generates HTML + JSON coverage in `coverage/` |
 
-Run a single file: `bun run test:run lib/api-auth.test.ts`
+Run a single file: `bun run test:run lib/api-client.test.ts`
 Run by name pattern: `bun run test:run -t "accepts a request"`
 
 ## Patterns
@@ -81,14 +80,14 @@ Because `unstubEnvs: true` is set, stubs auto-reset between tests.
 ```ts
 import { describe, expect, it, vi } from "vitest";
 
-it("keeps API authentication disabled when BOT_API_KEY is not configured", () => {
-  vi.stubEnv("BOT_API_KEY", "");
+it("returns the path unchanged when NEXT_PUBLIC_API_BASE_URL is unset", () => {
+  vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "");
 
-  expect(isAuthEnabled()).toBe(false);
+  expect(apiUrl("/api/compact")).toBe("/api/compact");
 });
 ```
 
-See `lib/api-auth.test.ts` for the full example.
+See `lib/api-client.test.ts` for the full example.
 
 ### Table-driven tests — `it.each`
 
@@ -199,6 +198,3 @@ informational. If you want to check coverage locally before a PR, run
 - **A test passes locally but fails in CI** — usually an environment
   variable leak. Make sure every `vi.stubEnv` sets a deterministic value
   and avoid reading from `process.env` directly inside tests.
-- **A Mastra tool test hangs** — the Mastra runtime starts timers; always
-  invoke tools through their pure `execute` function in tests rather than
-  booting the full agent.
