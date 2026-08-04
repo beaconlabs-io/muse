@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   MoreVertical,
   RefreshCw,
-  Save,
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -50,8 +49,7 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
   const [preGeneratedImage, setPreGeneratedImage] = useState<CanvasImageResult | null>(null);
 
   const { nodes, cardMetrics } = useCanvasState();
-  const { saveLogicModel, exportAsJSON, clearAllData, saveCanvasToIPFS, autoLayout } =
-    useCanvasOperations();
+  const { exportAsJSON, clearAllData, saveCanvasToIPFS, autoLayout } = useCanvasOperations();
   const { generate: generateImage } = useCanvasImage();
   const recipe = useRecipe();
 
@@ -196,10 +194,6 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
               <DropdownMenuItem onClick={handleAutoLayout} className="cursor-pointer">
                 <LayoutDashboard className="mr-2 h-4 w-4" />
                 {tCanvas("autoLayout")}
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled onClick={saveLogicModel} className="cursor-pointer">
-                <Save className="mr-2 h-4 w-4" />
-                {tCanvas("mintHypercert")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleUploadToIPFS}

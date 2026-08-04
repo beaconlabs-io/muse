@@ -46,7 +46,7 @@ LLM keys (`GOOGLE_GENERATIVE_AI_API_KEY`, `MODEL`, `FLASH_MODEL`,
 `SEMANTIC_SCHOLAR_API_KEY`) and `PINATA_JWT` now belong to that service, not
 to this app.
 
-### EAS + hypercerts (chain)
+### EAS (chain)
 
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` — RainbowKit/WalletConnect project
   ID (client-side)
@@ -54,7 +54,7 @@ to this app.
   attestation workflows in the sibling `evidence/` repo; leave unset in
   `muse/` unless you are running attestation scripts locally
 - `NEXT_PUBLIC_ENV` — `development` or `production`; switches
-  hypercerts/EAS endpoints (see `configs/hypercerts.tsx`, `lib/wagmi.ts`)
+  EAS endpoints (see `configs/eas.ts`, `lib/wagmi.ts`)
 
 ### Feature flags
 

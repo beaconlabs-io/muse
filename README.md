@@ -26,7 +26,7 @@ An LLM-powered evidence search agent semantically matches research evidence agai
 
 ### Blockchain Attestation
 
-Evidence submissions are attested on-chain via [EAS](https://attest.org/) (Ethereum Attestation Service) on Base Sepolia, with content stored on IPFS. Logic models can generate [Hypercerts](https://hypercerts.org/) for transparent impact tracking and measurement.
+Evidence submissions are attested on-chain via [EAS](https://attest.org/) (Ethereum Attestation Service) on Base Sepolia, with content stored on IPFS.
 
 ### Interactive Canvas
 
@@ -52,7 +52,7 @@ A React Flow-powered visual builder for creating and editing logic models. Evide
 │         ▼                    │    └─ Evidence-backed Edges  │  │
 │  ┌──────────────┐            │           │                  │  │
 │  │ IPFS + EAS   │            │           ▼                  │  │
-│  │ Attestation  │            │  Hypercerts (Impact)         │  │
+│  │ Attestation  │            │    └─ IPFS-backed Sharing    │  │
 │  └──────────────┘            └──────────────────────────────┘  │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -81,7 +81,7 @@ bun install
 cp .env.example .env.local
 ```
 
-See [docs/setup.md](./docs/setup.md) for the full variable reference grouped by concern (LLM keys, IPFS, EAS/hypercerts chain, i18n, feature flags) and common troubleshooting.
+See [docs/setup.md](./docs/setup.md) for the full variable reference grouped by concern (LLM keys, IPFS, EAS chain, i18n, feature flags) and common troubleshooting.
 
 ### Development
 
@@ -123,17 +123,14 @@ See [docs/setup.md](./docs/setup.md#docker) for build args vs runtime env, persi
 │   │   ├── canvas/       #     Interactive logic model builder
 │   │   ├── evidence/     #     Evidence browsing and detail pages
 │   │   ├── effects/      #     Effects/outcomes listing
-│   │   ├── hypercerts/   #     Hypercerts integration
 │   │   ├── search/       #     Evidence search and filtering
 │   │   └── strength-of-evidence/  # Scientific Maryland Scale
-│   ├── actions/          #   Server actions
 │   └── api/              #   Server-side API endpoints
 ├── components/           # React components
 │   ├── canvas/           #   React Flow nodes, edges, and controls
 │   ├── evidence/         #   Evidence-specific UI components
-│   ├── hypercerts/       #   Hypercerts components
 │   └── ui/               #   shadcn/ui primitives (auto-generated)
-├── configs/              # EAS and Hypercerts SDK configuration
+├── configs/              # EAS GraphQL endpoint configuration
 ├── i18n/                 # next-intl routing and request config
 ├── messages/             # Translation files (en, ja)
 ├── lib/                  # Shared utilities and configuration

@@ -33,7 +33,6 @@ import {
 import { useRecipe } from "./RecipeContext";
 import type { MetricFormInput, Metric, Card, Arrow, CanvasData, IPFSStorageResult } from "@/types";
 import type { OnNodesChange, OnEdgesChange, Node, Edge, EdgeChange } from "@xyflow/react";
-import { useRouter } from "@/i18n/routing";
 import { computeDagreLayout } from "@/lib/canvas/dagre-layout";
 import {
   cardsToNodes,
@@ -76,7 +75,6 @@ export interface CanvasStateContextValue {
  * Operations that read current state
  */
 export interface StateReadingOperations {
-  saveLogicModel: () => void;
   exportAsJSON: () => void;
   clearAllData: () => void;
   saveCanvasToIPFS: (ogImageCID?: string) => Promise<IPFSStorageResult | null>;
@@ -193,9 +191,6 @@ export function CanvasProvider({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
-  // 4. Get router for saveLogicModel
-  const router = useRouter();
-
   // 5. Auto-save effect (debounced 500ms)
   useEffect(() => {
     if (disableLocalStorage) return;
@@ -231,40 +226,6 @@ export function CanvasProvider({
   }, [nodes, edges, cardMetrics, disableLocalStorage]);
 
   // 6. State-reading callbacks (use refs to avoid dependency on state)
-  const saveLogicModel = useCallback(() => {
-    try {
-      const cards = nodesToCards(nodesRef.current);
-      const arrows = edgesToArrows(edgesRef.current);
-
-      // Validate that canvas is not empty
-      if (cards.length === 0) {
-        toast.error(t("saveEmptyError"), {
-          duration: 5000,
-        });
-        return;
-      }
-
-      const id = `canvas-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-
-      const canvasData: CanvasData = {
-        id,
-        cards,
-        arrows,
-        cardMetrics: cardMetricsRef.current,
-      };
-
-      saveCanvasState({ cards, arrows, cardMetrics: cardMetricsRef.current });
-      sessionStorage.setItem("currentCanvasData", JSON.stringify(canvasData));
-
-      router.push("/canvas/mint-hypercert");
-    } catch (error) {
-      console.error("Failed to prepare canvas data:", error);
-      toast.error(t("prepareError"), {
-        duration: 5000,
-      });
-    }
-  }, [router, t]);
-
   const saveCanvasToIPFS = useCallback(
     async (ogImageCID?: string) => {
       try {
@@ -553,7 +514,6 @@ export function CanvasProvider({
       setEdges,
       onNodesChange,
       onEdgesChange,
-      saveLogicModel,
       exportAsJSON,
       clearAllData,
       saveCanvasToIPFS,
@@ -570,7 +530,6 @@ export function CanvasProvider({
       setEdges,
       onNodesChange,
       onEdgesChange,
-      saveLogicModel,
       exportAsJSON,
       clearAllData,
       saveCanvasToIPFS,

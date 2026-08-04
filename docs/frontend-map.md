@@ -20,11 +20,6 @@ Evidence detail & listing building blocks used by `/[lang]/evidence/**` and
 - `AttestationHistory.tsx` — EAS attestation timeline (reads via `useEAS`)
 - `index.ts` — re-exports
 
-### `components/hypercerts/`
-
-- `HypercertCard.tsx` — hypercert thumbnail + metadata card. Image source
-  is proxied through `/api/hypercerts/[hypercert-id]`.
-
 ### `components/table/`
 
 Generic table primitives shared by evidence and effects list views.
@@ -55,13 +50,6 @@ Thin wrappers — open the folder directly when touching these.
 
 shadcn/ui primitives. Auto-generated; avoid hand-editing (ignored by
 ESLint for that reason).
-
-## Server actions
-
-### `app/actions/hypercerts/`
-
-- `getAllHypercerts.ts` — fetches all hypercerts owned by the current
-  wallet. Called from server components; returns typed results for the UI.
 
 ## Custom hooks
 

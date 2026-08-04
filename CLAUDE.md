@@ -44,7 +44,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 1. **Evidence Collection**: Communities submit research via PRs to the [evidence repository](https://github.com/beaconlabs-io/evidence)
 2. **Evidence Attestation**: GitHub Actions create blockchain attestations (EAS) on PR merge
 3. **Logic Model Creation**: AI-powered agents generate logic models with evidence validation
-4. **Impact Tracking**: Logic models generate hypercerts for measuring social impact
+4. **Impact Tracking**: Evidence-backed logic models as the basis for measuring social impact
 
 ## Key Directories
 
@@ -55,11 +55,9 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `app/[lang]/effects/` - Effects/outcomes listing page
 - `app/[lang]/search/` - Evidence search and filtering
 - `app/[lang]/strength-of-evidence/` - Scientific Maryland Scale reference
-- `app/actions/` - Server actions (hypercerts)
 - `app/api/` - Server-side API endpoints
 - `components/canvas/` - React Flow canvas components (nodes, edges, controls)
 - `components/evidence/` - Evidence-specific UI components
-- `components/hypercerts/` - Hypercerts integration components
 - `components/table/` - Table components
 - `components/tooltip/` - Tooltip components
 - `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
@@ -69,7 +67,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `utils/` - Configuration and helper functions
 - `tests/` - Vitest global setup (e.g., `@testing-library/jest-dom` extensions)
 - `docs/` - Detailed technical documentation (see Additional Documentation section)
-- `configs/` - EAS GraphQL endpoints, Hypercerts SDK configuration
+- `configs/` - EAS GraphQL endpoints
 - `i18n/` - next-intl routing and request configuration
 - `messages/` - Translation files (en.json, ja.json)
 
@@ -87,7 +85,7 @@ Evidence content is provided via the `@beaconlabs-io/evidence` npm package:
 - **i18n**: next-intl (locales: en, ja)
 - **Canvas & Graphs**: React Flow (@xyflow/react) for interactive logic model visualization
 - **AI & Agents**: none in this repository — served by the `muse-backend` service over HTTP
-- **Blockchain**: viem, EAS (Ethereum Attestation Service), Hypercerts SDK, RainbowKit
+- **Blockchain**: viem, EAS (Ethereum Attestation Service), RainbowKit
 - **State Management**: TanStack Query for server state
 - **Content**: MDX with rehype/remark plugins (math, syntax highlighting, TOC)
 - **Forms**: React Hook Form with Zod validation
@@ -117,7 +115,7 @@ For detailed technical information, see:
 
 **Operations**
 
-- `docs/api-routes.md` - HTTP endpoints (workflow/stream, compact, evidence, IPFS, hypercerts)
+- `docs/api-routes.md` - HTTP endpoints (workflow/stream, compact, evidence, IPFS, OG images)
 - `docs/setup.md` - Local setup, environment variables grouped by concern
 - `docs/testing.md` - Vitest conventions, patterns (env stubbing, `it.each`, factories), CI integration
 - `docs/i18n.md` - next-intl wiring and agent output language interaction

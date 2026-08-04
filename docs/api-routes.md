@@ -7,19 +7,18 @@ by the separate `muse-backend` service (Hono on Cloudflare Workers), reached
 through `NEXT_PUBLIC_API_BASE_URL`. The request, response and SSE shapes
 documented here are the contract this app consumes; agent orchestration and
 evidence matching internals live in that repository. What remains under
-`app/api/**` is the hypercert image proxy and the two OG image routes.
+`app/api/**` is the two OG image routes.
 
 ## Routes
 
-| Method | Path                             | Purpose                                                                                                                                                                                                                         | Entry file                                   |
-| ------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| POST   | `/api/workflow/stream`           | Streams logic-model generation events over SSE. Accepts JSON `{goal}` **or** multipart/form-data with an uploaded PDF/image (≤4 MB) forwarded to Gemini 2.5 Pro as multimodal input (see [File upload path](#file-upload-path)) | `muse-backend` `src/routes/workflow.ts`      |
-| POST   | `/api/recipe/stream`             | Streams measurement-recipe generation events over SSE. Input: `{ logicModelTitle, metrics[], locale }`. Wraps `recipeWorkflow` (single-step LLM call) and emits the same step-start / step-finish / _-error / _-complete shape  | `muse-backend` `src/routes/recipe.ts`        |
-| POST   | `/api/compact`                   | Turns a chat history into a logic model, uploads canvas JSON to IPFS, returns canvas URL                                                                                                                                        | `muse-backend` `src/routes/compact.ts`       |
-| POST   | `/api/evidence/search`           | Natural-language evidence search backed by the Conversation Bot Agent; optional external paper lookup                                                                                                                           | `muse-backend` `src/routes/evidence.ts`      |
-| GET    | `/api/hypercerts/[hypercert-id]` | Proxies a hypercert image with 30-minute edge cache                                                                                                                                                                             | `app/api/hypercerts/[hypercert-id]/route.ts` |
-| POST   | `/api/upload-to-ipfs`            | Uploads canvas JSON (Zod-validated) to Pinata IPFS                                                                                                                                                                              | `muse-backend` `src/routes/ipfs.ts`          |
-| POST   | `/api/upload-image-to-ipfs`      | Uploads a ≤2 MB image (multipart) to Pinata IPFS                                                                                                                                                                                | `muse-backend` `src/routes/ipfs.ts`          |
+| Method | Path                        | Purpose                                                                                                                                                                                                                         | Entry file                              |
+| ------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| POST   | `/api/workflow/stream`      | Streams logic-model generation events over SSE. Accepts JSON `{goal}` **or** multipart/form-data with an uploaded PDF/image (≤4 MB) forwarded to Gemini 2.5 Pro as multimodal input (see [File upload path](#file-upload-path)) | `muse-backend` `src/routes/workflow.ts` |
+| POST   | `/api/recipe/stream`        | Streams measurement-recipe generation events over SSE. Input: `{ logicModelTitle, metrics[], locale }`. Wraps `recipeWorkflow` (single-step LLM call) and emits the same step-start / step-finish / _-error / _-complete shape  | `muse-backend` `src/routes/recipe.ts`   |
+| POST   | `/api/compact`              | Turns a chat history into a logic model, uploads canvas JSON to IPFS, returns canvas URL                                                                                                                                        | `muse-backend` `src/routes/compact.ts`  |
+| POST   | `/api/evidence/search`      | Natural-language evidence search backed by the Conversation Bot Agent; optional external paper lookup                                                                                                                           | `muse-backend` `src/routes/evidence.ts` |
+| POST   | `/api/upload-to-ipfs`       | Uploads canvas JSON (Zod-validated) to Pinata IPFS                                                                                                                                                                              | `muse-backend` `src/routes/ipfs.ts`     |
+| POST   | `/api/upload-image-to-ipfs` | Uploads a ≤2 MB image (multipart) to Pinata IPFS                                                                                                                                                                                | `muse-backend` `src/routes/ipfs.ts`     |
 
 ## Auth
 
@@ -28,7 +27,7 @@ Auth is enforced by the backend service, not by this app.
 - `/api/compact` and `/api/evidence/search` are gated by `BOT_API_KEY` when
   it is set there. Callers send an `x-api-key` header. Unset means the routes
   accept unauthenticated requests.
-- The stream, IPFS and hypercert routes are unauthenticated.
+- The stream and IPFS routes are unauthenticated.
 
 ## Request / response schemas
 
