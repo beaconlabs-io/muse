@@ -193,7 +193,7 @@ choose to translate or surface the raw message.
 - File upload constants & MIME whitelist → `lib/constants.ts`
   (`FILE_UPLOAD_ALLOWED_MIME_TYPES`, `FILE_UPLOAD_MAX_BYTES`,
   `VERCEL_REQUEST_BODY_LIMIT_BYTES`)
-- Evidence search internals → `lib/evidence-search-batch.ts` + Conversation Bot Agent
-- External papers → `lib/external-paper-search.ts` + `lib/academic-apis/`
-- IPFS client → `lib/ipfs.ts`
+- Evidence search internals → `muse-backend`, `src/lib/evidence-search-batch.ts` + the conversation bot agent
+- External papers → `muse-backend`, `src/lib/external-paper-search.ts` + `src/lib/academic/`
+- IPFS client → `muse-backend`, `src/lib/pinata.ts` (this app posts through `utils/ipfs.ts`)
 - Error categorization → `lib/workflow-errors.ts`

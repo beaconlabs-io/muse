@@ -68,7 +68,7 @@ tests/
 | `bun run test:run`      | One-shot run; what CI runs                    |
 | `bun run test:coverage` | Generates HTML + JSON coverage in `coverage/` |
 
-Run a single file: `bun run test:run lib/api-auth.test.ts`
+Run a single file: `bun run test:run lib/api-client.test.ts`
 Run by name pattern: `bun run test:run -t "accepts a request"`
 
 ## Patterns
@@ -80,14 +80,14 @@ Because `unstubEnvs: true` is set, stubs auto-reset between tests.
 ```ts
 import { describe, expect, it, vi } from "vitest";
 
-it("keeps API authentication disabled when BOT_API_KEY is not configured", () => {
-  vi.stubEnv("BOT_API_KEY", "");
+it("returns the path unchanged when NEXT_PUBLIC_API_BASE_URL is unset", () => {
+  vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "");
 
-  expect(isAuthEnabled()).toBe(false);
+  expect(apiUrl("/api/compact")).toBe("/api/compact");
 });
 ```
 
-See `lib/api-auth.test.ts` for the full example.
+See `lib/api-client.test.ts` for the full example.
 
 ### Table-driven tests — `it.each`
 

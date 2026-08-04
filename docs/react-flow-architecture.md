@@ -721,8 +721,8 @@ disabled in the other.
 - `lib/canvas/react-flow-utils.ts:70` - `edgesToArrows()` function (preserves externalPapers)
 - `lib/canvas/dagre-layout.ts` - `computeDagreLayout()` (hybrid dagre + longest-path DP)
 - `lib/canvas/layout-helpers.ts` - `estimateCardHeight`, `calculateColumnYsFromHeights`, stage constants
-- `lib/external-paper-search.ts` - External paper search orchestration
-- `lib/academic-apis/semantic-scholar.ts` - Semantic Scholar API client
+- `muse-backend` `src/lib/external-paper-search.ts` - External paper search orchestration
+- `muse-backend` `src/lib/academic/semantic-scholar.ts` - Semantic Scholar API client
 - `lib/recipe-helpers.ts` - Recipe metric collection / title derivation / target-type guard
 - `lib/recipe/storage.ts` - localStorage hydrate/save/clear for `recipeState`
 - `lib/generate-recipe-html.ts` - Self-contained downloadable HTML

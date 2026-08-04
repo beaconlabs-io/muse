@@ -1,9 +1,11 @@
 /**
- * Base-URL indirection for the API routes that migrate to the muse-backend
- * service.
+ * Base URL of the muse-backend service, which serves logic model generation,
+ * recipes, evidence search and IPFS uploads.
  *
- * NEXT_PUBLIC_API_BASE_URL unset → same-origin (the current Next.js routes).
- * Do not set it in production until the backend serves every migrated route.
+ * NEXT_PUBLIC_API_BASE_URL is required: the routes it points at were removed
+ * from this app, so leaving it unset falls back to same-origin and every call
+ * 404s. Being a NEXT_PUBLIC_* variable it is inlined at build time — set it
+ * before building, not at runtime (see the Dockerfile build args).
  */
 export function apiUrl(path: string): string {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";

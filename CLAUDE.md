@@ -64,7 +64,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `components/tooltip/` - Tooltip components
 - `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
 - `hooks/` - Custom React hooks including blockchain integration and SSE workflow streaming (`useWorkflowStream`)
-- `lib/` - Shared utilities, configuration, and academic API clients (`lib/academic-apis/`)
+- `lib/` - Shared utilities, configuration, and the backend API client (`lib/api-client.ts`)
 - `types/` - TypeScript definitions for Evidence, Attestation, graph structures
 - `utils/` - Configuration and helper functions
 - `tests/` - Vitest global setup (e.g., `@testing-library/jest-dom` extensions)

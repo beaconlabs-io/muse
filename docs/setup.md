@@ -46,11 +46,6 @@ LLM keys (`GOOGLE_GENERATIVE_AI_API_KEY`, `MODEL`, `FLASH_MODEL`,
 `SEMANTIC_SCHOLAR_API_KEY`) and `PINATA_JWT` now belong to that service, not
 to this app.
 
-### IPFS (Pinata)
-
-- `PINATA_JWT` — required for `/api/upload-to-ipfs`,
-  `/api/upload-image-to-ipfs`, and the `/api/compact` canvas upload step
-
 ### EAS + hypercerts (chain)
 
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` — RainbowKit/WalletConnect project
@@ -60,12 +55,6 @@ to this app.
   `muse/` unless you are running attestation scripts locally
 - `NEXT_PUBLIC_ENV` — `development` or `production`; switches
   hypercerts/EAS endpoints (see `configs/hypercerts.tsx`, `lib/wagmi.ts`)
-
-### API auth
-
-- `BOT_API_KEY` — when set, `/api/compact` and `/api/evidence/search`
-  require an `x-api-key: <key>` header (timing-safe compared in
-  `lib/api-auth.ts`). Leave unset for unauthenticated local dev.
 
 ### Feature flags
 
@@ -132,12 +121,13 @@ runtime.
 `docker-compose.yml` wires all of the above together:
 
 - Build args sourced from the host shell:
-  `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`,
-  `NEXT_PUBLIC_ENV` (defaults to `production`).
-- Runtime `environment:` for server-side secrets plus `NODE_ENV=production`.
+  `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, `NEXT_PUBLIC_ENV` (defaults to
+  `production`) and `NEXT_PUBLIC_API_BASE_URL`. The last one has to be a build
+  arg: it is inlined into the client bundle, so setting it at runtime leaves
+  the image calling routes this app no longer serves.
+- Runtime `environment:` carries only `NODE_ENV=production`.
 - `env_file: .env.local` — any additional variables in `.env.local` are
-  also loaded at runtime (e.g. `BOT_API_KEY`, `SEMANTIC_SCHOLAR_API_KEY`,
-  `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED`).
+  also loaded at runtime (e.g. `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED`).
 - Port `3000:3000`, `restart: unless-stopped`.
 
 ### Typical flow
@@ -166,11 +156,12 @@ interact.
 
 ## Troubleshooting
 
-- **401 on `/api/compact`** — `BOT_API_KEY` is set server-side but the
-  caller did not send the `x-api-key` header. Either unset the env var or
-  send the header.
-- **"PINATA_JWT environment variable not configured"** — IPFS routes
-  refuse to run without the JWT; set it or stub the upload path.
+- **404 on generation, recipe, evidence search or IPFS upload** —
+  `NEXT_PUBLIC_API_BASE_URL` was unset at build time, so the app is calling
+  same-origin routes that live in the backend now. Rebuild with the variable
+  set; changing it at runtime has no effect.
+- **401 from the backend** — `BOT_API_KEY` is set on the backend but the
+  caller did not send the `x-api-key` header.
 - **Workflow times out after 5 minutes** — raise `WORKFLOW_TIMEOUT_MS` in
-  `lib/constants.ts` (and the matching `maxDuration` in the route) if you
-  are adding longer-running steps.
+  `lib/constants.ts` if you are adding longer-running steps. The client abort
+  is the only limit now; Workers imposes no wall-clock cap.

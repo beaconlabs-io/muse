@@ -197,7 +197,7 @@ The GitHub Actions workflow requires:
 
 Evidence is semantically matched to logic model arrows (causal relationships) using:
 
-1. **LLM-based matching** - Uses `google/gemini-2.5-pro` via `lib/evidence-search-batch.ts`
+1. **LLM-based matching** - Uses `gemini-2.5-pro` via the backend's `src/lib/evidence-search-batch.ts`
 2. **Batch processing** - Single LLM call evaluates all arrows together (not parallel N+1)
 3. **Match criteria**:
    - Intervention in evidence aligns with arrow source
@@ -219,7 +219,7 @@ Evidence is semantically matched to logic model arrows (causal relationships) us
 
 ### Batch search pipeline
 
-`lib/evidence-search-batch.ts` is the single entry point used by both the
+The backend's `src/lib/evidence-search-batch.ts` is the single entry point used by both the
 workflow (`muse-backend`, `src/ai/workflows/logic-model-with-evidence.ts`) and the
 Conversation Bot Agent's tooling. It:
 
@@ -298,8 +298,8 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 - Validation script: `.github/scripts/validate-evidence.ts` (in evidence repository)
 - Type definitions: `types/index.ts` (Zod schemas)
 - Evidence parsing: `lib/evidence.ts`
-- Evidence search: `lib/evidence-search-batch.ts`
-- External paper search: `lib/external-paper-search.ts` (multi-query orchestration, quality ranking, caching)
-- Semantic Scholar client: `lib/academic-apis/semantic-scholar.ts` (fieldsOfStudy/publicationTypes filter with fallback)
-- Query extraction: `lib/academic-apis/extract-search-keywords.ts` (generates 2 queries: keywords + causal)
+- Evidence search: `muse-backend`, `src/lib/evidence-search-batch.ts`
+- External paper search: `muse-backend`, `src/lib/external-paper-search.ts` (multi-query orchestration, quality ranking)
+- Semantic Scholar client: `muse-backend`, `src/lib/academic/semantic-scholar.ts` (fieldsOfStudy/publicationTypes filter with fallback)
+- Query extraction: `muse-backend`, `src/lib/academic/extract-search-keywords.ts` (generates 2 queries: keywords + causal)
 - External search constants: `lib/constants.ts`

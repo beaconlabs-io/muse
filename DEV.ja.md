@@ -250,7 +250,7 @@ strength: 4 (Maryland Scale)
 - ❌ 最大の間違い #4: カウントを満たすために弱い/間接的な接続を作成
 - ❌ 最大の間違い #5: 無効なfrequency値
 
-**3. 外部学術論文検索** (`lib/external-paper-search.ts`)
+**3. 外部学術論文検索** (`muse-backend` の `src/lib/external-paper-search.ts`)
 
 Semantic Scholar APIを使用した外部学術論文検索:
 
@@ -354,7 +354,7 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
   簡略化された出力を返す: `{ canvasData }`（統計はデータから導出、別途追跡なし）
   モジュールプレフィックスと詳細なデバッグ情報を含む包括的なロギング
 
-- `lib/evidence-search-batch.ts`: バッチエビデンス検索関数
+- `muse-backend` の `src/lib/evidence-search-batch.ts`: バッチエビデンス検索関数
   - すべてのエッジに対して単一のLLM呼び出し（N+1パターンを排除）
   - エビデンスメタデータを1回読み込み、すべてのマッチを強化
   - `Record<arrowId, EvidenceMatch[]>`マップを返す
