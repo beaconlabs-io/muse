@@ -3,7 +3,6 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formatHypercertData, TransferRestrictions } from "@hypercerts-org/sdk";
-import { track } from "@vercel/analytics";
 import { format } from "date-fns";
 import { toPng } from "html-to-image";
 import { ArrowLeft, Loader2, CalendarIcon, Trash2 } from "lucide-react";
@@ -304,9 +303,6 @@ export default function MintHypercertPage() {
       try {
         hypercertId = generateHypercertIdFromReceipt(receipt, chain.id);
         logger.info({ hypercertId: hypercertId || "not found" }, "Mint completed");
-        track("Mint completed", {
-          hypercertId: hypercertId || "not found",
-        });
       } catch (error) {
         logger.error(
           { error: error instanceof Error ? error.message : String(error) },
