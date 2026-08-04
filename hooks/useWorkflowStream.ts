@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import type { ErrorCategory } from "@/lib/workflow-errors";
 import type { CanvasData } from "@/types";
 import type { WorkflowSSEEvent } from "@/types/workflow-events";
+import { apiUrl, readSSEEvents } from "@/lib/api-client";
 import { WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
 
 type WorkflowStreamStatus = "idle" | "running" | "success" | "error";
@@ -110,87 +111,57 @@ export function useWorkflowStream() {
                 signal: abortController.signal,
               };
 
-        const response = await fetch("/api/workflow/stream", fetchInit);
+        const response = await fetch(apiUrl("/api/workflow/stream"), fetchInit);
 
         if (!response.ok) {
           const errorBody = await response.json().catch(() => ({}));
           throw new Error((errorBody as Record<string, string>).error || `HTTP ${response.status}`);
         }
 
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error("No response stream");
-        }
+        for await (const event of readSSEEvents<WorkflowSSEEvent>(response)) {
+          switch (event.type) {
+            case "step-start":
+              setState((prev) => ({
+                ...prev,
+                currentStepId: event.stepId,
+              }));
+              setStepEvents((prev) => [...prev, { type: "step-start", stepId: event.stepId }]);
+              break;
 
-        const decoder = new TextDecoder();
-        let buffer = "";
+            case "step-finish":
+              setStepEvents((prev) => [...prev, { type: "step-finish", stepId: event.stepId }]);
+              break;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-
-          // Parse SSE lines
-          const lines = buffer.split("\n\n");
-          buffer = lines.pop() || "";
-
-          for (const chunk of lines) {
-            const dataLine = chunk.split("\n").find((line) => line.startsWith("data: "));
-            if (!dataLine) continue;
-
-            const jsonStr = dataLine.slice(6); // Remove "data: " prefix
-            let event: WorkflowSSEEvent;
-            try {
-              event = JSON.parse(jsonStr) as WorkflowSSEEvent;
-            } catch {
-              continue;
-            }
-
-            switch (event.type) {
-              case "step-start":
-                setState((prev) => ({
-                  ...prev,
-                  currentStepId: event.stepId,
-                }));
-                setStepEvents((prev) => [...prev, { type: "step-start", stepId: event.stepId }]);
-                break;
-
-              case "step-finish":
-                setStepEvents((prev) => [...prev, { type: "step-finish", stepId: event.stepId }]);
-                break;
-
-              case "step-error":
-                setStepEvents((prev) => [
-                  ...prev,
-                  {
-                    type: "step-error",
-                    stepId: event.stepId,
-                    error: event.error,
-                    errorCategory: event.errorCategory,
-                  },
-                ]);
-                break;
-
-              case "workflow-complete":
-                setState((prev) => ({
-                  ...prev,
-                  status: "success",
-                  canvasData: event.canvasData,
-                }));
-                break;
-
-              case "workflow-error":
-                setState((prev) => ({
-                  ...prev,
-                  status: "error",
+            case "step-error":
+              setStepEvents((prev) => [
+                ...prev,
+                {
+                  type: "step-error",
+                  stepId: event.stepId,
                   error: event.error,
-                  errorCategory: event.errorCategory || null,
-                  rawError: event.rawError || null,
-                  failedStepId: event.failedStepId || null,
-                }));
-                break;
-            }
+                  errorCategory: event.errorCategory,
+                },
+              ]);
+              break;
+
+            case "workflow-complete":
+              setState((prev) => ({
+                ...prev,
+                status: "success",
+                canvasData: event.canvasData,
+              }));
+              break;
+
+            case "workflow-error":
+              setState((prev) => ({
+                ...prev,
+                status: "error",
+                error: event.error,
+                errorCategory: event.errorCategory || null,
+                rawError: event.rawError || null,
+                failedStepId: event.failedStepId || null,
+              }));
+              break;
           }
         }
       } catch (err) {
