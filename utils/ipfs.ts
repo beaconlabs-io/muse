@@ -1,4 +1,5 @@
 import { CID } from "multiformats/cid";
+import { apiUrl } from "@/lib/api-client";
 import { MAX_CANVAS_SIZE } from "@/lib/constants";
 import { CanvasData, CanvasDataSchema, IPFSStorageResult } from "@/types";
 
@@ -41,7 +42,7 @@ export async function uploadToIPFS(canvasData: CanvasData): Promise<IPFSStorageR
   try {
     const filename = `canvas-${canvasData.id}.json`;
 
-    const response = await fetch("/api/upload-to-ipfs", {
+    const response = await fetch(apiUrl("/api/upload-to-ipfs"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -110,7 +111,7 @@ export async function uploadImageToIPFS(blob: Blob, filename: string): Promise<s
   formData.append("file", blob, filename);
   formData.append("filename", filename);
 
-  const response = await fetch("/api/upload-image-to-ipfs", {
+  const response = await fetch(apiUrl("/api/upload-image-to-ipfs"), {
     method: "POST",
     body: formData,
   });
