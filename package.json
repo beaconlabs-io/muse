@@ -55,6 +55,7 @@
     "dotenv": "^17.2.3",
     "framer-motion": "^12.42.2",
     "fs": "0.0.1-security",
+    "graphql-request": "^7.2.0",
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
     "html-to-image": "^1.11.13",
