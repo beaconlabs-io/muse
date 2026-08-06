@@ -55,6 +55,20 @@ export const getEvidenceBySlug = cache(
 );
 
 /**
+ * Get evidence frontmatter by slug without compiling MDX.
+ * Use this when only metadata is needed (e.g. OG images): the MDX compile
+ * pipeline pulls in shiki's WASM engine, which cannot start on Workers.
+ */
+export function getEvidenceMetaBySlug(slug: string): Evidence | undefined {
+  const realSlug = slug.replace(/\.mdx$/, "");
+  const bundled = getEvidence(realSlug);
+
+  if (!bundled) return undefined;
+
+  return getEvidenceWithDeployment(realSlug) ?? (bundled.frontmatter as Evidence);
+}
+
+/**
  * Get all evidence with raw content (for search, AI tools)
  * Returns evidence metadata + raw markdown content
  */
