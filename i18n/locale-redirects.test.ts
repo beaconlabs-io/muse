@@ -1,36 +1,44 @@
 import { describe, expect, it } from "vitest";
 import { localeRedirects, prefixlessSource } from "./locale-redirects";
 
-// The path constraint embedded in `prefixlessSource` (the parenthesized
-// pattern of the :path parameter), applied the way path-to-regexp does:
-// anchored against the full path segment string.
-const pathConstraint = new RegExp(`^(?:${prefixlessSource.slice("/:path(".length, -1)})$`);
+// Approximate how path-to-regexp expands `prefixlessSource`
+// (`/:path(<constraint>)/:rest*`): the constrained first segment followed by
+// an optional wildcard remainder, anchored against the full pathname.
+const constraint = prefixlessSource.slice("/:path(".length, prefixlessSource.indexOf(")/:rest*"));
+const sourceRegex = new RegExp(`^/(?:${constraint})(?:/.*)?$`);
 
-describe("prefixlessSource path constraint", () => {
-  it.each(["canvas", "search", "evidence", "canvas/abc123", "strength-of-evidence"])(
+describe("prefixlessSource", () => {
+  it.each(["/canvas", "/search", "/evidence", "/canvas/abc123", "/strength-of-evidence"])(
     "matches the prefix-less path %s",
     (path) => {
-      expect(pathConstraint.test(path)).toBe(true);
+      expect(sourceRegex.test(path)).toBe(true);
     },
   );
 
   it.each([
-    "en",
-    "ja",
-    "en/canvas",
-    "ja/evidence/slug",
-    "api/og/canvas",
-    "_next/static/chunk.js",
-    "_vercel/insights",
-    "favicon.ico",
-    ".well-known/security.txt",
+    "/en",
+    "/ja",
+    "/en/canvas",
+    "/ja/evidence/slug",
+    "/api/og/canvas",
+    "/_next/static/chunk.js",
+    "/_vercel/insights",
+    "/favicon.ico",
+    "/.well-known/security.txt",
+    "/docs/file.pdf",
   ])("skips %s", (path) => {
-    expect(pathConstraint.test(path)).toBe(false);
+    expect(sourceRegex.test(path)).toBe(false);
   });
 
   it("still matches paths that merely start with a locale string", () => {
-    expect(pathConstraint.test("enigma")).toBe(true);
-    expect(pathConstraint.test("javanese")).toBe(true);
+    expect(sourceRegex.test("/enigma")).toBe(true);
+    expect(sourceRegex.test("/javanese")).toBe(true);
+  });
+
+  it("keeps the first segment free of slashes for destination substitution", () => {
+    // OpenNext compiles the destination with path-to-regexp, which rejects
+    // parameter values containing "/" — the wildcard :rest* carries them.
+    expect(constraint.endsWith("[^/]+")).toBe(true);
   });
 });
 
@@ -56,8 +64,8 @@ describe("localeRedirects", () => {
     ]);
   });
 
-  it("carries the path through for prefix-less sources", () => {
+  it("carries the full path through for prefix-less sources", () => {
     const fallback = redirects.find((r) => r.source === prefixlessSource && !r.has);
-    expect(fallback?.destination).toBe("/en/:path");
+    expect(fallback?.destination).toBe("/en/:path/:rest*");
   });
 });
