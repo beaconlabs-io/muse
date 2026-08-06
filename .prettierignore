@@ -1,4 +1,5 @@
 .next
+.open-next
 node_modules
 bun.lock
 public
