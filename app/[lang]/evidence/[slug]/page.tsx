@@ -1,5 +1,6 @@
 import "highlight.js/styles/github-dark.css";
 import { notFound } from "next/navigation";
+import { getAllEvidenceSlugs } from "@beaconlabs-io/evidence/content";
 import { extractEffectData } from "@/components/effect-icons";
 import {
   EvidenceHeader,
@@ -12,6 +13,15 @@ import {
 } from "@/components/evidence";
 import { Separator } from "@/components/ui/separator";
 import { getEvidenceBySlug } from "@/lib/evidence";
+
+// Pre-render every evidence page at build time. Evidence content is bundled
+// from the npm package, so the slug list is complete at build time — and the
+// MDX compile (shiki WASM) cannot run on the Workers runtime anyway.
+export function generateStaticParams() {
+  return getAllEvidenceSlugs().map((slug) => ({ slug }));
+}
+
+export const dynamicParams = false;
 
 export default async function EvidencePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
