@@ -1,5 +1,6 @@
 import withMDX from "@next/mdx";
 import createNextIntlPlugin from "next-intl/plugin";
+import { localeRedirects } from "./i18n/locale-redirects";
 import type { NextConfig } from "next";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
@@ -7,6 +8,9 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
   output: "standalone",
+  async redirects() {
+    return localeRedirects();
+  },
   experimental: {
     mdxRs: true,
   },

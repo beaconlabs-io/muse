@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LOCALE_COOKIE } from "@/i18n/config";
 import { usePathname, useRouter, routing } from "@/i18n/routing";
 
 const localeLabels: Record<string, string> = {
@@ -22,6 +23,9 @@ export function LanguageSwitcher() {
   const pathname = usePathname();
 
   const handleLocaleChange = (newLocale: string) => {
+    // The next-intl proxy used to persist this cookie; without middleware the
+    // locale redirects in next.config read it to keep an explicit choice.
+    document.cookie = `${LOCALE_COOKIE}=${newLocale}; path=/; max-age=31536000; samesite=lax`;
     router.replace(pathname, { locale: newLocale as (typeof routing.locales)[number] });
   };
 
