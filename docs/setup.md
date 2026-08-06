@@ -105,8 +105,10 @@ Multi-stage build (`Dockerfile`):
 1. **deps** — `oven/bun:1.3.5-alpine` installs dependencies from
    `package.json` + `bun.lock` (`--frozen-lockfile`).
 2. **builder** — copies the source, bakes `NEXT_PUBLIC_*` build args into
-   the client bundle, then runs `bun run build` (Next.js `standalone`
-   output).
+   the client bundle, then runs `bun run build`. The stage sets
+   `NEXT_OUTPUT=standalone` to opt in to the Next.js `standalone` output —
+   outside Docker the build uses the default output, which the OpenNext
+   (Cloudflare Workers) build requires.
 3. **runner** — `node:22-alpine` with only `public/`, `.next/standalone`,
    and `.next/static` copied in. Runs as the non-root user `nextjs:nodejs`
    (uid 1001) on port 3000 via `node server.js`.

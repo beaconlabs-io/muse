@@ -23,6 +23,9 @@ ENV NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
 ENV NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV}
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
+# Opt in to the standalone server bundle; the default output stays clean for
+# the OpenNext (Cloudflare Workers) build.
+ENV NEXT_OUTPUT=standalone
 
 RUN bun run build
 
