@@ -150,6 +150,38 @@ docker compose logs -f app
   values listed there to influence the client bundle unless they are
   also passed as build args.
 
+## Cloudflare Workers (OpenNext)
+
+The app can be built into a Cloudflare Worker with
+[`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare). Config lives
+in `open-next.config.ts` (defaults — no ISR, so no caching bindings) and
+`wrangler.jsonc` (`nodejs_compat`, static assets, observability).
+
+```bash
+bun run build:worker   # opennextjs-cloudflare build → .open-next/
+bun run preview        # build + run the Worker locally (wrangler dev)
+```
+
+Notes:
+
+- **`NEXT_PUBLIC_*` values are baked in at build time**, exactly as in the
+  Docker build: the build reads `.env.local` / shell env, so each target
+  environment (staging/production) needs its own build. CI wiring lives
+  in #299.
+- The build uses the default Next.js output — do not set
+  `NEXT_OUTPUT=standalone` (that is only for the Docker image).
+- Prerendered pages (e.g. evidence detail pages) are served from the
+  static assets cache, which `opennextjs-cloudflare preview` / `deploy`
+  populate automatically. If you run plain `wrangler dev` against an
+  existing build, run `bunx opennextjs-cloudflare populateCache local`
+  first — otherwise those pages 404.
+- The MDX compile pipeline (shiki) cannot run on the Workers runtime
+  (WASM instantiation is disallowed), so evidence MDX must stay
+  build-time-only: detail pages are SSG'd and the OG route reads only
+  frontmatter.
+- Check the Worker bundle against the 10 MiB gzip limit with
+  `bunx wrangler deploy --dry-run`.
+
 ## i18n
 
 Locales are resolved at the URL level (`/en`, `/ja`). See

@@ -20,6 +20,12 @@ AI processing (logic model generation, recipes, evidence search) lives in the se
 `muse-backend` service (Hono on Cloudflare Workers), not in this repository. Point the frontend at
 it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 
+### Cloudflare Workers (OpenNext)
+
+- `bun run build:worker` - Build the app into a Worker with `@opennextjs/cloudflare` (output: `.open-next/`)
+- `bun run preview` - Build and run the Worker locally via `wrangler dev`
+- Config: `open-next.config.ts` (defaults, no caching bindings) + `wrangler.jsonc`; see `docs/setup.md`
+
 ### Docker
 
 - `docker compose build` - Build the production image (multi-stage Bun→Node; bakes `NEXT_PUBLIC_*` build args)
