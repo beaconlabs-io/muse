@@ -2,8 +2,6 @@ import { BASE_URL } from "@/lib/constants";
 import { CanvasDataSchema } from "@/types";
 import { isValidCID, parseCID } from "@/utils/ipfs";
 
-export const runtime = "edge";
-
 const IPFS_GATEWAY_TIMEOUT = 5000; // 5 seconds
 
 /**
