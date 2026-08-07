@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "muse-frontend",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+  // Staging/production environments and deploy wiring are added in #299.
+  // No KV / R2 / D1 / Durable Object bindings on purpose: the app uses no ISR,
+  // so prerendered pages are served read-only from the static assets cache
+  // (see open-next.config.ts). Deploy with `bun run deploy:worker`, not plain
+  // `wrangler deploy`, which never populates that cache.
+}

@@ -9,9 +9,11 @@ type LocaleRedirect = {
 
 /**
  * Matches any path without a locale prefix, skipping API routes, Next.js /
- * Vercel internals, and files (paths containing a dot).
+ * Vercel internals, and files (paths containing a dot). The first segment is
+ * captured separately from a `:rest*` wildcard because OpenNext's routing
+ * layer cannot substitute a parameter containing "/" into the destination.
  */
-export const prefixlessSource = `/:path((?!(?:${locales.join("|")})(?:/|$)|api|_next|_vercel|.*\\..*).+)`;
+export const prefixlessSource = `/:path((?!(?:${locales.join("|")})(?:/|$)|api|_next|_vercel|.*\\..*)[^/]+)/:rest*`;
 
 /**
  * Locale redirects for prefix-less paths, evaluated in order. They replace
@@ -21,7 +23,7 @@ export const prefixlessSource = `/:path((?!(?:${locales.join("|")})(?:/|$)|api|_
  */
 export function localeRedirects(): LocaleRedirect[] {
   return ["/", prefixlessSource].flatMap((source) => {
-    const to = (locale: string) => (source === "/" ? `/${locale}` : `/${locale}/:path`);
+    const to = (locale: string) => (source === "/" ? `/${locale}` : `/${locale}/:path/:rest*`);
 
     return [
       ...locales.map((locale) => ({
@@ -32,7 +34,10 @@ export function localeRedirects(): LocaleRedirect[] {
       })),
       {
         source,
-        has: [{ type: "header" as const, key: "accept-language", value: "ja.*" }],
+        // The value carries its own "^": Next anchors it as `^<value>$`, but
+        // OpenNext's router tests it unanchored, where a bare "ja.*" would
+        // also match an "en-US,en;q=0.9,ja;q=0.8" header.
+        has: [{ type: "header" as const, key: "accept-language", value: "^ja.*" }],
         destination: to("ja"),
         permanent: false,
       },

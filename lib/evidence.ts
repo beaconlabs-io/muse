@@ -16,15 +16,33 @@ import remarkMath from "remark-math";
 import type { Evidence } from "@beaconlabs-io/evidence";
 
 /**
+ * The slugs that actually exist. `getEvidence` indexes a plain object, so an
+ * unchecked lookup resolves `Object.prototype` member names (`toString`,
+ * `constructor`, `__proto__`, …) to inherited values instead of `undefined` —
+ * which would defeat every `if (!evidence)` not-found guard downstream.
+ */
+const knownSlugs = new Set(getAllEvidenceSlugs());
+
+/** Normalize a URL slug, returning undefined when it is not real evidence. */
+function resolveSlug(slug: string): string | undefined {
+  const realSlug = slug.replace(/\.mdx$/, "");
+  return knownSlugs.has(realSlug) ? realSlug : undefined;
+}
+
+/**
  * Get evidence by slug with compiled MDX content
  * Uses pre-bundled content from npm package, compiles MDX at runtime for rich rendering
  */
 export const getEvidenceBySlug = cache(
   async (slug: string): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
-    const realSlug = slug.replace(/\.mdx$/, "");
-    const bundled = getEvidence(realSlug);
+    const realSlug = resolveSlug(slug);
 
-    if (!bundled) return undefined;
+    if (!realSlug) return undefined;
+
+    const bundled = getEvidence(realSlug);
+    const meta = getEvidenceMetaBySlug(realSlug);
+
+    if (!bundled || !meta) return undefined;
 
     // Compile raw MDX content with plugins for rich rendering
     const { content } = await compileMDX({
@@ -44,15 +62,30 @@ export const getEvidenceBySlug = cache(
       },
     });
 
-    // Get deployment metadata merged with frontmatter
-    const evidenceWithDeployment = getEvidenceWithDeployment(realSlug);
-
-    return {
-      meta: evidenceWithDeployment ?? (bundled.frontmatter as Evidence),
-      content,
-    };
+    return { meta, content };
   },
 );
+
+/**
+ * Get evidence frontmatter by slug without compiling MDX.
+ * Use this when only metadata is needed (e.g. OG images): the MDX compile
+ * pipeline pulls in shiki's WASM engine, which cannot start on Workers.
+ *
+ * This is the single source of the metadata contract — the detail page reads
+ * it through `getEvidenceBySlug` — so the page and its OG image cannot drift.
+ */
+export function getEvidenceMetaBySlug(slug: string): Evidence | undefined {
+  const realSlug = resolveSlug(slug);
+
+  if (!realSlug) return undefined;
+
+  const bundled = getEvidence(realSlug);
+
+  if (!bundled) return undefined;
+
+  // Deployment metadata merged with frontmatter
+  return getEvidenceWithDeployment(realSlug) ?? (bundled.frontmatter as Evidence);
+}
 
 /**
  * Get all evidence with raw content (for search, AI tools)
