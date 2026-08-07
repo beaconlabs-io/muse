@@ -34,7 +34,10 @@ export function localeRedirects(): LocaleRedirect[] {
       })),
       {
         source,
-        has: [{ type: "header" as const, key: "accept-language", value: "ja.*" }],
+        // The value carries its own "^": Next anchors it as `^<value>$`, but
+        // OpenNext's router tests it unanchored, where a bare "ja.*" would
+        // also match an "en-US,en;q=0.9,ja;q=0.8" header.
+        has: [{ type: "header" as const, key: "accept-language", value: "^ja.*" }],
         destination: to("ja"),
         permanent: false,
       },

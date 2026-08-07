@@ -153,34 +153,50 @@ docker compose logs -f app
 ## Cloudflare Workers (OpenNext)
 
 The app can be built into a Cloudflare Worker with
-[`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare). Config lives
-in `open-next.config.ts` (defaults — no ISR, so no caching bindings) and
-`wrangler.jsonc` (`nodejs_compat`, static assets, observability).
+[`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare). `wrangler.jsonc`
+sets `nodejs_compat`, static assets and observability; `open-next.config.ts`
+declares no KV / R2 / D1 / Durable Object bindings but does override the
+incremental cache with `staticAssetsIncrementalCache`, a read-only cache that
+serves prerendered pages out of the uploaded static assets.
 
 ```bash
-bun run build:worker   # opennextjs-cloudflare build → .open-next/
-bun run preview        # build + run the Worker locally (wrangler dev)
+bun run build:worker    # opennextjs-cloudflare build → .open-next/
+bun run preview         # build + run the Worker locally (wrangler dev)
+bun run deploy:worker   # build + populate the cache + deploy
 ```
 
 Notes:
 
-- **`NEXT_PUBLIC_*` values are baked in at build time**, exactly as in the
-  Docker build: the build reads `.env.local` / shell env, so each target
-  environment (staging/production) needs its own build. CI wiring lives
-  in #299.
+- **Never build with production server secrets in the environment.** Unlike
+  the Docker image — which bakes only `NEXT_PUBLIC_*` build args and reads
+  server secrets from `.env.local` at container start — the OpenNext build
+  writes _every_ variable it sees into
+  `.open-next/cloudflare/next-env.mjs`, which the Worker imports and wrangler
+  uploads as part of the script. A local `.env.local` containing
+  `PRIVATE_KEY`, `PINATA_JWT` or any API key therefore ships those values in
+  plaintext inside the deployed Worker. Keep server secrets out of the build
+  environment and supply them at runtime as Cloudflare secrets instead.
+- **`NEXT_PUBLIC_*` values are baked in at build time**, as in the Docker
+  build, so each target environment (staging/production) needs its own build.
+  CI wiring lives in #299.
 - The build uses the default Next.js output — do not set
   `NEXT_OUTPUT=standalone` (that is only for the Docker image).
-- Prerendered pages (e.g. evidence detail pages) are served from the
-  static assets cache, which `opennextjs-cloudflare preview` / `deploy`
-  populate automatically. If you run plain `wrangler dev` against an
-  existing build, run `bunx opennextjs-cloudflare populateCache local`
-  first — otherwise those pages 404.
+- **Deploy through `opennextjs-cloudflare`, not plain `wrangler deploy`.**
+  Prerendered pages (the evidence detail pages) live in the static assets
+  cache, which only `opennextjs-cloudflare deploy` / `preview` / `upload`
+  populate. `wrangler deploy` skips that step, and because the pages set
+  `dynamicParams = false` the miss cannot fall back to on-demand rendering —
+  every evidence page 404s while the rest of the site looks healthy. Same for
+  running plain `wrangler dev` against an existing build: run
+  `bunx opennextjs-cloudflare populateCache local` first.
 - The MDX compile pipeline (shiki) cannot run on the Workers runtime
   (WASM instantiation is disallowed), so evidence MDX must stay
   build-time-only: detail pages are SSG'd and the OG route reads only
   frontmatter.
-- Check the Worker bundle against the 10 MiB gzip limit with
-  `bunx wrangler deploy --dry-run`.
+- Check the Worker bundle size with `bunx wrangler deploy --dry-run`. The
+  limit is 3 MiB gzip on Workers Free and 10 MiB on Workers Paid; the current
+  bundle is ~6.8 MiB gzip, so this app **requires a paid plan** and has
+  roughly 3 MiB of headroom left.
 
 ## i18n
 

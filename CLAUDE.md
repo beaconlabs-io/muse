@@ -24,7 +24,9 @@ it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 
 - `bun run build:worker` - Build the app into a Worker with `@opennextjs/cloudflare` (output: `.open-next/`)
 - `bun run preview` - Build and run the Worker locally via `wrangler dev`
-- Config: `open-next.config.ts` (defaults, no caching bindings) + `wrangler.jsonc`; see `docs/setup.md`
+- `bun run deploy:worker` - Build, populate the prerender cache, and deploy (plain `wrangler deploy` skips the cache and 404s the evidence pages)
+- Config: `open-next.config.ts` (no caching bindings, but overrides the incremental cache with `staticAssetsIncrementalCache`) + `wrangler.jsonc`; see `docs/setup.md`
+- The build inlines every env var it sees — including server secrets — into the uploaded Worker; see `docs/setup.md`
 
 ### Docker
 

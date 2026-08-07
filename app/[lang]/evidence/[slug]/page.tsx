@@ -12,6 +12,7 @@ import {
   AttestationHistory,
 } from "@/components/evidence";
 import { Separator } from "@/components/ui/separator";
+import { BASE_URL } from "@/lib/constants";
 import { getEvidenceBySlug } from "@/lib/evidence";
 
 // Pre-render every evidence page at build time. Evidence content is bundled
@@ -88,7 +89,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       })
     : "Explore evidence on MUSE";
 
-  const ogImageUrl = `/api/og/evidence?slug=${encodeURIComponent(slug)}`;
+  // Absolute: the page is prerendered, and with no `metadataBase` set Next
+  // would freeze a relative URL against its http://localhost:3000 fallback.
+  const ogImageUrl = `${BASE_URL}/api/og/evidence?slug=${encodeURIComponent(slug)}`;
 
   return {
     title,
