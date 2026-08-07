@@ -167,18 +167,22 @@ bun run deploy:worker   # build + populate the cache + deploy
 
 Notes:
 
-- **Never build with production server secrets in the environment.** Unlike
-  the Docker image — which bakes only `NEXT_PUBLIC_*` build args and reads
-  server secrets from `.env.local` at container start — the OpenNext build
-  writes _every_ variable it sees into
-  `.open-next/cloudflare/next-env.mjs`, which the Worker imports and wrangler
-  uploads as part of the script. A local `.env.local` containing
-  `PRIVATE_KEY`, `PINATA_JWT` or any API key therefore ships those values in
-  plaintext inside the deployed Worker. Keep server secrets out of the build
-  environment and supply them at runtime as Cloudflare secrets instead.
+- **Never put a server secret in a `.env*` file.** The OpenNext build copies
+  every variable from `.env`, `.env.<mode>`, `.env.local` and
+  `.env.<mode>.local` into `.open-next/cloudflare/next-env.mjs`, which the
+  Worker imports and wrangler bundles into the uploaded script. It does not
+  filter by prefix, so a `.env.local` holding `PRIVATE_KEY` or `PINATA_JWT`
+  ships those values in plaintext to everyone who can read the Worker source.
+  Note that the build reads the **files**, not the ambient shell environment,
+  so a CI job passing secrets through `env:` is unaffected. Pass server values
+  with `wrangler secret put` (and `.dev.vars` locally), which keeps them out of
+  the bundle. Setting a Worker secret does not undo a bake: at runtime the
+  secret wins, but the plaintext literal stays in the script either way.
 - **`NEXT_PUBLIC_*` values are baked in at build time**, as in the Docker
   build, so each target environment (staging/production) needs its own build.
-  CI wiring lives in #299.
+  This app reads only `NEXT_PUBLIC_*` and `NODE_ENV`, so its `.env*` files hold
+  nothing that is not already public in the client bundle. CI wiring lives
+  in #299.
 - The build uses the default Next.js output — do not set
   `NEXT_OUTPUT=standalone` (that is only for the Docker image).
 - **Deploy through `opennextjs-cloudflare`, not plain `wrangler deploy`.**

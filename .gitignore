@@ -33,8 +33,18 @@ yarn-error.log*
 
 
 # env files (can opt-in for committing if needed)
+# The OpenNext build bakes every one of these into the Worker script, so keep
+# server secrets out of them entirely — see docs/setup.md.
 .env
 .env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# wrangler local secrets
+.dev.vars
+.dev.vars.*
 
 # vercel
 .vercel

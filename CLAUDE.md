@@ -26,7 +26,7 @@ it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 - `bun run preview` - Build and run the Worker locally via `wrangler dev`
 - `bun run deploy:worker` - Build, populate the prerender cache, and deploy (plain `wrangler deploy` skips the cache and 404s the evidence pages)
 - Config: `open-next.config.ts` (no caching bindings, but overrides the incremental cache with `staticAssetsIncrementalCache`) + `wrangler.jsonc`; see `docs/setup.md`
-- The build inlines every env var it sees — including server secrets — into the uploaded Worker; see `docs/setup.md`
+- The build inlines every variable from the `.env*` files — including server secrets — into the uploaded Worker. Keep `.env*` to `NEXT_PUBLIC_*` only and pass server values via `wrangler secret put`; see `docs/setup.md`
 
 ### Docker
 

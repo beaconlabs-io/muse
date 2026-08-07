@@ -12,5 +12,8 @@
     "enabled": true
   }
   // Staging/production environments and deploy wiring are added in #299.
-  // No caching bindings on purpose: the app uses no ISR (see open-next.config.ts).
+  // No KV / R2 / D1 / Durable Object bindings on purpose: the app uses no ISR,
+  // so prerendered pages are served read-only from the static assets cache
+  // (see open-next.config.ts). Deploy with `bun run deploy:worker`, not plain
+  // `wrangler deploy`, which never populates that cache.
 }
