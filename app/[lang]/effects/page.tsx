@@ -1,9 +1,24 @@
 import React from "react";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EffectIcons, effectData, effectTranslationKeys } from "@/components/effect-icons";
 import { Separator } from "@/components/ui/separator";
+import type { Metadata } from "next";
+import { localeAlternates } from "@/lib/locale-alternates";
 
-export default async function EffectsPage() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  return { alternates: localeAlternates(lang, "/effects") };
+}
+
+export default async function EffectsPage({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params;
+  // The layout also calls this, but layouts and pages render in parallel, so a
+  // page reading translations must seed the locale itself.
+  setRequestLocale(lang);
   const t = await getTranslations("effects");
 
   return (

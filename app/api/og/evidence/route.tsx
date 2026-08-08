@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { BASE_URL } from "@/lib/constants";
-import { getEvidenceBySlug } from "@/lib/evidence";
+import { getEvidenceMetaBySlug } from "@/lib/evidence";
 
 export async function GET(request: Request) {
   try {
@@ -11,13 +11,13 @@ export async function GET(request: Request) {
       return new Response("Slug parameter required", { status: 400 });
     }
 
-    const evidence = await getEvidenceBySlug(slug);
+    // Frontmatter only — the image never renders the MDX body, and the MDX
+    // compile pipeline cannot run on Workers (shiki WASM).
+    const meta = getEvidenceMetaBySlug(slug);
 
-    if (!evidence) {
+    if (!meta) {
       return new Response("Evidence not found", { status: 404 });
     }
-
-    const { meta } = evidence;
 
     const logoUrl = `${BASE_URL}/beaconlabs.png`;
 

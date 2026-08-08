@@ -105,8 +105,10 @@ Multi-stage build (`Dockerfile`):
 1. **deps** — `oven/bun:1.3.5-alpine` installs dependencies from
    `package.json` + `bun.lock` (`--frozen-lockfile`).
 2. **builder** — copies the source, bakes `NEXT_PUBLIC_*` build args into
-   the client bundle, then runs `bun run build` (Next.js `standalone`
-   output).
+   the client bundle, then runs `bun run build`. The stage sets
+   `NEXT_OUTPUT=standalone` to opt in to the Next.js `standalone` output —
+   outside Docker the build uses the default output, which the OpenNext
+   (Cloudflare Workers) build requires.
 3. **runner** — `node:22-alpine` with only `public/`, `.next/standalone`,
    and `.next/static` copied in. Runs as the non-root user `nextjs:nodejs`
    (uid 1001) on port 3000 via `node server.js`.
@@ -147,6 +149,58 @@ docker compose logs -f app
 - **`.env.local` is a runtime-only file** for this setup. Do not expect
   values listed there to influence the client bundle unless they are
   also passed as build args.
+
+## Cloudflare Workers (OpenNext)
+
+The app can be built into a Cloudflare Worker with
+[`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare). `wrangler.jsonc`
+sets `nodejs_compat`, static assets and observability; `open-next.config.ts`
+declares no KV / R2 / D1 / Durable Object bindings but does override the
+incremental cache with `staticAssetsIncrementalCache`, a read-only cache that
+serves prerendered pages out of the uploaded static assets.
+
+```bash
+bun run build:worker    # opennextjs-cloudflare build → .open-next/
+bun run preview         # build + run the Worker locally (wrangler dev)
+bun run deploy:worker   # build + populate the cache + deploy
+```
+
+Notes:
+
+- **Never put a server secret in a `.env*` file.** The OpenNext build copies
+  every variable from `.env`, `.env.<mode>`, `.env.local` and
+  `.env.<mode>.local` into `.open-next/cloudflare/next-env.mjs`, which the
+  Worker imports and wrangler bundles into the uploaded script. It does not
+  filter by prefix, so a `.env.local` holding `PRIVATE_KEY` or `PINATA_JWT`
+  ships those values in plaintext to everyone who can read the Worker source.
+  Note that the build reads the **files**, not the ambient shell environment,
+  so a CI job passing secrets through `env:` is unaffected. Pass server values
+  with `wrangler secret put` (and `.dev.vars` locally), which keeps them out of
+  the bundle. Setting a Worker secret does not undo a bake: at runtime the
+  secret wins, but the plaintext literal stays in the script either way.
+- **`NEXT_PUBLIC_*` values are baked in at build time**, as in the Docker
+  build, so each target environment (staging/production) needs its own build.
+  This app reads only `NEXT_PUBLIC_*` and `NODE_ENV`, so its `.env*` files hold
+  nothing that is not already public in the client bundle. CI wiring lives
+  in #299.
+- The build uses the default Next.js output — do not set
+  `NEXT_OUTPUT=standalone` (that is only for the Docker image).
+- **Deploy through `opennextjs-cloudflare`, not plain `wrangler deploy`.**
+  Prerendered pages (the evidence detail pages) live in the static assets
+  cache, which only `opennextjs-cloudflare deploy` / `preview` / `upload`
+  populate. `wrangler deploy` skips that step, and because the pages set
+  `dynamicParams = false` the miss cannot fall back to on-demand rendering —
+  every evidence page 404s while the rest of the site looks healthy. Same for
+  running plain `wrangler dev` against an existing build: run
+  `bunx opennextjs-cloudflare populateCache local` first.
+- The MDX compile pipeline (shiki) cannot run on the Workers runtime
+  (WASM instantiation is disallowed), so evidence MDX must stay
+  build-time-only: detail pages are SSG'd and the OG route reads only
+  frontmatter.
+- Check the Worker bundle size with `bunx wrangler deploy --dry-run`. The
+  limit is 3 MiB gzip on Workers Free and 10 MiB on Workers Paid; the current
+  bundle is ~6.8 MiB gzip, so this app **requires a paid plan** and has
+  roughly 3 MiB of headroom left.
 
 ## i18n
 
