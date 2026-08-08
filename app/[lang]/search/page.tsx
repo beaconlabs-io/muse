@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 import { EvidenceGrid } from "./evidence-grid";
 import { SearchFilters } from "./search-filters";
+import type { Metadata } from "next";
 import { getAllEvidenceMeta } from "@/lib/evidence";
 import { filterEvidence } from "@/lib/evidence-filters";
+import { localeAlternates } from "@/lib/locale-alternates";
 
 interface SearchPageProps {
   searchParams: Promise<{
@@ -10,6 +12,15 @@ interface SearchPageProps {
     effects?: string;
     strength?: string;
   }>;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  return { alternates: localeAlternates(lang, "/search") };
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {

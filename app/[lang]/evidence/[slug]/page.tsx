@@ -14,6 +14,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { BASE_URL } from "@/lib/constants";
 import { getEvidenceBySlug } from "@/lib/evidence";
+import { localeAlternates } from "@/lib/locale-alternates";
 
 // Pre-render every evidence page at build time. Evidence content is bundled
 // from the npm package, so the slug list is complete at build time — and the
@@ -68,14 +69,20 @@ export default async function EvidencePage({ params }: { params: Promise<{ slug:
   );
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string; slug: string }>;
+}) {
+  const { lang, slug } = await params;
   const response = await getEvidenceBySlug(slug);
+  const alternates = localeAlternates(lang, `/evidence/${slug}`);
 
   if (!response) {
     return {
       title: "Evidence not found - MUSE",
       description: "The requested evidence could not be found.",
+      alternates,
     };
   }
 
@@ -96,6 +103,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title,
     description,
+    alternates,
     openGraph: {
       title,
       description,

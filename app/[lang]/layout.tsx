@@ -6,6 +6,7 @@ import "../globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import { Toaster } from "sonner";
 import { Header } from "@/components/header";
+import { LocaleCookieSync } from "@/components/locale-cookie-sync";
 import Providers from "./providers";
 import { locales, type Locale } from "@/i18n/routing";
 import { BASE_URL } from "@/lib/constants";
@@ -68,6 +69,7 @@ export default async function LocaleLayout({
     <html lang={lang}>
       <body>
         <NextIntlClientProvider messages={messages}>
+          <LocaleCookieSync locale={lang} />
           <Providers>
             <Header />
             {children}

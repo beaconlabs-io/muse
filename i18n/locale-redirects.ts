@@ -36,8 +36,16 @@ export function localeRedirects(): LocaleRedirect[] {
         source,
         // The value carries its own "^": Next anchors it as `^<value>$`, but
         // OpenNext's router tests it unanchored, where a bare "ja.*" would
-        // also match an "en-US,en;q=0.9,ja;q=0.8" header.
-        has: [{ type: "header" as const, key: "accept-language", value: "^ja.*" }],
+        // also match an "en-US,en;q=0.9,ja;q=0.8" header. The character
+        // classes stand in for a case-insensitive flag, which neither runtime
+        // applies to this value — "JA-JP" is a legal header.
+        //
+        // This is a first-tag test, not the q-value negotiation the proxy did:
+        // a client that lists a non-Japanese language first still lands on the
+        // default locale. LocaleCookieSync pins the cookie on the first
+        // localized page view, so the approximation only decides the very
+        // first prefix-less request.
+        has: [{ type: "header" as const, key: "accept-language", value: "^[jJ][aA].*" }],
         destination: to("ja"),
         permanent: false,
       },

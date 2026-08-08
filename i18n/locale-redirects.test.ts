@@ -109,8 +109,12 @@ describe("localeRedirects", () => {
       ["ja", true],
       ["ja,en;q=0.9", true],
       ["ja-JP,ja;q=0.9,en;q=0.8", true],
+      // Neither runtime compiles this value case-insensitively.
+      ["JA-JP", true],
+      ["Ja-JP,ja;q=0.9", true],
       ["en-US,en;q=0.9,ja;q=0.8", false],
       ["en-US,en;q=0.9", false],
+      ["EN-US,en;q=0.9", false],
     ])("matches %j as %s on both runtimes", (header, expected) => {
       expect(new RegExp(`^${value}$`).test(header)).toBe(expected); // Next
       expect(new RegExp(value).test(header)).toBe(expected); // OpenNext
