@@ -12,6 +12,7 @@ export default [
       "dist/**",
       ".next/**",
       ".open-next/**",
+      ".wrangler/**",
       ".mastra/**",
       "public/**",
       "**/components/ui/**",
