@@ -10,9 +10,12 @@ const nextConfig: NextConfig = {
   // The standalone server bundle is only needed by the Docker image; OpenNext
   // (Cloudflare Workers) requires the default output. The Dockerfile sets this.
   output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
-  // Only three local images use next/image — not worth an optimization server.
+  // Cloudflare Workers has no image optimization server, so the Worker build
+  // opts out (the `*:worker`/`preview` scripts set this). Leaving it on
+  // globally would also stop Vercel from optimizing, where the header logo
+  // alone ships 37 KB into a 32x32 box on every page.
   images: {
-    unoptimized: true,
+    unoptimized: process.env.NEXT_UNOPTIMIZED_IMAGES === "true",
   },
   async redirects() {
     return localeRedirects();
