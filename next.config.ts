@@ -34,7 +34,6 @@ const withMDXConfig = withMDX({
       "rehype-toc",
       "rehype-katex",
       "rehype-slug",
-      "rehype-pretty-code",
       "rehype-autolink-headings",
     ],
   },

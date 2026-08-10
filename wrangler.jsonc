@@ -7,6 +7,10 @@
   // beaconlabs-admin account — pinned so deploys never target a personal account.
   "account_id": "4c5ef16e3b6b9dd23e9a8f59bc69bea7",
   "main": ".open-next/worker.js",
+  // The Workers Free plan caps the deployed script at 3 MiB gzipped; wrangler's
+  // esbuild minify buys roughly 0.5 MiB of headroom (the OpenNext server bundle
+  // is shipped unminified). Inheritable, so it applies to every environment.
+  "minify": true,
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
