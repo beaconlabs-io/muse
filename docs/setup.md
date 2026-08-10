@@ -114,19 +114,23 @@ Multi-stage build (`Dockerfile`):
    (uid 1001) on port 3000 via `node server.js`.
 
 Because `NEXT_PUBLIC_*` values are baked in at build time, they must be
-passed as **build args** (not runtime env). Server-only secrets
-(`PINATA_JWT`, `GOOGLE_GENERATIVE_AI_API_KEY`, `MODEL`) are injected at
-runtime.
+passed as **build args** (not runtime env). The image needs no server-only
+secrets of its own: the LLM keys and `PINATA_JWT` moved to `muse-backend`
+(see [Environment variables](#backend-service) above), and `PRIVATE_KEY` is
+only used by the sibling `evidence/` repo.
 
 ### docker-compose
 
 `docker-compose.yml` wires all of the above together:
 
-- Build args sourced from the host shell:
+- Build args interpolated by compose:
   `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, `NEXT_PUBLIC_ENV` (defaults to
   `production`) and `NEXT_PUBLIC_API_BASE_URL`. The last one has to be a build
   arg: it is inlined into the client bundle, so setting it at runtime leaves
-  the image calling routes this app no longer serves.
+  the image calling routes this app no longer serves. The `bun run docker:*`
+  wrappers pass `--env-file .env.local`, so these `${…}` references resolve
+  from `.env.local`; with a bare `docker compose build` they resolve from the
+  host shell instead.
 - Runtime `environment:` carries only `NODE_ENV=production`.
 - `env_file: .env.local` — any additional variables in `.env.local` are
   also loaded at runtime (e.g. `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED`).
@@ -136,19 +140,24 @@ runtime.
 
 ```bash
 cp .env.example .env.local   # fill in values per Environment variables above
-export NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=…   # build arg, not loaded from .env.local
-docker compose build
-docker compose up -d
-docker compose logs -f app
+bun run docker:build         # docker compose --env-file .env.local build
+bun run docker:up            # docker compose --env-file .env.local up -d
+bun run docker:logs          # docker compose logs -f
 ```
+
+Only when invoking `docker compose` directly (without `--env-file .env.local`)
+do the build args have to come from the shell, e.g.
+`export NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=…` before `docker compose build`.
 
 ### Notes and gotchas
 
 - **`NEXT_PUBLIC_*` values are baked into the bundle** — changing them
-  requires a rebuild (`docker compose build`), not just a restart.
-- **`.env.local` is a runtime-only file** for this setup. Do not expect
-  values listed there to influence the client bundle unless they are
-  also passed as build args.
+  requires a rebuild (`bun run docker:build`), not just a restart.
+- **`.env.local` reaches the build only through compose interpolation.** The
+  `bun run docker:*` wrappers pass `--env-file .env.local`, which feeds the
+  `${…}` references in the `args:` block of `docker-compose.yml`. A variable
+  that has no matching `args:` entry stays runtime-only (`env_file:`) and
+  never influences the client bundle.
 
 ## Cloudflare Workers (OpenNext)
 

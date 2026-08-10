@@ -6,7 +6,7 @@ Thank you for your interest in contributing to MUSE! This guide will help you ge
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 20+
+- [Node.js](https://nodejs.org/) 20.9+
 - [Bun](https://bun.sh/) 1.3+
 
 ### Installation
@@ -37,11 +37,43 @@ This project uses [husky](https://typicode.github.io/husky/) with [lint-staged](
 1. Linted with ESLint (`--fix`)
 2. Formatted with Prettier
 
+Formatting is enforced by this hook only — CI does not run Prettier — so avoid committing with `--no-verify`. To format manually, run `bunx prettier --write <paths>`.
+
 You can also run ESLint manually:
 
 ```bash
-bun lint      # ESLint with auto-fix
+bun lint         # ESLint with auto-fix
+bun lint:check   # ESLint without fixing (what CI runs)
 ```
+
+### Testing
+
+Tests use [Vitest](https://vitest.dev/) and should land in the same PR as the implementation: any new pure function, utility, or handler needs coverage.
+
+Place `*.test.ts` next to the source file (`lib/foo.ts` → `lib/foo.test.ts`); shared setup lives in `tests/setup.ts`.
+
+```bash
+bun run test           # Watch mode
+bun run test:run       # Single run (what CI runs)
+bun run test:coverage  # Single run with v8 coverage
+```
+
+See [docs/testing.md](./docs/testing.md) for patterns, fixtures, and troubleshooting.
+
+### Continuous Integration
+
+`.github/workflows/quality.yml` runs on every pull request, in this order:
+
+1. `bun install --frozen-lockfile`
+2. `bun run lint:check`
+3. `bun run test:run`
+4. `bun run build`
+
+CI sets `NEXT_PUBLIC_ENV=development` and `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=test` because the build requires them; set the same values locally if `bun run build` fails on missing environment variables. React Doctor and Claude Code Review also post advisory comments on pull requests (React Doctor only on PRs targeting `dev`).
+
+### Previewing the Cloudflare Worker build
+
+CI builds with plain `next build`, so the Worker build is never exercised there. If your change touches build or deploy configuration, run `bun run preview` to build and serve the OpenNext Worker locally. See [docs/setup.md](./docs/setup.md#cloudflare-workers-opennext) for the Worker and Docker paths.
 
 ### Commit Messages
 
@@ -63,11 +95,15 @@ refactor: extract evidence search into batch processor
    git checkout -b feature/your-feature dev
    ```
 
-2. **Make your changes** and ensure ESLint passes (`bun lint`). Prettier runs on staged files when you commit.
+2. **Make your changes**, adding tests alongside them, then run the same checks CI runs:
 
    ```bash
-   bun lint
+   bun run lint:check   # or `bun lint` to auto-fix
+   bun run test:run
+   bun run build
    ```
+
+   Prettier runs on staged files when you commit.
 
 3. **Commit** with a descriptive message following the conventional commit format.
 
