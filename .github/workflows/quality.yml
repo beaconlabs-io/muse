@@ -1,16 +1,20 @@
 name: Quality
 
-# Pull requests only. The push trigger for main/dev was dropped when
-# deploy-worker.yml landed: every merge into those branches now re-runs lint and
-# tests before it deploys, and a push-triggered copy would only duplicate a
-# multi-minute Next.js build on the same commit.
+# The push trigger looks redundant next to deploy-worker.yml's own lint/test
+# re-run, but it is not: release PRs (dev → main) are opened by
+# create-release-pr.yml with the workflow's GITHUB_TOKEN, and PRs created with
+# that token never trigger pull_request workflows. The push run on dev/main is
+# the only lint/test those refs get outside a deploy, and the only signal a
+# release PR's reviewer has that the dev tip is green.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main, dev]
 
-# Superseded runs for the same PR are pointless; cancel them.
+# Superseded runs for the same PR (or branch) are pointless; cancel them.
 concurrency:
-  group: quality-${{ github.event.pull_request.number }}
+  group: quality-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -47,6 +51,9 @@ jobs:
 
   preview:
     name: Build / Preview deploy
+    # Push runs exist for lint/test only (see the trigger comment above); a
+    # preview needs a PR to alias and comment on.
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -62,7 +69,6 @@ jobs:
       # working in a fork or clone with no variables configured.
       NEXT_PUBLIC_ENV: ${{ vars.NEXT_PUBLIC_ENV || 'development' }}
       NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://example.invalid' }}
-      NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${{ vars.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'test' }}
       NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED: ${{ vars.NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED }}
       # Forks receive no secrets, and the token may simply not be configured yet.
       # `secrets` cannot be read from an `if:`, so it is mapped to a flag here.
@@ -95,33 +101,34 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          # wrangler appends machine-readable NDJSON records here — the
+          # `version-upload` record carries both preview URLs — which survives
+          # banner rewording, unlike scraping the log (and never fabricates an
+          # alias by string surgery). The variable passes through to the
+          # wrangler child process that opennextjs-cloudflare spawns.
+          WRANGLER_OUTPUT_FILE_DIRECTORY: ${{ runner.temp }}/wrangler-output
         run: |
           if [ "$HAS_CLOUDFLARE_TOKEN" != "true" ]; then
             echo "::warning::CLOUDFLARE_API_TOKEN is not available (fork PR, or the secret is not configured) — skipping the preview upload. The build above still ran."
             exit 0
           fi
 
-          bunx opennextjs-cloudflare upload -e staging -- --preview-alias "pr-${PR_NUMBER}" 2>&1 | tee upload.log
+          bunx opennextjs-cloudflare upload -e staging -- --preview-alias "pr-${PR_NUMBER}"
 
-          # The version URL is https://<version-prefix>-<worker>.<subdomain>.workers.dev
-          # and is unique per push; the aliased URL stays stable across pushes to
-          # the same PR. Prefer the alias wrangler prints, and derive it from the
-          # version URL otherwise so the Worker name is never duplicated here.
-          # Colour codes would cut a URL short mid-match, so strip them first.
-          sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g' upload.log > upload.txt
-          alias_url=$(grep -Eo "https://pr-${PR_NUMBER}-[A-Za-z0-9.-]+\.workers\.dev" upload.txt | tail -1) || true
-          version_url=$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' upload.txt | grep -v "^https://pr-${PR_NUMBER}-" | tail -1) || true
+          records=$(cat "$WRANGLER_OUTPUT_FILE_DIRECTORY"/*.json 2>/dev/null) || records=""
+          # The version URL is unique per push; the aliased URL stays stable
+          # across pushes to the same PR (the alias is the PR number: branch
+          # names can hold characters a DNS label cannot).
+          version_url=$(jq -r 'select(.type == "version-upload") | .preview_url // empty' <<< "$records" | tail -1) || version_url=""
+          alias_url=$(jq -r 'select(.type == "version-upload") | .preview_alias_url // empty' <<< "$records" | tail -1) || alias_url=""
 
           if [ -z "$version_url" ]; then
-            echo "::error::The upload succeeded but no workers.dev URL was found in its output."
+            echo "::error::The upload succeeded but wrangler reported no preview URL."
             exit 1
           fi
 
           if [ -z "$alias_url" ]; then
-            host=${version_url#https://}
-            label=${host%%.*}          # <version-prefix>-<worker>
-            subdomain=${host#*.}       # <subdomain>.workers.dev
-            alias_url="https://pr-${PR_NUMBER}-${label#*-}.${subdomain}"
+            echo "::warning::wrangler reported no preview alias URL; the PR comment will carry only the per-commit URL."
           fi
 
           {
@@ -129,30 +136,34 @@ jobs:
             echo "version_url=$version_url"
           } >> "$GITHUB_OUTPUT"
 
+      # Upserted by header via .github/scripts/comment.js: react-doctor and
+      # Claude Code Review comment under the same github-actions[bot] identity,
+      # so `gh pr comment --edit-last` would edit whichever of them commented
+      # last — overwriting a review — instead of this workflow's own comment.
       - name: Comment preview URLs on the PR
-        if: steps.upload.outputs.alias_url != ''
+        if: steps.upload.outputs.version_url != ''
+        uses: actions/github-script@v7
         env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
           ALIAS_URL: ${{ steps.upload.outputs.alias_url }}
           VERSION_URL: ${{ steps.upload.outputs.version_url }}
           COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          body=$(cat <<EOF
-          ### 🚀 プレビューデプロイ
-
-          | | URL |
-          | --- | --- |
-          | この PR（push しても固定） | ${ALIAS_URL} |
-          | このコミット | ${VERSION_URL} |
-
-          staging Worker (\`muse-frontend-staging\`) の**バージョン**としてアップロードされています。
-          トラフィックは切り替わっていないため staging 本体には影響しません。
-
-          バックエンド API 呼び出しは CORS で拒否されます（許可リストは完全一致で、プレビューの URL は毎回変わるため）。
-          画面表示・ルーティング・SSG されたページの確認に使ってください。
-
-          <sub>commit \`${COMMIT_SHA}\`</sub>
-          EOF
-          )
-          gh pr comment "$PR_NUMBER" --edit-last --create-if-none --body "$body"
+        with:
+          script: |
+            const upsertComment = require("./.github/scripts/comment.js");
+            const { ALIAS_URL, VERSION_URL, COMMIT_SHA } = process.env;
+            const body = [
+              "",
+              "| | URL |",
+              "| --- | --- |",
+              ...(ALIAS_URL ? [`| この PR（push しても固定） | ${ALIAS_URL} |`] : []),
+              `| このコミット | ${VERSION_URL} |`,
+              "",
+              "staging Worker (`muse-frontend-staging`) の**バージョン**としてアップロードされています。",
+              "トラフィックは切り替わっていないため staging 本体には影響しません。",
+              "",
+              "バックエンド API 呼び出しは CORS で拒否されます（許可リストは完全一致で、プレビューの URL は毎回変わるため）。",
+              "画面表示・ルーティング・SSG されたページの確認に使ってください。",
+              "",
+              `<sub>commit \`${COMMIT_SHA}\`</sub>`,
+            ].join("\n");
+            await upsertComment({ github, context, header: "### 🚀 プレビューデプロイ", body });

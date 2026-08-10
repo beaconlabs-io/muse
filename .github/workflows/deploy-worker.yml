@@ -36,13 +36,34 @@ jobs:
     outputs:
       environment: ${{ steps.pick.outputs.environment }}
       ref: ${{ steps.pick.outputs.ref }}
+      # This job joins no GitHub Environment, so `vars.*` here resolves to the
+      # repository-level (staging) value — captured for the deploy job, whose
+      # own view of the variable is shadowed by its environment's override.
+      repo_api_base_url: ${{ steps.pick.outputs.repo_api_base_url }}
+    env:
+      # GitHub withholds secrets from pull_request runs of fork PRs — including
+      # the `closed` event that fires on merge. `secrets` cannot be read from an
+      # `if:`, so it is mapped to a flag here. (Checking the secret rather than
+      # `head.repo.fork` also covers a deleted fork, where `head.repo` is null,
+      # and a repository where the secret was never configured.)
+      HAS_CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
     steps:
+      # Without this, a merged fork PR would pass ~10 minutes of lint/test/build
+      # and only then fail at the deploy step with an empty token, leaving the
+      # environment silently stale behind a red run. Fail fast and loudly.
+      - name: Refuse to run without a Cloudflare token
+        if: env.HAS_CLOUDFLARE_TOKEN != 'true'
+        run: |
+          echo "::error::CLOUDFLARE_API_TOKEN is not available to this run (fork-originated PR, or the secret is not configured), so nothing can deploy. Ship this merge manually: Actions → Deploy Worker → 'Run workflow' from the merged branch."
+          exit 1
+
       - id: pick
         env:
           EVENT_NAME: ${{ github.event_name }}
           DISPATCH_ENV: ${{ inputs.environment }}
           DISPATCH_REF: ${{ github.ref_name }}
           BASE_REF: ${{ github.event.pull_request.base.ref }}
+          REPO_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
         run: |
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             environment="$DISPATCH_ENV"
@@ -57,6 +78,7 @@ jobs:
           {
             echo "environment=$environment"
             echo "ref=$ref"
+            echo "repo_api_base_url=$REPO_API_BASE_URL"
           } >> "$GITHUB_OUTPUT"
           echo "Deploying branch '$ref' to '$environment'"
 
@@ -82,11 +104,11 @@ jobs:
       # into the bundle by `next build`, so the environment split happens here,
       # at build time, not in wrangler.jsonc. Repository-level variables carry
       # the staging values; the `production` GitHub Environment overrides them.
-      # `NEXT_PUBLIC_ENV` differs between the two, so the check below catches a
-      # missing production override instead of shipping staging config to prod.
+      # The checks below catch a missing production override — `NEXT_PUBLIC_ENV`
+      # by expected value, `NEXT_PUBLIC_API_BASE_URL` by comparison against the
+      # repository-level value — instead of shipping staging config to prod.
       NEXT_PUBLIC_ENV: ${{ vars.NEXT_PUBLIC_ENV }}
       NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
-      NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${{ vars.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
       NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED: ${{ vars.NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED }}
     steps:
       - uses: actions/checkout@v4
@@ -113,9 +135,10 @@ jobs:
       - name: Check build variables
         env:
           TARGET_ENV: ${{ needs.resolve.outputs.environment }}
+          REPO_API_BASE_URL: ${{ needs.resolve.outputs.repo_api_base_url }}
         run: |
           missing=()
-          for name in NEXT_PUBLIC_ENV NEXT_PUBLIC_API_BASE_URL NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID; do
+          for name in NEXT_PUBLIC_ENV NEXT_PUBLIC_API_BASE_URL; do
             [ -n "${!name}" ] || missing+=("$name")
           done
           if [ ${#missing[@]} -gt 0 ]; then
@@ -123,15 +146,27 @@ jobs:
             exit 1
           fi
 
-          # configs/eas.ts and lib/constants.ts switch chain endpoints and the
-          # canonical base URL on this value, so it is the one variable that
-          # must differ between the two environments.
+          # lib/constants.ts switches the canonical base URL on this value, so
+          # it must differ between the two environments.
           case "$TARGET_ENV" in
             production) expected=production ;;
             *) expected=development ;;
           esac
           if [ "$NEXT_PUBLIC_ENV" != "$expected" ]; then
             echo "::error::NEXT_PUBLIC_ENV is '${NEXT_PUBLIC_ENV}' but a ${TARGET_ENV} deploy expects '${expected}'. The '${TARGET_ENV}' environment is probably missing its variable overrides."
+            exit 1
+          fi
+
+          # The backend URL must differ too, and NEXT_PUBLIC_ENV cannot vouch
+          # for it: with the NEXT_PUBLIC_API_BASE_URL override missing, the
+          # presence loop above still passes on the repository-level staging
+          # value, and the smoke test below never checks which backend the
+          # bundle calls. So on a production deploy, compare the resolved value
+          # against the repository-level one captured by the `resolve` job —
+          # equality means the 'production' environment override is missing or
+          # was deleted.
+          if [ "$TARGET_ENV" = "production" ] && [ "$NEXT_PUBLIC_API_BASE_URL" = "$REPO_API_BASE_URL" ]; then
+            echo "::error::NEXT_PUBLIC_API_BASE_URL resolves to the repository-level (staging) value on a production deploy. Set the production backend URL as an override in the 'production' environment."
             exit 1
           fi
 
@@ -162,16 +197,25 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TARGET_ENV: ${{ needs.resolve.outputs.environment }}
+          # wrangler appends machine-readable NDJSON records here — the `deploy`
+          # record's `targets` carries the deployed URLs — which survives banner
+          # rewording and extra hosts in the CLI output, unlike scraping the
+          # log. The variable passes through to the wrangler child process that
+          # opennextjs-cloudflare spawns.
+          WRANGLER_OUTPUT_FILE_DIRECTORY: ${{ runner.temp }}/wrangler-output
         run: |
-          bunx opennextjs-cloudflare deploy -e "$TARGET_ENV" 2>&1 | tee deploy.log
+          bunx opennextjs-cloudflare deploy -e "$TARGET_ENV"
 
-          # Colour codes would cut the URL short mid-match, so strip them first.
-          sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g' deploy.log > deploy.txt
-          url=$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' deploy.txt | tail -1) || true
+          records=$(cat "$WRANGLER_OUTPUT_FILE_DIRECTORY"/*.json 2>/dev/null) || records=""
+          url=$(jq -r 'select(.type == "deploy") | .targets[0]? // empty' <<< "$records" | tail -1) || url=""
           if [ -z "$url" ]; then
-            echo "::error::The deploy succeeded but no workers.dev URL was found in its output, so the smoke test cannot run. Verify the deployment manually."
+            echo "::error::The deploy succeeded but wrangler reported no target URL, so the smoke test cannot run. Verify the deployment manually."
             exit 1
           fi
+          # A custom-domain target arrives as a bare route pattern; the smoke
+          # test needs a scheme and no trailing path glob.
+          host=${url#*://}
+          url="https://${host%%/*}"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deployed to $url"
 
@@ -211,8 +255,12 @@ jobs:
             *) echo "::error::The OG route answered with '${og_type}', not a PNG."; exit 1 ;;
           esac
 
+      # Only once the deploy step has actually run: a lint/test/variable-check
+      # failure leaves nothing new to roll back from, and the instruction would
+      # only mislead. (A failed deploy step still counts — the upload may have
+      # gone through before the step errored.)
       - name: Rollback instructions
-        if: failure()
+        if: failure() && steps.deploy.outcome != 'skipped'
         env:
           TARGET_ENV: ${{ needs.resolve.outputs.environment }}
         run: |
