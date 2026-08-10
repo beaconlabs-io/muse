@@ -174,13 +174,16 @@ contracts. Prefer refactoring to remove the branch when possible.
 
 ## CI Integration
 
-`.github/workflows/quality.yml` runs on every PR and push to
-`main` / `dev`:
+`.github/workflows/quality.yml` runs on every PR, in two parallel jobs:
 
-1. `bun install --frozen-lockfile`
-2. `bun run lint:check`
-3. `bun run test:run`
-4. `bun run build`
+1. `bun run lint:check` and `bun run test:run`
+2. `bun run build:worker` — the Cloudflare Worker build, which is `next build`
+   plus the OpenNext bundling step, so Workers-only breakage surfaces before
+   the merge. For non-fork PRs it also uploads a preview version.
+
+Merging into `main` / `dev` re-runs the same lint and tests before deploying
+(`.github/workflows/deploy-worker.yml`), so nothing reaches a Worker without
+passing them.
 
 Failures block merge. There are no coverage thresholds yet — coverage is
 informational. If you want to check coverage locally before a PR, run

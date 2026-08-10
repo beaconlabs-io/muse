@@ -160,10 +160,15 @@ incremental cache with `staticAssetsIncrementalCache`, a read-only cache that
 serves prerendered pages out of the uploaded static assets.
 
 ```bash
-bun run build:worker    # opennextjs-cloudflare build → .open-next/
-bun run preview         # build + run the Worker locally (wrangler dev)
-bun run deploy:worker   # build + populate the cache + deploy
+bun run build:worker      # opennextjs-cloudflare build → .open-next/
+bun run preview           # build + run the Worker locally (wrangler dev)
+bun run deploy:staging    # build + populate the cache + deploy to muse-frontend-staging
+bun run deploy:production # same, to muse-frontend-prod
 ```
+
+The two deploy scripts are a break-glass path. Normal deploys go through CI —
+see [Environments and deploys](#environments-and-deploys) — and a local deploy
+bakes whatever your `.env*` files hold into the uploaded bundle.
 
 Notes:
 
@@ -181,8 +186,8 @@ Notes:
 - **`NEXT_PUBLIC_*` values are baked in at build time**, as in the Docker
   build, so each target environment (staging/production) needs its own build.
   This app reads only `NEXT_PUBLIC_*` and `NODE_ENV`, so its `.env*` files hold
-  nothing that is not already public in the client bundle. CI wiring lives
-  in #299.
+  nothing that is not already public in the client bundle — and the Worker
+  itself needs no `vars` and no secrets at all.
 - The build uses the default Next.js output — do not set
   `NEXT_OUTPUT=standalone` (that is only for the Docker image).
 - **Deploy through `opennextjs-cloudflare`, not plain `wrangler deploy`.**
@@ -201,6 +206,74 @@ Notes:
   limit is 3 MiB gzip on Workers Free and 10 MiB on Workers Paid; the current
   bundle is ~6.8 MiB gzip, so this app **requires a paid plan** and has
   roughly 3 MiB of headroom left.
+
+### Environments and deploys
+
+Two Workers, both on the `beaconlabs-admin` account (`account_id` is pinned in
+`wrangler.jsonc` so a deploy can never land on a personal account):
+
+| Branch | wrangler env | Worker                  | Triggered by            |
+| ------ | ------------ | ----------------------- | ----------------------- |
+| `dev`  | `staging`    | `muse-frontend-staging` | a PR merged into `dev`  |
+| `main` | `production` | `muse-frontend-prod`    | a PR merged into `main` |
+
+Deploys are **merge-driven**: `.github/workflows/deploy-worker.yml` runs on
+`pull_request: closed` and does nothing unless the PR was actually merged. A
+direct push to `dev` or `main` deploys nothing — use the workflow's manual
+`workflow_dispatch` (pick an environment; it deploys the branch you run it from)
+if you ever need to ship something that did not arrive via a PR.
+
+Each run re-runs `lint:check` and `test:run` against the merged branch, builds
+the Worker, deploys with `opennextjs-cloudflare deploy -e <env>`, then smoke
+tests the deployed URL: `/` (locale redirects), an SSG'd evidence detail page
+(the only check that catches an unpopulated prerender cache) and
+`/api/og/evidence` (the only server-rendered route, and the one that needs the
+separately uploaded resvg WASM module). A fresh workers.dev URL can 404 for tens
+of seconds, so every request retries. On failure the log prints the rollback
+command, `bunx wrangler rollback --env <env>`.
+
+Open PRs upload a **version** of the staging Worker (`quality.yml`), which
+shifts no traffic, and get the URLs commented back on the PR:
+`https://pr-<number>-muse-frontend-staging.<subdomain>.workers.dev` stays stable
+across pushes to the same PR.
+
+#### Repository configuration
+
+One secret, on the repository:
+
+- `CLOUDFLARE_API_TOKEN` — needs Workers Scripts: Edit on the
+  `beaconlabs-admin` account. Fork PRs never see it, so their preview upload is
+  skipped with a warning while the build still runs.
+
+The build-time variables are **GitHub variables**, not secrets — every one of
+them is inlined into a public client bundle:
+
+| Variable                               | Where                                                 |
+| -------------------------------------- | ----------------------------------------------------- |
+| `NEXT_PUBLIC_ENV`                      | repo: `development`, `production` env: `production`   |
+| `NEXT_PUBLIC_API_BASE_URL`             | repo: staging backend, `production` env: prod backend |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | repo (override per environment if they differ)        |
+| `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED`  | repo, optional                                        |
+
+The repository-level values are the **staging** ones, so PR previews (which join
+no GitHub Environment, to keep PRs out of staging's deployment history) pick them
+up automatically; the `production` environment overrides what differs. Both
+GitHub Environments still have to exist — the deploy job joins them for the
+deployment history and the URL on the repo sidebar.
+
+`NEXT_PUBLIC_ENV` is the tripwire for that layering: a production deploy fails
+before building if it does not resolve to `production`, which is exactly what a
+missing set of production overrides looks like.
+
+#### Known gap until the domain cutover (#300)
+
+The backend allows CORS origins by exact match (`ALLOWED_ORIGINS`), and its
+staging list holds `https://dev.muse.beaconlabs.io`, not the Worker's
+workers.dev URL. Until #300 points the domains at these Workers, staging and PR
+previews render and route correctly but every backend call from the browser is
+blocked — treat them as build, routing and SSG checks. Preview URLs are dynamic
+and can never be listed exactly, so functional previews would need the backend
+to match by suffix instead.
 
 ## i18n
 
