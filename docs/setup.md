@@ -114,9 +114,10 @@ Multi-stage build (`Dockerfile`):
    (uid 1001) on port 3000 via `node server.js`.
 
 Because `NEXT_PUBLIC_*` values are baked in at build time, they must be
-passed as **build args** (not runtime env). Server-only secrets
-(`PINATA_JWT`, `GOOGLE_GENERATIVE_AI_API_KEY`, `MODEL`) are injected at
-runtime.
+passed as **build args** (not runtime env). The image needs no server-only
+secrets of its own: the LLM keys and `PINATA_JWT` moved to `muse-backend`
+(see [Environment variables](#backend-service) above), and `PRIVATE_KEY` is
+only used by the sibling `evidence/` repo.
 
 ### docker-compose
 
