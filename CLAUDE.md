@@ -29,7 +29,7 @@ it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 - Config: `open-next.config.ts` (no caching bindings, but overrides the incremental cache with `staticAssetsIncrementalCache`) + `wrangler.jsonc`; see `docs/setup.md`
 - Always deploy through `opennextjs-cloudflare`, never plain `wrangler deploy` — the latter skips the prerender cache and 404s every evidence page
 - The Worker has no `vars` and no secrets: everything the app reads is a `NEXT_PUBLIC_*` value inlined at build time, so each environment needs its own build
-- The build inlines every variable from the `.env*` files — including server secrets — into the uploaded Worker. Keep `.env*` to `NEXT_PUBLIC_*` only and pass server values via `wrangler secret put`; see `docs/setup.md`
+- The build inlines every variable from the `.env*` files into the uploaded Worker, so keep `.env*` to `NEXT_PUBLIC_*` values only — this app has no server-side values (those live in `muse-backend`); see `docs/setup.md`
 
 ### Docker
 
