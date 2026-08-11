@@ -62,18 +62,16 @@ See [docs/testing.md](./docs/testing.md) for patterns, fixtures, and troubleshoo
 
 ### Continuous Integration
 
-`.github/workflows/quality.yml` runs on every pull request, in this order:
+`.github/workflows/quality.yml` runs two jobs on every pull request (and its lint/test half again on every push to `dev`/`main`):
 
-1. `bun install --frozen-lockfile`
-2. `bun run lint:check`
-3. `bun run test:run`
-4. `bun run build`
+- **Lint / Test** — `bun install --frozen-lockfile`, `bun run lint:check`, `bun run test:run`
+- **Build / Preview deploy** — `bun run build:worker` (the Cloudflare Worker build, which is also the PR's build check), then an upload of the build as a preview version of the staging Worker; the preview URLs are commented on the PR. Fork PRs skip the upload (no Cloudflare token) but still build.
 
-CI sets `NEXT_PUBLIC_ENV=development` and `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=test` because the build requires them; set the same values locally if `bun run build` fails on missing environment variables. React Doctor and Claude Code Review also post advisory comments on pull requests (React Doctor only on PRs targeting `dev`).
+React Doctor and Claude Code Review also post advisory comments on pull requests (React Doctor only on PRs targeting `dev`). Merging a PR into `dev` or `main` triggers `.github/workflows/deploy-worker.yml`, which re-runs lint and tests against the merged branch before deploying — see [docs/setup.md](./docs/setup.md#environments-and-deploys).
 
 ### Previewing the Cloudflare Worker build
 
-CI builds with plain `next build`, so the Worker build is never exercised there. If your change touches build or deploy configuration, run `bun run preview` to build and serve the OpenNext Worker locally. See [docs/setup.md](./docs/setup.md#cloudflare-workers-opennext) for the Worker and Docker paths.
+CI builds the Worker on every PR, but to actually browse it locally, run `bun run preview` to build and serve the OpenNext Worker. See [docs/setup.md](./docs/setup.md#cloudflare-workers-opennext) for the Worker and Docker paths.
 
 ### Commit Messages
 

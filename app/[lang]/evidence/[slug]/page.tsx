@@ -17,8 +17,8 @@ import { getEvidenceBySlug } from "@/lib/evidence";
 import { localeAlternates } from "@/lib/locale-alternates";
 
 // Pre-render every evidence page at build time. Evidence content is bundled
-// from the npm package, so the slug list is complete at build time — and the
-// MDX compile (shiki WASM) cannot run on the Workers runtime anyway.
+// from the npm package, so the slug list is complete at build time and the
+// MDX compile never needs to run on the server at runtime.
 export function generateStaticParams() {
   return getAllEvidenceSlugs().map((slug) => ({ slug }));
 }

@@ -3,7 +3,6 @@ import { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import "../globals.css";
-import "@rainbow-me/rainbowkit/styles.css";
 import { Toaster } from "sonner";
 import { Header } from "@/components/header";
 import { LocaleCookieSync } from "@/components/locale-cookie-sync";

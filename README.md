@@ -106,26 +106,27 @@ See [docs/setup.md](./docs/setup.md#docker) for build args vs runtime env, persi
 
 ## Scripts
 
-| Command                 | Description                                                                          |
-| ----------------------- | ------------------------------------------------------------------------------------ |
-| `bun dev`               | Start Next.js development server                                                     |
-| `bun run build`         | Build for production                                                                 |
-| `bun start`             | Start production server                                                              |
-| `bun lint`              | Run ESLint with auto-fix                                                             |
-| `bun lint:check`        | Run ESLint without fixing (the command CI runs)                                      |
-| `bun run test`          | Run Vitest in watch mode                                                             |
-| `bun run test:run`      | Run unit tests once                                                                  |
-| `bun run test:coverage` | Run unit tests with coverage                                                         |
-| `bun run build:worker`  | Build the app into a Cloudflare Worker with OpenNext (output: `.open-next/`)         |
-| `bun run preview`       | Build the Worker and run it locally with `opennextjs-cloudflare preview`             |
-| `bun run deploy:worker` | Build and deploy the Worker to Cloudflare                                            |
-| `bun run docker:build`  | Build the production image (`docker compose --env-file .env.local build`)            |
-| `bun run docker:up`     | Start the container in the background (`docker compose --env-file .env.local up -d`) |
-| `bun run docker:down`   | Stop and remove the container                                                        |
-| `bun run docker:logs`   | Follow container logs                                                                |
-| `bun clean`             | Clean build artifacts and reinstall                                                  |
+| Command                     | Description                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------ |
+| `bun dev`                   | Start Next.js development server                                                     |
+| `bun run build`             | Build for production                                                                 |
+| `bun start`                 | Start production server                                                              |
+| `bun lint`                  | Run ESLint with auto-fix                                                             |
+| `bun lint:check`            | Run ESLint without fixing (the command CI runs)                                      |
+| `bun run test`              | Run Vitest in watch mode                                                             |
+| `bun run test:run`          | Run unit tests once                                                                  |
+| `bun run test:coverage`     | Run unit tests with coverage                                                         |
+| `bun run build:worker`      | Build the app into a Cloudflare Worker with OpenNext (output: `.open-next/`)         |
+| `bun run preview`           | Build the Worker and run it locally with `opennextjs-cloudflare preview`             |
+| `bun run deploy:staging`    | Break-glass manual deploy to `muse-frontend-staging` (normal deploys go through CI)  |
+| `bun run deploy:production` | Break-glass manual deploy to `muse-frontend-prod` (normal deploys go through CI)     |
+| `bun run docker:build`      | Build the production image (`docker compose --env-file .env.local build`)            |
+| `bun run docker:up`         | Start the container in the background (`docker compose --env-file .env.local up -d`) |
+| `bun run docker:down`       | Stop and remove the container                                                        |
+| `bun run docker:logs`       | Follow container logs                                                                |
+| `bun clean`                 | Clean build artifacts and reinstall                                                  |
 
-The three Worker scripts prefix `NEXT_UNOPTIMIZED_IMAGES=true`, because Cloudflare Workers has no image-optimization server; the default and Docker builds leave Next.js image optimization enabled.
+The four Worker scripts prefix `NEXT_UNOPTIMIZED_IMAGES=true`, because Cloudflare Workers has no image-optimization server; the default and Docker builds leave Next.js image optimization enabled.
 
 ## Project Structure
 
@@ -174,7 +175,7 @@ For detailed technical information, see:
 | Production  | [https://muse.beaconlabs.io](https://muse.beaconlabs.io)         |
 | Development | [https://dev.muse.beaconlabs.io](https://dev.muse.beaconlabs.io) |
 
-The app can be built into a Cloudflare Worker with [OpenNext](https://opennext.js.org/cloudflare); deploy it with `bun run deploy:worker`. The per-environment Worker wiring (staging/production names, routes, CI deploy) is not yet in `wrangler.jsonc`. Deploying with a plain `wrangler deploy` is unsupported: it skips the prerender-cache population step, which makes the statically generated evidence pages 404. See [docs/setup.md](./docs/setup.md#cloudflare-workers-opennext) for the Worker and Docker paths.
+The app can be built into a Cloudflare Worker with [OpenNext](https://opennext.js.org/cloudflare). Deploys are merge-driven through CI: a PR merged into `dev` ships `muse-frontend-staging`, one merged into `main` ships `muse-frontend-prod`, and open PRs get preview versions (`.github/workflows/deploy-worker.yml`, `quality.yml`); the per-environment wiring lives in `wrangler.jsonc`. `bun run deploy:staging` / `bun run deploy:production` exist as a break-glass manual path. Deploying with a plain `wrangler deploy` is unsupported: it skips the prerender-cache population step, which makes the statically generated evidence pages 404. See [docs/setup.md](./docs/setup.md#cloudflare-workers-opennext) for the Worker and Docker paths.
 
 ## Contributing
 

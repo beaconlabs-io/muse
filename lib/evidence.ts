@@ -7,8 +7,8 @@ import {
 } from "@beaconlabs-io/evidence/content";
 import { compileMDX } from "next-mdx-remote/rsc";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
-import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
 import rehypeToc from "rehype-toc";
 import remarkGfm from "remark-gfm";
@@ -56,7 +56,9 @@ export const getEvidenceBySlug = cache(
             [rehypeToc, { headings: ["h2", "h3"] }],
             [rehypeAutolinkHeadings, { behavior: "wrap" }],
             [rehypeKatex, { output: "mathml" }],
-            rehypePrettyCode,
+            // highlight.js, not shiki: shiki bundles every grammar (~9 MB) and
+            // its WASM engine cannot start on the Workers runtime.
+            rehypeHighlight,
           ],
         },
       },
@@ -68,8 +70,8 @@ export const getEvidenceBySlug = cache(
 
 /**
  * Get evidence frontmatter by slug without compiling MDX.
- * Use this when only metadata is needed (e.g. OG images): the MDX compile
- * pipeline pulls in shiki's WASM engine, which cannot start on Workers.
+ * Use this when only metadata is needed (e.g. OG images): it skips the
+ * MDX compile pipeline entirely.
  *
  * This is the single source of the metadata contract — the detail page reads
  * it through `getEvidenceBySlug` — so the page and its OG image cannot drift.

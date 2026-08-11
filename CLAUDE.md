@@ -24,9 +24,12 @@ it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 
 - `bun run build:worker` - Build the app into a Worker with `@opennextjs/cloudflare` (output: `.open-next/`)
 - `bun run preview` - Build and run the Worker locally via `wrangler dev`
-- `bun run deploy:worker` - Build, populate the prerender cache, and deploy (plain `wrangler deploy` skips the cache and 404s the evidence pages)
+- `bun run deploy:staging` / `bun run deploy:production` - Break-glass manual deploy. Normally CI deploys; see `docs/setup.md`
+- Deploys are merge-driven: `dev` → `muse-frontend-staging`, `main` → `muse-frontend-prod`, PRs upload preview versions (`.github/workflows/deploy-worker.yml`, `quality.yml`)
 - Config: `open-next.config.ts` (no caching bindings, but overrides the incremental cache with `staticAssetsIncrementalCache`) + `wrangler.jsonc`; see `docs/setup.md`
-- The build inlines every variable from the `.env*` files — including server secrets — into the uploaded Worker. Keep `.env*` to `NEXT_PUBLIC_*` only and pass server values via `wrangler secret put`; see `docs/setup.md`
+- Always deploy through `opennextjs-cloudflare`, never plain `wrangler deploy` — the latter skips the prerender cache and 404s every evidence page
+- The Worker has no `vars` and no secrets: everything the app reads is a `NEXT_PUBLIC_*` value inlined at build time, so each environment needs its own build
+- The build inlines every variable from the `.env*` files into the uploaded Worker, so keep `.env*` to `NEXT_PUBLIC_*` values only — this app has no server-side values (those live in `muse-backend`); see `docs/setup.md`
 
 ### Docker
 

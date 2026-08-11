@@ -7,7 +7,6 @@ repo root for the authoritative variable list.
 
 - Node.js 20+ and [Bun](https://bun.sh/) (package manager + runtime for dev/build)
 - A Pinata account for IPFS uploads (optional for UI-only work)
-- A WalletConnect project ID for wallet flows (optional for UI-only work)
 - At least one LLM provider key (see [LLM keys](#llm-keys))
 
 ## Quickstart
@@ -48,13 +47,11 @@ to this app.
 
 ### EAS (chain)
 
-- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` — RainbowKit/WalletConnect project
-  ID (client-side)
 - `PRIVATE_KEY` — server-side Ethereum key used only for evidence
   attestation workflows in the sibling `evidence/` repo; leave unset in
   `muse/` unless you are running attestation scripts locally
-- `NEXT_PUBLIC_ENV` — `development` or `production`; switches
-  EAS endpoints (see `configs/eas.ts`, `lib/wagmi.ts`)
+- `NEXT_PUBLIC_ENV` — `development` or `production`; switches the
+  canonical base URL (see `lib/constants.ts`)
 
 ### Feature flags
 
@@ -123,8 +120,7 @@ only used by the sibling `evidence/` repo.
 
 `docker-compose.yml` wires all of the above together:
 
-- Build args interpolated by compose:
-  `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, `NEXT_PUBLIC_ENV` (defaults to
+- Build args interpolated by compose: `NEXT_PUBLIC_ENV` (defaults to
   `production`) and `NEXT_PUBLIC_API_BASE_URL`. The last one has to be a build
   arg: it is inlined into the client bundle, so setting it at runtime leaves
   the image calling routes this app no longer serves. The `bun run docker:*`
@@ -147,7 +143,7 @@ bun run docker:logs          # docker compose logs -f
 
 Only when invoking `docker compose` directly (without `--env-file .env.local`)
 do the build args have to come from the shell, e.g.
-`export NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=…` before `docker compose build`.
+`export NEXT_PUBLIC_API_BASE_URL=…` before `docker compose build`.
 
 ### Notes and gotchas
 
@@ -169,10 +165,15 @@ incremental cache with `staticAssetsIncrementalCache`, a read-only cache that
 serves prerendered pages out of the uploaded static assets.
 
 ```bash
-bun run build:worker    # opennextjs-cloudflare build → .open-next/
-bun run preview         # build + run the Worker locally (wrangler dev)
-bun run deploy:worker   # build + populate the cache + deploy
+bun run build:worker      # opennextjs-cloudflare build → .open-next/
+bun run preview           # build + run the Worker locally (wrangler dev)
+bun run deploy:staging    # build + populate the cache + deploy to muse-frontend-staging
+bun run deploy:production # same, to muse-frontend-prod
 ```
+
+The two deploy scripts are a break-glass path. Normal deploys go through CI —
+see [Environments and deploys](#environments-and-deploys) — and a local deploy
+bakes whatever your `.env*` files hold into the uploaded bundle.
 
 Notes:
 
@@ -190,8 +191,8 @@ Notes:
 - **`NEXT_PUBLIC_*` values are baked in at build time**, as in the Docker
   build, so each target environment (staging/production) needs its own build.
   This app reads only `NEXT_PUBLIC_*` and `NODE_ENV`, so its `.env*` files hold
-  nothing that is not already public in the client bundle. CI wiring lives
-  in #299.
+  nothing that is not already public in the client bundle — and the Worker
+  itself needs no `vars` and no secrets at all.
 - The build uses the default Next.js output — do not set
   `NEXT_OUTPUT=standalone` (that is only for the Docker image).
 - **Deploy through `opennextjs-cloudflare`, not plain `wrangler deploy`.**
@@ -202,14 +203,88 @@ Notes:
   every evidence page 404s while the rest of the site looks healthy. Same for
   running plain `wrangler dev` against an existing build: run
   `bunx opennextjs-cloudflare populateCache local` first.
-- The MDX compile pipeline (shiki) cannot run on the Workers runtime
-  (WASM instantiation is disallowed), so evidence MDX must stay
-  build-time-only: detail pages are SSG'd and the OG route reads only
-  frontmatter.
+- Evidence MDX stays build-time-only by design: detail pages are SSG'd
+  (`dynamicParams = false`) and the OG route reads only frontmatter, so the
+  MDX compile pipeline never runs on the Worker.
 - Check the Worker bundle size with `bunx wrangler deploy --dry-run`. The
-  limit is 3 MiB gzip on Workers Free and 10 MiB on Workers Paid; the current
-  bundle is ~6.8 MiB gzip, so this app **requires a paid plan** and has
-  roughly 3 MiB of headroom left.
+  limit is 3 MiB gzip on Workers Free and 10 MiB on Workers Paid; after
+  dropping shiki and the wallet stack and enabling wrangler's `minify`, the
+  bundle is ~2.9 MiB gzip — inside the Free plan with only ~166 KiB of
+  headroom, so weigh any heavy new dependency against it.
+
+### Environments and deploys
+
+Two Workers, both on the `beaconlabs-admin` account (`account_id` is pinned in
+`wrangler.jsonc` so a deploy can never land on a personal account):
+
+| Branch | wrangler env | Worker                  | Triggered by            |
+| ------ | ------------ | ----------------------- | ----------------------- |
+| `dev`  | `staging`    | `muse-frontend-staging` | a PR merged into `dev`  |
+| `main` | `production` | `muse-frontend-prod`    | a PR merged into `main` |
+
+Deploys are **merge-driven**: `.github/workflows/deploy-worker.yml` runs on
+`pull_request: closed` and does nothing unless the PR was actually merged. A
+direct push to `dev` or `main` deploys nothing — use the workflow's manual
+`workflow_dispatch` (pick an environment; it deploys the branch you run it from)
+if you ever need to ship something that did not arrive via a PR.
+
+Each run re-runs `lint:check` and `test:run` against the merged branch, builds
+the Worker, deploys with `opennextjs-cloudflare deploy -e <env>`, then smoke
+tests the deployed URL: `/` (locale redirects), an SSG'd evidence detail page
+(the only check that catches an unpopulated prerender cache) and
+`/api/og/evidence` (the only server-rendered route, and the one that needs the
+separately uploaded resvg WASM module). A fresh workers.dev URL can 404 for tens
+of seconds, so every request retries. On failure the log prints the rollback
+command, `bunx wrangler rollback --env <env>`.
+
+Open PRs upload a **version** of the staging Worker (`quality.yml`), which
+shifts no traffic, and get the URLs commented back on the PR:
+`https://pr-<number>-muse-frontend-staging.<subdomain>.workers.dev` stays stable
+across pushes to the same PR.
+
+#### Repository configuration
+
+One secret, on the repository:
+
+- `CLOUDFLARE_API_TOKEN` — needs Workers Scripts: Edit on the
+  `beaconlabs-admin` account. Fork PRs never see it, so their preview upload is
+  skipped with a warning while the build still runs — and merging a fork PR
+  makes `deploy-worker.yml` fail fast with instructions to ship the merge via
+  `workflow_dispatch` instead.
+
+The build-time variables are **GitHub variables**, not secrets — every one of
+them is inlined into a public client bundle:
+
+| Variable                              | Where                                                 |
+| ------------------------------------- | ----------------------------------------------------- |
+| `NEXT_PUBLIC_ENV`                     | repo: `development`, `production` env: `production`   |
+| `NEXT_PUBLIC_API_BASE_URL`            | repo: staging backend, `production` env: prod backend |
+| `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` | repo, optional                                        |
+
+The repository-level values are the **staging** ones, so PR previews (which join
+no GitHub Environment, to keep PRs out of staging's deployment history) pick them
+up automatically; the `production` environment overrides what differs. Both
+GitHub Environments still have to exist — the deploy job joins them for the
+deployment history and the URL on the repo sidebar.
+
+Staging deliberately reuses `development` as its `NEXT_PUBLIC_ENV` value: the
+code branches only on `development` vs `production` (`lib/constants.ts`), so a
+third `staging` value would match nothing.
+
+Two tripwires guard that layering before a production build starts:
+`NEXT_PUBLIC_ENV` must resolve to `production`, and `NEXT_PUBLIC_API_BASE_URL`
+must differ from the repository-level (staging) value — each failure is exactly
+what a missing production override looks like.
+
+#### Known gap until the domain cutover (#300)
+
+The backend allows CORS origins by exact match (`ALLOWED_ORIGINS`), and its
+staging list holds `https://dev.muse.beaconlabs.io`, not the Worker's
+workers.dev URL. Until #300 points the domains at these Workers, staging and PR
+previews render and route correctly but every backend call from the browser is
+blocked — treat them as build, routing and SSG checks. Preview URLs are dynamic
+and can never be listed exactly, so functional previews would need the backend
+to match by suffix instead.
 
 ## i18n
 
