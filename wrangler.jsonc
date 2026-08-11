@@ -43,12 +43,26 @@
   // account_id) is an inheritable key and cascades from the top level — unlike
   // `vars`, which would have to be restated per environment if this app had any.
   "env": {
-    // dev branch → https://muse-frontend-staging.<subdomain>.workers.dev
+    // dev branch → https://dev.muse.beaconlabs.io (workers.dev stays up too)
     // PR previews are uploaded as versions of this Worker.
     "staging": {
       "name": "muse-frontend-staging",
       // Required for the versioned/aliased preview URLs used by PR previews.
       "preview_urls": true,
+      // Stated explicitly because the `routes` entry below flips the default:
+      // wrangler disables workers.dev on any Worker that declares a route,
+      // which would take the preview URLs (same subdomain) down with it.
+      "workers_dev": true,
+      // #300, staging half. This is the origin the backend's staging
+      // ALLOWED_ORIGINS lists, so browser calls only pass CORS from here,
+      // never from the workers.dev URL. `custom_domain` means Cloudflare owns
+      // this hostname's DNS record: the record it manages is created on
+      // attach, and adding any record for the hostname by hand breaks it.
+      // Cloudflare refuses the attach outright while an externally managed
+      // record exists (error 100117), which is what the former Vercel CNAME
+      // did until it was deleted — and CI deploys non-interactively, so such
+      // a conflict fails every merge into `dev` rather than prompting.
+      "routes": [{ "pattern": "dev.muse.beaconlabs.io", "custom_domain": true }],
     },
     // main branch → https://muse-frontend-prod.<subdomain>.workers.dev
     // The custom domain is attached in #300; until then this workers.dev URL is
