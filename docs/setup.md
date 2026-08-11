@@ -217,10 +217,27 @@ Notes:
 Two Workers, both on the `beaconlabs-admin` account (`account_id` is pinned in
 `wrangler.jsonc` so a deploy can never land on a personal account):
 
-| Branch | wrangler env | Worker                  | Triggered by            |
-| ------ | ------------ | ----------------------- | ----------------------- |
-| `dev`  | `staging`    | `muse-frontend-staging` | a PR merged into `dev`  |
-| `main` | `production` | `muse-frontend-prod`    | a PR merged into `main` |
+| Branch | wrangler env | Worker                  | Served at                        | Triggered by            |
+| ------ | ------------ | ----------------------- | -------------------------------- | ----------------------- |
+| `dev`  | `staging`    | `muse-frontend-staging` | `dev.muse.beaconlabs.io`         | a PR merged into `dev`  |
+| `main` | `production` | `muse-frontend-prod`    | workers.dev only (#300 half-way) | a PR merged into `main` |
+
+Staging's hostname is a **custom domain** declared in `wrangler.jsonc`
+(`env.staging.routes`), which makes Cloudflare own its DNS record — a proxied
+placeholder `AAAA` it creates on attach. Production is still on Vercel:
+`muse.beaconlabs.io` keeps its CNAME there, and its cutover is the remaining
+half of #300.
+
+Two things to know before touching either hostname:
+
+- Cloudflare refuses to attach a custom domain to a hostname that already has
+  an externally managed DNS record (error 100117), which is what the Vercel
+  CNAME on `dev.muse.beaconlabs.io` was. Delete the record first, then deploy;
+  adding one back by hand breaks the attached domain. CI deploys
+  non-interactively, so a conflict fails the merge rather than prompting.
+- Declaring any route flips wrangler's workers.dev default to **off**, and the
+  PR preview URLs live on that same subdomain. `workers_dev: true` next to the
+  route is what keeps them up.
 
 Deploys are **merge-driven**: `.github/workflows/deploy-worker.yml` runs on
 `pull_request: closed` and does nothing unless the PR was actually merged. A
@@ -276,15 +293,15 @@ Two tripwires guard that layering before a production build starts:
 must differ from the repository-level (staging) value — each failure is exactly
 what a missing production override looks like.
 
-#### Known gap until the domain cutover (#300)
+#### Known gap for PR previews (#300)
 
 The backend allows CORS origins by exact match (`ALLOWED_ORIGINS`), and its
-staging list holds `https://dev.muse.beaconlabs.io`, not the Worker's
-workers.dev URL. Until #300 points the domains at these Workers, staging and PR
-previews render and route correctly but every backend call from the browser is
-blocked — treat them as build, routing and SSG checks. Preview URLs are dynamic
-and can never be listed exactly, so functional previews would need the backend
-to match by suffix instead.
+staging list holds `https://dev.muse.beaconlabs.io`. Staging answers on exactly
+that origin now, so its backend calls pass. **PR previews still do not**: their
+URLs are per-PR workers.dev hostnames that no exact-match list can cover, so a
+preview renders and routes correctly while every backend call from the browser
+is blocked — treat previews as build, routing and SSG checks. Making them
+functional would need the backend to match by suffix instead.
 
 ## i18n
 
