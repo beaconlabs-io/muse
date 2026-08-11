@@ -18,7 +18,13 @@
     "binding": "ASSETS",
   },
   "observability": {
-    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+    },
+    "traces": {
+      "enabled": false,
+    },
   },
   // No KV / R2 / D1 / Durable Object bindings on purpose: the app uses no ISR,
   // so prerendered pages are served read-only from the static assets cache
