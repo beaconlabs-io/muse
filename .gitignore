@@ -19,6 +19,9 @@
 /.wrangler/
 /out/
 
+# build-time generated OG images (scripts/generate-og-images.tsx)
+/public/og/
+
 # production
 /build
 
