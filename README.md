@@ -139,7 +139,7 @@ The four Worker scripts prefix `NEXT_UNOPTIMIZED_IMAGES=true`, because Cloudflar
 │   │   ├── effects/      #     Effects/outcomes listing
 │   │   ├── search/       #     Evidence search and filtering
 │   │   └── strength-of-evidence/  # Scientific Maryland Scale
-│   └── api/og/           #   OG image generation routes (canvas, evidence)
+│   └── api/og/           #   OG image routes: canvas (IPFS proxy), evidence (302 to build-time PNG)
 ├── components/           # React components
 │   ├── canvas/           #   React Flow nodes, edges, and controls
 │   ├── evidence/         #   Evidence-specific UI components

@@ -4,7 +4,8 @@
  * Renders one 1200×630 PNG per evidence slug into public/og/evidence/ so the
  * Workers runtime never runs satori/resvg — the per-request render exceeded
  * the Workers Free plan's 10 ms CPU budget. Run by the `generate:og` package
- * script, chained ahead of `next build` in `build` / `build:worker`.
+ * script, chained ahead of `next build` in `build`. `build:worker` gets it for
+ * free: `opennextjs-cloudflare build` shells out to the package `build` script.
  *
  * Evidence data comes from @beaconlabs-io/evidence/content directly, not
  * lib/evidence, which would drag the MDX compile pipeline into this script.
@@ -21,9 +22,14 @@ const OUT_DIR = join(ROOT, "public", "og", "evidence");
 const logo = readFileSync(join(ROOT, "public", "beaconlabs.png"));
 // Sniff the real format: the file is a JPEG despite its .png extension, and
 // satori silently drops an <img> whose data URI declares the wrong MIME type.
-const logoMime = logo.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))
-  ? "image/jpeg"
-  : "image/png";
+// Any other format (a WebP re-export, say) must fail loudly here — a wrong
+// MIME would ship every OG image logo-less with a green build.
+function sniffLogoMime(bytes: Buffer): string {
+  if (bytes.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))) return "image/jpeg";
+  if (bytes.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47]))) return "image/png";
+  throw new Error("public/beaconlabs.png is neither JPEG nor PNG; satori would drop the logo");
+}
+const logoMime = sniffLogoMime(logo);
 const logoUrl = `data:${logoMime};base64,${logo.toString("base64")}`;
 
 function ogTemplate(meta: { title: string; author: string }) {
@@ -170,9 +176,9 @@ async function renderOne(slug: string): Promise<void> {
   if (!bundled) throw new Error("no bundled evidence");
 
   const meta = bundled.frontmatter as { title: string; author: string };
+  // No status check: ImageResponse is always 200 unless an explicit `status`
+  // option is passed; render failures reject from arrayBuffer() below.
   const response = new ImageResponse(ogTemplate(meta), { width: 1200, height: 630 });
-  if (response.status !== 200) throw new Error(`ImageResponse status ${response.status}`);
-
   const png = Buffer.from(await response.arrayBuffer());
   writeFileSync(join(OUT_DIR, `${slug}.png`), png);
 }

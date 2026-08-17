@@ -28,6 +28,11 @@ Other common commands:
 | `bun run test:run`      | Run unit tests once          |
 | `bun run test:coverage` | Run unit tests with coverage |
 | `bun clean`             | Clean artifacts + reinstall  |
+| `bun run generate:og`   | Build evidence OG images     |
+
+`bun dev` does not generate the evidence OG images (`/og/evidence/<slug>.png`),
+and `public/og/` is gitignored — run `bun run generate:og` once if you need the
+social-card images on a dev server. Production builds run it automatically.
 
 ## Environment variables
 

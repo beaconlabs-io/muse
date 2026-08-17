@@ -12,7 +12,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "build:worker": "bun run generate:og && NEXT_UNOPTIMIZED_IMAGES=true opennextjs-cloudflare build",
+    "build:worker": "NEXT_UNOPTIMIZED_IMAGES=true opennextjs-cloudflare build",
     "preview": "bun run build:worker && opennextjs-cloudflare preview",
     "deploy:staging": "bun run build:worker && opennextjs-cloudflare deploy -e staging",
     "deploy:production": "bun run build:worker && opennextjs-cloudflare deploy -e production",
