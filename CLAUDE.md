@@ -25,7 +25,8 @@ it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 - `bun run build:worker` - Build the app into a Worker with `@opennextjs/cloudflare` (output: `.open-next/`)
 - `bun run preview` - Build and run the Worker locally via `wrangler dev`
 - `bun run deploy:staging` / `bun run deploy:production` - Break-glass manual deploy. Normally CI deploys; see `docs/setup.md`
-- Deploys are merge-driven: `dev` → `muse-frontend-staging`, `main` → `muse-frontend-prod`, PRs upload preview versions (`.github/workflows/deploy-worker.yml`, `quality.yml`)
+- Deploys are merge-driven: `dev` → `muse-frontend-staging` (`dev.muse.beaconlabs.io`), `main` → `muse-frontend-prod` (`muse.beaconlabs.io`), PRs upload preview versions (`.github/workflows/deploy-worker.yml`, `quality.yml`)
+- Both hostnames are Cloudflare-managed custom domains declared in `wrangler.jsonc`; roll a bad release back with `bunx wrangler rollback --env <env>`, see `docs/setup.md`
 - Config: `open-next.config.ts` (no caching bindings, but overrides the incremental cache with `staticAssetsIncrementalCache`) + `wrangler.jsonc`; see `docs/setup.md`
 - Always deploy through `opennextjs-cloudflare`, never plain `wrangler deploy` — the latter skips the prerender cache and 404s every evidence page
 - The Worker has no `vars` and no secrets: everything the app reads is a `NEXT_PUBLIC_*` value inlined at build time, so each environment needs its own build
