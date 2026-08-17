@@ -7,7 +7,9 @@ by the separate `muse-backend` service (Hono on Cloudflare Workers), reached
 through `NEXT_PUBLIC_API_BASE_URL`. The request, response and SSE shapes
 documented here are the contract this app consumes; agent orchestration and
 evidence matching internals live in that repository. What remains under
-`app/api/**` is the two OG image routes.
+`app/api/**` is the two OG image routes: `/api/og/canvas` (IPFS proxy) and
+`/api/og/evidence` (302 to the static image generated at build time by
+`scripts/generate-og-images.tsx`, see #306).
 
 ## Routes
 

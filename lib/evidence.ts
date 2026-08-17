@@ -14,20 +14,7 @@ import rehypeToc from "rehype-toc";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import type { Evidence } from "@beaconlabs-io/evidence";
-
-/**
- * The slugs that actually exist. `getEvidence` indexes a plain object, so an
- * unchecked lookup resolves `Object.prototype` member names (`toString`,
- * `constructor`, `__proto__`, …) to inherited values instead of `undefined` —
- * which would defeat every `if (!evidence)` not-found guard downstream.
- */
-const knownSlugs = new Set(getAllEvidenceSlugs());
-
-/** Normalize a URL slug, returning undefined when it is not real evidence. */
-function resolveSlug(slug: string): string | undefined {
-  const realSlug = slug.replace(/\.mdx$/, "");
-  return knownSlugs.has(realSlug) ? realSlug : undefined;
-}
+import { resolveSlug } from "@/lib/evidence-slug";
 
 /**
  * Get evidence by slug with compiled MDX content

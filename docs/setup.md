@@ -28,6 +28,11 @@ Other common commands:
 | `bun run test:run`      | Run unit tests once          |
 | `bun run test:coverage` | Run unit tests with coverage |
 | `bun clean`             | Clean artifacts + reinstall  |
+| `bun run generate:og`   | Build evidence OG images     |
+
+`bun dev` does not generate the evidence OG images (`/og/evidence/<slug>.png`),
+and `public/og/` is gitignored — run `bun run generate:og` once if you need the
+social-card images on a dev server. Production builds run it automatically.
 
 ## Environment variables
 
@@ -248,10 +253,12 @@ if you ever need to ship something that did not arrive via a PR.
 Each run re-runs `lint:check` and `test:run` against the merged branch, builds
 the Worker, deploys with `opennextjs-cloudflare deploy -e <env>`, then smoke
 tests the deployed URL: `/` (locale redirects), an SSG'd evidence detail page
-(the only check that catches an unpopulated prerender cache) and
-`/api/og/evidence` (the only server-rendered route, and the one that needs the
-separately uploaded resvg WASM module). A fresh workers.dev URL can 404 for tens
-of seconds, so every request retries. On failure the log prints the rollback
+(the only check that catches an unpopulated prerender cache), the build-time
+static evidence OG image (after one warmed-up fetch, 6 cache-busted requests
+that must all return 200 with no retries — the check that catches Workers
+CPU-limit regressions like #306), and the legacy `/api/og/evidence` URL, which
+must 302 to that static file. A fresh workers.dev URL can 404 for tens of
+seconds, so the warm-up requests retry. On failure the log prints the rollback
 command, `bunx wrangler rollback --env <env>`.
 
 Open PRs upload a **version** of the staging Worker (`quality.yml`), which
