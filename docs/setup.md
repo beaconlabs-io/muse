@@ -293,8 +293,12 @@ a separate, manual procedure, and it exists only while the Vercel project does
 (it is retired one week after the cutover, #300):
 
 1. Cloudflare dashboard → **Workers & Pages** → `muse-frontend-prod` →
-   **Settings** → **Domains & Routes** → remove `muse.beaconlabs.io`. That
-   deletes the `AAAA` record Cloudflare manages for it.
+   **Settings** → **Domains & Routes** → remove `muse.beaconlabs.io`. The
+   `AAAA` record Cloudflare manages for it is read-only and goes with it —
+   confirm in the DNS table before step 2, because any leftover record blocks
+   the CNAME. The Advanced Certificate the attach generated is _not_ removed
+   with it (SSL/TLS → Edge Certificates); harmless, but it will confuse a
+   later audit.
 2. Re-create the Vercel record in the `beaconlabs.io` zone:
    `CNAME muse → 4c63a93a6cc62575.vercel-dns-017.com`, **DNS only** (grey
    cloud). The `_vercel` `TXT` verification record for the hostname has to
