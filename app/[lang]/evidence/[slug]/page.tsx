@@ -98,7 +98,8 @@ export async function generateMetadata({
 
   // Absolute: the page is prerendered, and with no `metadataBase` set Next
   // would freeze a relative URL against its http://localhost:3000 fallback.
-  const ogImageUrl = `${BASE_URL}/api/og/evidence?slug=${encodeURIComponent(slug)}`;
+  // The PNG itself is generated at build time by scripts/generate-og-images.tsx.
+  const ogImageUrl = `${BASE_URL}/og/evidence/${encodeURIComponent(slug)}.png`;
 
   return {
     title,
