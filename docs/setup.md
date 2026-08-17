@@ -301,8 +301,9 @@ a separate, manual procedure, and it exists only while the Vercel project does
    later audit.
 2. Re-create the Vercel record in the `beaconlabs.io` zone:
    `CNAME muse → 4c63a93a6cc62575.vercel-dns-017.com`, **DNS only** (grey
-   cloud). The `_vercel` `TXT` verification record for the hostname has to
-   still be there.
+   cloud). That target is what Vercel assigned as of the cutover — reconfirm it
+   in the Vercel dashboard rather than pasting it blind. The `_vercel` `TXT`
+   verification record for the hostname has to still be there.
 3. Remove the `routes` entry from `env.production` in `wrangler.jsonc` in the
    same breath. Left in place, the next production deploy either re-attaches
    the domain or fails on the record it just re-created (error 100117).
