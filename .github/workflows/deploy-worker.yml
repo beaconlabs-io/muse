@@ -243,16 +243,39 @@ jobs:
           fetch "${DEPLOY_URL}/en/evidence/${EVIDENCE_SLUG}" evidence.html
           grep -q "<article" evidence.html
 
-          # The only server-rendered route left in this app, and the one that
-          # depends on the separately uploaded resvg WASM module. It renders a
-          # logo fetched from lib/constants.ts's BASE_URL, so this also fails if
-          # that host is unreachable.
-          echo "GET ${DEPLOY_URL}/api/og/evidence?slug=${EVIDENCE_SLUG}"
-          fetch "${DEPLOY_URL}/api/og/evidence?slug=${EVIDENCE_SLUG}" og.png
+          # The evidence OG image, now a build-time static asset (#306). One
+          # warmed-up fetch absorbs deploy propagation; after that, 6
+          # cache-busted requests must ALL succeed with no retries —
+          # `--retry-all-errors` is exactly how the exceededCpu failures of
+          # #306 slipped past this test (a ~1-in-6 success rate almost always
+          # survives 10 retries).
+          echo "GET ${DEPLOY_URL}/og/evidence/${EVIDENCE_SLUG}.png"
+          fetch "${DEPLOY_URL}/og/evidence/${EVIDENCE_SLUG}.png" og.png
+          for i in 1 2 3 4 5 6; do
+            curl --fail --silent --show-error --output og.png \
+              "${DEPLOY_URL}/og/evidence/${EVIDENCE_SLUG}.png?cb=${RANDOM}${i}"
+          done
           og_type=$(file -b og.png)
           case "$og_type" in
             "PNG image data"*) echo "OG image OK: $og_type" ;;
-            *) echo "::error::The OG route answered with '${og_type}', not a PNG."; exit 1 ;;
+            *) echo "::error::The OG image is '${og_type}', not a PNG."; exit 1 ;;
+          esac
+
+          # The legacy OG URL lives on in already-scraped social cards; it
+          # must 302 to the static file, not render anything. The Location is
+          # asserted by suffix only: its host comes from the build-time
+          # BASE_URL, which never matches a workers.dev DEPLOY_URL.
+          echo "GET ${DEPLOY_URL}/api/og/evidence?slug=${EVIDENCE_SLUG}"
+          read -r redirect_status redirect_location <<< "$(curl --silent --output /dev/null \
+            --write-out "%{http_code} %{redirect_url}" \
+            "${DEPLOY_URL}/api/og/evidence?slug=${EVIDENCE_SLUG}&cb=${RANDOM}")"
+          if [ "$redirect_status" != "302" ]; then
+            echo "::error::/api/og/evidence answered ${redirect_status}, expected 302."
+            exit 1
+          fi
+          case "$redirect_location" in
+            */og/evidence/"${EVIDENCE_SLUG}".png) echo "Redirect OK: $redirect_location" ;;
+            *) echo "::error::/api/og/evidence redirects to '${redirect_location}', expected */og/evidence/${EVIDENCE_SLUG}.png."; exit 1 ;;
           esac
 
       # Only once the deploy step has actually run: a lint/test/variable-check
