@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Fix #306 by generating the 42 evidence OG images at build time and serving them as static assets, removing satori/resvg from the Worker bundle, and hardening the deploy smoke test so this failure class cannot slip through again.
+**Goal:** Fix #306 by generating every evidence OG image at build time (one per slug — 21 with `@beaconlabs-io/evidence@1.1.4`; the "42 entries" in #306 counts prerendered _pages_, 21 slugs × 2 locales) and serving them as static assets, removing satori/resvg from the Worker bundle, and hardening the deploy smoke test so this failure class cannot slip through again.
 
 **Architecture:** A standalone Bun script renders every evidence OG image with `ImageResponse` from `next/og` into `public/og/evidence/<slug>.png` before `next build`. Page metadata points at the static file; the old `/api/og/evidence` route shrinks to a 302 redirect for already-scraped links. The deploy smoke test switches from retry-until-success to 6 cache-busted requests that must all return 200.
 
@@ -18,7 +18,21 @@
 - OG images are locale-independent: one PNG per slug, no per-locale variants.
 - The generation script imports evidence data from `@beaconlabs-io/evidence/content` only — never `lib/evidence` (drags in the MDX compile pipeline).
 - Repo commit style: Conventional Commits, English.
-- Verified 2026-08-17: `/og/evidence/<slug>.png` is NOT caught by the locale redirects — `i18n/locale-redirects.ts`'s `.*\..*` exclusion tests the whole remaining path, and `.png` contains a dot.
+- Verified 2026-08-17: `/og/evidence/<slug>.png` is NOT caught by the locale redirects — `i18n/locale-redirects.ts`'s `.*\..*` exclusion tests the whole remaining path, and `.png` contains a dot. (Belt and braces: `wrangler.jsonc` declares `assets` without `run_worker_first`, so an existing asset is served by the assets layer before the Worker — and its redirect logic — ever runs.)
+
+## Dig round outcome (2026-08-17, defaults adopted)
+
+Non-interactive dig round: assumptions were verified against the codebase; the remaining judgment calls were resolved by adopting each recommended default.
+
+1. **Legacy route `Location` assertion: adopted.** Task 4 Step 1 asserts the 302 status AND that `Location` ends with `/og/evidence/${EVIDENCE_SLUG}.png`. Suffix only: the host is `BASE_URL` (varies with `NEXT_PUBLIC_ENV`) and never matches a workers.dev `DEPLOY_URL`, so a full-URL compare would fail spuriously.
+2. **302 kept** (not 301) — it keeps the URL contract revisable; scrapers follow either.
+3. **One-shot bundle check accepted.** A durable CI bundle-size/grep gate against satori/resvg re-entry would be a separate PR.
+4. **Script approach confirmed over `opengraph-image.tsx`.** Suspected rationale (satori/resvg would still ship in the OpenNext server bundle even for prerendered image routes; per-locale duplicates under `app/[lang]/`) stays out of the spec until verified against OpenNext.
+
+Latent notes (no action required):
+
+- A future slug with URL-special characters would diverge: the script writes the raw `${slug}.png` filename while metadata/redirect use `encodeURIComponent`. All 21 current slugs match `[A-Za-z0-9_-]+`, so this is theoretical today.
+- A future CJK/Japanese evidence title would render as tofu in `next/og`'s bundled latin font. Pre-existing limitation of the old route; build-time generation at least makes it visible in PR review instead of production. (Current non-ASCII is limited to curly quotes/dashes, which the latin font covers.)
 
 ---
 
@@ -265,8 +279,10 @@ Coverage: `quality.yml` calls `bun run build:worker`, the Dockerfile calls `bun 
 
 ```bash
 bun run generate:og
-ls public/og/evidence/*.png | wc -l   # expect the slug count (42 at time of writing)
+ls public/og/evidence/*.png | wc -l   # expect getAllEvidenceSlugs().length — 21 with evidence@1.1.4
 ```
+
+Do NOT expect 42: #306's "42 entries" is the prerendered-page count (21 slugs × 2 locales). The images are locale-independent, so one PNG per slug — 21 — is correct.
 
 Open one PNG (e.g. `public/og/evidence/00.png`) and confirm title, author, AND the logo render (the logo is the regression the spike caught).
 
@@ -476,14 +492,21 @@ In `.github/workflows/deploy-worker.yml`, replace the third check (lines 246-256
           esac
 
           # The legacy OG URL lives on in already-scraped social cards; it
-          # must 302 to the static file, not render anything.
+          # must 302 to the static file, not render anything. The Location is
+          # asserted by suffix only: its host comes from the build-time
+          # BASE_URL, which never matches a workers.dev DEPLOY_URL.
           echo "GET ${DEPLOY_URL}/api/og/evidence?slug=${EVIDENCE_SLUG}"
-          redirect_status=$(curl --silent --output /dev/null --write-out "%{http_code}" \
-            "${DEPLOY_URL}/api/og/evidence?slug=${EVIDENCE_SLUG}&cb=${RANDOM}")
+          read -r redirect_status redirect_location <<< "$(curl --silent --output /dev/null \
+            --write-out "%{http_code} %{redirect_url}" \
+            "${DEPLOY_URL}/api/og/evidence?slug=${EVIDENCE_SLUG}&cb=${RANDOM}")"
           if [ "$redirect_status" != "302" ]; then
             echo "::error::/api/og/evidence answered ${redirect_status}, expected 302."
             exit 1
           fi
+          case "$redirect_location" in
+            */og/evidence/"${EVIDENCE_SLUG}".png) echo "Redirect OK: $redirect_location" ;;
+            *) echo "::error::/api/og/evidence redirects to '${redirect_location}', expected */og/evidence/${EVIDENCE_SLUG}.png."; exit 1 ;;
+          esac
 ```
 
 - [ ] **Step 2: Sweep the stale comments**
