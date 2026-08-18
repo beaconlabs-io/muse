@@ -64,13 +64,21 @@
       // a conflict fails every merge into `dev` rather than prompting.
       "routes": [{ "pattern": "dev.muse.beaconlabs.io", "custom_domain": true }],
     },
-    // main branch → https://muse-frontend-prod.<subdomain>.workers.dev
-    // The custom domain is attached in #300; until then this workers.dev URL is
-    // the only entry point, so `workers_dev` stays on (the default).
+    // main branch → https://muse.beaconlabs.io
     "production": {
       "name": "muse-frontend-prod",
       // Off so unreleased versions of production are never publicly reachable.
       "preview_urls": false,
+      // #300, production half. Same `custom_domain` semantics as staging above:
+      // Cloudflare owns the DNS record, and the attach fails with error 100117
+      // while an externally managed record for the hostname still exists — the
+      // Vercel CNAME has to be deleted before the deploy that lands this.
+      //
+      // Unlike staging, workers.dev is left at the default the route flips it
+      // to (off): production has no preview URLs to keep alive, and a second
+      // public hostname would only duplicate the site. The CI smoke test
+      // therefore runs against muse.beaconlabs.io.
+      "routes": [{ "pattern": "muse.beaconlabs.io", "custom_domain": true }],
     },
   },
 }
