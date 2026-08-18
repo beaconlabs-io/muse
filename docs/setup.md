@@ -98,7 +98,15 @@ minimumReleaseAge = 259200
 A production image is available via the repo-root `Dockerfile` and
 `docker-compose.yml`. Useful when reproducing production-like behaviour
 locally (standalone Next.js output, non-root runtime) or when deploying
-to a server without a Vercel-style platform.
+to a plain server.
+
+It is kept deliberately now that Cloudflare Workers hosts every environment
+(#300): it is the app's only container-based deployment path, and the hedge
+against a future requirement to run somewhere other than Cloudflare. Nothing in
+CI builds it, so it costs only the occasional dependency bump — but that also
+means a change to the app can break it silently. Run `docker compose build`
+after touching the build inputs (`next.config.ts`, the `NEXT_PUBLIC_*` set,
+Node version).
 
 ### Image layout
 
@@ -213,36 +221,37 @@ Notes:
   MDX compile pipeline never runs on the Worker.
 - Check the Worker bundle size with `bunx wrangler deploy --dry-run`. The
   limit is 3 MiB gzip on Workers Free and 10 MiB on Workers Paid; after
-  dropping shiki and the wallet stack and enabling wrangler's `minify`, the
-  bundle is ~2.9 MiB gzip — inside the Free plan with only ~166 KiB of
-  headroom, so weigh any heavy new dependency against it.
+  dropping shiki and the wallet stack, enabling wrangler's `minify` and moving
+  the evidence OG images to build time (#306), the bundle is ~1.9 MiB gzip —
+  about 1.1 MiB of headroom on the Free plan, which a single heavy dependency
+  can still eat.
 
 ### Environments and deploys
 
 Two Workers, both on the `beaconlabs-admin` account (`account_id` is pinned in
 `wrangler.jsonc` so a deploy can never land on a personal account):
 
-| Branch | wrangler env | Worker                  | Served at                        | Triggered by            |
-| ------ | ------------ | ----------------------- | -------------------------------- | ----------------------- |
-| `dev`  | `staging`    | `muse-frontend-staging` | `dev.muse.beaconlabs.io`         | a PR merged into `dev`  |
-| `main` | `production` | `muse-frontend-prod`    | workers.dev only (#300 half-way) | a PR merged into `main` |
+| Branch | wrangler env | Worker                  | Served at                | Triggered by            |
+| ------ | ------------ | ----------------------- | ------------------------ | ----------------------- |
+| `dev`  | `staging`    | `muse-frontend-staging` | `dev.muse.beaconlabs.io` | a PR merged into `dev`  |
+| `main` | `production` | `muse-frontend-prod`    | `muse.beaconlabs.io`     | a PR merged into `main` |
 
-Staging's hostname is a **custom domain** declared in `wrangler.jsonc`
-(`env.staging.routes`), which makes Cloudflare own its DNS record — a proxied
-placeholder `AAAA` it creates on attach. Production is still on Vercel:
-`muse.beaconlabs.io` keeps its CNAME there, and its cutover is the remaining
-half of #300.
+Both hostnames are **custom domains** declared in `wrangler.jsonc`
+(`env.*.routes`), which makes Cloudflare own their DNS records — a proxied
+placeholder `AAAA` it creates on attach.
 
 Two things to know before touching either hostname:
 
 - Cloudflare refuses to attach a custom domain to a hostname that already has
   an externally managed DNS record (error 100117), which is what the Vercel
-  CNAME on `dev.muse.beaconlabs.io` was. Delete the record first, then deploy;
-  adding one back by hand breaks the attached domain. CI deploys
-  non-interactively, so a conflict fails the merge rather than prompting.
-- Declaring any route flips wrangler's workers.dev default to **off**, and the
-  PR preview URLs live on that same subdomain. `workers_dev: true` next to the
-  route is what keeps them up.
+  CNAMEs on both hostnames were. Delete the record first, then deploy; adding
+  one back by hand breaks the attached domain. CI deploys non-interactively, so
+  a conflict fails the merge rather than prompting.
+- Declaring any route flips wrangler's workers.dev default to **off**. Staging
+  needs it back on (`workers_dev: true`), because the PR preview URLs live on
+  that same subdomain; production leaves it off, so `muse.beaconlabs.io` is its
+  only public hostname — and the CI smoke test runs against that hostname, not
+  a workers.dev one.
 
 Deploys are **merge-driven**: `.github/workflows/deploy-worker.yml` runs on
 `pull_request: closed` and does nothing unless the PR was actually merged. A
@@ -265,6 +274,39 @@ Open PRs upload a **version** of the staging Worker (`quality.yml`), which
 shifts no traffic, and get the URLs commented back on the PR:
 `https://pr-<number>-muse-frontend-staging.<subdomain>.workers.dev` stays stable
 across pushes to the same PR.
+
+#### Rollback
+
+```bash
+bunx wrangler rollback --env production   # or --env staging
+```
+
+This is the whole rollback path for a bad release. A Cloudflare **version**
+captures the code, the static assets and the compatibility settings together,
+so rolling back also restores that version's prerender cache — the pages served
+out of the static assets. It makes the selected version active across every
+route and custom domain the Worker already has, and changes no DNS record. Only
+the last 100 versions are available.
+
+Reverting the domain itself — pointing `muse.beaconlabs.io` back at Vercel — is
+a separate, manual procedure, and it exists only while the Vercel project does
+(it is retired one week after the cutover, #300):
+
+1. Cloudflare dashboard → **Workers & Pages** → `muse-frontend-prod` →
+   **Settings** → **Domains & Routes** → remove `muse.beaconlabs.io`. The
+   `AAAA` record Cloudflare manages for it is read-only and goes with it —
+   confirm in the DNS table before step 2, because any leftover record blocks
+   the CNAME. The Advanced Certificate the attach generated is _not_ removed
+   with it (SSL/TLS → Edge Certificates); harmless, but it will confuse a
+   later audit.
+2. Re-create the Vercel record in the `beaconlabs.io` zone:
+   `CNAME muse → 4c63a93a6cc62575.vercel-dns-017.com`, **DNS only** (grey
+   cloud). That target is what Vercel assigned as of the cutover — reconfirm it
+   in the Vercel dashboard rather than pasting it blind. The `_vercel` `TXT`
+   verification record for the hostname has to still be there.
+3. Remove the `routes` entry from `env.production` in `wrangler.jsonc` in the
+   same breath. Left in place, the next production deploy either re-attaches
+   the domain or fails on the record it just re-created (error 100117).
 
 #### Repository configuration
 
@@ -300,7 +342,7 @@ Two tripwires guard that layering before a production build starts:
 must differ from the repository-level (staging) value — each failure is exactly
 what a missing production override looks like.
 
-#### Known gap for PR previews (#300)
+#### Known gap for PR previews
 
 The backend allows CORS origins by exact match (`ALLOWED_ORIGINS`), and its
 staging list holds `https://dev.muse.beaconlabs.io`. Staging answers on exactly
