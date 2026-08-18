@@ -15,7 +15,12 @@
 
 # next.js
 /.next/
+/.open-next/
+/.wrangler/
 /out/
+
+# build-time generated OG images (scripts/generate-og-images.tsx)
+/public/og/
 
 # production
 /build
@@ -31,8 +36,18 @@ yarn-error.log*
 
 
 # env files (can opt-in for committing if needed)
+# The OpenNext build bakes every one of these into the Worker script, so keep
+# server secrets out of them entirely — see docs/setup.md.
 .env
 .env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# wrangler local secrets
+.dev.vars
+.dev.vars.*
 
 # vercel
 .vercel
@@ -43,10 +58,14 @@ next-env.d.ts
 
 .serena
 .claude
-.mastra
 # Vector store for RAG evidence search
 vector.*
-# Mastra storage (LibSQL)
+
+# Leftovers from the removed Mastra AI layer. Nothing regenerates these — the
+# layer now lives in the muse-backend service — but existing checkouts still
+# have the LibSQL database on disk (~950MB) and it must never be committed.
+# Delete the files locally, then these rules can go.
+.mastra
 mastra.db
 mastra.db-journal
 mastra.db-wal

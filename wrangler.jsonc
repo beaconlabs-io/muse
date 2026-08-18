@@ -1,0 +1,76 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Top-level config is the base for local `bun run preview` only. Every deploy
+  // targets a named environment (`--env staging` / `--env production`), so a
+  // bare `muse-frontend` Worker is never created by CI.
+  "name": "muse-frontend",
+  // beaconlabs-admin account — pinned so deploys never target a personal account.
+  "account_id": "4c5ef16e3b6b9dd23e9a8f59bc69bea7",
+  "main": ".open-next/worker.js",
+  // The Workers Free plan caps the deployed script at 3 MiB gzipped; wrangler's
+  // esbuild minify buys roughly 0.5 MiB of headroom (the OpenNext server bundle
+  // is shipped unminified). Inheritable, so it applies to every environment.
+  "minify": true,
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+    },
+    "traces": {
+      "enabled": false,
+    },
+  },
+  // No KV / R2 / D1 / Durable Object bindings on purpose: the app uses no ISR,
+  // so prerendered pages are served read-only from the static assets cache
+  // (see open-next.config.ts). Deploy with `opennextjs-cloudflare deploy`, not
+  // plain `wrangler deploy`, which never populates that cache.
+  //
+  // No `vars` and no secrets, in any environment. Everything this app reads is a
+  // `NEXT_PUBLIC_*` value inlined into the bundle by `next build`, so the split
+  // between staging and production is a build-time one: the values live as
+  // GitHub environment variables and each environment gets its own build
+  // (.github/workflows/deploy-worker.yml). A runtime var here would be read by
+  // nothing.
+  //
+  // The environments below only override what actually differs. Everything else
+  // (main, assets, compatibility_date, compatibility_flags, observability,
+  // account_id) is an inheritable key and cascades from the top level — unlike
+  // `vars`, which would have to be restated per environment if this app had any.
+  "env": {
+    // dev branch → https://dev.muse.beaconlabs.io (workers.dev stays up too)
+    // PR previews are uploaded as versions of this Worker.
+    "staging": {
+      "name": "muse-frontend-staging",
+      // Required for the versioned/aliased preview URLs used by PR previews.
+      "preview_urls": true,
+      // Stated explicitly because the `routes` entry below flips the default:
+      // wrangler disables workers.dev on any Worker that declares a route,
+      // which would take the preview URLs (same subdomain) down with it.
+      "workers_dev": true,
+      // #300, staging half. This is the origin the backend's staging
+      // ALLOWED_ORIGINS lists, so browser calls only pass CORS from here,
+      // never from the workers.dev URL. `custom_domain` means Cloudflare owns
+      // this hostname's DNS record: the record it manages is created on
+      // attach, and adding any record for the hostname by hand breaks it.
+      // Cloudflare refuses the attach outright while an externally managed
+      // record exists (error 100117), which is what the former Vercel CNAME
+      // did until it was deleted — and CI deploys non-interactively, so such
+      // a conflict fails every merge into `dev` rather than prompting.
+      "routes": [{ "pattern": "dev.muse.beaconlabs.io", "custom_domain": true }],
+    },
+    // main branch → https://muse-frontend-prod.<subdomain>.workers.dev
+    // The custom domain is attached in #300; until then this workers.dev URL is
+    // the only entry point, so `workers_dev` stays on (the default).
+    "production": {
+      "name": "muse-frontend-prod",
+      // Off so unreleased versions of production are never publicly reachable.
+      "preview_urls": false,
+    },
+  },
+}

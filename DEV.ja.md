@@ -17,7 +17,7 @@ sequenceDiagram
     FE->>Agent: 目標を送信
     Agent->>Evidence: 関連エビデンスを検索
     Evidence-->>Agent: エビデンスデータを返却
-    Agent->>SS: 外部学術論文を検索（エビデンス不足エッジ）
+    Agent->>SS: 外部学術論文を検索（エビデンス不足エッジ、トグル有効時）
     SS-->>Agent: 学術論文を返却
     Agent->>Agent: ロジックモデルを生成 (JSON)
     Agent->>FE: ロジックモデルを表示
@@ -36,7 +36,7 @@ Museは、ロジックモデル内の因果関係を裏付ける研究エビデ�
 - **LLMベースのマッチング**: Chain-of-thought推論を使用して、エビデンスのintervention→outcome関係とロジックモデルのエッジを意味的にマッチング
 - **品質指標**: エビデンス強度評価（Maryland Scientific Method Scale 0-5）を表示し、低品質エビデンスに警告を表示
 - **エビデンスメタデータ**: 各エッジにマッチしたエビデンスID、スコア、信頼度評価、構造化された推論を保存
-- **外部学術論文検索**: 内部エビデンスが不足するエッジに対して、Semantic Scholar APIから関連する学術論文を自動検索（参考資料として表示）
+- **外部学術論文検索**: 内部エビデンスが不足するエッジに対して、Semantic Scholar APIから関連する学術論文を検索（参考資料として表示）。生成ダイアログのトグルで有効にしたときだけ実行される
 
 ### 仕組み
 
@@ -44,10 +44,10 @@ Museは、ロジックモデル内の因果関係を裏付ける研究エビデ�
 2. **エビデンス検索**: すべての矢印に対して、Evidence Search Agentへの**単一のバッチリクエスト**としてエビデンス検索を実行（1回のLLM呼び出しですべてのエッジを評価）
 3. **セマンティックマッチング**: Evidence Search Agent（google/gemini-2.5-pro使用）がchain-of-thought推論を使用して、エビデンスのintervention→outcomeペアがエッジ関係を裏付けるかを評価
 4. **エビデンス添付**: スコア≥70の上位マッチングエビデンスIDを、メタデータ（スコア、信頼度、推論、強度、intervention/outcomeテキスト）と共に矢印に添付
-5. **外部論文検索**: 内部エビデンスマッチが不足するエッジに対して、Semantic Scholar APIで学術論文を並列検索。LLM（Gemini 2.5 Flash）がカードタイトルから英語の学術キーワードを抽出し、結果をキャッシュ（24時間TTL）
-6. **UI表示**: フロントエンドは、エビデンス付きの矢印を緑色の太いエッジ（FileTextアイコン）、外部論文のみの矢印を青色の太いエッジ（BookOpenアイコン）としてレンダリング。クリックすると、内部エビデンス（緑）と外部学術論文（青「Academic Papers (Reference)」）の2セクションを含むダイアログが表示
+5. **外部論文検索**: 外部検索トグルが有効なとき、内部エビデンスマッチが不足するエッジに対して、Semantic Scholar APIで学術論文を並列検索。LLM（Gemini 2.5 Flash）がカードタイトルから英語の学術キーワードを抽出し、結果をキャッシュ（24時間TTL）
+6. **UI表示**: フロントエンドは、エビデンスの有無に応じてエッジを色分けし、エッジ上のボタンからエビデンスダイアログを開く（配色とダイアログの構成は後述の「フロントエンドコンポーネント」を参照）
 
-**UIフロー**: ユーザーには4つのステップ（analyze → structure → illustrate → complete）が表示されるが、完全な4ステップワークフロー（構造生成 → エビデンス検索 → 外部論文検索 → 強化）は「structure」ステップ中に見えない形で実行される
+**UIフロー**: 生成ダイアログの進捗ステップは、バックエンドが送る SSE の `step-start` / `step-finish` / `step-error` イベントで進む。ステップ ID はバックエンドが送るものをそのまま使い、UI 側で別名を付けることはない。最後の `complete` だけは `workflow-complete` を受け取ったフロントエンドが完了にする。
 
 ### 詳細シーケンス図
 
@@ -59,7 +59,8 @@ sequenceDiagram
     participant Canvas as ReactFlowCanvas
     participant Edge as EvidenceEdge コンポーネント
     participant Dialog as EvidenceDialog
-    participant Workflow as Mastra Workflow
+    participant API as muse-backend (NEXT_PUBLIC_API_BASE_URL)
+    participant Workflow as Backend Workflow
     participant Agent as Logic Model Agent
     participant Tool as Logic Model Tool
     participant Search as Evidence Search
@@ -67,13 +68,13 @@ sequenceDiagram
     participant LLM
     participant SS as Semantic Scholar API
 
-    Note over User, SS: ロジックモデル生成とエビデンス検証 (Mastra Workflow)
+    Note over User, SS: ロジックモデル生成とエビデンス検証 (muse-backend のワークフロー)
 
     User->>FE: 目標を提供（例：「EthereumへのOSSの影響」）
 
-    Note over FE, LLM: UI Step 1: 構造を生成 (SSEストリーム)
-    FE->>FE: "generate-logic-model"をアクティブにマーク
-    FE->>API: POST /api/workflow/stream (SSE)
+    Note over FE, LLM: 進捗ステップは SSE の step-start / step-finish で駆動される（最後の complete のみ workflow-complete 受信後にクライアント側で完了）
+    FE->>API: POST /api/workflow/stream (SSE、apiUrl() 経由で muse-backend へ)
+    API-->>FE: step-start "generate-logic-model"
     API->>Workflow: logicModelWithEvidenceWorkflow.stream()
 
     Note over Workflow, Agent: Workflow Step 1: ロジックモデル構造を生成
@@ -93,6 +94,7 @@ sequenceDiagram
     Agent-->>Workflow: { canvasData }を返却
 
     Note over Workflow, LLM: Workflow Step 2: エビデンス検索 (バッチ - 単一LLM呼び出し)
+    API-->>FE: step-finish "generate-logic-model" / step-start "search-evidence"
     Workflow->>Search: searchEvidenceForAllEdges(agent, allEdges)
     Search->>Search: エビデンスメタデータを読み込み（1回）
     Search->>EvidenceAgent: すべてのエッジを含む単一バッチリクエスト
@@ -103,7 +105,8 @@ sequenceDiagram
     Search-->>Workflow: evidenceByArrowマップを返却
     Note over Workflow: すべてのエッジに対して単一のLLM呼び出し<br/>(N+1パターンを排除)
 
-    Note over Workflow, SS: Workflow Step 2.5: 外部学術論文検索 (並列、キャッシュ付き)
+    Note over Workflow, SS: Workflow Step 2.5: 外部学術論文検索 (並列、キャッシュ付き。トグル有効時のみ)
+    API-->>FE: step-finish "search-evidence" / step-start "search-external-papers"
     Workflow->>Workflow: 内部マッチ < 1 のエッジをフィルタ
     Workflow->>SS: Promise.allSettled: エッジごとに検索
     Note over SS: LLMキーワード抽出 (Gemini 2.5 Flash)<br/>→ Semantic Scholar Graph API<br/>→ DOI/タイトルで重複排除
@@ -111,29 +114,26 @@ sequenceDiagram
     Note over Workflow: 結果をキャッシュ (24時間TTL、500エントリFIFO)
 
     Note over Workflow: Workflow Step 3: エビデンスと外部論文でCanvasを強化
+    API-->>FE: step-finish "search-external-papers" / step-start "enrich-canvas"
     Workflow->>Workflow: エビデンスIDを矢印に添付
     Workflow->>Workflow: 外部学術論文を矢印に添付
     Workflow->>Workflow: エビデンスメタデータを追加（スコア、信頼度、推論、強度）
     Workflow-->>API: { canvasData }を返却（完全に強化済み）
-    API-->>FE: canvasData with evidenceを返却
-    FE->>FE: "structure"を完了にマーク
+    API-->>FE: step-finish "enrich-canvas"
+    API-->>FE: workflow-complete + canvasData
+    FE->>FE: "complete" を完了にマーク（クライアント側）
 
-    Note over FE: UI Step 3: Canvasを描画 (クライアントサイド)
-    FE->>FE: "illustrate"をアクティブにマーク
-    FE->>Canvas: loadGeneratedCanvas(canvasData)
+    Note over FE: ストリーム成功後: Canvasを描画 (クライアントサイド)
+    FE->>Canvas: loadGeneratedCanvas({ ...canvasData, enableRecipe })
     Canvas->>Canvas: カードをReact Flowノードに変換
-    Canvas->>Canvas: 矢印をReact Flowエッジに変換
-    Note over Canvas: evidenceIds付き → type="evidence", 緑色 (#10b981)<br/>externalPapersのみ → type="evidence", 青色 (#3b82f6)<br/>なし → default, グレー (#6b7280)
-    FE->>FE: "illustrate"を完了にマーク
-
-    Note over FE: UI Step 4: 完了
-    FE->>FE: "complete"を完了にマーク
+    Canvas->>Canvas: arrowsToEdges() で矢印をReact Flowエッジに変換
+    Note over Canvas: 配色は lib/canvas/react-flow-utils.ts が決める
     FE-->>User: canvasDataを表示（緑/青/グレーのエッジ）
 
     Note over User, Edge: ユーザーとエビデンスの対話
     User->>Edge: エッジ上の緑色/青色ボタンをクリック
     Edge->>Dialog: EvidenceDialogを開く
-    Dialog-->>User: 内部エビデンス（緑）+ 外部論文（青）を表示
+    Dialog-->>User: 内部エビデンスと外部学術論文の2セクションを表示
     User->>Dialog: エビデンスIDまたは論文DOIリンクをクリック
     Dialog->>User: /evidence/{id}ページまたは外部URLへナビゲート
 ```
@@ -187,12 +187,9 @@ strength: 4 (Maryland Scale)
 
 **UIプレゼンテーション:**
 
-- 内部エビデンス付きの矢印は緑色の太いエッジで表示（マッチスコア≥70）、FileTextアイコン
-- 外部論文のみの矢印は青色の太いエッジで表示、BookOpenアイコン
-- エビデンスのないエッジは通常のグレーカーブとして表示（ネガティブな表示なし）
-- エビデンスダイアログは2セクション: 内部エビデンス（緑）と外部学術論文（青「Academic Papers (Reference)」）
-- 内部エビデンスは`/evidence/{id}`ページへリンク、外部論文はDOIまたはSemantic Scholar URLへリンク
-- 3色の色分けでエビデンスカバレッジを自然に可視化（緑 / 青 / グレー）
+エビデンスのないエッジは通常のグレーカーブとして表示し、欠落を責めるような表示はしません。
+3色の色分け（緑 / 青 / グレー）だけでエビデンスカバレッジが一目で読み取れます。
+具体的な配色とダイアログの構成は、後述の「フロントエンドコンポーネント」で定義します。
 
 **科学的利点:**
 
@@ -204,11 +201,18 @@ strength: 4 (Maryland Scale)
 
 ### 技術実装
 
+> **この節の大半は別リポジトリの記述である。**
+> AI 層の実装は `muse-backend`（Cloudflare Workers 上の Hono サービス）に移設済みで、このリポジトリには存在しない。
+> 具体的には、エージェントのプロンプトと5段階ワークフロー、採用モデル（`google/gemini-2.5-pro`、Gemini 2.5 Flash）、スコアリングの閾値と校正、キャッシュ、`EXTERNAL_SEARCH_ENABLED` などのサーバー側フラグ、Workflow Step 1/2/2.5/3 の構成が該当する。
+> これらは muse-backend 側のコードを出典としており、このチェックアウトからは検証できない。差異を疑ったときは muse-backend を直接確認する。
+> 以下の `muse-backend の …` と付いたファイルパスはすべてそのリポジトリ内のものを指す。このアプリは `NEXT_PUBLIC_API_BASE_URL` 経由で HTTP で呼び出す。
+> 例外として `types/index.ts` と `components/` 配下のパスはこのリポジトリのものである。
+
 **エージェントアーキテクチャと品質管理:**
 
-システムは、包括的な品質管理を備えた2つの専門AIエージェントを使用します:
+システムは、包括的な品質管理を備えた2つの専門AIエージェントと、それらを補う外部論文検索モジュールを使用します:
 
-**1. Logic Model Agent** (`mastra/agents/logic-model-agent.ts`)
+**1. Logic Model Agent** (`muse-backend` の `src/ai/agents/logic-model.ts`)
 
 構造化された5段階ワークフローを持つTheory of Change専門家:
 
@@ -218,7 +222,7 @@ strength: 4 (Maryland Scale)
   - 目標評価と参照介入
 
 - **Stage 2: カードを生成**
-  - ステージごとに1-2枚のカードを作成、タイトル（最大100文字）、説明（最大200文字）、メトリクス付き
+  - ステージごとに1-2枚のカードを作成、タイトル（最大100文字）、説明（最大200文字）、メトリクス付き。なおこの200文字はエージェントへの指示であり、このリポジトリの `CardSchema` が検証する上限は300文字である
   - ステージ: Activities → Outputs → Outcomes-Short（0-6ヶ月） → Outcomes-Intermediate（6-18ヶ月） → Impact（18ヶ月以上）
   - 各カードには簡潔な`name` (3-8語) と1文の `description` を持つメトリクスオブジェクトが1つ含まれる。`description` はレシピエージェントが具体的な測定手順を生成する際のヒントとして使われる。測定方法・頻度・目標値はここでは出さず、レシピステップで詳細化される
 
@@ -247,19 +251,7 @@ strength: 4 (Maryland Scale)
 - ❌ 最大の間違い #4: カウントを満たすために弱い/間接的な接続を作成
 - ❌ 最大の間違い #5: 無効なfrequency値
 
-**3. 外部学術論文検索** (`lib/external-paper-search.ts`)
-
-Semantic Scholar APIを使用した外部学術論文検索:
-
-- **トリガー条件**: `EXTERNAL_SEARCH_ENABLED=true` かつ内部エビデンスマッチ < `MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL` (1) のエッジ
-- **キーワード抽出**: Gemini 2.5 Flash がカードタイトルを英語の学術キーワードに変換（失敗時は元のタイトルにフォールバック）
-- **API呼び出し**: Semantic Scholar Graph API でrelevance検索、結果をExternalPaper形式に正規化
-- **重複排除**: DOIまたはタイトルの一致で重複を除去
-- **キャッシュ**: 24時間TTL、500エントリFIFO、決定的キー（エッジコンテンツのタイトルから生成）
-- **並列実行**: `Promise.allSettled` で1つのエッジの失敗が他に影響しないよう保証
-- **スコアリングなし**: 外部論文はLLMスコアリングなしの参考資料として表示
-
-**2. Evidence Search Agent** (`mastra/agents/evidence-search-agent.ts`)
+**2. Evidence Search Agent** (`muse-backend` の `src/lib/evidence-search-batch.ts`)
 
 Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 
@@ -313,17 +305,34 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 - ✓ 信頼度値が入力されている（0-100）
 - ✓ JSONフォーマットがスキーマと完全に一致
 
+**3. 外部学術論文検索** (`muse-backend` の `src/lib/external-paper-search.ts`)
+
+Semantic Scholar APIを使用した外部学術論文検索（この項目も muse-backend 側の実装であり、このチェックアウトからは検証できない）:
+
+- **トリガー条件**: `EXTERNAL_SEARCH_ENABLED=true` かつ内部エビデンスマッチ < `MIN_INTERNAL_MATCHES_BEFORE_EXTERNAL` (1) のエッジ
+- **キーワード抽出**: Gemini 2.5 Flash がカードタイトルを英語の学術キーワードに変換（失敗時は元のタイトルにフォールバック）
+- **API呼び出し**: Semantic Scholar Graph API でrelevance検索、結果をExternalPaper形式に正規化
+- **重複排除**: DOIまたはタイトルの一致で重複を除去
+- **キャッシュ**: 24時間TTL、500エントリFIFO、決定的キー（エッジコンテンツのタイトルから生成）
+- **並列実行**: `Promise.allSettled` で1つのエッジの失敗が他に影響しないよう保証
+- **スコアリングなし**: 外部論文はLLMスコアリングなしの参考資料として表示
+
 **コアコンポーネント:**
 
-- `components/canvas/GenerateLogicModelDialog.tsx`: 4ステッププロセスのメインUIコンポーネント
-  - Step 1: "generate-logic-model" - SSEストリーム経由でロジックモデル構造を生成
-  - Step 2: "search-evidence" - エビデンスを検索
-  - Step 3: "enrich-canvas" - エビデンスメタデータでキャンバスを充実化
-  - Step 4: "complete" - 最終状態
-  - `useWorkflowStream`フックとSSEルート（`/api/workflow/stream`）によるリアルタイムステップ進捗
-  - Zodでフォーム検証
+- `components/canvas/GenerateLogicModelDialog.tsx`: 生成フローのメインUIコンポーネント
+  - 進捗ステップは `buildProgressSteps(enableExternalSearch)` が組み立てる。外部検索が無効なら4ステップ、有効なら `search-external-papers` が挟まって5ステップになる:
+    - `generate-logic-model` - ロジックモデル構造を生成
+    - `search-evidence` - 内部エビデンスを検索
+    - `search-external-papers` - 外部学術論文を検索（外部検索トグルが有効なときのみ）
+    - `enrich-canvas` - エビデンスメタデータでキャンバスを充実化
+    - `complete` - 最終状態
+  - 各ステップの状態は SSE の `step-start` / `step-finish` / `step-error` イベント（`types/workflow-events.ts`）で更新される。UI 側が先読みして進めることはなく、例外は最後の `complete` だけで、これは `workflow-complete` を受け取った時点でフロントエンドが完了にする
+  - 入力モードは `goal`（目標テキスト、最大1000文字）と `file`（ファイルアップロード）の2種類。ファイルモードでは MIME タイプを `FILE_UPLOAD_ALLOWED_MIME_TYPES`、サイズを `FILE_UPLOAD_MAX_BYTES_BY_MIME`（いずれも `lib/constants.ts`）に照らして Zod の `superRefine` で検証し、multipart/form-data で送信する
+  - 3つのトグルを持つ: `enableExternalSearch`（外部学術論文検索）、`enableMetrics`（メトリクス生成）、`enableRecipe`（レシピ生成。`loadGeneratedCanvas` に渡され、キャンバス描画後にレシピストリームを起動する）
+  - 外部検索トグル自体がビルド時フラグ `EXTERNAL_SEARCH_ENABLED`（`lib/constants.ts`、実体は `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED === "true"`）で表示制御されており、フラグが立っていなければユーザーには出ない
+  - `useWorkflowStream` フックが muse-backend の `/api/workflow/stream` を `apiUrl()` 経由で呼ぶ。このアプリ自身の Next.js ルートではない（`app/api/` にあるのは OG 画像の2ルートだけ）
 
-- `mastra/workflows/logic-model-with-evidence.ts`: 4ステップのプロダクションワークフロー（Step 2.5を含む）:
+- `muse-backend` の `src/ai/workflows/logic-model-with-evidence.ts`: 4ステップのプロダクションワークフロー（Step 2.5を含む）:
 
   **Step 1: ロジックモデル構造を生成**
   - ツール検証エラーのリトライロジックを含む（メトリクスフォーマット失敗時に自動的により厳格なプロンプトで再試行）
@@ -351,20 +360,20 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
   簡略化された出力を返す: `{ canvasData }`（統計はデータから導出、別途追跡なし）
   モジュールプレフィックスと詳細なデバッグ情報を含む包括的なロギング
 
-- `lib/evidence-search-batch.ts`: バッチエビデンス検索関数
+- `muse-backend` の `src/lib/evidence-search-batch.ts`: バッチエビデンス検索関数
   - すべてのエッジに対して単一のLLM呼び出し（N+1パターンを排除）
   - エビデンスメタデータを1回読み込み、すべてのマッチを強化
   - `Record<arrowId, EvidenceMatch[]>`マップを返す
   - エラー処理は失敗時にすべてのエッジに対して空の結果を返す
 
-- `mastra/tools/logic-model-tool.ts`: ロジックモデル構造生成のためのツール
+- `muse-backend` の `src/ai/tools/logic-model-tool.ts`: ロジックモデル構造生成のためのツール
   - 入力フォーマットを検証（targetContext、metrics、connections）
   - 配置を含むcanvasレイアウトを生成
   - スキーマに準拠したCanvasDataを返す
 
 - `types/index.ts`: 型定義
   - `evidenceIds: string[]`、`evidenceMetadata: EvidenceMatch[]`、`externalPapers: ExternalPaper[]`で拡張されたArrow型
-  - evidenceId、score、confidence、reasoning、strength、hasWarning、title、interventionText、outcomeTextを含むEvidenceMatchインターフェース
+  - evidenceId、score、confidence、reasoning、strength、hasWarning、title、interventionText、outcomeTextを含むEvidenceMatchインターフェース（`strength` は数値ではなく省略可能な文字列、必須は evidenceId / score / reasoning / hasWarning の4つ）
   - id、title、authors、year、doi、url、abstract、source、citationCount、tldr、influentialCitationCount、fieldsOfStudy、publicationVenueを含むExternalPaperインターフェース
   - `includeExternalPapers: boolean`オプション付きのEvidenceSearchRequest
   - オプションの`externalPapers: ExternalPaper[]`付きのEvidenceSearchResponse
@@ -373,7 +382,7 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 **アーキテクチャの利点:**
 
 - **関心の分離**: 構造生成とエビデンス検索を分離（4つの異なるワークフローステップ、Step 2.5を含む）
-- **ステップバイステップUI**: ユーザーは4つのUIステップで明確な進捗を確認（analyze → structure → illustrate → complete）
+- **ステップバイステップUI**: ワークフローのステップがそのまま進捗ステップとして SSE で流れるため、どの処理が走っているかがユーザーから見える
 - **バッチ処理**: 単一のLLM呼び出しですべてのエッジを評価、N+1パターンを排除
 - **高速モデル**: ツール呼び出しサポート付きの高品質LLM評価に`google/gemini-2.5-pro`を使用
 - **構造化されたエージェント指示**: 品質保証のための検証チェックリストとメタ認知的質問を含む5段階ワークフロー
@@ -383,43 +392,34 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 - **簡素化されたAPI**: CanvasDataのみを返し、消費者は必要に応じて統計を計算（重複追跡なし）
 - **プロダクション対応ロギング**: モジュールプレフィックスと包括的なデバッグ情報を含む詳細な進捗ログ
 - **スキーマ再利用**: `types/index.ts`から100%の型再利用（CanvasDataSchema、EvidenceMatchSchemaなど）
-- **透明なエビデンス検索**: エビデンス検索は構造ステップ中に見えない形で実行、別のUI読み込み状態なし
 - **より良いエラー回復**: リトライロジックがフォーマットエラーをキャッチ、詳細なロギングがデバッグを支援
 - **可観測性**: 構造化推論を含む包括的なロギングにより、エージェントの決定を説明可能に
 - **グレースフルな外部検索**: 外部論文検索はエビデンス不足エッジのみ実行、`Promise.allSettled`による障害分離と積極的キャッシュ（24時間TTL）
 
-**UIフロー（4ステップ）:**
-
-1. **Analyze Goal**（UIのみ） - ステップをアクティブ → 即座に完了にマーク
-2. **Generate Structure**（サーバー） - **完全なワークフローがここで実行**:
-   - Workflow Step 1: 5段階検証付きでカードと矢印をLLMが生成
-   - Workflow Step 2: バッチエビデンス検索 - すべてのエッジに対してchain-of-thought付き単一LLM呼び出し
-   - Workflow Step 2.5: 外部学術論文検索 - エビデンス不足エッジに対してSemantic Scholar API検索
-   - Workflow Step 3: エビデンスメタデータと外部論文で矢印を強化
-3. **Illustrate Canvas**（クライアント） - React FlowでcanvasDataをレンダリング、エビデンススタイリングを適用
-4. **Complete**（UI） - エビデンス裏付け矢印用の緑色/外部論文の青色エッジを含む最終ロジックモデルを表示
-
 **フロントエンドコンポーネント:**
 
 - `components/canvas/EvidenceEdge.tsx`: ボタンツールバー付きのカスタムReact Flowエッジ
-  - 3段階の色分け: 緑（内部エビデンス）、青（外部論文のみ）、グレー（なし）
-  - 緑ボタン（FileTextアイコン）: 内部エビデンスがある場合
-  - 青ボタン（BookOpenアイコン）: 外部論文のみがある場合
+  - エメラルドのボタン（`FileText` アイコン）: 内部エビデンスがある場合
+  - 青のボタン（`BookOpen` アイコン）: 外部論文のみがある場合（`hasExternalPapers && !hasEvidence`）
+  - ボタンは `getBezierPath()` が返すラベル位置（`labelX` / `labelY`）に配置する
   - ダイアログの開閉状態を管理
 
 - `components/canvas/EvidenceDialog.tsx`: エビデンス表示用のモーダルダイアログ（2セクション）
-  - **内部エビデンス（緑テーマ）**: エビデンスIDを`/evidence/{id}`ページへのリンクとして表示、スコア、推論、強度評価
-  - **外部学術論文（青テーマ「Academic Papers (Reference)」）**: タイトル（DOI/URLリンク）、ソースバッジ、著者（最大3名）、年、要旨、DOI
+  - ラベルは（外部論文カードの `DOI:` 表記を除き）next-intl の `evidenceDialog` 名前空間のキーで、ハードコードされた英文ではない
+  - **内部エビデンス**: 白背景（`bg-white`）のカード。エビデンスIDを`/evidence/{id}`へのリンク（`target="_blank"`）として表示し、関連性スコアをエメラルドのバッジで添える。以下、タイトル、推論、強度、`hasWarning` が真のときの⚠️表示、intervention / outcome テキストが続く
+  - 強度は `EvidenceMatch.strength`（型は文字列。`types/index.ts`）をそのまま `{strength}/5` の書式で表示する。⚠️ 表示もフロントエンドで閾値判定しているわけではなく、バックエンドが返す `hasWarning` をそのまま描画している
+  - リンク先の `/evidence/{id}` はロケール接頭辞を持たないため、`i18n/locale-redirects.ts` のリダイレクト規則（`NEXT_LOCALE` クッキー → Accept-Language の先頭タグ → デフォルトロケール）で解決される。キャンバスの現在ロケールを引き継ぐわけではない（詳細は `docs/i18n.md`）
+  - **外部学術論文**: 見出しは `academicPapers` キー（en: "Academic Papers (Reference)" / ja: 「学術論文（参考文献）」）でグレー。青系の配色は個々の論文カード（`border-blue-200 bg-blue-50/50`）側に付く。各カードはタイトル（DOI があれば `https://doi.org/{doi}`、なければ `url` へのリンク）、著者（最大3名、超過分は "et al."）、年、斜体の `publicationVenue`、被引用数と influential citation 数のバッジ、TLDR（`tldr` があれば優先し、なければ `abstract` にフォールバック。いずれも3行でクランプ）、DOI を表示する。ソースバッジは持たない
 
 - `components/canvas/ReactFlowCanvas.tsx`: カスタムエッジタイプ登録付きのCanvas
-  - `edgeTypes: { evidence: EvidenceEdge }`をマッピング
-  - `arrowsToEdges()`を介してエビデンススタイリングを自動的に適用
+  - `edgeTypes: { evidence: EvidenceEdge }` を `useMemo` で組み立てて React Flow に渡すだけで、エッジ変換自体は行わない
+  - `arrowsToEdges()` の呼び出し元は `components/canvas/context/CanvasContext.tsx`（初期化と復元）と `components/canvas/context/canvas-operations.ts` の `loadGeneratedCanvas`
 
-- `lib/canvas/react-flow-utils.ts`: エッジタイプ検出とスタイリング（3段階）
-  - 内部エビデンス付き → 緑色 (#10b981)、3px strokeWidth
-  - 外部論文のみ → 青色 (#3b82f6)、3px strokeWidth
-  - なし → グレー (#6b7280)、2px strokeWidth
-  - `externalPapers`データもエッジに渡す
+- `lib/canvas/react-flow-utils.ts`: エッジタイプ検出とスタイリング（3段階）。配色の定義はここが唯一の出典である
+  - 内部エビデンス付き → `type="evidence"`、緑色 (#10b981)、3px strokeWidth
+  - 外部論文のみ → `type="evidence"`、青色 (#3b82f6)、3px strokeWidth
+  - どちらもなし → `type="default"`、グレー (#6b7280)、2px strokeWidth
+  - `evidenceIds` / `evidenceMetadata` / `externalPapers` をエッジの `data` に渡す
 
 **エビデンス品質スケール（Maryland Scientific Method Scale）:**
 
@@ -430,27 +430,4 @@ Chain-of-thought推論を備えたLLMベースのエビデンスマッチング:
 - 1: 前実験
 - 0: 不明確/報告されていない
 
-**UI実装:**
-
-- **3段階のエッジ色分け**:
-  - 緑色の太いエッジ（#10b981、3px）: 内部エビデンス付き
-  - 青色の太いエッジ（#3b82f6、3px）: 外部論文のみ
-  - グレーのデフォルトエッジ（#6b7280、2px）: エビデンスなし
-- **エビデンスボタン**:
-  - 緑色の円形ボタン（FileTextアイコン）: 内部エビデンスがある場合
-  - 青色の円形ボタン（BookOpenアイコン）: 外部論文のみがある場合
-  - エッジの中点に配置（ジオメトリ計算）
-- **エビデンスダイアログ（2セクション）**: ボタンクリック時に表示するモーダル
-  - **内部エビデンス（緑テーマ）**:
-    - エビデンスID（`/evidence/{id}`へのクリック可能なリンク）
-    - 関連性スコア（0-100）とエメラルドバッジ
-    - タイトル、推論、強度評価（0-5）
-    - InterventionとOutcomeテキスト
-    - エビデンス強度 < 3の場合の⚠️警告インジケータ
-  - **外部学術論文（青テーマ「Academic Papers (Reference)」）**:
-    - 論文タイトル（DOIまたはSemantic Scholar URLへのリンク）
-    - ソースバッジ（"Semantic Scholar"）
-    - 著者（最大3名、"et al."付き）と年
-    - 要旨（3行にクランプ）
-    - DOI識別子
-- **クリーンなデザイン**: カードにバッジなし、3色の色分けでエビデンスステータスを一目で区別
+このスケールは `app/[lang]/strength-of-evidence/` のページでもユーザー向けに解説しています。

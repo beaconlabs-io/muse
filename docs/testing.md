@@ -1,7 +1,7 @@
 # Testing
 
 Unit-test guide for `muse/`. Not strict TDD — but every PR that adds a
-pure function, utility, API handler, or Mastra tool should land with a
+pure function, utility, or API handler should land with a
 matching `*.test.ts` in the same PR. This doc captures the conventions
 that have emerged from the existing test suite so new tests stay
 consistent.
@@ -31,7 +31,6 @@ Config lives in `vitest.config.mts`. Key behaviors:
   - `lib/` — shared utilities, parsers, adapters
   - `utils/` — helper functions
   - `app/api/**/route.ts` — HTTP handlers (auth, validation, response shape)
-  - `mastra/tools/**` — agent-callable tools with deterministic IO
 - **Optional** (test when logic is non-trivial):
   - React components in `components/` — especially those with branching
     rendering, derived state, or a11y-critical interactions
@@ -69,7 +68,7 @@ tests/
 | `bun run test:run`      | One-shot run; what CI runs                    |
 | `bun run test:coverage` | Generates HTML + JSON coverage in `coverage/` |
 
-Run a single file: `bun run test:run lib/api-auth.test.ts`
+Run a single file: `bun run test:run lib/api-client.test.ts`
 Run by name pattern: `bun run test:run -t "accepts a request"`
 
 ## Patterns
@@ -81,14 +80,14 @@ Because `unstubEnvs: true` is set, stubs auto-reset between tests.
 ```ts
 import { describe, expect, it, vi } from "vitest";
 
-it("keeps API authentication disabled when BOT_API_KEY is not configured", () => {
-  vi.stubEnv("BOT_API_KEY", "");
+it("returns the path unchanged when NEXT_PUBLIC_API_BASE_URL is unset", () => {
+  vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "");
 
-  expect(isAuthEnabled()).toBe(false);
+  expect(apiUrl("/api/compact")).toBe("/api/compact");
 });
 ```
 
-See `lib/api-auth.test.ts` for the full example.
+See `lib/api-client.test.ts` for the full example.
 
 ### Table-driven tests — `it.each`
 
@@ -175,13 +174,16 @@ contracts. Prefer refactoring to remove the branch when possible.
 
 ## CI Integration
 
-`.github/workflows/quality.yml` runs on every PR and push to
-`main` / `dev`:
+`.github/workflows/quality.yml` runs on every PR, in two parallel jobs:
 
-1. `bun install --frozen-lockfile`
-2. `bun run lint:check`
-3. `bun run test:run`
-4. `bun run build`
+1. `bun run lint:check` and `bun run test:run`
+2. `bun run build:worker` — the Cloudflare Worker build, which is `next build`
+   plus the OpenNext bundling step, so Workers-only breakage surfaces before
+   the merge. For non-fork PRs it also uploads a preview version.
+
+Merging into `main` / `dev` re-runs the same lint and tests before deploying
+(`.github/workflows/deploy-worker.yml`), so nothing reaches a Worker without
+passing them.
 
 Failures block merge. There are no coverage thresholds yet — coverage is
 informational. If you want to check coverage locally before a PR, run
@@ -199,6 +201,3 @@ informational. If you want to check coverage locally before a PR, run
 - **A test passes locally but fails in CI** — usually an environment
   variable leak. Make sure every `vi.stubEnv` sets a deterministic value
   and avoid reading from `process.env` directly inside tests.
-- **A Mastra tool test hangs** — the Mastra runtime starts timers; always
-  invoke tools through their pure `execute` function in tests rather than
-  booting the full agent.

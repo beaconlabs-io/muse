@@ -7,13 +7,14 @@ import {
 } from "@beaconlabs-io/evidence/content";
 import { compileMDX } from "next-mdx-remote/rsc";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
-import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
 import rehypeToc from "rehype-toc";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import type { Evidence } from "@beaconlabs-io/evidence";
+import { resolveSlug } from "@/lib/evidence-slug";
 
 /**
  * Get evidence by slug with compiled MDX content
@@ -21,10 +22,14 @@ import type { Evidence } from "@beaconlabs-io/evidence";
  */
 export const getEvidenceBySlug = cache(
   async (slug: string): Promise<{ meta: Evidence; content: React.ReactElement } | undefined> => {
-    const realSlug = slug.replace(/\.mdx$/, "");
-    const bundled = getEvidence(realSlug);
+    const realSlug = resolveSlug(slug);
 
-    if (!bundled) return undefined;
+    if (!realSlug) return undefined;
+
+    const bundled = getEvidence(realSlug);
+    const meta = getEvidenceMetaBySlug(realSlug);
+
+    if (!bundled || !meta) return undefined;
 
     // Compile raw MDX content with plugins for rich rendering
     const { content } = await compileMDX({
@@ -38,21 +43,38 @@ export const getEvidenceBySlug = cache(
             [rehypeToc, { headings: ["h2", "h3"] }],
             [rehypeAutolinkHeadings, { behavior: "wrap" }],
             [rehypeKatex, { output: "mathml" }],
-            rehypePrettyCode,
+            // highlight.js, not shiki: shiki bundles every grammar (~9 MB) and
+            // its WASM engine cannot start on the Workers runtime.
+            rehypeHighlight,
           ],
         },
       },
     });
 
-    // Get deployment metadata merged with frontmatter
-    const evidenceWithDeployment = getEvidenceWithDeployment(realSlug);
-
-    return {
-      meta: evidenceWithDeployment ?? (bundled.frontmatter as Evidence),
-      content,
-    };
+    return { meta, content };
   },
 );
+
+/**
+ * Get evidence frontmatter by slug without compiling MDX.
+ * Use this when only metadata is needed (e.g. OG images): it skips the
+ * MDX compile pipeline entirely.
+ *
+ * This is the single source of the metadata contract — the detail page reads
+ * it through `getEvidenceBySlug` — so the page and its OG image cannot drift.
+ */
+export function getEvidenceMetaBySlug(slug: string): Evidence | undefined {
+  const realSlug = resolveSlug(slug);
+
+  if (!realSlug) return undefined;
+
+  const bundled = getEvidence(realSlug);
+
+  if (!bundled) return undefined;
+
+  // Deployment metadata merged with frontmatter
+  return getEvidenceWithDeployment(realSlug) ?? (bundled.frontmatter as Evidence);
+}
 
 /**
  * Get all evidence with raw content (for search, AI tools)

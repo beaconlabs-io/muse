@@ -11,6 +11,8 @@ export default [
       "coverage/**",
       "dist/**",
       ".next/**",
+      ".open-next/**",
+      ".wrangler/**",
       ".mastra/**",
       "public/**",
       "**/components/ui/**",

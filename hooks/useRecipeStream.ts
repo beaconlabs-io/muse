@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { ErrorCategory } from "@/lib/workflow-errors";
 import type { Recipe, RecipeMetricContext, RecipeLocale } from "@/types";
 import type { RecipeSSEEvent } from "@/types/recipe-events";
+import { apiUrl, readSSEEvents } from "@/lib/api-client";
 import { WORKFLOW_TIMEOUT_MS } from "@/lib/constants";
 
 type RecipeStreamStatus = "idle" | "running" | "success" | "error";
@@ -59,7 +60,7 @@ export function useRecipeStream() {
       }, WORKFLOW_TIMEOUT_MS + 10_000);
 
       try {
-        const response = await fetch("/api/recipe/stream", {
+        const response = await fetch(apiUrl("/api/recipe/stream"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
@@ -82,63 +83,38 @@ export function useRecipeStream() {
           throw new Error(errorMessage || `HTTP ${response.status}`);
         }
 
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error("No response stream");
-
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const chunks = buffer.split("\n\n");
-          buffer = chunks.pop() || "";
-
-          for (const chunk of chunks) {
-            const dataLine = chunk.split("\n").find((line) => line.startsWith("data: "));
-            if (!dataLine) continue;
-
-            let event: RecipeSSEEvent;
-            try {
-              event = JSON.parse(dataLine.slice(6)) as RecipeSSEEvent;
-            } catch {
-              continue;
-            }
-
-            switch (event.type) {
-              case "step-start":
-                setState((prev) => ({ ...prev, currentStepId: event.stepId }));
-                break;
-              case "step-finish":
-                break;
-              case "step-error":
-                setState((prev) => ({
-                  ...prev,
-                  status: "error",
-                  error: event.error,
-                  errorCategory: event.errorCategory ?? null,
-                  failedStepId: event.stepId,
-                }));
-                break;
-              case "recipe-complete":
-                setState((prev) => ({
-                  ...prev,
-                  status: "success",
-                  recipe: event.recipe,
-                }));
-                break;
-              case "recipe-error":
-                setState((prev) => ({
-                  ...prev,
-                  status: "error",
-                  error: event.error,
-                  errorCategory: event.errorCategory ?? null,
-                  failedStepId: event.failedStepId ?? null,
-                }));
-                break;
-            }
+        for await (const event of readSSEEvents<RecipeSSEEvent>(response)) {
+          switch (event.type) {
+            case "step-start":
+              setState((prev) => ({ ...prev, currentStepId: event.stepId }));
+              break;
+            case "step-finish":
+              break;
+            case "step-error":
+              setState((prev) => ({
+                ...prev,
+                status: "error",
+                error: event.error,
+                errorCategory: event.errorCategory ?? null,
+                failedStepId: event.stepId,
+              }));
+              break;
+            case "recipe-complete":
+              setState((prev) => ({
+                ...prev,
+                status: "success",
+                recipe: event.recipe,
+              }));
+              break;
+            case "recipe-error":
+              setState((prev) => ({
+                ...prev,
+                status: "error",
+                error: event.error,
+                errorCategory: event.errorCategory ?? null,
+                failedStepId: event.failedStepId ?? null,
+              }));
+              break;
           }
         }
       } catch (err) {

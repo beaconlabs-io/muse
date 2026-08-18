@@ -18,7 +18,7 @@ Built as part of the [Beacon Labs](https://beaconlabs.io) ecosystem for supporti
 
 ### AI-Powered Logic Models
 
-Mastra-based AI agents generate complete Theory of Change logic models through a 5-stage process: analyze context, generate structure, design visual layout, self-critique, and produce canvas-ready output. The result is a fully connected pathway from Activities → Outputs → Short-term Outcomes → Intermediate Outcomes → Impact.
+AI agents in the `muse-backend` service generate complete Theory of Change logic models through a 5-stage process: analyze context, generate structure, design visual layout, self-critique, and produce canvas-ready output. The result is a fully connected pathway from Activities → Outputs → Short-term Outcomes → Intermediate Outcomes → Impact.
 
 ### Evidence-Based Validation
 
@@ -26,7 +26,7 @@ An LLM-powered evidence search agent semantically matches research evidence agai
 
 ### Blockchain Attestation
 
-Evidence submissions are attested on-chain via [EAS](https://attest.org/) (Ethereum Attestation Service) on Base Sepolia, with content stored on IPFS. Logic models can generate [Hypercerts](https://hypercerts.org/) for transparent impact tracking and measurement.
+Evidence submissions are attested on-chain via [EAS](https://attest.org/) (Ethereum Attestation Service) on Base Sepolia, with content stored on IPFS.
 
 ### Interactive Canvas
 
@@ -42,7 +42,7 @@ A React Flow-powered visual builder for creating and editing logic models. Evide
 │  Evidence Repository          MUSE Application                  │
 │  ┌──────────────┐            ┌──────────────────────────────┐  │
 │  │ MDX Research  │  npm pkg  │                              │  │
-│  │ Files         ├──────────►│  AI Agents (Mastra)          │  │
+│  │ Files         ├──────────►│  AI Agents (muse-backend)    │  │
 │  │              │            │    ├─ Logic Model Agent      │  │
 │  │ Zod          │            │    └─ Evidence Search Agent  │  │
 │  │ Validation   │            │           │                  │  │
@@ -52,19 +52,19 @@ A React Flow-powered visual builder for creating and editing logic models. Evide
 │         ▼                    │    └─ Evidence-backed Edges  │  │
 │  ┌──────────────┐            │           │                  │  │
 │  │ IPFS + EAS   │            │           ▼                  │  │
-│  │ Attestation  │            │  Hypercerts (Impact)         │  │
+│  │ Attestation  │            │    └─ IPFS-backed Sharing    │  │
 │  └──────────────┘            └──────────────────────────────┘  │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-The application supports English and Japanese (next-intl), with all pages routed through `app/[lang]/`.
+The application supports English and Japanese (next-intl), with all pages routed through `app/[lang]/`. Prefix-less URLs are redirected to a locale prefix by the rules in `i18n/locale-redirects.ts` — see [docs/i18n.md](./docs/i18n.md) for the precedence order.
 
 ## Getting Started
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 20+
+- [Node.js](https://nodejs.org/) 20.9+
 - [Bun](https://bun.sh/) 1.3+
 
 ### Installation
@@ -81,7 +81,7 @@ bun install
 cp .env.example .env.local
 ```
 
-See [docs/setup.md](./docs/setup.md) for the full variable reference grouped by concern (LLM keys, IPFS, EAS/hypercerts chain, i18n, feature flags) and common troubleshooting.
+See [docs/setup.md](./docs/setup.md) for the full variable reference grouped by concern (backend service URL, EAS chain, feature flags, runtime) and common troubleshooting.
 
 ### Development
 
@@ -96,25 +96,37 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 A production-style image is available via the repo-root `Dockerfile` and `docker-compose.yml`:
 
 ```bash
-docker compose build
-docker compose up -d
+bun run docker:build
+bun run docker:up
 ```
+
+These wrappers pass `--env-file .env.local` to `docker compose`, so the `NEXT_PUBLIC_*` build args resolve from that file.
 
 See [docs/setup.md](./docs/setup.md#docker) for build args vs runtime env, persistence notes, and gotchas.
 
 ## Scripts
 
-| Command                 | Description                           |
-| ----------------------- | ------------------------------------- |
-| `bun dev`               | Start Next.js development server      |
-| `bun run build`         | Build for production                  |
-| `bun start`             | Start production server               |
-| `bun lint`              | Run ESLint with auto-fix              |
-| `bun run test:run`      | Run unit tests once                   |
-| `bun run test:coverage` | Run unit tests with coverage          |
-| `bun clean`             | Clean build artifacts and reinstall   |
-| `bun dev:mastra`        | Start Mastra agent development server |
-| `bun build:mastra`      | Build Mastra agent system             |
+| Command                     | Description                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------ |
+| `bun dev`                   | Start Next.js development server                                                     |
+| `bun run build`             | Build for production                                                                 |
+| `bun start`                 | Start production server                                                              |
+| `bun lint`                  | Run ESLint with auto-fix                                                             |
+| `bun lint:check`            | Run ESLint without fixing (the command CI runs)                                      |
+| `bun run test`              | Run Vitest in watch mode                                                             |
+| `bun run test:run`          | Run unit tests once                                                                  |
+| `bun run test:coverage`     | Run unit tests with coverage                                                         |
+| `bun run build:worker`      | Build the app into a Cloudflare Worker with OpenNext (output: `.open-next/`)         |
+| `bun run preview`           | Build the Worker and run it locally with `opennextjs-cloudflare preview`             |
+| `bun run deploy:staging`    | Break-glass manual deploy to `muse-frontend-staging` (normal deploys go through CI)  |
+| `bun run deploy:production` | Break-glass manual deploy to `muse-frontend-prod` (normal deploys go through CI)     |
+| `bun run docker:build`      | Build the production image (`docker compose --env-file .env.local build`)            |
+| `bun run docker:up`         | Start the container in the background (`docker compose --env-file .env.local up -d`) |
+| `bun run docker:down`       | Stop and remove the container                                                        |
+| `bun run docker:logs`       | Follow container logs                                                                |
+| `bun clean`                 | Clean build artifacts and reinstall                                                  |
+
+The four Worker scripts prefix `NEXT_UNOPTIMIZED_IMAGES=true`, because Cloudflare Workers has no image-optimization server; the default and Docker builds leave Next.js image optimization enabled.
 
 ## Project Structure
 
@@ -125,24 +137,17 @@ See [docs/setup.md](./docs/setup.md#docker) for build args vs runtime env, persi
 │   │   ├── canvas/       #     Interactive logic model builder
 │   │   ├── evidence/     #     Evidence browsing and detail pages
 │   │   ├── effects/      #     Effects/outcomes listing
-│   │   ├── hypercerts/   #     Hypercerts integration
 │   │   ├── search/       #     Evidence search and filtering
 │   │   └── strength-of-evidence/  # Scientific Maryland Scale
-│   ├── actions/          #   Server actions
-│   └── api/              #   Server-side API endpoints
+│   └── api/og/           #   OG image routes: canvas (IPFS proxy), evidence (302 to build-time PNG)
 ├── components/           # React components
 │   ├── canvas/           #   React Flow nodes, edges, and controls
 │   ├── evidence/         #   Evidence-specific UI components
-│   ├── hypercerts/       #   Hypercerts components
-│   └── ui/               #   shadcn/ui primitives (auto-generated)
-├── configs/              # EAS and Hypercerts SDK configuration
-├── i18n/                 # next-intl routing and request config
+│   ├── ui/               #   shadcn/ui primitives (auto-generated)
+│   └── locale-cookie-sync.tsx  # Keeps the NEXT_LOCALE cookie in sync with the URL
+├── configs/              # EAS GraphQL endpoint configuration
+├── i18n/                 # next-intl config, locale redirect rules, request config
 ├── messages/             # Translation files (en, ja)
-├── mastra/               # AI agent system
-│   ├── agents/           #   Logic model and evidence search agents
-│   ├── workflows/        #   Multi-step agent workflows
-│   ├── tools/            #   Agent tools (canvas data, evidence access)
-│   └── skills/           #   Domain knowledge for agents
 ├── lib/                  # Shared utilities and configuration
 ├── hooks/                # Custom React hooks
 ├── types/                # TypeScript type definitions
@@ -153,22 +158,24 @@ See [docs/setup.md](./docs/setup.md#docker) for build args vs runtime env, persi
 
 For detailed technical information, see:
 
-| Document                                                     | Description                                                      |
-| ------------------------------------------------------------ | ---------------------------------------------------------------- |
-| [AI Agent Architecture](./docs/mastra-agents.md)             | Agents, workflows, skills, output language policy, observability |
-| [Evidence Workflow](./docs/evidence-workflow.md)             | Submission, attestation, batch matching pipeline                 |
-| [React Flow Architecture](./docs/react-flow-architecture.md) | Canvas implementation, evidence edges, UI flow                   |
-| [Frontend Map](./docs/frontend-map.md)                       | Non-canvas components, server actions, custom hooks              |
-| [API Routes](./docs/api-routes.md)                           | HTTP endpoints (workflow/stream, compact, evidence, IPFS)        |
-| [Setup](./docs/setup.md)                                     | Local setup, environment variables, troubleshooting              |
-| [Internationalization](./docs/i18n.md)                       | next-intl wiring and agent output language                       |
+| Document                                                     | Description                                             |
+| ------------------------------------------------------------ | ------------------------------------------------------- |
+| [Evidence Workflow](./docs/evidence-workflow.md)             | Submission, attestation, batch matching pipeline        |
+| [React Flow Architecture](./docs/react-flow-architecture.md) | Canvas implementation, evidence edges, UI flow          |
+| [Frontend Map](./docs/frontend-map.md)                       | Non-canvas components, server actions, custom hooks     |
+| [API Routes](./docs/api-routes.md)                           | HTTP endpoints: OG images here, the rest on the backend |
+| [Setup](./docs/setup.md)                                     | Local setup, environment variables, troubleshooting     |
+| [Testing](./docs/testing.md)                                 | Vitest conventions, patterns, and CI integration        |
+| [Internationalization](./docs/i18n.md)                       | next-intl wiring and agent output language              |
 
 ## Deployments
 
-|             | Environment   | URL                                                              |
-| ----------- | ------------- | ---------------------------------------------------------------- |
-| Production  | `production`  | [https://muse.beaconlabs.io](https://muse.beaconlabs.io)         |
-| Development | `development` | [https://dev.muse.beaconlabs.io](https://dev.muse.beaconlabs.io) |
+|             | URL                                                              |
+| ----------- | ---------------------------------------------------------------- |
+| Production  | [https://muse.beaconlabs.io](https://muse.beaconlabs.io)         |
+| Development | [https://dev.muse.beaconlabs.io](https://dev.muse.beaconlabs.io) |
+
+The app can be built into a Cloudflare Worker with [OpenNext](https://opennext.js.org/cloudflare). Deploys are merge-driven through CI: a PR merged into `dev` ships `muse-frontend-staging`, one merged into `main` ships `muse-frontend-prod`, and open PRs get preview versions (`.github/workflows/deploy-worker.yml`, `quality.yml`); the per-environment wiring lives in `wrangler.jsonc`. `bun run deploy:staging` / `bun run deploy:production` exist as a break-glass manual path. Deploying with a plain `wrangler deploy` is unsupported: it skips the prerender-cache population step, which makes the statically generated evidence pages 404. See [docs/setup.md](./docs/setup.md#cloudflare-workers-opennext) for the Worker and Docker paths.
 
 ## Contributing
 
