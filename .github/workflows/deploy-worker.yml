@@ -212,10 +212,15 @@ jobs:
             echo "::error::The deploy succeeded but wrangler reported no target URL, so the smoke test cannot run. Verify the deployment manually."
             exit 1
           fi
-          # A custom-domain target arrives as a bare route pattern; the smoke
-          # test needs a scheme and no trailing path glob.
+          # Reduce whichever shape wrangler reported to a bare origin. A
+          # workers.dev target arrives as a full URL; a custom-domain target
+          # arrives as a hostname wrangler annotates in place —
+          # "muse.beaconlabs.io (custom domain)" — and the annotation has to go,
+          # or every curl below dies on a malformed URL (#300).
           host=${url#*://}
-          url="https://${host%%/*}"
+          host=${host%%/*}
+          host=${host%% *}
+          url="https://${host}"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deployed to $url"
 
