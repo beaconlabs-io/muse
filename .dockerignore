@@ -47,8 +47,9 @@ yarn-error.log*
 .playwright
 .playwright-mcp
 
-# Leftover LibSQL database from the removed Mastra layer (~880MB on existing
-# checkouts). Git ignores it; without this the whole thing rides into the build.
+# Leftover LibSQL database from the removed Mastra layer (~880MB on checkouts
+# that predate 832bee8). Nothing regenerates it; without this line the whole
+# thing rides into the build context.
 mastra.db*
 
 # Misc
