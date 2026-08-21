@@ -23,7 +23,7 @@
       "invocation_logs": true,
     },
     "traces": {
-      "enabled": false,
+      "enabled": true,
     },
   },
   // No KV / R2 / D1 / Durable Object bindings on purpose: the app uses no ISR,
