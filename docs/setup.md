@@ -133,16 +133,18 @@ only used by the sibling `evidence/` repo.
 
 `docker-compose.yml` wires all of the above together:
 
-- Build args interpolated by compose: `NEXT_PUBLIC_ENV` (defaults to
-  `production`) and `NEXT_PUBLIC_API_BASE_URL`. The last one has to be a build
-  arg: it is inlined into the client bundle, so setting it at runtime leaves
-  the image calling routes this app no longer serves. The `bun run docker:*`
-  wrappers pass `--env-file .env.local`, so these `${…}` references resolve
-  from `.env.local`; with a bare `docker compose build` they resolve from the
-  host shell instead.
-- Runtime `environment:` carries only `NODE_ENV=production`.
-- `env_file: .env.local` — any additional variables in `.env.local` are
-  also loaded at runtime (e.g. `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED`).
+- Build args interpolated by compose — every `NEXT_PUBLIC_*` the app reads:
+  `NEXT_PUBLIC_ENV` (defaults to `production`), `NEXT_PUBLIC_API_BASE_URL`, and
+  `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` (defaults to `false`). They have to be
+  build args: they are inlined into the client bundle, so setting them at
+  runtime leaves the image calling routes this app no longer serves, or the
+  feature flag permanently off. The `bun run docker:*` wrappers pass
+  `--env-file .env.local`, so these `${…}` references resolve from
+  `.env.local`; with a bare `docker compose build` they resolve from the host
+  shell instead.
+- Nothing is needed at runtime: `NODE_ENV=production` comes from the Dockerfile,
+  and `env_file: .env.local` is declared `required: false` — an escape hatch for
+  a future server-side variable, not something the image depends on today.
 - Port `3000:3000`, `restart: unless-stopped`.
 
 ### Typical flow
@@ -164,9 +166,11 @@ do the build args have to come from the shell, e.g.
   requires a rebuild (`bun run docker:build`), not just a restart.
 - **`.env.local` reaches the build only through compose interpolation.** The
   `bun run docker:*` wrappers pass `--env-file .env.local`, which feeds the
-  `${…}` references in the `args:` block of `docker-compose.yml`. A variable
-  that has no matching `args:` entry stays runtime-only (`env_file:`) and
-  never influences the client bundle.
+  `${…}` references in the `args:` block of `docker-compose.yml`. A new
+  `NEXT_PUBLIC_*` variable therefore needs three edits — `ARG` + `ENV` in the
+  Dockerfile's builder stage and an `args:` entry here — or it silently keeps
+  its default in the image. `.dockerignore` excludes `.env*` outright, so the
+  file itself never reaches `next build`.
 
 ## Cloudflare Workers (OpenNext)
 
