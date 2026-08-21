@@ -6,10 +6,13 @@ services:
       args:
         - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-production}
         - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+        - NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED=${NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED:-false}
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
+    # The image reads nothing at runtime — every value it needs is a
+    # NEXT_PUBLIC_* baked in above, and NODE_ENV is set in the Dockerfile.
+    # .env.local is kept as an escape hatch and stays optional.
     env_file:
-      - .env.local
+      - path: .env.local
+        required: false
     restart: unless-stopped
