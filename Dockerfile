@@ -17,9 +17,13 @@ ARG NEXT_PUBLIC_ENV=production
 # client bundle at build time, so this has to be a build arg — passing it at
 # runtime is too late and leaves the app calling routes that no longer exist.
 ARG NEXT_PUBLIC_API_BASE_URL
+# Read by a client component (GenerateLogicModelDialog), so it is inlined too —
+# passing it as runtime env leaves the feature permanently off.
+ARG NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED=false
 
 ENV NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV}
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+ENV NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED=${NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED}
 ENV NEXT_TELEMETRY_DISABLED=1
 # Opt in to the standalone server bundle; the default output stays clean for
 # the OpenNext (Cloudflare Workers) build.

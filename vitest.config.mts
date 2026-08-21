@@ -17,7 +17,6 @@ export default defineConfig({
     exclude: [
       "**/node_modules/**",
       "**/.next/**",
-      "**/.mastra/**",
       "**/dist/**",
       "**/coverage/**",
       "**/components/ui/**",
@@ -28,7 +27,6 @@ export default defineConfig({
       exclude: [
         "**/node_modules/**",
         "**/.next/**",
-        "**/.mastra/**",
         "**/dist/**",
         "**/coverage/**",
         "**/components/ui/**",

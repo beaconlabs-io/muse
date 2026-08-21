@@ -6,6 +6,8 @@ node_modules
 
 # Build outputs
 .next
+.open-next
+.wrangler
 out
 build
 dist
@@ -16,9 +18,9 @@ dist
 .gitmodules
 
 # Environment files
-.env
-.env.local
-.env.*.local
+# `next build` reads every .env* file in the context and inlines what it finds,
+# so keep all of them out — build-time values come from build args only.
+.env*
 
 # IDE / Editor
 .idea
@@ -40,6 +42,15 @@ yarn-error.log*
 .mastra
 .claude
 .husky
+.agents
+.codex
+.playwright
+.playwright-mcp
+
+# Leftover LibSQL database from the removed Mastra layer (~880MB on checkouts
+# that predate 832bee8). Nothing regenerates it; without this line the whole
+# thing rides into the build context.
+mastra.db*
 
 # Misc
 *.md
