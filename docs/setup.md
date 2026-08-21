@@ -6,8 +6,9 @@ repo root for the authoritative variable list.
 ## Prerequisites
 
 - Node.js 20+ and [Bun](https://bun.sh/) (package manager + runtime for dev/build)
-- A Pinata account for IPFS uploads (optional for UI-only work)
-- At least one LLM provider key (see [LLM keys](#llm-keys))
+- A reachable `muse-backend` service for logic model generation, recipes,
+  evidence search and IPFS uploads (see [Backend service](#backend-service));
+  optional for UI-only work
 
 ## Quickstart
 
