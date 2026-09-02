@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { AuthMenu } from "@/components/auth-menu";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import {
   NavigationMenu,
@@ -92,6 +93,7 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          <AuthMenu />
           <LanguageSwitcher />
         </div>
       </div>

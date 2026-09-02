@@ -6,6 +6,12 @@
     "canvasDescription": "Create and edit interactive logic models with evidence.",
     "menu": "Menu"
   },
+  "auth": {
+    "signInWithGoogle": "Sign in with Google",
+    "signInWithGithub": "Sign in with GitHub",
+    "signOut": "Sign out",
+    "signInFailed": "Sign-in failed ({code})"
+  },
   "hero": {
     "title": "MUSE",
     "description": "Infrastructure for evolving, managing, and utilizing scientific evidence to bootstrap impact evaluation, enable fair and effective decision-making, and ensure accountability.",

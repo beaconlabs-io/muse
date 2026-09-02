@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import "../globals.css";
 import { Toaster } from "sonner";
+import { AuthErrorToast } from "@/components/auth-error-toast";
 import { Header } from "@/components/header";
 import { LocaleCookieSync } from "@/components/locale-cookie-sync";
 import Providers from "./providers";
@@ -73,6 +75,9 @@ export default async function LocaleLayout({
             <Header />
             {children}
             <Toaster />
+            <Suspense fallback={null}>
+              <AuthErrorToast />
+            </Suspense>
           </Providers>
         </NextIntlClientProvider>
       </body>

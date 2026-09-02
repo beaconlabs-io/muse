@@ -6,6 +6,12 @@
     "canvasDescription": "エビデンスを活用したインタラクティブなロジックモデルを作成・編集します。",
     "menu": "メニュー"
   },
+  "auth": {
+    "signInWithGoogle": "Google でログイン",
+    "signInWithGithub": "GitHub でログイン",
+    "signOut": "ログアウト",
+    "signInFailed": "ログインに失敗しました（{code}）"
+  },
   "hero": {
     "title": "MUSE",
     "description": "インパクト評価の基盤構築・公正な意思決定の実現、および説明責任の保証のために、科学的エビデンスを進化・管理・活用するためのインフラ",
