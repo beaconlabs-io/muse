@@ -7,7 +7,10 @@
     "signInWithGoogle": "Google でログイン",
     "signInWithGithub": "GitHub でログイン",
     "signOut": "ログアウト",
-    "signInFailed": "ログインに失敗しました（{code}）"
+    "signInFailed": "ログインに失敗しました（{code}）",
+    "account": "アカウント",
+    "organization": "組織",
+    "notifications": "通知"
   },
   "hero": {
     "title": "MUSE",

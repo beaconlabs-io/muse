@@ -7,7 +7,10 @@
     "signInWithGoogle": "Sign in with Google",
     "signInWithGithub": "Sign in with GitHub",
     "signOut": "Sign out",
-    "signInFailed": "Sign-in failed ({code})"
+    "signInFailed": "Sign-in failed ({code})",
+    "account": "Account",
+    "organization": "Organization",
+    "notifications": "Notifications"
   },
   "hero": {
     "title": "MUSE",
