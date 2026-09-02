@@ -20,7 +20,7 @@ Branch: `feature/accounts`
 
 含まないもの:
 
-- `LanguageSwitcher` と `AuthMenu` の内部変更
+- `LanguageSwitcher` と `AuthMenu` のロジック変更（`LanguageSwitcher` のラベル表示クラスだけは Part 2 で触る）
 - キャンバスや各ページ側のレイアウト変更
 - エビデンス一覧をサイドバーにツリー表示すること（Evidence へのリンク1本だけにする）
 - アカウント関連の新規ナビ項目（現時点では存在しないので追加しない）
