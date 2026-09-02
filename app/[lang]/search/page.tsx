@@ -42,7 +42,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     (selectedEffects.length > 0 ? 1 : 0) + (selectedStrengths.length > 0 ? 1 : 0);
 
   return (
-    <main>
+    <div>
       <div className="container mx-auto max-w-[1600px] px-4 py-8 md:px-6 lg:px-8">
         <Suspense fallback={<FiltersSkeleton />}>
           <SearchFilters
@@ -63,7 +63,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 

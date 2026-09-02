@@ -1,10 +1,7 @@
 {
   "nav": {
     "evidence": "エビデンス",
-    "evidenceDescription": "コミュニティやBeacon Labsが収集したエビデンスを検索します。",
-    "canvas": "キャンバス",
-    "canvasDescription": "エビデンスを活用したインタラクティブなロジックモデルを作成・編集します。",
-    "menu": "メニュー"
+    "canvas": "キャンバス"
   },
   "auth": {
     "signInWithGoogle": "Google でログイン",

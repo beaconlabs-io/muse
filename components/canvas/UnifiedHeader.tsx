@@ -151,7 +151,7 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
 
   return (
     <>
-      <div className="bg-background flex items-center justify-between gap-3 border-b px-3 py-2 sm:px-4">
+      <div className="bg-background flex items-center justify-between gap-3 border-b py-2 pr-3 pl-10 sm:pr-4 md:pl-3 lg:pl-4">
         <TabsList className="bg-muted/60" data-tour="canvas-tabs">
           <TabsTrigger value="canvas" className="cursor-pointer">
             {tRecipe("canvasTabLabel")}

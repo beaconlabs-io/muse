@@ -5,9 +5,10 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import "../globals.css";
 import { Toaster } from "sonner";
+import { AppSidebar } from "@/components/app-sidebar";
 import { AuthErrorToast } from "@/components/auth-error-toast";
-import { Header } from "@/components/header";
 import { LocaleCookieSync } from "@/components/locale-cookie-sync";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import Providers from "./providers";
 import { locales, type Locale } from "@/i18n/routing";
 import { BASE_URL } from "@/lib/constants";
@@ -72,8 +73,13 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <LocaleCookieSync locale={lang} />
           <Providers>
-            <Header />
-            {children}
+            <SidebarProvider>
+              <AppSidebar />
+              <SidebarInset>
+                <SidebarTrigger className="absolute top-2 left-2 z-10 md:hidden" />
+                {children}
+              </SidebarInset>
+            </SidebarProvider>
             <Toaster />
             <Suspense fallback={null}>
               <AuthErrorToast />

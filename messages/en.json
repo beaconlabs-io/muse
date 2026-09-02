@@ -1,10 +1,7 @@
 {
   "nav": {
     "evidence": "Evidence",
-    "evidenceDescription": "Search evidence curated by community and Beacon Labs.",
-    "canvas": "Canvas",
-    "canvasDescription": "Create and edit interactive logic models with evidence.",
-    "menu": "Menu"
+    "canvas": "Canvas"
   },
   "auth": {
     "signInWithGoogle": "Sign in with Google",
