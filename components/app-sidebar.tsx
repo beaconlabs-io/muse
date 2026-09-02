@@ -15,12 +15,17 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Link, usePathname } from "@/i18n/routing";
 
 export function AppSidebar() {
   const t = useTranslations("nav");
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+  // On mobile the sidebar is a sheet that stays open across client-side
+  // navigation, so close it whenever a link is followed.
+  const closeMobile = () => setOpenMobile(false);
 
   const navigation = [
     { title: t("evidence"), href: "/search", icon: FileSearch },
@@ -33,7 +38,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg">
-              <Link href="/">
+              <Link href="/" onClick={closeMobile}>
                 <Image src="/beaconlabs.png" alt="BeaconLabs Logo" width={32} height={32} />
                 <span className="font-medium">MUSE</span>
               </Link>
@@ -51,7 +56,7 @@ export function AppSidebar() {
                   tooltip={item.title}
                   isActive={pathname === item.href || pathname.startsWith(`${item.href}/`)}
                 >
-                  <Link href={item.href}>
+                  <Link href={item.href} onClick={closeMobile}>
                     <item.icon />
                     <span>{item.title}</span>
                   </Link>

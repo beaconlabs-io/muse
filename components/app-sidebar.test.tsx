@@ -1,12 +1,17 @@
-import type { ComponentProps } from "react";
-import { render, screen } from "@testing-library/react";
+import { useEffect, type ComponentProps } from "react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import en from "@/messages/en.json";
 
-const { usePathname } = vi.hoisted(() => ({ usePathname: vi.fn() }));
+const { usePathname, useIsMobile } = vi.hoisted(() => ({
+  usePathname: vi.fn(),
+  useIsMobile: vi.fn(() => false),
+}));
+
+vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => useIsMobile() }));
 
 // next-intl's navigation helpers need next/navigation and an App Router
 // tree, neither of which exists under jsdom, so the whole module is
@@ -38,15 +43,24 @@ beforeEach(() => {
   );
 });
 
-function renderSidebar(pathname: string) {
+function renderSidebar(pathname: string, { mobile = false } = {}) {
   usePathname.mockReturnValue(pathname);
+  useIsMobile.mockReturnValue(mobile);
   return render(
     <NextIntlClientProvider locale="en" messages={en}>
       <SidebarProvider>
+        {mobile ? <OpenMobileSheet /> : null}
         <AppSidebar />
       </SidebarProvider>
     </NextIntlClientProvider>,
   );
+}
+
+// Opens the mobile sheet the way SidebarTrigger would.
+function OpenMobileSheet() {
+  const { setOpenMobile } = useSidebar();
+  useEffect(() => setOpenMobile(true), [setOpenMobile]);
+  return null;
 }
 
 describe("AppSidebar", () => {
@@ -60,5 +74,12 @@ describe("AppSidebar", () => {
     renderSidebar("/canvas/abc");
     expect(screen.getByRole("link", { name: "Canvas" })).toHaveAttribute("data-active", "true");
     expect(screen.getByRole("link", { name: "Evidence" })).toHaveAttribute("data-active", "false");
+  });
+
+  it("closes the mobile sheet when a link is followed", async () => {
+    renderSidebar("/", { mobile: true });
+    const canvas = await screen.findByRole("link", { name: "Canvas" });
+    fireEvent.click(canvas);
+    await waitFor(() => expect(screen.queryByRole("link", { name: "Canvas" })).toBeNull());
   });
 });
