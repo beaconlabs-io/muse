@@ -25,7 +25,7 @@ export function AuthMenu() {
 
   if (!session) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col items-stretch gap-2">
         <Button variant="outline" size="sm" onClick={() => signIn("google")}>
           {t("signInWithGoogle")}
         </Button>
