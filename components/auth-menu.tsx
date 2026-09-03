@@ -1,9 +1,9 @@
 "use client";
 
-import { Bell, Building2, ChevronsUpDown, LogOut, UserRound } from "lucide-react";
+import { Bell, Building2, ChevronsUpDown, LogIn, LogOut, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { SignInDialog } from "@/components/sign-in-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,12 +20,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
-
-type Provider = "google" | "github";
-
-function signIn(provider: Provider) {
-  return authClient.signIn.social({ provider, callbackURL: window.location.href });
-}
 
 function initials(name: string, fallback: string) {
   return (name.trim() || fallback)
@@ -44,14 +38,17 @@ export function AuthMenu() {
 
   if (!session) {
     return (
-      <div className="flex flex-col items-stretch gap-2">
-        <Button variant="outline" size="sm" onClick={() => signIn("google")}>
-          {t("signInWithGoogle")}
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => signIn("github")}>
-          {t("signInWithGithub")}
-        </Button>
-      </div>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          {/* On mobile the dialog lives inside the sheet, so the trigger must not close it. */}
+          <SignInDialog>
+            <SidebarMenuButton>
+              <LogIn />
+              <span>{t("signIn")}</span>
+            </SidebarMenuButton>
+          </SignInDialog>
+        </SidebarMenuItem>
+      </SidebarMenu>
     );
   }
 

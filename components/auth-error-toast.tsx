@@ -21,6 +21,7 @@ export function AuthErrorToast() {
     toast.error(t("signInFailed", { code }));
     const url = new URL(window.location.href);
     url.searchParams.delete("error");
+    url.searchParams.delete("error_description");
     window.history.replaceState(null, "", url);
   }, [code, t]);
 

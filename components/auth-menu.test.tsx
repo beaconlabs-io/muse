@@ -1,22 +1,24 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { useEffect } from "react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import { AuthMenu } from "./auth-menu";
 import en from "@/messages/en.json";
 
 // vi.mock はファイル先頭に巻き上げられ、静的 import の評価時にファクトリが走る。
 // 通常の const はその時点で未初期化（TDZ）なので vi.hoisted で先に作る。
-const { useSession, signIn, signOut } = vi.hoisted(() => ({
+const { useSession, signOut, useIsMobile } = vi.hoisted(() => ({
   useSession: vi.fn(),
-  signIn: { social: vi.fn() },
   signOut: vi.fn(),
+  useIsMobile: vi.fn(() => false),
 }));
 
 vi.mock("@/lib/auth-client", () => ({
-  authClient: { useSession: () => useSession(), signIn, signOut },
+  authClient: { useSession: () => useSession(), signOut },
 }));
 
-import { AuthMenu } from "./auth-menu";
+vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => useIsMobile() }));
 
 beforeEach(() => {
   // SidebarProvider の useIsMobile は window.matchMedia を呼ぶが jsdom にはない。
@@ -30,14 +32,27 @@ beforeEach(() => {
   );
 });
 
-function renderMenu() {
+// Sidebar renders the mobile sheet, which is where the sign-in dialog has to
+// survive; on desktop it is a plain container.
+function renderMenu({ mobile = false } = {}) {
+  useIsMobile.mockReturnValue(mobile);
   return render(
     <NextIntlClientProvider locale="en" messages={en}>
       <SidebarProvider>
-        <AuthMenu />
+        {mobile ? <OpenMobileSheet /> : null}
+        <Sidebar>
+          <AuthMenu />
+        </Sidebar>
       </SidebarProvider>
     </NextIntlClientProvider>,
   );
+}
+
+// Opens the mobile sheet the way SidebarTrigger would.
+function OpenMobileSheet() {
+  const { setOpenMobile } = useSidebar();
+  useEffect(() => setOpenMobile(true), [setOpenMobile]);
+  return null;
 }
 
 const ada = {
@@ -52,14 +67,24 @@ describe("AuthMenu", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it("offers Google and GitHub sign-in when signed out", () => {
+  it("opens the sign-in dialog when signed out", async () => {
     useSession.mockReturnValue({ data: null, isPending: false });
     renderMenu();
-    screen.getByRole("button", { name: "Sign in with Google" }).click();
-    expect(signIn.social).toHaveBeenCalledWith(
-      expect.objectContaining({ provider: "google", callbackURL: window.location.href }),
-    );
-    expect(screen.getByRole("button", { name: "Sign in with GitHub" })).toBeInTheDocument();
+    screen.getByRole("button", { name: "Sign in" }).click();
+    const dialog = await screen.findByRole("dialog", { name: "Sign in to MUSE" });
+    expect(dialog).toHaveTextContent("Sign in with Google");
+    expect(dialog).toHaveTextContent("Sign in with GitHub");
+  });
+
+  it("keeps the mobile sheet open behind the sign-in dialog", async () => {
+    useSession.mockReturnValue({ data: null, isPending: false });
+    renderMenu({ mobile: true });
+    (await screen.findByRole("button", { name: "Sign in" })).click();
+    await screen.findByRole("dialog", { name: "Sign in to MUSE" });
+    // Radix marks the sheet aria-hidden behind the dialog, so count both layers.
+    expect(screen.getAllByRole("dialog", { hidden: true })).toHaveLength(2);
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    await waitFor(() => expect(screen.getAllByRole("dialog", { hidden: true })).toHaveLength(1));
   });
 
   it("shows name, email, and initials when signed in without an image", () => {

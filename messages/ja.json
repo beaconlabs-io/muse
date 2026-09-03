@@ -8,6 +8,9 @@
     "signInWithGithub": "GitHub でログイン",
     "signOut": "ログアウト",
     "signInFailed": "ログインに失敗しました（{code}）",
+    "signIn": "ログイン",
+    "signInTitle": "MUSE にログイン",
+    "signInDescription": "Google または GitHub でログイン、またはアカウントを作成します。",
     "account": "アカウント",
     "organization": "組織",
     "notifications": "通知"

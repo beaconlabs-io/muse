@@ -8,6 +8,9 @@
     "signInWithGithub": "Sign in with GitHub",
     "signOut": "Sign out",
     "signInFailed": "Sign-in failed ({code})",
+    "signIn": "Sign in",
+    "signInTitle": "Sign in to MUSE",
+    "signInDescription": "Sign in or create an account with Google or GitHub.",
     "account": "Account",
     "organization": "Organization",
     "notifications": "Notifications"
