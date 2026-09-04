@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -68,5 +68,22 @@ describe("AuthMenu", () => {
     const trigger = screen.getByRole("button", { name: /Ada Lovelace/ });
     expect(trigger).toHaveTextContent("ada@example.com");
     expect(trigger).toHaveTextContent("AL");
+  });
+
+  it("falls back to the email for initials when the name is empty", () => {
+    useSession.mockReturnValue({
+      ...ada,
+      data: { ...ada.data, user: { ...ada.data.user, name: "" } },
+    });
+    renderMenu();
+    expect(screen.getByRole("button")).toHaveTextContent("A");
+  });
+
+  it("signs out from the account menu", () => {
+    useSession.mockReturnValue(ada);
+    renderMenu();
+    fireEvent.keyDown(screen.getByRole("button", { name: /Ada Lovelace/ }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("menuitem", { name: "Sign out" }));
+    expect(signOut).toHaveBeenCalledTimes(1);
   });
 });

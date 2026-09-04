@@ -61,7 +61,7 @@ export function AuthMenu() {
     <>
       <Avatar>
         <AvatarImage src={user.image ?? undefined} alt="" />
-        <AvatarFallback>{initials(user.name)}</AvatarFallback>
+        <AvatarFallback>{initials(user.name || user.email)}</AvatarFallback>
       </Avatar>
       <div className="grid flex-1 text-left text-sm leading-tight">
         <span className="truncate font-medium">{user.name}</span>
@@ -93,7 +93,7 @@ export function AuthMenu() {
               {identity}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* ponytail: disabled until the pages exist; swap to <Link> items then. */}
+            {/* Disabled until the pages exist; swap to <Link> items then. */}
             <DropdownMenuGroup>
               <DropdownMenuItem disabled>
                 <UserRound />
