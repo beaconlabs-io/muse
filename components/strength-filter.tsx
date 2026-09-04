@@ -53,7 +53,7 @@ export function StrengthFilter({ selectedStrengths, onStrengthsChange }: Strengt
           <Star size={14} className="mr-1" />
           {tFilters("strength")}
           {selectedStrengths.length > 0 && (
-            <Badge variant="secondary" className="ml-2 rounded-full">
+            <Badge variant="secondary" className="ml-2">
               {selectedStrengths.length}
             </Badge>
           )}

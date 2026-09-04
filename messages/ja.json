@@ -1,10 +1,19 @@
 {
   "nav": {
     "evidence": "エビデンス",
-    "evidenceDescription": "コミュニティやBeacon Labsが収集したエビデンスを検索します。",
-    "canvas": "キャンバス",
-    "canvasDescription": "エビデンスを活用したインタラクティブなロジックモデルを作成・編集します。",
-    "menu": "メニュー"
+    "canvas": "キャンバス"
+  },
+  "auth": {
+    "signInWithGoogle": "Google でログイン",
+    "signInWithGithub": "GitHub でログイン",
+    "signOut": "ログアウト",
+    "signInFailed": "ログインに失敗しました（{code}）",
+    "signIn": "ログイン",
+    "signInTitle": "MUSE にログイン",
+    "signInDescription": "Google または GitHub でログイン、またはアカウントを作成します。",
+    "account": "アカウント",
+    "organization": "組織",
+    "notifications": "通知"
   },
   "hero": {
     "title": "MUSE",

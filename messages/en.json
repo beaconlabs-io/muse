@@ -1,10 +1,19 @@
 {
   "nav": {
     "evidence": "Evidence",
-    "evidenceDescription": "Search evidence curated by community and Beacon Labs.",
-    "canvas": "Canvas",
-    "canvasDescription": "Create and edit interactive logic models with evidence.",
-    "menu": "Menu"
+    "canvas": "Canvas"
+  },
+  "auth": {
+    "signInWithGoogle": "Sign in with Google",
+    "signInWithGithub": "Sign in with GitHub",
+    "signOut": "Sign out",
+    "signInFailed": "Sign-in failed ({code})",
+    "signIn": "Sign in",
+    "signInTitle": "Sign in to MUSE",
+    "signInDescription": "Sign in or create an account with Google or GitHub.",
+    "account": "Account",
+    "organization": "Organization",
+    "notifications": "Notifications"
   },
   "hero": {
     "title": "MUSE",
