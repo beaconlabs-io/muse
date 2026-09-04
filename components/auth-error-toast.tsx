@@ -8,6 +8,8 @@ import { toast } from "sonner";
 /**
  * backend の Better Auth が OAuth 失敗時に `?error=<code>` を付けて戻してくる。
  * 1 回だけ toast に出し、URL からは消す（リロードで再表示しない）。
+ * 消すのは history.replaceState 直接。router.replace だと Next のナビゲーションになり
+ * RSC の再取得と再レンダーが走るが、変えたいのはアドレスバーだけ。
  */
 export function AuthErrorToast() {
   const params = useSearchParams();
