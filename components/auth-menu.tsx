@@ -27,9 +27,8 @@ function signIn(provider: Provider) {
   return authClient.signIn.social({ provider, callbackURL: window.location.href });
 }
 
-function initials(name: string) {
-  return name
-    .trim()
+function initials(name: string, fallback: string) {
+  return (name.trim() || fallback)
     .split(/\s+/)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
@@ -61,7 +60,7 @@ export function AuthMenu() {
     <>
       <Avatar>
         <AvatarImage src={user.image ?? undefined} alt="" />
-        <AvatarFallback>{initials(user.name || user.email)}</AvatarFallback>
+        <AvatarFallback>{initials(user.name, user.email)}</AvatarFallback>
       </Avatar>
       <div className="grid flex-1 text-left text-sm leading-tight">
         <span className="truncate font-medium">{user.name}</span>

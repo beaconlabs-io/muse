@@ -70,10 +70,10 @@ describe("AuthMenu", () => {
     expect(trigger).toHaveTextContent("AL");
   });
 
-  it("falls back to the email for initials when the name is empty", () => {
+  it("falls back to the email for initials when the name is blank", () => {
     useSession.mockReturnValue({
       ...ada,
-      data: { ...ada.data, user: { ...ada.data.user, name: "" } },
+      data: { ...ada.data, user: { ...ada.data.user, name: "  " } },
     });
     renderMenu();
     expect(screen.getByRole("button")).toHaveTextContent("A");
