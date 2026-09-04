@@ -95,7 +95,7 @@ jobs:
       # `versions upload` creates a new version of the staging Worker WITHOUT
       # shifting any traffic onto it, so open PRs never affect staging itself.
       # The alias is the PR number, not the branch name: branch names like
-      # `feature/foo` contain characters that cannot appear in a DNS label.
+      # `feat/foo` contain characters that cannot appear in a DNS label.
       - name: Upload preview version
         id: upload
         env:
