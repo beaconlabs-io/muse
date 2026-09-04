@@ -10,8 +10,8 @@
 
 Spec: `docs/superpowers/specs/2026-09-02-login-page-design.md`
 
-> **この計画は実行前に破棄した（2026-09-03）。** Task 1〜4 は着手せず、`/login` ページの代わりにダイアログで出す案に切り替えた（spec の Revision 節を参照）。`(app)` / `(auth)` の Route Group 分割はコミットされていない。実装は `components/sign-in-dialog.tsx` が正。
-> 作業中に得た知見は 2 点だけ引き継いだ。backend に届かないネットワーク失敗で `signIn.social` が reject するため `try/catch` で両経路を toast に流すこと、コンポーネントファイルから非コンポーネントを export しない（react-doctor）こと。
+> **この計画は実装後に取り下げた（2026-09-03）。** Task 1〜4 を一度実装して動かしたうえで、`/login` ページよりダイアログで出すほうが用途に合うと判断し、切り替えた（spec の Revision 節を参照）。ページ版はコミット前に `(auth)` / `(app)` の分割ごと取り除いたので、このブランチの履歴には残っていない。実装は `components/sign-in-dialog.tsx` が正。
+> ページ版から引き継いだ知見は 2 点。backend に届かないネットワーク失敗で `signIn.social` が reject するため `try/catch` で両経路を toast に流すこと、コンポーネントファイルから非コンポーネントを export しない（react-doctor）こと。
 
 ## Global Constraints
 
