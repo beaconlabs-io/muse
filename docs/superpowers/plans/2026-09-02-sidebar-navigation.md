@@ -25,7 +25,7 @@ Claude-Session: https://claude.ai/code/session_01B9Xi7F8NAXDtqRhPSVyuKL
 ```
 
 - The husky pre-commit hook runs lint-staged (eslint + prettier). Commit output is noisy; that is normal.
-- All commands run from `/Users/shutanaka/developer/beacon-labs/muse`.
+- All commands run from the `muse/` package root.
 
 ---
 

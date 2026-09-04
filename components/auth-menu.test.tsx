@@ -41,7 +41,7 @@ function renderMenu() {
 }
 
 const ada = {
-  data: { user: { name: "Ada Lovelace", email: "ada@example.com", image: null }, session: {} },
+  data: { user: { name: " Ada  Lovelace", email: "ada@example.com", image: null }, session: {} },
   isPending: false,
 };
 
