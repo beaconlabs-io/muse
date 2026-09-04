@@ -14,7 +14,7 @@ Spec: `docs/superpowers/specs/2026-09-02-login-page-design.md`
 
 ## Global Constraints
 
-- Package manager is **bun**. All commands run from `/Users/shutanaka/developer/beacon-labs/muse`.
+- Package manager is **bun**. All commands run from the `muse/` package root.
 - Exactly one page: `/[lang]/login`. No `/signup`, no email + password, no backend change.
 - `AuthErrorToast`, `Toaster`, `Providers`, `LocaleCookieSync`, `generateStaticParams`, and the `notFound()` guard stay in `app/[lang]/layout.tsx`. Only the sidebar chrome moves.
 - `(auth)/layout.tsx` has no `LanguageSwitcher` (spec decision 5).
