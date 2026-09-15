@@ -10,24 +10,13 @@ export interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
 
-  // Metadata for invalid CIDs (still include OG to override parent layout)
+  // DB のモデル。Cookie がないので中身は読めず、汎用 OG とタイトル固定（spec §4.1）
   if (!isValidCID(id)) {
-    const invalidTitle = "Invalid Canvas ID";
-    const invalidDescription = "The provided ID is not a valid IPFS content identifier.";
     return {
-      title: invalidTitle,
-      description: invalidDescription,
-      openGraph: {
-        title: invalidTitle,
-        description: invalidDescription,
-        type: "website",
-        siteName: "MUSE",
-      },
-      twitter: {
-        card: "summary",
-        title: invalidTitle,
-        description: invalidDescription,
-      },
+      title: "MUSE Canvas - Interactive Logic Models",
+      description: "Create and edit interactive logic models with evidence - MUSE by BeaconLabs",
+      openGraph: { type: "website", siteName: "MUSE", images: ["/canvas-og.png"] },
+      twitter: { card: "summary_large_image", images: ["/canvas-og.png"] },
     };
   }
 

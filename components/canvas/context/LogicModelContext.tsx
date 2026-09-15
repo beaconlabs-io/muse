@@ -158,7 +158,20 @@ export function LogicModelProvider({
       save,
       rename,
     }),
-    [id, title, document, readOnly, saving, save, rename],
+    // document は DbCanvas が毎レンダー新しいオブジェクトを渡すので、
+    // 使うフィールドだけを deps にする
+    [
+      id,
+      title,
+      document.access,
+      document.organizationId,
+      document.workspaceAccess,
+      document.linkEnabled,
+      readOnly,
+      saving,
+      save,
+      rename,
+    ],
   );
 
   return <LogicModelContext.Provider value={value}>{children}</LogicModelContext.Provider>;

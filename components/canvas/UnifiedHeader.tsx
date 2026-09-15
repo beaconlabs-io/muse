@@ -143,7 +143,10 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
                 onKeyDown={(e) => {
                   // 日本語入力の変換確定の Enter ではタイトルを確定しない
                   if (e.key === "Enter" && !e.nativeEvent.isComposing) commitTitle();
-                  if (e.key === "Escape") setEditingTitle(false);
+                  if (e.key === "Escape") {
+                    setTitleDraft(logicModel.title);
+                    setEditingTitle(false);
+                  }
                 }}
                 className="h-8 max-w-xs"
                 aria-label={tModel("title")}
