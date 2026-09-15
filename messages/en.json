@@ -48,8 +48,6 @@
     "autoLayoutApplied": "Layout updated",
     "autoLayoutEmptyError": "No nodes to lay out.",
     "createNewCanvas": "Create New Canvas",
-    "invalidCanvasId": "Invalid Canvas ID",
-    "invalidCanvasIdDescription": "The provided ID is not a valid IPFS content identifier (CID).",
     "loadingCanvas": "Loading canvas...",
     "canvasNotFound": "Canvas Not Found",
     "somethingWentWrong": "Something went wrong",

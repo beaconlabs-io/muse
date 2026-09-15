@@ -22,7 +22,7 @@ import type { LogicModelListItem } from "@/types/logic-model-api";
 import { Link } from "@/i18n/routing";
 import { authClient } from "@/lib/auth-client";
 import { clearCanvasDraft, draftKey } from "@/lib/canvas/storage";
-import { deleteLogicModel, listLogicModels } from "@/lib/logic-model-api";
+import { ApiError, deleteLogicModel, listLogicModels } from "@/lib/logic-model-api";
 import { logicModelKeys } from "@/lib/logic-model-queries";
 
 export function LogicModelsPageClient() {
@@ -48,6 +48,8 @@ export function LogicModelsPageClient() {
 
 function LogicModelList({ userId }: { userId: string }) {
   const t = useTranslations("logicModels");
+  const tModel = useTranslations("logicModel");
+  const tShare = useTranslations("share");
   const tCommon = useTranslations("common");
   const format = useFormatter();
   const queryClient = useQueryClient();
@@ -70,7 +72,10 @@ function LogicModelList({ userId }: { userId: string }) {
       toast.success(t("deleted"));
       await queryClient.invalidateQueries({ queryKey: logicModelKeys.list() });
     },
-    onError: () => toast.error(t("deleteFailed")),
+    onError: (error) =>
+      toast.error(
+        error instanceof ApiError && error.status === 403 ? tModel("forbidden") : t("deleteFailed"),
+      ),
     onSettled: () => setPendingDelete(null),
   });
 
@@ -111,7 +116,11 @@ function LogicModelList({ userId }: { userId: string }) {
                   </Badge>
                   {model.workspaceAccess !== "none" ? (
                     <Badge variant="secondary">
-                      {t("workspaceAccess", { access: model.workspaceAccess })}
+                      {t("workspaceAccess", {
+                        access: tShare(
+                          model.workspaceAccess === "viewer" ? "roleViewer" : "roleEditor",
+                        ),
+                      })}
                     </Badge>
                   ) : null}
                   {model.linkEnabled ? <Badge variant="secondary">{t("linkEnabled")}</Badge> : null}

@@ -102,7 +102,10 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
       return;
     }
     const snapshot = getSnapshot();
-    void logicModel.save(snapshot, () => markSaved(snapshot));
+    void logicModel.save(snapshot, () => {
+      markSaved(snapshot);
+      return getSnapshot();
+    });
   }, [nodes.length, tCanvas, logicModel, getSnapshot, markSaved]);
 
   const commitTitle = () => {
@@ -222,15 +225,17 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
             </Button>
           ) : null}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={tTour("restart")}
-            className="cursor-pointer"
-            onClick={() => startOnborda("canvas")}
-          >
-            <HelpCircle className="h-4 w-4" />
-          </Button>
+          {!readOnly && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={tTour("restart")}
+              className="cursor-pointer"
+              onClick={() => startOnborda("canvas")}
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          )}
 
           <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>

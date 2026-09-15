@@ -48,8 +48,6 @@
     "autoLayoutApplied": "レイアウトを更新しました",
     "autoLayoutEmptyError": "整列するノードがありません。",
     "createNewCanvas": "新しいキャンバスを作成",
-    "invalidCanvasId": "無効なキャンバスID",
-    "invalidCanvasIdDescription": "指定されたIDは有効なIPFSコンテンツ識別子（CID）ではありません。",
     "loadingCanvas": "キャンバスを読み込み中...",
     "canvasNotFound": "キャンバスが見つかりません",
     "somethingWentWrong": "エラーが発生しました",

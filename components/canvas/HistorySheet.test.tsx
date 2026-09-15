@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { HistorySheet } from "./HistorySheet";
@@ -90,6 +90,25 @@ describe("HistorySheet", () => {
     await waitFor(() =>
       expect(replaceCanvas).toHaveBeenCalledWith({ cards: [], arrows: [], cardMetrics: {} }),
     );
+  });
+
+  it("asks for confirmation before restoring over unsaved changes", async () => {
+    useCanvasState.mockReturnValue({ readOnly: false, dirty: true });
+    listLogicModelVersions.mockResolvedValue([
+      { versionNo: 1, createdAt: "2026-09-14T00:00:00.000Z", createdBy: null },
+    ]);
+    restoreLogicModelVersion.mockResolvedValue({ versionNo: 2 });
+    const canvasData: CanvasData = { id: "lm1", cards: [], arrows: [], cardMetrics: {} };
+    getLogicModelVersion.mockResolvedValue({ versionNo: 2, canvasData });
+
+    renderSheet();
+    fireEvent.click(await screen.findByRole("button", { name: "Restore" }));
+
+    const dialog = await screen.findByRole("alertdialog");
+    expect(restoreLogicModelVersion).not.toHaveBeenCalled();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Restore" }));
+    await waitFor(() => expect(restoreLogicModelVersion).toHaveBeenCalledWith("lm1", 1));
   });
 
   it("hides the restore button for viewers", async () => {

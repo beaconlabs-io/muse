@@ -8,7 +8,8 @@ import type { CanvasState } from "@/lib/canvas/storage";
 import type { Access, LogicModelDetail, WorkspaceAccess } from "@/types/logic-model-api";
 import { useRouter } from "@/i18n/routing";
 import { authClient } from "@/lib/auth-client";
-import { clearCanvasDraft, draftKey } from "@/lib/canvas/storage";
+import { serializeCanvas } from "@/lib/canvas/serialize-canvas";
+import { clearCanvasDraft, draftKey, saveCanvasDraft } from "@/lib/canvas/storage";
 import { MAX_CANVAS_SIZE } from "@/lib/constants";
 import {
   ApiError,
@@ -39,8 +40,11 @@ export interface LogicModelContextValue {
   linkEnabled: boolean;
   readOnly: boolean;
   saving: boolean;
-  /** 初回は POST、以後は PUT .../versions。成功したら onSaved を呼ぶ（spec §4.2） */
-  save: (snapshot: CanvasState, onSaved: () => void) => Promise<void>;
+  /**
+   * 初回は POST、以後は PUT .../versions。成功したら onSaved を呼ぶ（spec §4.2）。
+   * onSaved は保存済みの印を付けたうえで、その時点のキャンバスを返す
+   */
+  save: (snapshot: CanvasState, onSaved: () => CanvasState) => Promise<void>;
   rename: (title: string) => Promise<void>;
 }
 
@@ -72,7 +76,7 @@ export function LogicModelProvider({
   const readOnly = document.access === "viewer" || document.access === "none";
 
   const save = useCallback(
-    async (snapshot: CanvasState, onSaved: () => void) => {
+    async (snapshot: CanvasState, onSaved: () => CanvasState) => {
       const canvasData = { id: id ?? crypto.randomUUID(), ...snapshot };
       if (JSON.stringify(canvasData).length > MAX_CANVAS_SIZE) {
         toast.error(t("tooLarge"));
@@ -83,7 +87,11 @@ export function LogicModelProvider({
         if (id === null) {
           const created = await createLogicModel({ title, canvasData });
           setId(created.id);
-          onSaved();
+          const current = onSaved();
+          // POST の間の編集は新しいモデルの下書きとして移し、replace 先のページで復元させる
+          if (serializeCanvas(current) !== serializeCanvas(snapshot)) {
+            saveCanvasDraft(draftKey(created.id), current);
+          }
           clearCanvasDraft(draftKey(null));
           // /canvas/<id> へ replace したときのスピナーを消すため、GET /:id 相当をシードする
           // （dig 2026-09-15 Q2）。organizationId と ownerId はセッションから写す
