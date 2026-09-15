@@ -31,7 +31,7 @@ import {
   type LoadCanvasData,
 } from "./canvas-operations";
 import { useRecipe } from "./RecipeContext";
-import type { MetricFormInput, Metric, Card, Arrow, CanvasData, IPFSStorageResult } from "@/types";
+import type { MetricFormInput, Metric, Card, Arrow } from "@/types";
 import type { OnNodesChange, OnEdgesChange, Node, Edge, EdgeChange } from "@xyflow/react";
 import { computeDagreLayout } from "@/lib/canvas/dagre-layout";
 import {
@@ -40,8 +40,12 @@ import {
   arrowsToEdges,
   edgesToArrows,
 } from "@/lib/canvas/react-flow-utils";
-import { saveCanvasState, loadCanvasState } from "@/lib/canvas/storage";
-import { uploadToIPFS, generateLogicModelId } from "@/utils/ipfs";
+import {
+  clearCanvasDraft,
+  loadCanvasDraft,
+  saveCanvasDraft,
+  type CanvasState,
+} from "@/lib/canvas/storage";
 
 // =============================================================================
 // TYPES
@@ -67,7 +71,9 @@ export interface CanvasStateContextValue {
   editingNodeId: string | null;
   editDialogOpen: boolean;
   editingNodeData: EditingNodeData | null;
-  disableLocalStorage: boolean;
+  readOnly: boolean;
+  /** 最後に保存（または読み込み）した内容と今の内容が違う */
+  dirty: boolean;
   clearConfirmOpen: boolean;
 }
 
@@ -77,8 +83,17 @@ export interface CanvasStateContextValue {
 export interface StateReadingOperations {
   exportAsJSON: () => void;
   clearAllData: () => void;
-  saveCanvasToIPFS: (ogImageCID?: string) => Promise<IPFSStorageResult | null>;
   autoLayout: (options?: { silent?: boolean }) => void;
+  /** 保存用に今の内容を取り出す */
+  getSnapshot: () => CanvasState;
+  /** 履歴からの復元など、内容を丸ごと入れ替える（自動整列はしない） */
+  replaceCanvas: (state: CanvasState) => void;
+  /**
+   * 保存成功後に、実際に送った snapshot を渡して呼ぶ。送信中の編集を「保存済み」と
+   * 誤認しないよう、lastSaved は今の内容ではなく送った内容で更新し、dirty は今の内容と
+   * 比べ直す。下書きは dirty が下りたときだけ消す（dig 発見 1）
+   */
+  markSaved: (saved: CanvasState) => void;
 }
 
 /**
@@ -121,7 +136,10 @@ export interface CanvasProviderProps {
   initialCards?: Card[];
   initialArrows?: Arrow[];
   initialCardMetrics?: Record<string, Metric[]>;
-  disableLocalStorage?: boolean;
+  /** 表示だけ。編集、保存、下書きを止める */
+  readOnly?: boolean;
+  /** ローカル下書きのキー（lib/canvas/storage の draftKey）。undefined なら下書きを読み書きしない */
+  storageKey?: string;
   children: ReactNode;
 }
 
@@ -129,7 +147,8 @@ export function CanvasProvider({
   initialCards = [],
   initialArrows = [],
   initialCardMetrics = {},
-  disableLocalStorage = false,
+  readOnly = false,
+  storageKey,
   children,
 }: CanvasProviderProps) {
   const t = useTranslations("canvas");
@@ -165,50 +184,72 @@ export function CanvasProvider({
   const [cardMetrics, setCardMetrics] = useState<Record<string, Metric[]>>(initialCardMetrics);
   const { fitView } = useReactFlow();
 
-  // 2. Hydrate from localStorage after mount to avoid hydration mismatch
+  // 保存済みの内容の JSON。dirty はこれと今の内容の比較で決める。measured 等の
+  // React Flow 内部の変化は nodesToCards が落とすので、ここには現れない。
+  const lastSavedRef = useRef(
+    JSON.stringify({
+      cards: initialCards,
+      arrows: initialArrows,
+      cardMetrics: initialCardMetrics,
+    } satisfies CanvasState),
+  );
+  const [dirty, setDirty] = useState(false);
+
+  // replaceCanvas は下の hydration effect より後で定義されるので ref 経由で呼ぶ
+  const replaceCanvasRef = useRef<(state: CanvasState) => void>(() => {});
+
+  // 2. Hydrate from the local draft after mount to avoid hydration mismatch
   const hasHydrated = useRef(false);
   useEffect(() => {
-    if (disableLocalStorage || hasHydrated.current) return;
+    if (!storageKey || hasHydrated.current) return;
     hasHydrated.current = true;
-    const savedState = loadCanvasState();
-    if (savedState) {
+    const draft = loadCanvasDraft(storageKey);
+    if (draft) {
       setNodes(
-        cardsToNodes(savedState.cards).map((node) => ({
+        cardsToNodes(draft.cards).map((node) => ({
           ...node,
-          data: {
-            ...node.data,
-            metrics: savedState.cardMetrics[node.id],
-          },
+          data: { ...node.data, metrics: draft.cardMetrics[node.id] },
         })),
       );
-      setEdges(arrowsToEdges(savedState.arrows));
-      setCardMetrics(savedState.cardMetrics);
+      setEdges(arrowsToEdges(draft.arrows));
+      setCardMetrics(draft.cardMetrics);
+      // 下書きが DB の最新より優先されたことを知らせ、捨てる手段を出す（dig 2026-09-15 Q3）
+      toast(t("draftRestored"), {
+        duration: 8000,
+        action: {
+          label: t("discardDraft"),
+          onClick: () => replaceCanvasRef.current(JSON.parse(lastSavedRef.current) as CanvasState),
+        },
+      });
     }
-  }, [disableLocalStorage, setNodes, setEdges]);
+  }, [storageKey, setNodes, setEdges, t]);
 
   // 3. Edit dialog state
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
-  // 5. Auto-save effect (debounced 500ms)
+  // 5. Dirty 判定と下書きの自動保存（500ms デバウンス）
   useEffect(() => {
-    if (disableLocalStorage) return;
     const timeoutId = setTimeout(() => {
-      saveCanvasState({
+      const snapshot: CanvasState = {
         cards: nodesToCards(nodes),
         arrows: edgesToArrows(edges),
         cardMetrics,
-      });
+      };
+      const changed = JSON.stringify(snapshot) !== lastSavedRef.current;
+      setDirty(changed);
+      if (!storageKey || readOnly) return;
+      if (changed) saveCanvasDraft(storageKey, snapshot);
+      else clearCanvasDraft(storageKey);
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [nodes, edges, cardMetrics, disableLocalStorage]);
+  }, [nodes, edges, cardMetrics, storageKey, readOnly]);
 
   // 5.5. Refs to access current state without triggering re-renders
   const nodesRef = useRef(nodes);
   const edgesRef = useRef(edges);
   const cardMetricsRef = useRef(cardMetrics);
-  const disableLocalStorageRef = useRef(disableLocalStorage);
   // Set to true by loadGeneratedCanvas; consumed by the auto-fire effect once
   // React Flow has measured the freshly-mounted nodes (useNodesInitialized → true).
   const pendingAutoLayoutRef = useRef(false);
@@ -222,48 +263,49 @@ export function CanvasProvider({
     nodesRef.current = nodes;
     edgesRef.current = edges;
     cardMetricsRef.current = cardMetrics;
-    disableLocalStorageRef.current = disableLocalStorage;
-  }, [nodes, edges, cardMetrics, disableLocalStorage]);
+  }, [nodes, edges, cardMetrics]);
 
   // 6. State-reading callbacks (use refs to avoid dependency on state)
-  const saveCanvasToIPFS = useCallback(
-    async (ogImageCID?: string) => {
-      try {
-        const cards = nodesToCards(nodesRef.current);
-        const arrows = edgesToArrows(edgesRef.current);
-
-        // Validate that canvas is not empty
-        if (cards.length === 0) {
-          toast.error(t("uploadEmptyCardError"), {
-            duration: 5000,
-          });
-          return null;
-        }
-
-        // Generate unique ID for the canvas
-        const id = generateLogicModelId();
-
-        const canvasData: CanvasData = {
-          id,
-          cards,
-          arrows,
-          cardMetrics: cardMetricsRef.current,
-          ...(ogImageCID && { ogImageCID }),
-        };
-
-        const result = await uploadToIPFS(canvasData);
-        return result;
-      } catch (error) {
-        console.error("Failed to upload to IPFS:", error);
-        toast.error(t("uploadFailed"), {
-          duration: 5000,
-          description: error instanceof Error ? error.message : undefined,
-        });
-        return null;
-      }
-    },
-    [t],
+  const getSnapshot = useCallback(
+    (): CanvasState => ({
+      cards: nodesToCards(nodesRef.current),
+      arrows: edgesToArrows(edgesRef.current),
+      cardMetrics: cardMetricsRef.current,
+    }),
+    [],
   );
+
+  const markSaved = useCallback(
+    (saved: CanvasState) => {
+      // 送った内容を基準にする。PUT の間に編集があれば dirty のまま残り、下書きも残る
+      lastSavedRef.current = JSON.stringify(saved);
+      const stillDirty = JSON.stringify(getSnapshot()) !== lastSavedRef.current;
+      setDirty(stillDirty);
+      if (!stillDirty && storageKey) clearCanvasDraft(storageKey);
+    },
+    [getSnapshot, storageKey],
+  );
+
+  const replaceCanvas = useCallback(
+    (state: CanvasState) => {
+      setNodes(
+        cardsToNodes(state.cards).map((node) => ({
+          ...node,
+          data: { ...node.data, metrics: state.cardMetrics[node.id] },
+        })),
+      );
+      setEdges(arrowsToEdges(state.arrows));
+      setCardMetrics(state.cardMetrics);
+      lastSavedRef.current = JSON.stringify(state);
+      setDirty(false);
+      if (storageKey) clearCanvasDraft(storageKey);
+      recipe.markStale();
+    },
+    [setNodes, setEdges, storageKey, recipe],
+  );
+  useEffect(() => {
+    replaceCanvasRef.current = replaceCanvas;
+  });
 
   const exportAsJSON = useCallback(() => {
     const cards = nodesToCards(nodesRef.current);
@@ -295,14 +337,11 @@ export function CanvasProvider({
     setCardMetrics({});
     recipe.resetAll();
 
-    if (!disableLocalStorageRef.current && typeof window !== "undefined") {
-      localStorage.removeItem("canvasState");
-      sessionStorage.removeItem("currentCanvasData");
-    }
+    if (storageKey) clearCanvasDraft(storageKey);
 
     setClearConfirmOpen(false);
     toast.success(t("canvasCleared"), { duration: 3000 });
-  }, [setNodes, setEdges, setCardMetrics, recipe, t]);
+  }, [setNodes, setEdges, setCardMetrics, recipe, t, storageKey]);
 
   // Public API - opens confirmation dialog
   const clearAllData = useCallback(() => {
@@ -487,7 +526,8 @@ export function CanvasProvider({
       editingNodeId,
       editDialogOpen,
       editingNodeData,
-      disableLocalStorage,
+      readOnly,
+      dirty,
       clearConfirmOpen,
     }),
     [
@@ -497,7 +537,8 @@ export function CanvasProvider({
       editingNodeId,
       editDialogOpen,
       editingNodeData,
-      disableLocalStorage,
+      readOnly,
+      dirty,
       clearConfirmOpen,
     ],
   );
@@ -516,8 +557,10 @@ export function CanvasProvider({
       onEdgesChange,
       exportAsJSON,
       clearAllData,
-      saveCanvasToIPFS,
       autoLayout,
+      getSnapshot,
+      replaceCanvas,
+      markSaved,
     }),
     [
       operations,
@@ -532,8 +575,10 @@ export function CanvasProvider({
       onEdgesChange,
       exportAsJSON,
       clearAllData,
-      saveCanvasToIPFS,
       autoLayout,
+      getSnapshot,
+      replaceCanvas,
+      markSaved,
     ],
   );
 

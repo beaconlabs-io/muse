@@ -61,7 +61,9 @@
     "canvasCleared": "キャンバスをクリアしました",
     "clearAllTitle": "キャンバスデータをすべてクリアしますか？",
     "clearAllDescription": "キャンバス上のすべてのカード、接続、メトリクスが削除されます。この操作は元に戻せません。",
-    "clearAllConfirm": "すべてのデータをクリア"
+    "clearAllConfirm": "すべてのデータをクリア",
+    "draftRestored": "未保存の下書きを復元しました",
+    "discardDraft": "破棄"
   },
   "generate": {
     "title": "ロジックモデルを生成",

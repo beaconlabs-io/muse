@@ -15,7 +15,7 @@ interface ContextActionsProps {
 
 export function ContextActions({ activeTab }: ContextActionsProps) {
   const t = useTranslations("recipe");
-  const { nodes, cardMetrics } = useCanvasState();
+  const { nodes, cardMetrics, readOnly } = useCanvasState();
   const { addCard, loadGeneratedCanvas } = useCanvasOperations();
   const recipe = useRecipe();
 
@@ -34,6 +34,7 @@ export function ContextActions({ activeTab }: ContextActionsProps) {
   }, [recipe, nodes]);
 
   if (activeTab === "canvas") {
+    if (readOnly) return null;
     return (
       <div className="flex items-center gap-2">
         <GenerateLogicModelDialog onGenerate={loadGeneratedCanvas} />

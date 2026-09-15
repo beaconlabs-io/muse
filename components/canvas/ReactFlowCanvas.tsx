@@ -28,14 +28,16 @@ interface ReactFlowCanvasProps {
   initialCards?: Card[];
   initialArrows?: Arrow[];
   initialCardMetrics?: Record<string, Metric[]>;
-  disableLocalStorage?: boolean;
+  readOnly?: boolean;
+  storageKey?: string;
 }
 
 export function ReactFlowCanvas({
   initialCards = [],
   initialArrows = [],
   initialCardMetrics = {},
-  disableLocalStorage = false,
+  readOnly,
+  storageKey,
 }: ReactFlowCanvasProps) {
   return (
     // Provider order matters:
@@ -49,7 +51,8 @@ export function ReactFlowCanvas({
           initialCards={initialCards}
           initialArrows={initialArrows}
           initialCardMetrics={initialCardMetrics}
-          disableLocalStorage={disableLocalStorage}
+          readOnly={readOnly}
+          storageKey={storageKey}
         >
           <CanvasTour>
             <ReactFlowCanvasInner />
@@ -63,7 +66,7 @@ export function ReactFlowCanvas({
 function ReactFlowCanvasInner() {
   const [activeTab, setActiveTab] = useState<CanvasTab>("canvas");
   const { state, operations } = useCanvas();
-  const { nodes, edges, editingNodeData, editDialogOpen, editingNodeId } = state;
+  const { nodes, edges, editingNodeData, editDialogOpen, editingNodeId, readOnly } = state;
   const { onNodesChange, onEdgesChange, onConnect, updateCard, closeEditDialog } = operations;
 
   const handleEditDialogOpenChange = (open: boolean) => {
@@ -126,6 +129,11 @@ function ReactFlowCanvasInner() {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
+            nodesDraggable={!readOnly}
+            nodesConnectable={!readOnly}
+            elementsSelectable={!readOnly}
+            edgesReconnectable={!readOnly}
+            deleteKeyCode={readOnly ? null : "Backspace"}
             fitView
             className="bg-gray-50"
           >

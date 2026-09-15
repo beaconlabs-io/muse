@@ -1,7 +1,6 @@
 import { memo, useCallback, useMemo, useState } from "react";
 import {
   AlertTriangle,
-  CloudCheck,
   Download,
   HelpCircle,
   LayoutDashboard,
@@ -25,11 +24,7 @@ import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCanvasOperations, useCanvasState, useRecipe } from "./context";
 import { ContextActions } from "./ContextActions";
 import { ExportImageDialog } from "./ExportImageDialog";
-import { IPFSSaveDialog } from "./IPFSSaveDialog";
-import type { CanvasImageResult } from "@/lib/generate-canvas-image";
-import { useCanvasImage } from "@/hooks/useCanvasImage";
 import { collectMetricContexts } from "@/lib/recipe-helpers";
-import { uploadImageToIPFS } from "@/utils/ipfs";
 
 interface UnifiedHeaderProps {
   activeTab: "canvas" | "recipe";
@@ -42,15 +37,10 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
   const { startOnborda } = useOnborda();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [uploadingToIPFS, setUploadingToIPFS] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [ipfsDialogOpen, setIpfsDialogOpen] = useState(false);
-  const [ipfsHash, setIpfsHash] = useState<string | null>(null);
-  const [preGeneratedImage, setPreGeneratedImage] = useState<CanvasImageResult | null>(null);
 
   const { nodes, cardMetrics } = useCanvasState();
-  const { exportAsJSON, clearAllData, saveCanvasToIPFS, autoLayout } = useCanvasOperations();
-  const { generate: generateImage } = useCanvasImage();
+  const { exportAsJSON, clearAllData, autoLayout } = useCanvasOperations();
   const recipe = useRecipe();
 
   const metricContexts = useMemo(
@@ -90,50 +80,6 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
     setDropdownOpen(false);
     setExportDialogOpen(true);
   }, [nodes.length, tCanvas]);
-
-  const handleUploadToIPFS = useCallback(async () => {
-    if (nodes.length === 0) {
-      toast.error(tCanvas("uploadEmptyError"), { duration: 3000 });
-      return;
-    }
-
-    setDropdownOpen(false);
-    setIpfsHash(null);
-    setPreGeneratedImage(null);
-    setIpfsDialogOpen(true);
-    setUploadingToIPFS(true);
-
-    try {
-      const imageResult = await generateImage(nodes);
-
-      if (imageResult) {
-        setPreGeneratedImage(imageResult);
-      }
-
-      let ogImageCID: string | undefined;
-      if (imageResult?.blob) {
-        try {
-          ogImageCID = await uploadImageToIPFS(imageResult.blob, `canvas-og-${Date.now()}.png`);
-        } catch (imageUploadError) {
-          console.warn("Failed to upload OG image to IPFS:", imageUploadError);
-        }
-      }
-
-      const result = await saveCanvasToIPFS(ogImageCID);
-      setUploadingToIPFS(false);
-
-      if (result?.hash) {
-        setIpfsHash(result.hash);
-      } else {
-        setIpfsDialogOpen(false);
-      }
-    } catch (error) {
-      console.error("Failed to upload to IPFS:", error);
-      setUploadingToIPFS(false);
-      setIpfsDialogOpen(false);
-      toast.error(tCanvas("uploadFailed"), { duration: 3000 });
-    }
-  }, [nodes, saveCanvasToIPFS, generateImage, tCanvas]);
 
   const recipeTabBadge = (() => {
     if (recipe.phase === "running" || recipe.phase === "waiting-for-logic-model") {
@@ -195,14 +141,6 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
                 <LayoutDashboard className="mr-2 h-4 w-4" />
                 {tCanvas("autoLayout")}
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleUploadToIPFS}
-                disabled={uploadingToIPFS}
-                className="cursor-pointer"
-              >
-                <CloudCheck className="mr-2 h-4 w-4" />
-                {uploadingToIPFS ? tCanvas("uploading") : tCanvas("saveToIPFS")}
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportImage} className="cursor-pointer">
                 <Download className="mr-2 h-4 w-4" />
                 {tCanvas("exportImage")}
@@ -252,15 +190,6 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
       </div>
 
       <ExportImageDialog open={exportDialogOpen} onOpenChange={setExportDialogOpen} nodes={nodes} />
-
-      <IPFSSaveDialog
-        open={ipfsDialogOpen}
-        onOpenChange={setIpfsDialogOpen}
-        nodes={nodes}
-        ipfsHash={ipfsHash}
-        isUploading={uploadingToIPFS}
-        preGeneratedImage={preGeneratedImage}
-      />
     </>
   );
 });

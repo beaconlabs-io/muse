@@ -61,7 +61,9 @@
     "canvasCleared": "Canvas cleared successfully",
     "clearAllTitle": "Clear All Canvas Data?",
     "clearAllDescription": "This will remove all cards, connections, and metrics from the canvas. This action cannot be undone.",
-    "clearAllConfirm": "Clear All Data"
+    "clearAllConfirm": "Clear All Data",
+    "draftRestored": "Restored your unsaved draft",
+    "discardDraft": "Discard"
   },
   "generate": {
     "title": "Generate Logic Model",

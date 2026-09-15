@@ -75,7 +75,7 @@ export function LogicModelPageClient({ id }: LogicModelPageClientProps) {
         initialCards={canvasData.cards}
         initialArrows={canvasData.arrows}
         initialCardMetrics={canvasData.cardMetrics}
-        disableLocalStorage={true}
+        readOnly
       />
     </div>
   );

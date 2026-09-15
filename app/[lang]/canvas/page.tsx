@@ -1,5 +1,6 @@
 import { ReactFlowCanvas } from "@/components/canvas/ReactFlowCanvas";
 import type { Metadata } from "next";
+import { draftKey } from "@/lib/canvas/storage";
 import { localeAlternates } from "@/lib/locale-alternates";
 
 export async function generateMetadata({
@@ -12,5 +13,5 @@ export async function generateMetadata({
 }
 
 export default function CanvasPage() {
-  return <ReactFlowCanvas />;
+  return <ReactFlowCanvas storageKey={draftKey(null)} />;
 }
