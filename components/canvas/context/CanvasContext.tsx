@@ -47,6 +47,19 @@ import {
   type CanvasState,
 } from "@/lib/canvas/storage";
 
+/**
+ * dirty 比較用の JSON。DB の jsonb はキー順を並べ替えて返すので、snapshot と同じ
+ * 変換（nodesToCards / edgesToArrows）を通してキー順を揃える。cardMetrics は state と
+ * 同じオブジェクトがそのまま渡るので変換しない。
+ */
+function serializeCanvas(state: CanvasState): string {
+  return JSON.stringify({
+    cards: nodesToCards(cardsToNodes(state.cards)),
+    arrows: edgesToArrows(arrowsToEdges(state.arrows)),
+    cardMetrics: state.cardMetrics,
+  } satisfies CanvasState);
+}
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -186,13 +199,15 @@ export function CanvasProvider({
 
   // 保存済みの内容の JSON。dirty はこれと今の内容の比較で決める。measured 等の
   // React Flow 内部の変化は nodesToCards が落とすので、ここには現れない。
-  const lastSavedRef = useRef(
-    JSON.stringify({
+  // 変換を毎レンダー走らせないよう、初期値は useState の遅延初期化で 1 回だけ作る
+  const [initialSaved] = useState(() =>
+    serializeCanvas({
       cards: initialCards,
       arrows: initialArrows,
       cardMetrics: initialCardMetrics,
-    } satisfies CanvasState),
+    }),
   );
+  const lastSavedRef = useRef(initialSaved);
   const [dirty, setDirty] = useState(false);
 
   // replaceCanvas は下の hydration effect より後で定義されるので ref 経由で呼ぶ
@@ -296,7 +311,7 @@ export function CanvasProvider({
       );
       setEdges(arrowsToEdges(state.arrows));
       setCardMetrics(state.cardMetrics);
-      lastSavedRef.current = JSON.stringify(state);
+      lastSavedRef.current = serializeCanvas(state);
       setDirty(false);
       if (storageKey) clearCanvasDraft(storageKey);
       recipe.markStale();
