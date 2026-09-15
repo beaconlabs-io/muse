@@ -5,7 +5,8 @@
     "logicModels": "ロジックモデル"
   },
   "orgSwitcher": {
-    "label": "ワークスペース"
+    "label": "ワークスペース",
+    "switchFailed": "ワークスペースの切り替えに失敗しました"
   },
   "auth": {
     "signInWithGoogle": "Google でログイン",

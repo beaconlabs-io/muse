@@ -3,6 +3,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { SidebarLogo } from "@/components/sidebar-logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +23,8 @@ import { logicModelKeys } from "@/lib/logic-model-queries";
 
 /**
  * アクティブなワークスペースの表示と切替（account-pages spec の OrgSwitcher）。
- * ログイン中だけ描画する。「組織を作成」は段階 4。
+ * ログイン中だけ描画する。一覧が読み込み中か取得に失敗したときはホームへのリンクを残す。
+ * 「組織を作成」は段階 4。
  */
 export function OrgSwitcher({ activeOrganizationId }: { activeOrganizationId: string | null }) {
   const t = useTranslations("orgSwitcher");
@@ -30,11 +33,21 @@ export function OrgSwitcher({ activeOrganizationId }: { activeOrganizationId: st
   const { data: organizations } = authClient.useListOrganizations();
   const list = organizations ?? [];
   const active = list.find((o) => o.id === activeOrganizationId) ?? list[0];
-  if (!active) return null;
+  if (!active) return <SidebarLogo />;
 
   const switchTo = async (organizationId: string) => {
     if (organizationId === active.id) return;
-    await authClient.organization.setActive({ organizationId });
+    try {
+      // The real client resolves to { data, error }; a backend that is down rejects.
+      const { error } = await authClient.organization.setActive({ organizationId });
+      if (error) {
+        toast.error(t("switchFailed"));
+        return;
+      }
+    } catch {
+      toast.error(t("switchFailed"));
+      return;
+    }
     await queryClient.invalidateQueries({ queryKey: logicModelKeys.list() });
   };
 

@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { FileSearch, LayoutGrid, ListTree } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AuthMenu } from "@/components/auth-menu";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OrgSwitcher } from "@/components/org-switcher";
+import { SidebarLogo } from "@/components/sidebar-logo";
 import {
   Sidebar,
   SidebarContent,
@@ -42,16 +42,7 @@ export function AppSidebar() {
         {session ? (
           <OrgSwitcher activeOrganizationId={session.session.activeOrganizationId ?? null} />
         ) : (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild size="lg">
-                <Link href="/" onClick={closeMobile}>
-                  <Image src="/beaconlabs.png" alt="BeaconLabs Logo" width={32} height={32} />
-                  <span className="font-medium">MUSE</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <SidebarLogo />
         )}
       </SidebarHeader>
       <SidebarContent>

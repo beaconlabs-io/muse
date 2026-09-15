@@ -5,7 +5,8 @@
     "logicModels": "Logic models"
   },
   "orgSwitcher": {
-    "label": "Workspace"
+    "label": "Workspace",
+    "switchFailed": "Failed to switch workspace"
   },
   "auth": {
     "signInWithGoogle": "Sign in with Google",
