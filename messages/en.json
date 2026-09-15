@@ -159,6 +159,7 @@
     "tooLarge": "The canvas is too large to save (5MB limit)",
     "signInToView": "Sign in to view this logic model",
     "notFound": "This logic model was not found or you do not have access",
+    "linkInvalid": "This link is no longer valid",
     "history": "History",
     "share": "Share"
   },

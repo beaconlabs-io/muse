@@ -56,7 +56,7 @@ export function ShareDialog({
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
   // モデルの属するワークスペースを読む。アクティブなワークスペースとは限らない（dig Q1）
-  const { data: organization } = useQuery({
+  const { data: organization, isLoading: organizationLoading } = useQuery({
     queryKey: ["workspace", organizationId],
     queryFn: async () =>
       (await authClient.organization.getFullOrganization({ query: { organizationId } })).data,
@@ -226,10 +226,9 @@ export function ShareDialog({
             <Switch
               id="share-link"
               checked={link}
-              disabled={privateMode || settings.isPending}
+              disabled={privateMode || organizationLoading || settings.isPending}
               onCheckedChange={(checked) => {
                 setLink(checked);
-                if (!checked) setToken(null);
                 settings.mutate({ linkEnabled: checked });
               }}
             />
@@ -246,7 +245,8 @@ export function ShareDialog({
                 onClick={() => {
                   void navigator.clipboard
                     .writeText(shareUrl)
-                    .then(() => toast.success(t("linkCopied")));
+                    .then(() => toast.success(t("linkCopied")))
+                    .catch(() => toast.error(t("updateFailed")));
                 }}
               >
                 {t("copyLink")}

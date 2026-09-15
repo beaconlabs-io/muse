@@ -103,6 +103,9 @@ export function LogicModelProvider({
             latest: { versionNo: 1, canvasData },
             access: "owner",
           });
+          // シードした detail は organizationId: "" を持ちうるので、乗せたまま次回の
+          // staleTime まで放置せず refetch させる（review フォロー）
+          await queryClient.invalidateQueries({ queryKey: logicModelKeys.detail(created.id) });
           await queryClient.invalidateQueries({ queryKey: logicModelKeys.list() });
           router.replace(`/canvas/${created.id}`);
         } else {

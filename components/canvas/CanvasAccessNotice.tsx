@@ -10,14 +10,20 @@ export function CanvasAccessNotice({
   status,
   message,
 }: {
-  status: 401 | 404 | "error";
+  status: 401 | 404 | "error" | "link";
   message?: string;
 }) {
   const t = useTranslations("logicModel");
   const tCanvas = useTranslations("canvas");
   const tAuth = useTranslations("auth");
   const heading =
-    status === 401 ? t("signInToView") : status === 404 ? t("notFound") : tCanvas("canvasNotFound");
+    status === 401
+      ? t("signInToView")
+      : status === 404
+        ? t("notFound")
+        : status === "link"
+          ? t("linkInvalid")
+          : tCanvas("canvasNotFound");
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
