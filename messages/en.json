@@ -180,6 +180,23 @@
     "deleteFailed": "Failed to delete",
     "signInToList": "Sign in to see your logic models"
   },
+  "share": {
+    "title": "Share",
+    "description": "People, the whole workspace, and a link are independent. The strongest one applies.",
+    "people": "People",
+    "addPerson": "Add a member",
+    "selectMember": "Select a member",
+    "remove": "Remove",
+    "workspace": "Everyone in the workspace",
+    "link": "Anyone with the link",
+    "linkDisabledPrivate": "Link sharing is off because this workspace is in private mode.",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "roleNone": "No access",
+    "roleViewer": "Can view",
+    "roleEditor": "Can edit",
+    "updateFailed": "Failed to update sharing"
+  },
   "history": {
     "title": "Version history",
     "description": "Restoring copies a past version as the newest one.",

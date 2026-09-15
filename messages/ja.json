@@ -180,6 +180,23 @@
     "deleteFailed": "削除に失敗しました",
     "signInToList": "ロジックモデルを見るにはログインしてください"
   },
+  "share": {
+    "title": "共有",
+    "description": "人単位、ワークスペース全体、リンクは独立していて、最も強い権限が適用されます。",
+    "people": "人単位",
+    "addPerson": "メンバーを追加",
+    "selectMember": "メンバーを選択",
+    "remove": "解除",
+    "workspace": "ワークスペースの全員",
+    "link": "リンクを知っている全員",
+    "linkDisabledPrivate": "このワークスペースは非公開モードのため、リンク共有は使えません。",
+    "copyLink": "リンクをコピー",
+    "linkCopied": "リンクをコピーしました",
+    "roleNone": "アクセスなし",
+    "roleViewer": "閲覧のみ",
+    "roleEditor": "編集可",
+    "updateFailed": "共有設定の更新に失敗しました"
+  },
   "history": {
     "title": "バージョン履歴",
     "description": "復元すると、過去のバージョンが最新のバージョンとして複製されます。",

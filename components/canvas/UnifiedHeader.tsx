@@ -8,6 +8,7 @@ import {
   MoreVertical,
   RefreshCw,
   Save,
+  Share2,
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -29,6 +30,7 @@ import { useCanvasOperations, useCanvasState, useLogicModel, useRecipe } from ".
 import { ContextActions } from "./ContextActions";
 import { ExportImageDialog } from "./ExportImageDialog";
 import { HistorySheet } from "./HistorySheet";
+import { ShareDialog } from "./ShareDialog";
 import { authClient } from "@/lib/auth-client";
 import { collectMetricContexts } from "@/lib/recipe-helpers";
 
@@ -46,6 +48,7 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const { nodes, cardMetrics, readOnly, dirty } = useCanvasState();
   const { exportAsJSON, clearAllData, autoLayout, getSnapshot, markSaved } = useCanvasOperations();
@@ -205,6 +208,20 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
             </Button>
           ) : null}
 
+          {logicModel.id !== null &&
+          logicModel.organizationId !== null &&
+          logicModel.access === "owner" ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={tModel("share")}
+              className="cursor-pointer"
+              onClick={() => setShareOpen(true)}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          ) : null}
+
           <Button
             variant="ghost"
             size="icon"
@@ -292,6 +309,18 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
       <ExportImageDialog open={exportDialogOpen} onOpenChange={setExportDialogOpen} nodes={nodes} />
       {logicModel.id !== null ? (
         <HistorySheet id={logicModel.id} open={historyOpen} onOpenChange={setHistoryOpen} />
+      ) : null}
+      {logicModel.id !== null &&
+      logicModel.organizationId !== null &&
+      logicModel.access === "owner" ? (
+        <ShareDialog
+          id={logicModel.id}
+          organizationId={logicModel.organizationId}
+          workspaceAccess={logicModel.workspaceAccess}
+          linkEnabled={logicModel.linkEnabled}
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+        />
       ) : null}
     </>
   );
