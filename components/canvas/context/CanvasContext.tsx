@@ -40,25 +40,13 @@ import {
   arrowsToEdges,
   edgesToArrows,
 } from "@/lib/canvas/react-flow-utils";
+import { serializeCanvas } from "@/lib/canvas/serialize-canvas";
 import {
   clearCanvasDraft,
   loadCanvasDraft,
   saveCanvasDraft,
   type CanvasState,
 } from "@/lib/canvas/storage";
-
-/**
- * dirty 比較用の JSON。DB の jsonb はキー順を並べ替えて返すので、snapshot と同じ
- * 変換（nodesToCards / edgesToArrows）を通してキー順を揃える。cardMetrics は state と
- * 同じオブジェクトがそのまま渡るので変換しない。
- */
-function serializeCanvas(state: CanvasState): string {
-  return JSON.stringify({
-    cards: nodesToCards(cardsToNodes(state.cards)),
-    arrows: edgesToArrows(arrowsToEdges(state.arrows)),
-    cardMetrics: state.cardMetrics,
-  } satisfies CanvasState);
-}
 
 // =============================================================================
 // TYPES
@@ -293,7 +281,7 @@ export function CanvasProvider({
   const markSaved = useCallback(
     (saved: CanvasState) => {
       // 送った内容を基準にする。PUT の間に編集があれば dirty のまま残り、下書きも残る
-      lastSavedRef.current = JSON.stringify(saved);
+      lastSavedRef.current = serializeCanvas(saved);
       const stillDirty = JSON.stringify(getSnapshot()) !== lastSavedRef.current;
       setDirty(stillDirty);
       if (!stillDirty && storageKey) clearCanvasDraft(storageKey);
@@ -314,9 +302,9 @@ export function CanvasProvider({
       lastSavedRef.current = serializeCanvas(state);
       setDirty(false);
       if (storageKey) clearCanvasDraft(storageKey);
-      recipe.markStale();
+      markStale();
     },
-    [setNodes, setEdges, storageKey, recipe],
+    [setNodes, setEdges, storageKey, markStale],
   );
   useEffect(() => {
     replaceCanvasRef.current = replaceCanvas;
