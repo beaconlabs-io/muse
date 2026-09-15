@@ -60,6 +60,16 @@ describe("LogicModelsPageClient", () => {
     expect(screen.getByText("Owner")).toBeInTheDocument();
   });
 
+  it("shows an error instead of the empty state when the list fails to load", async () => {
+    useSession.mockReturnValue({ data: { user: { id: "u1" } }, isPending: false });
+    listLogicModels.mockRejectedValue(new Error("network error"));
+    renderPage();
+    expect(await screen.findByText("Failed to load logic models")).toBeInTheDocument();
+    expect(
+      screen.queryByText("No logic models yet. Create one from the canvas."),
+    ).not.toBeInTheDocument();
+  });
+
   it("deletes after confirmation", async () => {
     useSession.mockReturnValue({ data: { user: { id: "u1" } }, isPending: false });
     listLogicModels.mockResolvedValue([

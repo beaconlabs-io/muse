@@ -53,7 +53,11 @@ function LogicModelList({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
   const [pendingDelete, setPendingDelete] = useState<LogicModelListItem | null>(null);
 
-  const { data: models = [], isLoading } = useQuery({
+  const {
+    data: models = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: logicModelKeys.list(),
     queryFn: listLogicModels,
   });
@@ -82,7 +86,9 @@ function LogicModelList({ userId }: { userId: string }) {
         </Button>
       </div>
 
-      {isLoading ? null : models.length === 0 ? (
+      {isLoading ? null : isError ? (
+        <p className="text-muted-foreground">{t("loadFailed")}</p>
+      ) : models.length === 0 ? (
         <p className="text-muted-foreground">{t("empty")}</p>
       ) : (
         <ul className="divide-y rounded-lg border">

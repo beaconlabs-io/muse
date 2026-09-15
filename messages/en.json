@@ -163,6 +163,7 @@
     "description": "Logic models saved in this workspace",
     "new": "New logic model",
     "empty": "No logic models yet. Create one from the canvas.",
+    "loadFailed": "Failed to load logic models",
     "updatedAt": "Updated",
     "owner": "Owner",
     "sharedWithYou": "Shared with you",
