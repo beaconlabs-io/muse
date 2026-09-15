@@ -65,6 +65,7 @@ export function useRecipeStream() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
           signal: abortController.signal,
+          credentials: "include",
         });
 
         if (!response.ok) {
