@@ -4,6 +4,9 @@
     "canvas": "Canvas",
     "logicModels": "Logic models"
   },
+  "orgSwitcher": {
+    "label": "Workspace"
+  },
   "auth": {
     "signInWithGoogle": "Sign in with Google",
     "signInWithGithub": "Sign in with GitHub",

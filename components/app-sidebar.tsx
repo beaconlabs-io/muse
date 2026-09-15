@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { FileSearch, LayoutGrid } from "lucide-react";
+import { FileSearch, LayoutGrid, ListTree } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AuthMenu } from "@/components/auth-menu";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { OrgSwitcher } from "@/components/org-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +19,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Link, usePathname } from "@/i18n/routing";
+import { authClient } from "@/lib/auth-client";
 
 export function AppSidebar() {
   const t = useTranslations("nav");
@@ -26,25 +28,31 @@ export function AppSidebar() {
   // On mobile the sidebar is a sheet that stays open across client-side
   // navigation, so close it whenever a link is followed.
   const closeMobile = () => setOpenMobile(false);
+  const { data: session } = authClient.useSession();
 
   const navigation = [
     { title: t("evidence"), href: "/search", icon: FileSearch },
     { title: t("canvas"), href: "/canvas", icon: LayoutGrid },
-  ] as const;
+    ...(session ? [{ title: t("logicModels"), href: "/logic-models", icon: ListTree }] : []),
+  ];
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lg">
-              <Link href="/" onClick={closeMobile}>
-                <Image src="/beaconlabs.png" alt="BeaconLabs Logo" width={32} height={32} />
-                <span className="font-medium">MUSE</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {session ? (
+          <OrgSwitcher activeOrganizationId={session.session.activeOrganizationId ?? null} />
+        ) : (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild size="lg">
+                <Link href="/" onClick={closeMobile}>
+                  <Image src="/beaconlabs.png" alt="BeaconLabs Logo" width={32} height={32} />
+                  <span className="font-medium">MUSE</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

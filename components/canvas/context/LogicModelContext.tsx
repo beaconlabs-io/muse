@@ -88,10 +88,7 @@ export function LogicModelProvider({
           // /canvas/<id> へ replace したときのスピナーを消すため、GET /:id 相当をシードする
           // （dig 2026-09-15 Q2）。organizationId と ownerId はセッションから写す
           const now = new Date().toISOString();
-          // Task 7 で organizationClient() を足すと activeOrganizationId が型に載るので、このキャストは消す
-          const activeOrganizationId = (
-            session?.session as { activeOrganizationId?: string | null } | undefined
-          )?.activeOrganizationId;
+          const activeOrganizationId = session?.session.activeOrganizationId;
           queryClient.setQueryData<LogicModelDetail>(logicModelKeys.detail(created.id), {
             model: {
               id: created.id,

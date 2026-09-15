@@ -4,6 +4,9 @@
     "canvas": "キャンバス",
     "logicModels": "ロジックモデル"
   },
+  "orgSwitcher": {
+    "label": "ワークスペース"
+  },
   "auth": {
     "signInWithGoogle": "Google でログイン",
     "signInWithGithub": "GitHub でログイン",
