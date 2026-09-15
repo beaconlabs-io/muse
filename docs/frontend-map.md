@@ -5,7 +5,22 @@ hooks. Intentionally a map, not exhaustive API reference — open the file
 for details. For the canvas subsystem see
 [react-flow-architecture.md](./react-flow-architecture.md).
 
+## Pages
+
+- `app/[lang]/logic-models/` — workspace list of saved logic models
+  (`LogicModelsPageClient.tsx`). Sign-in gated; delete with confirmation.
+  Reached from the sidebar's Logic models item.
+- `app/[lang]/canvas/shared/[token]/` — read-only view of a link-shared
+  logic model (`SharedLogicModelPageClient.tsx`). No session; 404/invalid
+  link renders `CanvasAccessNotice`.
+
 ## Components
+
+### `components/org-switcher.tsx`, `components/sidebar-logo.tsx`
+
+`OrgSwitcher` is the sidebar's workspace switcher (account-pages spec
+§OrgSwitcher) — a dropdown of the signed-in user's organizations, falling
+back to `SidebarLogo` when signed out or the list hasn't loaded.
 
 ### `components/evidence/`
 
@@ -41,6 +56,22 @@ Quick map:
   downloadable HTML in `lib/generate-recipe-html.ts` is intentionally a
   separate format — keep both until we decide whether to unify.
 - `context/RecipeContext.tsx` — `RecipeProvider` + `useRecipe()` hook.
+
+### `components/canvas/` (logic model storage & sharing pieces)
+
+Saved-document UI opened from `UnifiedHeader`; state comes from
+`useLogicModel()` (`context/LogicModelContext.tsx`). See
+[react-flow-architecture.md → Provider tree](./react-flow-architecture.md#reactflowcanvastsx)
+for how this provider relates to the canvas one.
+
+- `ShareDialog.tsx` — per-user shares (add/change/remove role), workspace
+  access level, and the link-share toggle (fetches the token via
+  `PATCH { linkEnabled: true }`).
+- `HistorySheet.tsx` — version list with "restore this version"; only
+  opens for a model that has an `id`.
+- `CanvasAccessNotice.tsx` — the 401 / 404 / invalid-link / generic-error
+  screen shown by `/canvas/[id]` and `/canvas/shared/[token]` instead of
+  the canvas.
 
 ### `components/tooltip/`
 

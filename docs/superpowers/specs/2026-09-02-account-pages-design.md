@@ -118,6 +118,9 @@ shadcn の TeamSwitcher パターンを `SidebarHeader` に置く。
 この時点では組織が個人用 1 つしかないので、OrgSwitcher は一覧に 1 件の状態で出る。
 それでも 3a で作る理由は、`/logic-models` が「今どの組織の一覧か」を示す必要があり、段階 4 で作り直しにならないためである。
 
+**段階 3a は実装済み**（`feat/logic-model-storage`、2026-09-15）。画面設計の詳細は
+`docs/superpowers/specs/2026-09-15-logic-model-storage-3a-design.md` を参照。
+
 ## Translation keys
 
 段階ごとに `messages/en.json` と `messages/ja.json` に追加する。

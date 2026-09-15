@@ -51,16 +51,28 @@ backend は変更しない。
 
 ### 2.1 `LogicModelProvider` が公開するもの
 
-- 状態：`id`（`null` なら未保存）、`title`、`access`、`readOnly`、`dirty`、`saving`
-- 操作：`save()`、`rename(title)`、`restore(versionNo)`、共有と履歴の mutation（§5、§6 で使う）
+**実装時の訂正（dig 発見 4）**：`dirty`、`getSnapshot`、`replaceCanvas`、`markSaved(saved)` は
+`LogicModelProvider` ではなく `CanvasProvider` 側が持つ（§2.2）。`LogicModelProvider` は
+文書の身元（id、タイトル、実効権限）と保存・共有・履歴の操作だけを持ち、キャンバスの
+中身へは `getSnapshot()` で触れる。理由は、下書きの JSON 比較（dirty 判定）と下書き
+localStorage の読み書きが `storageKey` を握る `CanvasProvider` 側にしかない状態と結び
+ついているため。
 
-`dirty` は `CanvasProvider` が変更を通知する callback（`onChange`）で立て、保存成功で下ろす。
+- 状態：`id`（`null` なら未保存）、`title`、`access`、`organizationId`、`workspaceAccess`、`linkEnabled`、`readOnly`、`saving`
+- 操作：`save(snapshot, onSaved)`（`CanvasProvider.getSnapshot()` を呼び出し側が渡す）、`rename(title)`、共有と履歴の mutation（§5、§6 で使う）
 
 ### 2.2 `CanvasProvider` の変更
 
 - `readOnly`：`nodesDraggable`、`nodesConnectable`、`elementsSelectable` を false にし、追加、編集、削除、自動整列、クリアの操作を無効にする
 - `storageKey`：ローカル下書きのキー。`undefined` なら下書きを読み書きしない（現行の `disableLocalStorage` を置き換える）
-- `onChange`：ノード、エッジ、指標が変わったときに呼ぶ
+- `dirty`：保存済みの内容（`lastSaved` の JSON）と今の内容を比較して `CanvasProvider` 内部で持つ。`LogicModelProvider` からの `onChange` callback は無い
+- `getSnapshot()`：今の `CanvasState` を返す。`LogicModelProvider.save()` へ渡す入力
+- `replaceCanvas(state)`：バージョン復元（§6）で使う。ノード/エッジ/指標を丸ごと差し替える
+- `markSaved(saved)`：保存成功後に呼ぶ。基準を送った内容で更新し直し、まだ dirty なら下書きは残す（保存中の編集を保護するため）
+
+`/canvas/shared/[token]` は `document` prop に閲覧用の `LogicModelDocument`
+（`title` だけリンク先のタイトルで埋める）を渡すので、`useLogicModel().title` が
+共有ビューでも表示できる。
 
 ## 3. API 層
 

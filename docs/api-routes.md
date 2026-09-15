@@ -2,25 +2,28 @@
 
 Reference map for the HTTP endpoints this app talks to.
 
-Logic model generation, recipes, evidence search and IPFS uploads are served
-by the separate `muse-backend` service (Hono on Cloudflare Workers), reached
-through `NEXT_PUBLIC_API_BASE_URL`. The request, response and SSE shapes
-documented here are the contract this app consumes; agent orchestration and
-evidence matching internals live in that repository. What remains under
-`app/api/**` is the two OG image routes: `/api/og/canvas` (IPFS proxy) and
-`/api/og/evidence` (302 to the static image generated at build time by
-`scripts/generate-og-images.tsx`, see #306).
+Logic model generation, recipes, evidence search, IPFS uploads and logic
+model storage/sharing are served by the separate `muse-backend` service
+(Hono on Cloudflare Workers), reached through `NEXT_PUBLIC_API_BASE_URL`.
+The request, response and SSE shapes documented here are the contract this
+app consumes; agent orchestration and evidence matching internals live in
+that repository. What remains under `app/api/**` is the two OG image
+routes: `/api/og/canvas` (IPFS proxy) and `/api/og/evidence` (302 to the
+static image generated at build time by `scripts/generate-og-images.tsx`,
+see #306).
 
 ## Routes
 
-| Method | Path                        | Purpose                                                                                                                                                                                                                         | Entry file                              |
-| ------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| POST   | `/api/workflow/stream`      | Streams logic-model generation events over SSE. Accepts JSON `{goal}` **or** multipart/form-data with an uploaded PDF/image (≤4 MB) forwarded to Gemini 2.5 Pro as multimodal input (see [File upload path](#file-upload-path)) | `muse-backend` `src/routes/workflow.ts` |
-| POST   | `/api/recipe/stream`        | Streams measurement-recipe generation events over SSE. Input: `{ logicModelTitle, metrics[], locale }`. Wraps `recipeWorkflow` (single-step LLM call) and emits the same step-start / step-finish / _-error / _-complete shape  | `muse-backend` `src/routes/recipe.ts`   |
-| POST   | `/api/compact`              | Turns a chat history into a logic model, uploads canvas JSON to IPFS, returns canvas URL                                                                                                                                        | `muse-backend` `src/routes/compact.ts`  |
-| POST   | `/api/evidence/search`      | Natural-language evidence search backed by the Conversation Bot Agent; optional external paper lookup                                                                                                                           | `muse-backend` `src/routes/evidence.ts` |
-| POST   | `/api/upload-to-ipfs`       | Uploads canvas JSON (Zod-validated) to Pinata IPFS                                                                                                                                                                              | `muse-backend` `src/routes/ipfs.ts`     |
-| POST   | `/api/upload-image-to-ipfs` | Uploads a ≤2 MB image (multipart) to Pinata IPFS                                                                                                                                                                                | `muse-backend` `src/routes/ipfs.ts`     |
+| Method                    | Path                              | Purpose                                                                                                                                                                                                                         | Entry file                                           |
+| ------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| POST                      | `/api/workflow/stream`            | Streams logic-model generation events over SSE. Accepts JSON `{goal}` **or** multipart/form-data with an uploaded PDF/image (≤4 MB) forwarded to Gemini 2.5 Pro as multimodal input (see [File upload path](#file-upload-path)) | `muse-backend` `src/routes/workflow.ts`              |
+| POST                      | `/api/recipe/stream`              | Streams measurement-recipe generation events over SSE. Input: `{ logicModelTitle, metrics[], locale }`. Wraps `recipeWorkflow` (single-step LLM call) and emits the same step-start / step-finish / _-error / _-complete shape  | `muse-backend` `src/routes/recipe.ts`                |
+| POST                      | `/api/compact`                    | Turns a chat history into a logic model, uploads canvas JSON to IPFS, returns canvas URL                                                                                                                                        | `muse-backend` `src/routes/compact.ts`               |
+| POST                      | `/api/evidence/search`            | Natural-language evidence search backed by the Conversation Bot Agent; optional external paper lookup                                                                                                                           | `muse-backend` `src/routes/evidence.ts`              |
+| POST                      | `/api/upload-to-ipfs`             | Uploads canvas JSON (Zod-validated) to Pinata IPFS. The muse frontend stopped calling this route on 2026-09-15 (canvases now save to the DB); whether the route itself stays is a separate issue                                | `muse-backend` `src/routes/ipfs.ts`                  |
+| POST                      | `/api/upload-image-to-ipfs`       | Uploads a ≤2 MB image (multipart) to Pinata IPFS. The muse frontend stopped calling this route on 2026-09-15; whether the route itself stays is a separate issue                                                                | `muse-backend` `src/routes/ipfs.ts`                  |
+| GET/POST/PUT/PATCH/DELETE | `/api/logic-models/*`             | Logic model CRUD, version history and sharing (create, save version, restore, rename, list/put/delete shares, toggle link). Session required                                                                                    | `muse-backend`, called from `lib/logic-model-api.ts` |
+| GET                       | `/api/shared-logic-models/:token` | Read-only fetch of a link-shared logic model. No session                                                                                                                                                                        | `muse-backend`, called from `lib/logic-model-api.ts` |
 
 ## Auth
 
@@ -30,6 +33,9 @@ Auth is enforced by the backend service, not by this app.
   it is set there. Callers send an `x-api-key` header. Unset means the routes
   accept unauthenticated requests.
 - The stream and IPFS routes are unauthenticated.
+- `/api/logic-models/*` requires a session: the client sends the Better
+  Auth cookie via `credentials: "include"` (see `lib/logic-model-api.ts`).
+  `/api/shared-logic-models/:token` needs no session.
 
 ## Request / response schemas
 
@@ -196,5 +202,8 @@ choose to translate or surface the raw message.
   `VERCEL_REQUEST_BODY_LIMIT_BYTES`)
 - Evidence search internals → `muse-backend`, `src/lib/evidence-search-batch.ts` + the conversation bot agent
 - External papers → `muse-backend`, `src/lib/external-paper-search.ts` + `src/lib/academic/`
-- IPFS client → `muse-backend`, `src/lib/pinata.ts` (this app posts through `utils/ipfs.ts`)
+- IPFS client → `muse-backend`, `src/lib/pinata.ts`. This app no longer
+  uploads to IPFS; `utils/ipfs.ts` only reads a pinned canvas
+  (`fetchFromIPFS`, `isValidCID`, `parseCID`) for the read-only `/canvas/<cid>` route
+- Logic model storage/sharing client → `lib/logic-model-api.ts`
 - Error categorization → `lib/workflow-errors.ts`
