@@ -1,7 +1,8 @@
 {
   "nav": {
     "evidence": "エビデンス",
-    "canvas": "キャンバス"
+    "canvas": "キャンバス",
+    "logicModels": "ロジックモデル"
   },
   "auth": {
     "signInWithGoogle": "Google でログイン",
@@ -156,6 +157,23 @@
     "notFound": "ロジックモデルが見つからないか、アクセス権がありません",
     "history": "履歴",
     "share": "共有"
+  },
+  "logicModels": {
+    "title": "ロジックモデル",
+    "description": "このワークスペースに保存されたロジックモデル",
+    "new": "新規作成",
+    "empty": "ロジックモデルはまだありません。キャンバスから作成してください。",
+    "updatedAt": "更新",
+    "owner": "オーナー",
+    "sharedWithYou": "共有",
+    "workspaceAccess": "ワークスペース: {access}",
+    "linkEnabled": "リンク",
+    "delete": "削除",
+    "deleteTitle": "このロジックモデルを削除しますか？",
+    "deleteDescription": "すべてのバージョンと共有設定が削除されます。元に戻せません。",
+    "deleted": "削除しました",
+    "deleteFailed": "削除に失敗しました",
+    "signInToList": "ロジックモデルを見るにはログインしてください"
   },
   "evidenceDialog": {
     "title": "接続されたエビデンス",

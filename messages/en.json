@@ -1,7 +1,8 @@
 {
   "nav": {
     "evidence": "Evidence",
-    "canvas": "Canvas"
+    "canvas": "Canvas",
+    "logicModels": "Logic models"
   },
   "auth": {
     "signInWithGoogle": "Sign in with Google",
@@ -156,6 +157,23 @@
     "notFound": "This logic model was not found or you do not have access",
     "history": "History",
     "share": "Share"
+  },
+  "logicModels": {
+    "title": "Logic models",
+    "description": "Logic models saved in this workspace",
+    "new": "New logic model",
+    "empty": "No logic models yet. Create one from the canvas.",
+    "updatedAt": "Updated",
+    "owner": "Owner",
+    "sharedWithYou": "Shared with you",
+    "workspaceAccess": "Workspace: {access}",
+    "linkEnabled": "Link",
+    "delete": "Delete",
+    "deleteTitle": "Delete this logic model?",
+    "deleteDescription": "All versions and shares are removed. This cannot be undone.",
+    "deleted": "Deleted",
+    "deleteFailed": "Failed to delete",
+    "signInToList": "Sign in to see your logic models"
   },
   "evidenceDialog": {
     "title": "Evidence for Connection",
