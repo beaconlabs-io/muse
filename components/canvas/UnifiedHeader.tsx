@@ -6,11 +6,13 @@ import {
   LayoutDashboard,
   MoreVertical,
   RefreshCw,
+  Save,
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useOnborda } from "onborda";
 import { toast } from "sonner";
+import { SignInDialog } from "@/components/sign-in-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,10 +22,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCanvasOperations, useCanvasState, useRecipe } from "./context";
+import { useCanvasOperations, useCanvasState, useLogicModel, useRecipe } from "./context";
 import { ContextActions } from "./ContextActions";
 import { ExportImageDialog } from "./ExportImageDialog";
+import { authClient } from "@/lib/auth-client";
 import { collectMetricContexts } from "@/lib/recipe-helpers";
 
 interface UnifiedHeaderProps {
@@ -34,14 +38,19 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
   const tCanvas = useTranslations("canvas");
   const tRecipe = useTranslations("recipe");
   const tTour = useTranslations("tour");
+  const tModel = useTranslations("logicModel");
   const { startOnborda } = useOnborda();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
-  const { nodes, cardMetrics } = useCanvasState();
-  const { exportAsJSON, clearAllData, autoLayout } = useCanvasOperations();
+  const { nodes, cardMetrics, readOnly, dirty } = useCanvasState();
+  const { exportAsJSON, clearAllData, autoLayout, getSnapshot, markSaved } = useCanvasOperations();
   const recipe = useRecipe();
+  const logicModel = useLogicModel();
+  const { data: session } = authClient.useSession();
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(logicModel.title);
 
   const metricContexts = useMemo(
     () => collectMetricContexts(nodes, cardMetrics),
@@ -81,6 +90,20 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
     setExportDialogOpen(true);
   }, [nodes.length, tCanvas]);
 
+  const handleSave = useCallback(() => {
+    if (nodes.length === 0) {
+      toast.error(tCanvas("saveEmptyError"), { duration: 3000 });
+      return;
+    }
+    const snapshot = getSnapshot();
+    void logicModel.save(snapshot, () => markSaved(snapshot));
+  }, [nodes.length, tCanvas, logicModel, getSnapshot, markSaved]);
+
+  const commitTitle = () => {
+    setEditingTitle(false);
+    void logicModel.rename(titleDraft);
+  };
+
   const recipeTabBadge = (() => {
     if (recipe.phase === "running" || recipe.phase === "waiting-for-logic-model") {
       return (
@@ -98,18 +121,71 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
   return (
     <>
       <div className="bg-background flex items-center justify-between gap-3 border-b py-2 pr-3 pl-10 sm:pr-4 md:pl-3 lg:pl-4">
-        <TabsList className="bg-muted/60" data-tour="canvas-tabs">
-          <TabsTrigger value="canvas" className="cursor-pointer">
-            {tRecipe("canvasTabLabel")}
-          </TabsTrigger>
-          <TabsTrigger value="recipe" className="cursor-pointer" data-tour="recipe-tab">
-            {tRecipe("tabLabel")}
-            {recipeTabBadge}
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex min-w-0 items-center gap-3">
+          <TabsList className="bg-muted/60" data-tour="canvas-tabs">
+            <TabsTrigger value="canvas" className="cursor-pointer">
+              {tRecipe("canvasTabLabel")}
+            </TabsTrigger>
+            <TabsTrigger value="recipe" className="cursor-pointer" data-tour="recipe-tab">
+              {tRecipe("tabLabel")}
+              {recipeTabBadge}
+            </TabsTrigger>
+          </TabsList>
+
+          {logicModel.title !== "" ? (
+            editingTitle && !readOnly ? (
+              <Input
+                autoFocus
+                value={titleDraft}
+                maxLength={200}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={commitTitle}
+                onKeyDown={(e) => {
+                  // 日本語入力の変換確定の Enter ではタイトルを確定しない
+                  if (e.key === "Enter" && !e.nativeEvent.isComposing) commitTitle();
+                  if (e.key === "Escape") setEditingTitle(false);
+                }}
+                className="h-8 max-w-xs"
+                aria-label={tModel("title")}
+              />
+            ) : (
+              <button
+                type="button"
+                className="truncate text-sm font-medium disabled:cursor-default"
+                disabled={readOnly}
+                onClick={() => {
+                  setTitleDraft(logicModel.title);
+                  setEditingTitle(true);
+                }}
+              >
+                {logicModel.title}
+              </button>
+            )
+          ) : null}
+        </div>
 
         <div className="flex items-center gap-2">
           <ContextActions activeTab={activeTab} />
+
+          {!readOnly &&
+            (session ? (
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={!dirty || logicModel.saving}
+                className="cursor-pointer"
+              >
+                <Save className="mr-1 h-4 w-4" />
+                {logicModel.saving ? tModel("saving") : tModel("save")}
+              </Button>
+            ) : (
+              <SignInDialog>
+                <Button size="sm" className="cursor-pointer">
+                  <Save className="mr-1 h-4 w-4" />
+                  {tModel("save")}
+                </Button>
+              </SignInDialog>
+            ))}
 
           <Button
             variant="ghost"
@@ -137,10 +213,12 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
               <DropdownMenuLabel className="text-muted-foreground text-[10px] tracking-wider uppercase">
                 {tRecipe("canvasTabLabel")}
               </DropdownMenuLabel>
-              <DropdownMenuItem onClick={handleAutoLayout} className="cursor-pointer">
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                {tCanvas("autoLayout")}
-              </DropdownMenuItem>
+              {!readOnly && (
+                <DropdownMenuItem onClick={handleAutoLayout} className="cursor-pointer">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  {tCanvas("autoLayout")}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={handleExportImage} className="cursor-pointer">
                 <Download className="mr-2 h-4 w-4" />
                 {tCanvas("exportImage")}
@@ -172,18 +250,22 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
                 {tRecipe("downloadHtml")}
               </DropdownMenuItem>
 
-              <DropdownMenuSeparator />
+              {!readOnly && (
+                <>
+                  <DropdownMenuSeparator />
 
-              <DropdownMenuLabel className="text-muted-foreground text-[10px] tracking-wider uppercase">
-                {tCanvas("dangerZone")}
-              </DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={handleClearAll}
-                className="text-destructive focus:text-destructive cursor-pointer"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {tCanvas("clearAll")}
-              </DropdownMenuItem>
+                  <DropdownMenuLabel className="text-muted-foreground text-[10px] tracking-wider uppercase">
+                    {tCanvas("dangerZone")}
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={handleClearAll}
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {tCanvas("clearAll")}
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

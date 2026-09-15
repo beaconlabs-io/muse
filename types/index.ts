@@ -50,12 +50,6 @@ export interface SingleDecodedEvidence extends ReturnedAttestation, AttestationD
 // STORAGE TYPES
 // =============================================================================
 
-export interface IPFSStorageResult {
-  hash: string;
-  size: number;
-  timestamp: string;
-}
-
 // ZOD SCHEMAS FOR VALIDATION
 // =============================================================================
 

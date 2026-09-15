@@ -35,8 +35,6 @@
     "generateFromIntent": "Generate Logic Model",
     "addNode": "Add Node",
     "more": "More",
-    "saveToIPFS": "Save to IPFS",
-    "uploading": "Uploading...",
     "exportImage": "Export Image",
     "exportJSON": "Export JSON",
     "clearAll": "Clear All",
@@ -53,10 +51,7 @@
     "errorRenderingCanvas": "An error occurred while rendering the canvas.",
     "errorId": "Error ID: {digest}",
     "exportEmptyError": "Cannot export an empty canvas.",
-    "uploadEmptyError": "Cannot upload an empty canvas to IPFS.",
-    "uploadFailed": "Failed to upload to IPFS. Please try again.",
     "saveEmptyError": "Cannot save an empty logic model. Please add at least one card.",
-    "uploadEmptyCardError": "Cannot upload an empty canvas to IPFS. Please add at least one card.",
     "prepareError": "Failed to prepare canvas data. Please try again.",
     "canvasCleared": "Canvas cleared successfully",
     "clearAllTitle": "Clear All Canvas Data?",
@@ -148,21 +143,19 @@
     "previewUnavailable": "Preview unavailable",
     "logicModelPreview": "Logic model preview"
   },
-  "ipfsDialog": {
-    "savingTitle": "Saving to IPFS",
-    "savedTitle": "Saved to IPFS",
-    "uploadingDescription": "Uploading your logic model to IPFS...",
-    "savedDescription": "Your logic model has been saved. Share it with the world!",
-    "ipfsHash": "IPFS Hash:",
-    "uploading": "Uploading...",
-    "viewCanvas": "View canvas",
-    "copyUrl": "Copy URL",
-    "shareOnX": "Share on X",
-    "shareText": "Check out my logic model on MUSE!",
-    "shareTextWithTitle": "Check out \"{title}\" - my logic model on MUSE!",
-    "urlCopied": "URL copied to clipboard",
-    "urlCopyFailed": "Failed to copy URL",
-    "generatingPreview": "Generating preview..."
+  "logicModel": {
+    "title": "Title",
+    "save": "Save",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "saveFailed": "Failed to save",
+    "renameFailed": "Failed to rename",
+    "forbidden": "You do not have permission to do this",
+    "tooLarge": "The canvas is too large to save (5MB limit)",
+    "signInToView": "Sign in to view this logic model",
+    "notFound": "This logic model was not found or you do not have access",
+    "history": "History",
+    "share": "Share"
   },
   "evidenceDialog": {
     "title": "Evidence for Connection",
@@ -366,7 +359,7 @@
       },
       "moreMenu": {
         "title": "Save & export",
-        "content": "Auto-layout your canvas, export it as an image or JSON, or save it to IPFS to share a permanent link."
+        "content": "Auto-layout your canvas or export it as an image or JSON. Use the Save button in the header to save your logic model."
       },
       "recipeTab": {
         "title": "Measurement recipe",

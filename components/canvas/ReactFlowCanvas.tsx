@@ -13,7 +13,13 @@ import {
 import "@xyflow/react/dist/style.css";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { CardNode } from "./CardNode";
-import { CanvasProvider, RecipeProvider, useCanvas } from "./context";
+import {
+  CanvasProvider,
+  LogicModelProvider,
+  RecipeProvider,
+  useCanvas,
+  type LogicModelDocument,
+} from "./context";
 import { EvidenceEdge } from "./EvidenceEdge";
 import { NodeEditorDialog } from "./NodeEditorDialog";
 import { RecipePanel } from "./RecipePanel";
@@ -21,6 +27,7 @@ import { CanvasTour } from "./tour/CanvasTour";
 import { UnifiedHeader } from "./UnifiedHeader";
 import type { CardFormData } from "./context/canvas-operations";
 import type { Card, Arrow, Metric } from "@/types";
+import { draftKey } from "@/lib/canvas/storage";
 
 type CanvasTab = "canvas" | "recipe";
 
@@ -28,36 +35,39 @@ interface ReactFlowCanvasProps {
   initialCards?: Card[];
   initialArrows?: Arrow[];
   initialCardMetrics?: Record<string, Metric[]>;
-  readOnly?: boolean;
-  storageKey?: string;
+  /** 保存先の文書。undefined は閲覧のみ（IPFS、リンク共有） */
+  document?: LogicModelDocument;
 }
 
 export function ReactFlowCanvas({
   initialCards = [],
   initialArrows = [],
   initialCardMetrics = {},
-  readOnly,
-  storageKey,
+  document,
 }: ReactFlowCanvasProps) {
+  const readOnly = !document || document.access === "viewer" || document.access === "none";
   return (
     // Provider order matters:
     //   ReactFlowProvider  → required by useReactFlow() inside CanvasProvider
     //   RecipeProvider     → must wrap CanvasProvider because CanvasContext
     //                        consumes useRecipe() to wire stale + auto-start
+    //   LogicModelProvider → CanvasProvider の外。保存が getSnapshot を受け取る形なので canvas の状態に依存しない
     //   CanvasProvider     → owns nodes/edges/metrics
     <ReactFlowProvider>
       <RecipeProvider>
-        <CanvasProvider
-          initialCards={initialCards}
-          initialArrows={initialArrows}
-          initialCardMetrics={initialCardMetrics}
-          readOnly={readOnly}
-          storageKey={storageKey}
-        >
-          <CanvasTour>
-            <ReactFlowCanvasInner />
-          </CanvasTour>
-        </CanvasProvider>
+        <LogicModelProvider document={document}>
+          <CanvasProvider
+            initialCards={initialCards}
+            initialArrows={initialArrows}
+            initialCardMetrics={initialCardMetrics}
+            readOnly={readOnly}
+            storageKey={document && !readOnly ? draftKey(document.id) : undefined}
+          >
+            <CanvasTour>
+              <ReactFlowCanvasInner />
+            </CanvasTour>
+          </CanvasProvider>
+        </LogicModelProvider>
       </RecipeProvider>
     </ReactFlowProvider>
   );

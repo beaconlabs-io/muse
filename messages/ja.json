@@ -35,8 +35,6 @@
     "generateFromIntent": "ロジックモデルを生成",
     "addNode": "ノード追加",
     "more": "その他",
-    "saveToIPFS": "IPFSに保存",
-    "uploading": "アップロード中...",
     "exportImage": "画像エクスポート",
     "exportJSON": "JSONエクスポート",
     "clearAll": "すべてクリア",
@@ -53,10 +51,7 @@
     "errorRenderingCanvas": "キャンバスの表示中にエラーが発生しました。",
     "errorId": "エラーID: {digest}",
     "exportEmptyError": "空のキャンバスはエクスポートできません。",
-    "uploadEmptyError": "空のキャンバスはIPFSにアップロードできません。",
-    "uploadFailed": "IPFSへのアップロードに失敗しました。もう一度お試しください。",
     "saveEmptyError": "空のロジックモデルは保存できません。少なくとも1枚のカードを追加してください。",
-    "uploadEmptyCardError": "空のキャンバスはIPFSにアップロードできません。少なくとも1枚のカードを追加してください。",
     "prepareError": "キャンバスデータの準備に失敗しました。もう一度お試しください。",
     "canvasCleared": "キャンバスをクリアしました",
     "clearAllTitle": "キャンバスデータをすべてクリアしますか？",
@@ -148,21 +143,19 @@
     "previewUnavailable": "プレビューを利用できません",
     "logicModelPreview": "ロジックモデルのプレビュー"
   },
-  "ipfsDialog": {
-    "savingTitle": "IPFSに保存中",
-    "savedTitle": "IPFSに保存しました",
-    "uploadingDescription": "ロジックモデルをIPFSにアップロード中...",
-    "savedDescription": "ロジックモデルが保存されました。世界中で共有しましょう！",
-    "ipfsHash": "IPFSハッシュ:",
-    "uploading": "アップロード中...",
-    "viewCanvas": "キャンバスを表示",
-    "copyUrl": "URLをコピー",
-    "shareOnX": "Xでシェア",
-    "shareText": "MUSEで作ったロジックモデルを見てください！",
-    "shareTextWithTitle": "MUSEで作った「{title}」のロジックモデルを見てください！",
-    "urlCopied": "URLをクリップボードにコピーしました",
-    "urlCopyFailed": "URLのコピーに失敗しました",
-    "generatingPreview": "プレビューを生成中..."
+  "logicModel": {
+    "title": "タイトル",
+    "save": "保存",
+    "saving": "保存中...",
+    "saved": "保存しました",
+    "saveFailed": "保存に失敗しました",
+    "renameFailed": "タイトルの変更に失敗しました",
+    "forbidden": "この操作を行う権限がありません",
+    "tooLarge": "キャンバスが大きすぎて保存できません（上限 5MB）",
+    "signInToView": "このロジックモデルを見るにはログインしてください",
+    "notFound": "ロジックモデルが見つからないか、アクセス権がありません",
+    "history": "履歴",
+    "share": "共有"
   },
   "evidenceDialog": {
     "title": "接続されたエビデンス",
@@ -366,7 +359,7 @@
       },
       "moreMenu": {
         "title": "保存とエクスポート",
-        "content": "自動レイアウト、画像・JSONでのエクスポート、IPFSへの保存（共有リンクの発行）が行えます。"
+        "content": "自動レイアウトや、画像・JSONでのエクスポートが行えます。ロジックモデルはヘッダーの保存ボタンで保存できます。"
       },
       "recipeTab": {
         "title": "測定レシピ",
