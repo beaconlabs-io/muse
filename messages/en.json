@@ -180,6 +180,19 @@
     "deleteFailed": "Failed to delete",
     "signInToList": "Sign in to see your logic models"
   },
+  "history": {
+    "title": "Version history",
+    "description": "Restoring copies a past version as the newest one.",
+    "version": "Version {no}",
+    "by": "by {name}",
+    "unknownUser": "deleted user",
+    "restore": "Restore",
+    "restoreTitle": "Restore version {no}?",
+    "restoreDescription": "Your unsaved changes on the canvas will be replaced.",
+    "restored": "Restored as version {no}",
+    "restoreFailed": "Failed to restore",
+    "empty": "No versions yet"
+  },
   "evidenceDialog": {
     "title": "Evidence for Connection",
     "itemCount": "{count, plural, one {# evidence item linked to this connection} other {# evidence items linked to this connection}}",

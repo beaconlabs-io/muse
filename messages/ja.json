@@ -180,6 +180,19 @@
     "deleteFailed": "削除に失敗しました",
     "signInToList": "ロジックモデルを見るにはログインしてください"
   },
+  "history": {
+    "title": "バージョン履歴",
+    "description": "復元すると、過去のバージョンが最新のバージョンとして複製されます。",
+    "version": "バージョン {no}",
+    "by": "{name}",
+    "unknownUser": "退会したユーザー",
+    "restore": "復元",
+    "restoreTitle": "バージョン {no} を復元しますか？",
+    "restoreDescription": "キャンバス上の未保存の変更は置き換えられます。",
+    "restored": "バージョン {no} として復元しました",
+    "restoreFailed": "復元に失敗しました",
+    "empty": "バージョンはまだありません"
+  },
   "evidenceDialog": {
     "title": "接続されたエビデンス",
     "itemCount": "関連エビデンス: {count}件",

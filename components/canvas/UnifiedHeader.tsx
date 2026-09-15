@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   Download,
   HelpCircle,
+  History,
   LayoutDashboard,
   MoreVertical,
   RefreshCw,
@@ -27,6 +28,7 @@ import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCanvasOperations, useCanvasState, useLogicModel, useRecipe } from "./context";
 import { ContextActions } from "./ContextActions";
 import { ExportImageDialog } from "./ExportImageDialog";
+import { HistorySheet } from "./HistorySheet";
 import { authClient } from "@/lib/auth-client";
 import { collectMetricContexts } from "@/lib/recipe-helpers";
 
@@ -43,6 +45,7 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const { nodes, cardMetrics, readOnly, dirty } = useCanvasState();
   const { exportAsJSON, clearAllData, autoLayout, getSnapshot, markSaved } = useCanvasOperations();
@@ -190,6 +193,18 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
               </SignInDialog>
             ))}
 
+          {logicModel.id !== null ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={tModel("history")}
+              className="cursor-pointer"
+              onClick={() => setHistoryOpen(true)}
+            >
+              <History className="h-4 w-4" />
+            </Button>
+          ) : null}
+
           <Button
             variant="ghost"
             size="icon"
@@ -275,6 +290,9 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
       </div>
 
       <ExportImageDialog open={exportDialogOpen} onOpenChange={setExportDialogOpen} nodes={nodes} />
+      {logicModel.id !== null ? (
+        <HistorySheet id={logicModel.id} open={historyOpen} onOpenChange={setHistoryOpen} />
+      ) : null}
     </>
   );
 });
