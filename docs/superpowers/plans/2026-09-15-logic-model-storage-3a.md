@@ -560,7 +560,7 @@ git commit -m "feat(canvas): key local drafts per logic model and validate them"
 - Produces:
   - `CanvasProviderProps`: `initialCards`、`initialArrows`、`initialCardMetrics`、`readOnly?: boolean`、`storageKey?: string`（`disableLocalStorage` は削除）
   - `CanvasStateContextValue` に `readOnly: boolean`、`dirty: boolean` を追加（`disableLocalStorage` は削除）
-  - `StateReadingOperations` から `saveCanvasToIPFS` を削除し、`getSnapshot(): CanvasState`、`replaceCanvas(state: CanvasState): void`、`markSaved(): void` を追加
+  - `StateReadingOperations` から `saveCanvasToIPFS` を削除し、`getSnapshot(): CanvasState`、`replaceCanvas(state: CanvasState): void`、`markSaved(saved: CanvasState): void` を追加
   - `ReactFlowCanvasProps`: `initialCards`、`initialArrows`、`initialCardMetrics`、`readOnly?`、`storageKey?`（Task 4 で `document` に包む前の中間形）
 
 - [ ] **Step 1: `CanvasContext.tsx` を変更する**
@@ -603,8 +603,12 @@ export interface StateReadingOperations {
   getSnapshot: () => CanvasState;
   /** 履歴からの復元など、内容を丸ごと入れ替える（自動整列はしない） */
   replaceCanvas: (state: CanvasState) => void;
-  /** 保存成功後に呼ぶ。dirty を下ろし、下書きを消す */
-  markSaved: () => void;
+  /**
+   * 保存成功後に、実際に送った snapshot を渡して呼ぶ。送信中の編集を「保存済み」と
+   * 誤認しないよう、lastSaved は今の内容ではなく送った内容で更新し、dirty は今の内容と
+   * 比べ直す。下書きは dirty が下りたときだけ消す（dig 発見 1）
+   */
+  markSaved: (saved: CanvasState) => void;
 }
 
 export interface CanvasProviderProps {
@@ -650,9 +654,28 @@ useEffect(() => {
     );
     setEdges(arrowsToEdges(draft.arrows));
     setCardMetrics(draft.cardMetrics);
+    // 下書きが DB の最新より優先されたことを知らせ、捨てる手段を出す（dig 2026-09-15 Q3）
+    toast(t("draftRestored"), {
+      duration: 8000,
+      action: {
+        label: t("discardDraft"),
+        onClick: () => replaceCanvasRef.current(JSON.parse(lastSavedRef.current) as CanvasState),
+      },
+    });
   }
-}, [storageKey, setNodes, setEdges]);
+}, [storageKey, setNodes, setEdges, t]);
 ```
+
+`replaceCanvas` はこの effect より後で定義されるので、ref 経由で呼ぶ（既存の `autoLayoutRef` と同じ手法）:
+
+```ts
+const replaceCanvasRef = useRef<(state: CanvasState) => void>(() => {});
+useEffect(() => {
+  replaceCanvasRef.current = replaceCanvas;
+});
+```
+
+翻訳（`canvas` 名前空間）: en `"draftRestored": "Restored your unsaved draft"`、`"discardDraft": "Discard"`。ja `"draftRestored": "未保存の下書きを復元しました"`、`"discardDraft": "破棄"`。
 
 自動保存（既存の「5.」）を置き換える。dirty 判定を兼ねる:
 
@@ -689,11 +712,16 @@ const getSnapshot = useCallback(
   [],
 );
 
-const markSaved = useCallback(() => {
-  lastSavedRef.current = JSON.stringify(getSnapshot());
-  setDirty(false);
-  if (storageKey) clearCanvasDraft(storageKey);
-}, [getSnapshot, storageKey]);
+const markSaved = useCallback(
+  (saved: CanvasState) => {
+    // 送った内容を基準にする。PUT の間に編集があれば dirty のまま残り、下書きも残る
+    lastSavedRef.current = JSON.stringify(saved);
+    const stillDirty = JSON.stringify(getSnapshot()) !== lastSavedRef.current;
+    setDirty(stillDirty);
+    if (!stillDirty && storageKey) clearCanvasDraft(storageKey);
+  },
+  [getSnapshot, storageKey],
+);
 
 const replaceCanvas = useCallback(
   (state: CanvasState) => {
@@ -830,13 +858,16 @@ import { logicModelKeys } from "@/lib/logic-model-queries";
 import type { CanvasState } from "@/lib/canvas/storage";
 import { MAX_CANVAS_SIZE } from "@/lib/constants";
 import { clearCanvasDraft, draftKey } from "@/lib/canvas/storage";
-import type { Access, WorkspaceAccess } from "@/types/logic-model-api";
+import { authClient } from "@/lib/auth-client";
+import type { Access, LogicModelDetail, WorkspaceAccess } from "@/types/logic-model-api";
 
 /** 文書としてのロジックモデル。id が null なら未保存（/canvas） */
 export interface LogicModelDocument {
   id: string | null;
   title: string;
   access: Access;
+  /** モデルの属するワークスペース。共有ダイアログのメンバー一覧と privateMode はこれで引く（dig Q1）。未保存は null */
+  organizationId: string | null;
   /** 共有ダイアログ（Task 9）の初期値。GET /:id の model から写す */
   workspaceAccess: WorkspaceAccess;
   linkEnabled: boolean;
@@ -846,6 +877,7 @@ export interface LogicModelContextValue {
   id: string | null;
   title: string;
   access: Access;
+  organizationId: string | null;
   workspaceAccess: WorkspaceAccess;
   linkEnabled: boolean;
   readOnly: boolean;
@@ -861,6 +893,7 @@ const VIEWER_ONLY: LogicModelDocument = {
   id: null,
   title: "",
   access: "viewer",
+  organizationId: null,
   workspaceAccess: "none",
   linkEnabled: false,
 };
@@ -875,6 +908,7 @@ export function LogicModelProvider({
   const t = useTranslations("logicModel");
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: session } = authClient.useSession();
   const [id, setId] = useState(document.id);
   const [title, setTitle] = useState(document.title);
   const [saving, setSaving] = useState(false);
@@ -894,6 +928,23 @@ export function LogicModelProvider({
           setId(created.id);
           onSaved();
           clearCanvasDraft(draftKey(null));
+          // /canvas/<id> へ replace したときのスピナーを消すため、GET /:id 相当をシードする
+          // （dig 2026-09-15 Q2）。organizationId と ownerId はセッションから写す
+          const now = new Date().toISOString();
+          queryClient.setQueryData<LogicModelDetail>(logicModelKeys.detail(created.id), {
+            model: {
+              id: created.id,
+              organizationId: session?.session.activeOrganizationId ?? "",
+              ownerId: session?.user.id ?? "",
+              title,
+              workspaceAccess: "none",
+              linkEnabled: false,
+              createdAt: now,
+              updatedAt: now,
+            },
+            latest: { versionNo: 1, canvasData },
+            access: "owner",
+          });
           await queryClient.invalidateQueries({ queryKey: logicModelKeys.list() });
           router.replace(`/canvas/${created.id}`);
         } else {
@@ -938,6 +989,7 @@ export function LogicModelProvider({
       id,
       title,
       access: document.access,
+      organizationId: document.organizationId,
       workspaceAccess: document.workspaceAccess,
       linkEnabled: document.linkEnabled,
       readOnly,
@@ -1039,7 +1091,8 @@ import { useLogicModel } from "./context";
       toast.error(tCanvas("saveEmptyError"), { duration: 3000 });
       return;
     }
-    void logicModel.save(getSnapshot(), markSaved);
+    const snapshot = getSnapshot();
+    void logicModel.save(snapshot, () => markSaved(snapshot));
   }, [nodes.length, tCanvas, logicModel, getSnapshot, markSaved]);
 
   const commitTitle = () => {
@@ -1122,6 +1175,7 @@ import { useLogicModel } from "./context";
     id: null,
     title: DEFAULT_LOGIC_MODEL_TITLE,
     access: "owner",
+    organizationId: null,
     workspaceAccess: "none",
     linkEnabled: false,
   }}
@@ -1347,6 +1401,7 @@ function DbCanvas({ id }: { id: string }) {
           id: data.model.id,
           title: data.model.title,
           access: data.access,
+          organizationId: data.model.organizationId,
           workspaceAccess: data.model.workspaceAccess,
           linkEnabled: data.model.linkEnabled,
         }}
@@ -1589,6 +1644,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/routing";
 import { authClient } from "@/lib/auth-client";
+import { clearCanvasDraft, draftKey } from "@/lib/canvas/storage";
 import { ApiError, deleteLogicModel, listLogicModels } from "@/lib/logic-model-api";
 import { logicModelKeys } from "@/lib/logic-model-queries";
 import type { LogicModelListItem } from "@/types/logic-model-api";
@@ -1628,7 +1684,9 @@ function LogicModelList({ userId }: { userId: string }) {
 
   const remove = useMutation({
     mutationFn: (id: string) => deleteLogicModel(id),
-    onSuccess: async () => {
+    onSuccess: async (_result, id) => {
+      // 消したモデルのローカル下書きを残さない（dig 発見 3）
+      clearCanvasDraft(draftKey(id));
       toast.success(t("deleted"));
       await queryClient.invalidateQueries({ queryKey: logicModelKeys.list() });
     },
@@ -1745,7 +1803,7 @@ git commit -m "feat(logic-models): add the workspace logic model list page"
 **Interfaces:**
 
 - Consumes: `authClient.useSession`、`authClient.useListOrganizations`、`authClient.organization.setActive`
-- Produces: `authClient` に `organizationClient()`（`privateMode: boolean` の additionalField 付き。Task 9 の共有ダイアログが `useActiveOrganization().data?.privateMode` を読む）
+- Produces: `authClient` に `organizationClient()`（`privateMode: boolean` の additionalField 付き。Task 9 の共有ダイアログが `organization.getFullOrganization({ query: { organizationId } })` の応答の `privateMode` を読む）
 
 - [ ] **Step 1: `auth-client.ts` にプラグインを足す**
 
@@ -2220,8 +2278,8 @@ git commit -m "feat(canvas): add the version history sheet with restore"
 
 **Interfaces:**
 
-- Consumes: `listLogicModelShares`、`putLogicModelShare`、`deleteLogicModelShare`、`updateLogicModelSettings`、`logicModelKeys`、`authClient.organization.listMembers`、`authClient.useActiveOrganization`、`authClient.useSession`
-- Produces: `ShareDialog({ id, workspaceAccess, linkEnabled, open, onOpenChange })`
+- Consumes: `listLogicModelShares`、`putLogicModelShare`、`deleteLogicModelShare`、`updateLogicModelSettings`、`logicModelKeys`、`authClient.organization.listMembers`、`authClient.organization.getFullOrganization`、`authClient.useSession`
+- Produces: `ShareDialog({ id, organizationId, workspaceAccess, linkEnabled, open, onOpenChange })`。メンバー一覧と `privateMode` は**モデルの** `organizationId` で引く。アクティブなワークスペースは backend の権限解決と無関係なので使わない（dig 2026-09-15 Q1）
 
 - [ ] **Step 1: 翻訳を足す**
 
@@ -2286,7 +2344,7 @@ const api = vi.hoisted(() => ({
   deleteLogicModelShare: vi.fn(),
   updateLogicModelSettings: vi.fn(),
   listMembers: vi.fn(),
-  useActiveOrganization: vi.fn(),
+  getFullOrganization: vi.fn(),
   useSession: vi.fn(),
 }));
 
@@ -2300,8 +2358,10 @@ vi.mock("@/lib/logic-model-api", async (importOriginal) => ({
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
     useSession: () => api.useSession(),
-    useActiveOrganization: () => api.useActiveOrganization(),
-    organization: { listMembers: () => api.listMembers() },
+    organization: {
+      listMembers: (input: unknown) => api.listMembers(input),
+      getFullOrganization: (input: unknown) => api.getFullOrganization(input),
+    },
   },
 }));
 
@@ -2312,6 +2372,7 @@ function renderDialog(props: Partial<Parameters<typeof ShareDialog>[0]> = {}) {
       <NextIntlClientProvider locale="en" messages={en}>
         <ShareDialog
           id="m1"
+          organizationId="o1"
           workspaceAccess="none"
           linkEnabled={false}
           open
@@ -2325,7 +2386,7 @@ function renderDialog(props: Partial<Parameters<typeof ShareDialog>[0]> = {}) {
 
 beforeEach(() => {
   api.useSession.mockReturnValue({ data: { user: { id: "u1" } } });
-  api.useActiveOrganization.mockReturnValue({ data: { id: "o1", privateMode: false } });
+  api.getFullOrganization.mockResolvedValue({ data: { id: "o1", privateMode: false } });
   api.listLogicModelShares.mockResolvedValue([{ userId: "u2", name: "Bob", role: "viewer" }]);
   api.listMembers.mockResolvedValue({
     data: {
@@ -2359,10 +2420,18 @@ describe("ShareDialog", () => {
   });
 
   it("disables the link section in private mode", async () => {
-    api.useActiveOrganization.mockReturnValue({ data: { id: "o1", privateMode: true } });
+    api.getFullOrganization.mockResolvedValue({ data: { id: "o1", privateMode: true } });
     renderDialog();
     expect(await screen.findByText(/private mode/)).toBeInTheDocument();
     expect(screen.getByRole("switch")).toBeDisabled();
+  });
+
+  it("reads members and private mode from the model's workspace, not the active one", async () => {
+    renderDialog({ organizationId: "o2" });
+    await waitFor(() =>
+      expect(api.listMembers).toHaveBeenCalledWith({ query: { organizationId: "o2" } }),
+    );
+    expect(api.getFullOrganization).toHaveBeenCalledWith({ query: { organizationId: "o2" } });
   });
 });
 ```
@@ -2412,6 +2481,8 @@ import type { ShareRole, WorkspaceAccess } from "@/types/logic-model-api";
 
 interface ShareDialogProps {
   id: string;
+  /** モデルの属するワークスペース（LogicModelDetail.model.organizationId） */
+  organizationId: string;
   workspaceAccess: WorkspaceAccess;
   linkEnabled: boolean;
   open: boolean;
@@ -2421,6 +2492,7 @@ interface ShareDialogProps {
 /** owner だけが開く 3 区画の共有設定（spec §7.1） */
 export function ShareDialog({
   id,
+  organizationId,
   workspaceAccess,
   linkEnabled,
   open,
@@ -2429,7 +2501,13 @@ export function ShareDialog({
   const t = useTranslations("share");
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
-  const { data: organization } = authClient.useActiveOrganization();
+  // モデルの属するワークスペースを読む。アクティブなワークスペースとは限らない（dig Q1）
+  const { data: organization } = useQuery({
+    queryKey: ["workspace", organizationId],
+    queryFn: async () =>
+      (await authClient.organization.getFullOrganization({ query: { organizationId } })).data,
+    enabled: open,
+  });
   const privateMode = organization?.privateMode === true;
 
   const [access, setAccess] = useState<WorkspaceAccess>(workspaceAccess);
@@ -2444,8 +2522,10 @@ export function ShareDialog({
     enabled: open,
   });
   const { data: members = [] } = useQuery({
-    queryKey: ["workspaceMembers", organization?.id],
-    queryFn: async () => (await authClient.organization.listMembers()).data?.members ?? [],
+    queryKey: ["workspaceMembers", organizationId],
+    queryFn: async () =>
+      (await authClient.organization.listMembers({ query: { organizationId } })).data?.members ??
+      [],
     enabled: open,
   });
 
@@ -2641,9 +2721,10 @@ export function ShareDialog({
             </Button>
           ) : null}
   ...
-      {logicModel.id !== null && logicModel.access === "owner" ? (
+      {logicModel.id !== null && logicModel.organizationId !== null && logicModel.access === "owner" ? (
         <ShareDialog
           id={logicModel.id}
+          organizationId={logicModel.organizationId}
           workspaceAccess={logicModel.workspaceAccess}
           linkEnabled={logicModel.linkEnabled}
           open={shareOpen}
@@ -2747,7 +2828,7 @@ export function SharedLogicModelPageClient({ token }: { token: string }) {
 }
 ```
 
-タイトルの表示: `ReactFlowCanvas` の `document` が `undefined` だとヘッダーはタイトルを出さない。リンク閲覧でもタイトルは見せたいので、上のコードの `ReactFlowCanvas` に `document={{ id: null, title: data.title, access: "viewer", workspaceAccess: "none", linkEnabled: false }}` を渡す。`ReactFlowCanvas` の `readOnly` 判定は `access === "viewer"` で true になり、`storageKey` は `undefined` になる（Task 4 の式のとおり）。
+タイトルの表示: `ReactFlowCanvas` の `document` が `undefined` だとヘッダーはタイトルを出さない。リンク閲覧でもタイトルは見せたいので、上のコードの `ReactFlowCanvas` に `document={{ id: null, title: data.title, access: "viewer", organizationId: null, workspaceAccess: "none", linkEnabled: false }}` を渡す。`ReactFlowCanvas` の `readOnly` 判定は `access === "viewer"` で true になり、`storageKey` は `undefined` になる（Task 4 の式のとおり）。
 
 - [ ] **Step 3: `/canvas/[id]` との衝突を確認する**
 
@@ -2782,6 +2863,7 @@ git commit -m "feat(canvas): add the read-only page for link-shared logic models
 - `docs/react-flow-architecture.md`: localStorage の記述（`canvasState` 単一キー）を `canvasState:<id>` / `canvasState:new` に直し、`IPFSSaveDialog` の言及を消し、`LogicModelProvider` を Provider 順序の図に足す
 - `docs/frontend-map.md`: `/logic-models`、`/canvas/shared/[token]`、`OrgSwitcher`、`ShareDialog`、`HistorySheet` を足す
 - `CLAUDE.md`: Key Directories に `app/[lang]/logic-models/` を足す。`lib/` の説明に `lib/logic-model-api.ts` を足す
+- `docs/superpowers/specs/2026-09-15-logic-model-storage-3a-design.md` §2.1–2.2: `dirty` は `LogicModelProvider` の `onChange` ではなく `CanvasProvider` が持つ（`dirty`、`getSnapshot`、`replaceCanvas`、`markSaved(saved)`）と直す。plan と spec の食い違い（dig 発見 4）
 
 - [ ] **Step 2: 全体チェック**
 
