@@ -114,3 +114,11 @@ export function deleteLogicModel(id: string): Promise<void> {
 export function getSharedLogicModel(token: string): Promise<SharedLogicModel> {
   return request(`/api/shared-logic-models/${encodeURIComponent(token)}`);
 }
+
+/** ワークスペースの非公開モードを切り替える（owner か admin）。有効化で共有リンクは全て失効する */
+export function setWorkspacePrivateMode(
+  organizationId: string,
+  enabled: boolean,
+): Promise<{ privateMode: boolean }> {
+  return request(`/api/workspaces/${organizationId}/private-mode`, json("PUT", { enabled }));
+}

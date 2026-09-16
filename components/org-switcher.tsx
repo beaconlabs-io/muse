@@ -1,15 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { CreateWorkspaceDialog } from "@/components/create-workspace-dialog";
 import { SidebarLogo } from "@/components/sidebar-logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -24,12 +27,13 @@ import { logicModelKeys } from "@/lib/logic-model-queries";
 /**
  * アクティブなワークスペースの表示と切替（account-pages spec の OrgSwitcher）。
  * ログイン中だけ描画する。一覧が読み込み中か取得に失敗したときはホームへのリンクを残す。
- * 「組織を作成」は段階 4。
+ * 「ワークスペースを作成」はダイアログで名前だけを聞く（段階 4）。
  */
 export function OrgSwitcher({ activeOrganizationId }: { activeOrganizationId: string | null }) {
   const t = useTranslations("orgSwitcher");
   const { isMobile } = useSidebar();
   const queryClient = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
   const { data: organizations } = authClient.useListOrganizations();
   const list = organizations ?? [];
   const active = list.find((o) => o.id === activeOrganizationId) ?? list[0];
@@ -85,8 +89,14 @@ export function OrgSwitcher({ activeOrganizationId }: { activeOrganizationId: st
                 {organization.id === active.id ? <Check className="ml-auto size-4" /> : null}
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setCreateOpen(true)}>
+              <Plus className="size-4" />
+              {t("create")}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <CreateWorkspaceDialog open={createOpen} onOpenChange={setCreateOpen} />
       </SidebarMenuItem>
     </SidebarMenu>
   );

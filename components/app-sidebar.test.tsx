@@ -46,7 +46,7 @@ vi.mock("@/lib/auth-client", () => ({
   authClient: {
     useSession: () => useSession(),
     useListOrganizations: () => useListOrganizations(),
-    organization: { setActive: (input: unknown) => setActive(input) },
+    organization: { setActive: (input: unknown) => setActive(input), create: vi.fn() },
   },
 }));
 
@@ -136,7 +136,45 @@ describe("AppSidebar", () => {
     useSession.mockReturnValue({ data: null, isPending: false });
     renderSidebar("/");
     expect(screen.queryByRole("link", { name: "Logic models" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Organization" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Workspace/ })).toBeNull();
+  });
+
+  it("expands Organization and marks Settings active on its page", () => {
+    signInWith(personalAndTeam);
+    renderSidebar("/settings/organization");
+    expect(screen.getByRole("button", { name: "Organization" })).toHaveAttribute(
+      "data-active",
+      "true",
+    );
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
+      "href",
+      "/settings/organization",
+    );
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("data-active", "true");
+  });
+
+  it("marks Members active on the members page", () => {
+    signInWith(personalAndTeam);
+    renderSidebar("/settings/organization/members");
+    expect(screen.getByRole("link", { name: "Members" })).toHaveAttribute("data-active", "true");
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("data-active", "false");
+  });
+
+  it("offers to create a workspace from the switcher", async () => {
+    signInWith(personalAndTeam);
+    renderSidebar("/");
+    fireEvent.keyDown(screen.getByRole("button", { name: /Personal/ }), { key: "Enter" });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Create workspace" }));
+    expect(await screen.findByRole("dialog", { name: "Create a workspace" })).toBeInTheDocument();
+  });
+
+  it("keeps Organization collapsed elsewhere until it is opened", () => {
+    signInWith(personalAndTeam);
+    renderSidebar("/logic-models");
+    expect(screen.queryByRole("link", { name: "Settings" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Organization" }));
+    expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
   });
 
   it("shows Logic models and the active workspace when signed in", () => {

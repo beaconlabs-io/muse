@@ -31,7 +31,7 @@ import {
   putLogicModelShare,
   updateLogicModelSettings,
 } from "@/lib/logic-model-api";
-import { logicModelKeys } from "@/lib/logic-model-queries";
+import { logicModelKeys, workspaceKeys } from "@/lib/logic-model-queries";
 
 interface ShareDialogProps {
   id: string;
@@ -57,7 +57,7 @@ export function ShareDialog({
   const { data: session } = authClient.useSession();
   // モデルの属するワークスペースを読む。アクティブなワークスペースとは限らない（dig Q1）
   const { data: organization, isLoading: organizationLoading } = useQuery({
-    queryKey: ["workspace", organizationId],
+    queryKey: workspaceKeys.detail(organizationId),
     queryFn: async () =>
       (await authClient.organization.getFullOrganization({ query: { organizationId } })).data,
     enabled: open,

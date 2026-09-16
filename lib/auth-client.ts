@@ -15,7 +15,10 @@ export const authClient = createAuthClient({
       schema: {
         organization: {
           // backend の plugins.ts と同じ。get-full-organization の応答に型を付ける
-          additionalFields: { privateMode: { type: "boolean", required: true, input: false } },
+          additionalFields: {
+            privateMode: { type: "boolean", required: true, input: false },
+            personalForUserId: { type: "string", required: false, input: false },
+          },
         },
       },
     }),
