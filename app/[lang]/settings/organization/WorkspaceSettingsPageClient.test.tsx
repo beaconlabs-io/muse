@@ -6,14 +6,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkspaceSettingsPageClient } from "./WorkspaceSettingsPageClient";
 import en from "@/messages/en.json";
 
-const { useSession, useListOrganizations, getFullOrganization, update, setWorkspacePrivateMode } =
-  vi.hoisted(() => ({
-    useSession: vi.fn(),
-    useListOrganizations: vi.fn(() => ({ data: [] })),
-    getFullOrganization: vi.fn(),
-    update: vi.fn(),
-    setWorkspacePrivateMode: vi.fn(),
-  }));
+const {
+  useSession,
+  useListOrganizations,
+  getFullOrganization,
+  update,
+  leave,
+  del,
+  setWorkspacePrivateMode,
+} = vi.hoisted(() => ({
+  useSession: vi.fn(),
+  useListOrganizations: vi.fn(() => ({ data: [] })),
+  getFullOrganization: vi.fn(),
+  update: vi.fn(),
+  leave: vi.fn(),
+  del: vi.fn(),
+  setWorkspacePrivateMode: vi.fn(),
+}));
 
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
@@ -22,6 +31,8 @@ vi.mock("@/lib/auth-client", () => ({
     organization: {
       getFullOrganization: (input: unknown) => getFullOrganization(input),
       update: (input: unknown) => update(input),
+      leave: (input: unknown) => leave(input),
+      delete: (input: unknown) => del(input),
     },
   },
 }));
@@ -40,14 +51,22 @@ function signIn() {
   });
 }
 
-function organization(role: string, privateMode = false) {
+function organization(
+  role: string,
+  privateMode = false,
+  opts: { personal?: boolean; extraOwner?: boolean } = {},
+) {
   return {
     data: {
       id: "o1",
       name: "Beacon",
       slug: "beacon",
       privateMode,
-      members: [{ id: "m1", userId: "u1", role }],
+      personalForUserId: opts.personal ? "u1" : null,
+      members: [
+        { id: "m1", userId: "u1", role },
+        ...(opts.extraOwner ? [{ id: "m2", userId: "u2", role: "owner" }] : []),
+      ],
       invitations: [],
     },
   };
@@ -64,9 +83,16 @@ function renderPage() {
   );
 }
 
+const assign = vi.fn();
+
 beforeEach(() => {
+  assign.mockReset();
   update.mockResolvedValue({ data: {}, error: null });
+  leave.mockResolvedValue({ data: {}, error: null });
+  del.mockResolvedValue({ data: {}, error: null });
   setWorkspacePrivateMode.mockResolvedValue({ privateMode: true });
+  // jsdom の location は書き換えられないので、assign だけ差し替える
+  vi.stubGlobal("location", { ...window.location, assign });
 });
 
 describe("WorkspaceSettingsPageClient", () => {
@@ -117,5 +143,37 @@ describe("WorkspaceSettingsPageClient", () => {
     expect(
       screen.getByText("Only owners and admins can change these settings."),
     ).toBeInTheDocument();
+  });
+
+  it("hides the danger zone in a personal workspace", async () => {
+    signIn();
+    getFullOrganization.mockResolvedValue(organization("owner", false, { personal: true }));
+    renderPage();
+    await screen.findByLabelText("Name");
+    expect(screen.queryByText("Danger zone")).toBeNull();
+  });
+
+  it("lets an owner who is not the only owner leave, with a full reload", async () => {
+    signIn();
+    getFullOrganization.mockResolvedValue(organization("owner", false, { extraOwner: true }));
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Leave workspace" }));
+    await screen.findByRole("alertdialog");
+    fireEvent.click(screen.getAllByRole("button", { name: "Leave workspace" }).at(-1)!);
+    await waitFor(() => expect(leave).toHaveBeenCalledWith({ organizationId: "o1" }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/logic-models"));
+  });
+
+  it("stops the only owner from leaving but lets them delete the workspace", async () => {
+    signIn();
+    getFullOrganization.mockResolvedValue(organization("owner"));
+    renderPage();
+    expect(await screen.findByText(/You are the only owner/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Leave workspace" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Delete workspace" }));
+    await screen.findByRole("alertdialog");
+    fireEvent.click(screen.getAllByRole("button", { name: "Delete workspace" }).at(-1)!);
+    await waitFor(() => expect(del).toHaveBeenCalledWith({ organizationId: "o1" }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/logic-models"));
   });
 });

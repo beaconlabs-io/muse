@@ -8,6 +8,9 @@ for details. For the canvas subsystem see
 ## Pages
 
 - `app/[lang]/logic-models/` — workspace list of saved logic models
+- `app/[lang]/settings/organization/` — workspace settings: name, slug, private mode, leave and delete (danger zone)
+- `app/[lang]/settings/organization/members/` — workspace members: roles, removal, invitation links
+- `app/[lang]/invite/[id]/` — invitation acceptance (sign in with the invited email, then join)
   (`LogicModelsPageClient.tsx`). Sign-in gated; delete with confirmation.
   Reached from the sidebar's Logic models item.
 - `app/[lang]/canvas/shared/[token]/` — read-only view of a link-shared

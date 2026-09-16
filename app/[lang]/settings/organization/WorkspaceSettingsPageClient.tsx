@@ -1,11 +1,22 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { SettingsSection } from "@/components/settings-section";
 import { SignInDialog } from "@/components/sign-in-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,7 +55,9 @@ export function WorkspaceSettingsPageClient() {
 function WorkspaceSettings({ organizationId, userId }: { organizationId: string; userId: string }) {
   const t = useTranslations("workspaceSettings");
   const tModel = useTranslations("logicModel");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
+  const [confirm, setConfirm] = useState<"leave" | "delete" | null>(null);
 
   const {
     data: organization,
@@ -58,19 +71,25 @@ function WorkspaceSettings({ organizationId, userId }: { organizationId: string;
 
   // member.role は "," 連結の text 列（backend の parseRole と同じ前提）
   const roles = organization?.members.find((m) => m.userId === userId)?.role.split(",") ?? [];
-  const canManage = roles.includes("owner") || roles.includes("admin");
+  const isOwner = roles.includes("owner");
+  const canManage = isOwner || roles.includes("admin");
+  const personal = Boolean(organization?.personalForUserId);
+  const owners = organization?.members.filter((m) => m.role.split(",").includes("owner")) ?? [];
+  const onlyOwner = isOwner && owners.length === 1;
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: workspaceKeys.detail(organizationId) });
     await queryClient.invalidateQueries({ queryKey: logicModelKeys.list() });
   };
+  const unwrap = async (p: Promise<{ error: { message?: string; code?: string } | null }>) => {
+    // 実クライアントは { data, error } を返し、backend が落ちていれば reject する
+    const { error } = await p;
+    if (error) throw new Error(error.code ?? error.message);
+  };
 
   const rename = useMutation({
-    mutationFn: async (name: string) => {
-      // 実クライアントは { data, error } を返し、backend が落ちていれば reject する
-      const { error } = await authClient.organization.update({ organizationId, data: { name } });
-      if (error) throw new Error(error.message);
-    },
+    mutationFn: (name: string) =>
+      unwrap(authClient.organization.update({ organizationId, data: { name } })),
     onSuccess: async () => {
       toast.success(t("saved"));
       await invalidate();
@@ -87,6 +106,27 @@ function WorkspaceSettings({ organizationId, userId }: { organizationId: string;
           ? tModel("forbidden")
           : t("privateModeFailed"),
       ),
+  });
+
+  // 退会・削除の後は別のワークスペースに移る。Better Auth のクライアントは leave / delete 後の
+  // 組織一覧やアクティブ組織を一貫して更新しないので、フルリロードで揃える（spec §3.4、dig Q2）
+  const leave = useMutation({
+    mutationFn: () => unwrap(authClient.organization.leave({ organizationId })),
+    onSuccess: () => {
+      toast.success(t("left"));
+      window.location.assign("/logic-models");
+    },
+    onError: () => toast.error(t("leaveFailed")),
+    onSettled: () => setConfirm(null),
+  });
+  const remove = useMutation({
+    mutationFn: () => unwrap(authClient.organization.delete({ organizationId })),
+    onSuccess: () => {
+      toast.success(t("deleted"));
+      window.location.assign("/logic-models");
+    },
+    onError: () => toast.error(t("deleteFailed")),
+    onSettled: () => setConfirm(null),
   });
 
   return (
@@ -114,7 +154,7 @@ function WorkspaceSettings({ organizationId, userId }: { organizationId: string;
             </p>
           )}
 
-          <Section title={t("general")} description={t("generalDescription")}>
+          <SettingsSection title={t("general")} description={t("generalDescription")}>
             <NameForm
               key={organization.name}
               name={organization.name}
@@ -126,9 +166,9 @@ function WorkspaceSettings({ organizationId, userId }: { organizationId: string;
               <code className="text-muted-foreground font-mono text-sm">{organization.slug}</code>
               <p className="text-muted-foreground text-xs">{t("slugDescription")}</p>
             </div>
-          </Section>
+          </SettingsSection>
 
-          <Section title={t("privacy")} description={t("privacyDescription")}>
+          <SettingsSection title={t("privacy")} description={t("privacyDescription")}>
             <div className="flex items-start justify-between gap-6">
               <div className="grid gap-1.5">
                 <Label htmlFor="private-mode">{t("privateMode")}</Label>
@@ -143,31 +183,62 @@ function WorkspaceSettings({ organizationId, userId }: { organizationId: string;
                 onCheckedChange={(enabled) => privateMode.mutate(enabled)}
               />
             </div>
-          </Section>
+          </SettingsSection>
+
+          {!personal && (
+            <SettingsSection title={t("dangerZone")} description={t("dangerZoneDescription")}>
+              <div className="flex items-start justify-between gap-6">
+                <div className="grid gap-1.5">
+                  <span className="text-sm font-medium">{t("leave")}</span>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    {onlyOwner ? t("onlyOwner") : t("leaveDescription")}
+                  </p>
+                </div>
+                <Button variant="outline" disabled={onlyOwner} onClick={() => setConfirm("leave")}>
+                  {t("leave")}
+                </Button>
+              </div>
+              {isOwner && (
+                <div className="flex items-start justify-between gap-6 border-t pt-5">
+                  <div className="grid gap-1.5">
+                    <span className="text-sm font-medium">{t("delete")}</span>
+                    <p className="text-muted-foreground text-xs leading-relaxed">
+                      {t("deleteDescription")}
+                    </p>
+                  </div>
+                  <Button variant="destructive" onClick={() => setConfirm("delete")}>
+                    {t("delete")}
+                  </Button>
+                </div>
+              )}
+            </SettingsSection>
+          )}
         </div>
       )}
-    </div>
-  );
-}
 
-/** 左に見出しと説明、右にコントロールのカード。設定ページの定石の 2 カラム */
-function Section({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="grid gap-4 py-10 first:pt-0 last:pb-0 md:grid-cols-[14rem_1fr] md:gap-10">
-      <div>
-        <h2 className="text-base font-semibold">{title}</h2>
-        <p className="text-muted-foreground mt-1 text-sm">{description}</p>
-      </div>
-      <div className="bg-card grid gap-5 rounded-xl border p-5">{children}</div>
-    </section>
+      <AlertDialog open={confirm !== null} onOpenChange={(open) => !open && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm === "delete"
+                ? t("deleteTitle", { name: organization?.name ?? "" })
+                : t("leaveTitle", { name: organization?.name ?? "" })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm === "delete" ? t("deleteDescription") : t("leaveDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => (confirm === "delete" ? remove.mutate() : leave.mutate())}
+            >
+              {confirm === "delete" ? t("delete") : t("leave")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
 
