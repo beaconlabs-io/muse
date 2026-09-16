@@ -2,7 +2,9 @@
   "nav": {
     "evidence": "Evidence",
     "canvas": "Canvas",
-    "logicModels": "Logic models"
+    "logicModels": "Logic models",
+    "organization": "Organization",
+    "organizationSettings": "Settings"
   },
   "orgSwitcher": {
     "label": "Workspace",
@@ -179,6 +181,26 @@
     "deleted": "Deleted",
     "deleteFailed": "Failed to delete",
     "signInToList": "Sign in to see your logic models"
+  },
+  "workspaceSettings": {
+    "title": "Workspace settings",
+    "description": "Name and privacy of the current workspace",
+    "signInToView": "Sign in to see workspace settings",
+    "loadFailed": "Failed to load the workspace",
+    "readOnly": "Only owners and admins can change these settings.",
+    "general": "General",
+    "generalDescription": "How this workspace appears to its members.",
+    "name": "Name",
+    "slug": "Slug",
+    "slugDescription": "Generated from the name.",
+    "save": "Save",
+    "saved": "Saved",
+    "saveFailed": "Failed to save",
+    "privacy": "Privacy",
+    "privacyDescription": "What may leave this workspace.",
+    "privateMode": "Private mode",
+    "privateModeDescription": "Turns off external paper search and link sharing. Turning it on revokes every existing share link.",
+    "privateModeFailed": "Failed to change private mode"
   },
   "share": {
     "title": "Share",

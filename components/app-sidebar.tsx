@@ -1,11 +1,13 @@
 "use client";
 
-import { FileSearch, LayoutGrid, ListTree } from "lucide-react";
+import { useState } from "react";
+import { Building2, ChevronRight, FileSearch, LayoutGrid, ListTree } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AuthMenu } from "@/components/auth-menu";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OrgSwitcher } from "@/components/org-switcher";
 import { SidebarLogo } from "@/components/sidebar-logo";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +17,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -29,6 +34,9 @@ export function AppSidebar() {
   // navigation, so close it whenever a link is followed.
   const closeMobile = () => setOpenMobile(false);
   const { data: session } = authClient.useSession();
+  // Organization トグル。配下のページを開いている間は開いたままにする（account-pages spec）
+  const inOrganization = pathname.startsWith("/settings/organization");
+  const [organizationOpen, setOrganizationOpen] = useState(inOrganization);
 
   const navigation = [
     { title: t("evidence"), href: "/search", icon: FileSearch },
@@ -62,6 +70,38 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
+            {session ? (
+              <Collapsible
+                asChild
+                open={organizationOpen || inOrganization}
+                onOpenChange={setOrganizationOpen}
+                className="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton tooltip={t("organization")} isActive={inOrganization}>
+                      <Building2 />
+                      <span>{t("organization")}</span>
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={pathname === "/settings/organization"}
+                        >
+                          <Link href="/settings/organization" onClick={closeMobile}>
+                            <span>{t("organizationSettings")}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            ) : null}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
