@@ -6,7 +6,7 @@ import { Check, Copy, Lock } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { SettingsSection } from "@/components/settings-section";
-import { SignInDialog } from "@/components/sign-in-dialog";
+import { SignInPrompt } from "@/components/sign-in-prompt";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,24 +44,11 @@ function primaryRole(raw: string): Role {
 
 export function WorkspaceMembersPageClient() {
   const t = useTranslations("members");
-  const tAuth = useTranslations("auth");
   const { data: session, isPending } = authClient.useSession();
   const { data: organizations } = authClient.useListOrganizations();
 
   if (isPending) return null;
-  if (!session) {
-    return (
-      <div className="flex min-h-[70vh] items-center justify-center px-4">
-        <div className="flex max-w-sm flex-col items-center text-center">
-          <Lock className="text-muted-foreground mb-5 size-6" aria-hidden />
-          <p className="text-muted-foreground mb-6 text-sm">{t("signInToView")}</p>
-          <SignInDialog>
-            <Button>{tAuth("signIn")}</Button>
-          </SignInDialog>
-        </div>
-      </div>
-    );
-  }
+  if (!session) return <SignInPrompt message={t("signInToView")} />;
   const organizationId = session.session.activeOrganizationId ?? organizations?.[0]?.id ?? null;
   if (organizationId === null) return null;
   return <Members organizationId={organizationId} userId={session.user.id} />;
