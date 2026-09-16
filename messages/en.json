@@ -164,6 +164,7 @@
   "logicModels": {
     "title": "Logic models",
     "description": "Logic models saved in this workspace",
+    "count": "{count, plural, one {# logic model} other {# logic models}} in this workspace",
     "new": "New logic model",
     "empty": "No logic models yet. Create one from the canvas.",
     "loadFailed": "Failed to load logic models",

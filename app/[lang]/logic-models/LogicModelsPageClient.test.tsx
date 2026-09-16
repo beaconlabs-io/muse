@@ -58,6 +58,7 @@ describe("LogicModelsPageClient", () => {
       "/canvas/m1",
     );
     expect(screen.getByText("Owner")).toBeInTheDocument();
+    expect(screen.getByText("1 logic model in this workspace")).toBeInTheDocument();
   });
 
   it("shows an error instead of the empty state when the list fails to load", async () => {
