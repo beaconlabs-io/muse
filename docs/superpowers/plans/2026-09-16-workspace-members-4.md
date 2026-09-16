@@ -630,15 +630,13 @@ assert.equal(personal.length, 1, "leaving user must have a personal workspace");
 const orgId = crypto.randomUUID();
 const now = new Date();
 try {
-  await db
-    .insert(organization)
-    .values({
-      id: orgId,
-      name: "smoke",
-      slug: `ws-smoke-${orgId.slice(0, 8)}`,
-      createdAt: now,
-      privateMode: false,
-    });
+  await db.insert(organization).values({
+    id: orgId,
+    name: "smoke",
+    slug: `ws-smoke-${orgId.slice(0, 8)}`,
+    createdAt: now,
+    privateMode: false,
+  });
   await db.insert(member).values([
     {
       id: crypto.randomUUID(),
