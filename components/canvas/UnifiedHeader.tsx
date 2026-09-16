@@ -6,6 +6,7 @@ import {
   History,
   LayoutDashboard,
   MoreVertical,
+  Pencil,
   RefreshCw,
   Save,
   Share2,
@@ -163,14 +164,17 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
             ) : (
               <button
                 type="button"
-                className="truncate text-sm font-medium disabled:cursor-default"
+                className="flex min-w-0 items-center gap-1.5 text-sm font-medium disabled:cursor-default"
                 disabled={readOnly}
                 onClick={() => {
                   setTitleDraft(logicModel.title);
                   setEditingTitle(true);
                 }}
               >
-                {logicModel.title}
+                <span className="truncate">{logicModel.title}</span>
+                {!readOnly && (
+                  <Pencil className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+                )}
               </button>
             )
           ) : null}
