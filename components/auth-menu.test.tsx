@@ -61,9 +61,10 @@ const ada = {
 };
 
 describe("AuthMenu", () => {
-  it("renders no auth UI while the session is loading", () => {
+  it("shows a skeleton instead of auth UI while the session is loading", () => {
     useSession.mockReturnValue({ data: null, isPending: true });
-    renderMenu();
+    const { container } = renderMenu();
+    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 

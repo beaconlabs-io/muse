@@ -2,6 +2,7 @@
 
 import { Bell, Building2, ChevronsUpDown, LogIn, LogOut, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { SidebarIdentitySkeleton } from "@/components/sidebar-identity-skeleton";
 import { SignInDialog } from "@/components/sign-in-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -34,7 +35,8 @@ export function AuthMenu() {
   const { isMobile } = useSidebar();
   const { data: session, isPending } = authClient.useSession();
 
-  if (isPending) return null;
+  // 未ログインでもここに描画されるので、ログインボタンが出るまでの一瞬もスケルトンになる
+  if (isPending) return <SidebarIdentitySkeleton round />;
 
   if (!session) {
     return (

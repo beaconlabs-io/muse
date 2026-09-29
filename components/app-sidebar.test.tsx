@@ -214,6 +214,17 @@ describe("AppSidebar", () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
+  it("shows a skeleton until the session reflects the switched workspace", async () => {
+    signInWith(personalAndTeam);
+    const { container } = renderSidebar("/");
+    await switchToTeam();
+    // setActive resolved, but the session still says "Personal" is active.
+    await waitFor(() =>
+      expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument(),
+    );
+    expect(screen.queryByRole("button", { name: /Personal/ })).not.toBeInTheDocument();
+  });
+
   it.each([
     [
       "resolves with an error",
@@ -228,6 +239,8 @@ describe("AppSidebar", () => {
     await switchToTeam();
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to switch workspace"));
     expect(invalidate).not.toHaveBeenCalled();
+    // The skeleton clears so the user can try again.
+    expect(screen.getByRole("button", { name: /Personal/ })).toBeInTheDocument();
   });
 
   describe("last workspace", () => {
