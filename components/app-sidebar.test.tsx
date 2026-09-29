@@ -273,6 +273,8 @@ describe("AppSidebar", () => {
       renderSidebar("/");
       await waitFor(() => expect(setActive).toHaveBeenCalledWith({ organizationId: "o2" }));
       expect(toast.error).not.toHaveBeenCalled();
+      // 保存は復元より先なので、失敗しても記憶は個人用に置き換わっている（再試行なし）
+      expect(loadLastWorkspaceId()).toBe("o1");
     });
 
     it("does not restore while the session points at a workspace outside the list", () => {
