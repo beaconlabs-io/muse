@@ -134,9 +134,16 @@ describe("AppSidebar", () => {
     await waitFor(() => expect(screen.queryByRole("link", { name: "Canvas" })).toBeNull());
   });
 
+  it("shows a header skeleton instead of the home link while the session is pending", () => {
+    const { container } = renderSidebar("/");
+    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /MUSE/ })).not.toBeInTheDocument();
+  });
+
   it("hides Logic models and the workspace switcher when signed out", () => {
     useSession.mockReturnValue({ data: null, isPending: false });
     renderSidebar("/");
+    expect(screen.getByRole("link", { name: /MUSE/ })).toHaveAttribute("href", "/");
     expect(screen.queryByRole("link", { name: "Logic models" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Organization" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Workspace/ })).toBeNull();
