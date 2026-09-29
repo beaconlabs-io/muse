@@ -190,7 +190,20 @@ describe("last workspace", () => {
     renderSidebar("/");
     await waitFor(() => expect(setActive).toHaveBeenCalledWith({ organizationId: "o2" }));
     expect(toast.error).not.toHaveBeenCalled();
-    // 保存値は上書きしない。次のマウントでもう一度試せる
+  });
+
+  it("does not restore while the session points at a workspace outside the list", () => {
+    saveLastWorkspaceId("o2");
+    useSession.mockReturnValue({
+      data: {
+        user: { id: "u1", name: "U", email: "u@example.com" },
+        session: { activeOrganizationId: "removed" },
+      },
+      isPending: false,
+    });
+    useListOrganizations.mockReturnValue({ data: personalAndTeam, isPending: false });
+    renderSidebar("/");
+    expect(setActive).not.toHaveBeenCalled();
     expect(loadLastWorkspaceId()).toBe("o2");
   });
 });
@@ -199,7 +212,7 @@ describe("last workspace", () => {
 - [ ] **Step 2: 失敗を確認**
 
 Run: `bun run test:run components/app-sidebar.test.tsx`
-Expected: 新規 5 件のうち "remembers" / "restores" / "forgets" / "stays quiet" が FAIL（保存も復元も起きない）。"leaves ... alone" は保存の期待（`"o2"`）で FAIL
+Expected: 新規 6 件のうち "remembers" / "restores" / "forgets" / "stays quiet" が FAIL（保存も復元も起きない）。"leaves ... alone" は保存の期待（`"o2"`）で FAIL。"outside the list" は先に PASS してよい
 
 - [ ] **Step 3: `OrgSwitcher` を実装**
 
@@ -254,7 +267,9 @@ export function OrgSwitcher({
   const [createOpen, setCreateOpen] = useState(false);
   const { data: organizations } = authClient.useListOrganizations();
   const list = organizations ?? [];
-  const active = list.find((o) => o.id === activeOrganizationId) ?? list[0];
+  // list[0] は表示用のフォールバック。list-organizations は orderBy なしなので、順序に意味はない
+  const found = list.find((o) => o.id === activeOrganizationId);
+  const active = found ?? list[0];
 
   const switchTo = async (organizationId: string, { silent = false } = {}) => {
     if (organizationId === active?.id) return;
@@ -272,29 +287,27 @@ export function OrgSwitcher({
     await queryClient.invalidateQueries({ queryKey: logicModelKeys.list() });
   };
 
-  // 復元はマウントごとに 1 回。setActive が飛んでいる間に再実行されても二重に呼ばない。
+  // 保存値を読むのはマウントごとに 1 回。ユーザーが自分で切り替えたときに前回の保存値へ
+  // 戻してしまわないため。保存は復元より先で、復元に失敗しても再試行はしない（ベストエフォート）。
   const restoreTried = useRef(false);
   useEffect(() => {
-    if (!active) return;
-    if (!restoreTried.current) {
-      restoreTried.current = true;
-      const stored = loadLastWorkspaceId();
-      // 「アクティブが個人用 かつ 保存値が別の所属」はログイン直後だけ。招待受諾のあとは
-      // 受諾した組織がアクティブなので、ここで保存値に戻して受諾を打ち消すことはない。
-      if (
-        stored &&
-        stored !== active.id &&
-        active.personalForUserId === userId &&
-        list.some((o) => o.id === stored)
-      ) {
-        void switchTo(stored, { silent: true });
-        return;
-      }
+    if (!found) return;
+    const stored = restoreTried.current ? null : loadLastWorkspaceId();
+    restoreTried.current = true;
+    saveLastWorkspaceId(found.id);
+    // 「アクティブが個人用 かつ 保存値が別の所属」はログイン直後だけ。招待受諾のあとは
+    // 受諾した組織がアクティブなので、ここで保存値に戻して受諾を打ち消すことはない。
+    if (
+      stored &&
+      stored !== found.id &&
+      found.personalForUserId === userId &&
+      list.some((o) => o.id === stored)
+    ) {
+      void switchTo(stored, { silent: true });
     }
-    saveLastWorkspaceId(active.id);
-    // switchTo はレンダーごとに作り直されるので依存に入れない（effect 自体は active の変化で足りる）
+    // switchTo はレンダーごとに作り直されるので依存に入れない（effect 自体は found の変化で足りる）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, list, userId]);
+  }, [found, list, userId]);
 
   if (!active) return <SidebarLogo />;
 
@@ -357,9 +370,9 @@ Closes #333"
 
 ### Task 3: 仕上げ
 
-- [ ] **Step 1: spec のファイル表を実態に合わせる**
+- [ ] **Step 1: spec が実態と一致していることを確認**
 
-`docs/superpowers/specs/2026-09-29-restore-last-workspace-design.md` §3 の `components/org-switcher.test.tsx` 行を `components/app-sidebar.test.tsx`（既存の切替テストに同居）に書き換える。
+`docs/superpowers/specs/2026-09-29-restore-last-workspace-design.md` §2.2（4 条件、再試行なし、旧ユーザーの但し書き）と §3（テストは `app-sidebar.test.tsx`、`typeof window` ガードなし）は dig で反映済み。実装と食い違いがあれば spec を直す。
 
 - [ ] **Step 2: react-doctor**
 
@@ -373,7 +386,9 @@ Expected: PASS
 
 - [ ] **Step 4: コミット**
 
+spec に修正があった場合のみ:
+
 ```bash
 git add docs/superpowers/specs/2026-09-29-restore-last-workspace-design.md
-git commit -m "docs: align the restore-last-workspace spec with the test placement"
+git commit -m "docs: align the restore-last-workspace spec with the implementation"
 ```
