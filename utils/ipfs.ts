@@ -1,7 +1,5 @@
 import { CID } from "multiformats/cid";
-import { apiUrl } from "@/lib/api-client";
-import { MAX_CANVAS_SIZE } from "@/lib/constants";
-import { CanvasData, CanvasDataSchema, IPFSStorageResult } from "@/types";
+import { CanvasData, CanvasDataSchema } from "@/types";
 
 /**
  * Validates an IPFS CID (Content Identifier)
@@ -30,51 +28,6 @@ export function parseCID(hash: string): CID {
   }
 }
 
-export async function uploadToIPFS(canvasData: CanvasData): Promise<IPFSStorageResult> {
-  // Validate size before sending to save bandwidth
-  const jsonSize = JSON.stringify(canvasData).length;
-  if (jsonSize > MAX_CANVAS_SIZE) {
-    throw new Error(
-      `Canvas data too large (${(jsonSize / 1024 / 1024).toFixed(2)}MB). Maximum size is ${MAX_CANVAS_SIZE / 1024 / 1024}MB`,
-    );
-  }
-
-  try {
-    const filename = `canvas-${canvasData.id}.json`;
-
-    const response = await fetch(apiUrl("/api/upload-to-ipfs"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        data: canvasData,
-        filename,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (!result.hash) {
-      throw new Error("No IPFS hash returned");
-    }
-
-    return {
-      hash: result.hash,
-      size: result.size,
-      timestamp: result.timestamp,
-    };
-  } catch (error) {
-    console.error("IPFS upload error:", error);
-    throw error;
-  }
-}
-
 export async function fetchFromIPFS(hash: string): Promise<CanvasData> {
   // Validate CID before fetching to prevent SSRF attacks
   const cid = parseCID(hash);
@@ -96,36 +49,4 @@ export async function fetchFromIPFS(hash: string): Promise<CanvasData> {
     console.error("IPFS fetch error:", error);
     throw error;
   }
-}
-
-export function generateLogicModelId(): string {
-  return `lm-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-}
-
-/**
- * Upload an image blob to IPFS via Pinata
- * Used for OG images that accompany canvas data
- */
-export async function uploadImageToIPFS(blob: Blob, filename: string): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", blob, filename);
-  formData.append("filename", filename);
-
-  const response = await fetch(apiUrl("/api/upload-image-to-ipfs"), {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-  }
-
-  const result = await response.json();
-
-  if (!result.hash) {
-    throw new Error("No IPFS hash returned for image");
-  }
-
-  return result.hash;
 }

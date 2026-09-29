@@ -98,6 +98,7 @@ export function useWorkflowStream() {
                   method: "POST",
                   body: formData,
                   signal: abortController.signal,
+                  credentials: "include",
                 };
               })()
             : {
@@ -109,6 +110,7 @@ export function useWorkflowStream() {
                   enableMetrics,
                 }),
                 signal: abortController.signal,
+                credentials: "include",
               };
 
         const response = await fetch(apiUrl("/api/workflow/stream"), fetchInit);

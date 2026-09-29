@@ -117,7 +117,7 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
       if (!stream.recipe) return;
       setDownloadingHtml(true);
       try {
-        const imageResult = await generateImage(nodes, "export").catch(() => null);
+        const imageResult = await generateImage(nodes).catch(() => null);
         const { generateRecipeHtml, downloadRecipeHtml } =
           await import("@/lib/generate-recipe-html");
         const html = generateRecipeHtml({

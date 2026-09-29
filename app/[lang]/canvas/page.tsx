@@ -1,6 +1,7 @@
 import { ReactFlowCanvas } from "@/components/canvas/ReactFlowCanvas";
 import type { Metadata } from "next";
 import { localeAlternates } from "@/lib/locale-alternates";
+import { DEFAULT_LOGIC_MODEL_TITLE } from "@/types/logic-model-api";
 
 export async function generateMetadata({
   params,
@@ -12,5 +13,16 @@ export async function generateMetadata({
 }
 
 export default function CanvasPage() {
-  return <ReactFlowCanvas />;
+  return (
+    <ReactFlowCanvas
+      document={{
+        id: null,
+        title: DEFAULT_LOGIC_MODEL_TITLE,
+        access: "owner",
+        organizationId: null,
+        workspaceAccess: "none",
+        linkEnabled: false,
+      }}
+    />
+  );
 }
