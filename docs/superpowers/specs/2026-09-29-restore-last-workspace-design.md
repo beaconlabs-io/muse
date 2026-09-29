@@ -50,7 +50,8 @@ muse が最後にアクティブだったワークスペースの id を `localS
 
 ### 2.3 実装上の注意
 
-- `OrgSwitcher` の `switchTo` は早期 return（`if (!active) return <SidebarLogo />`）より後に定義されている。effect はその上に置く必要があるので、`switchTo` を早期 return より上に動かし、toast の有無を引数で分ける
+- effect は早期 return（`if (!active) return <SidebarLogo />`）より上に置く。復元は既存の `switchTo`（toast を出す）を経由せず、effect の中で `setActive` を直接呼んで無音で invalidate する。`switchTo` は触らない
+- effect の依存は `useListOrganizations()` の `data` そのもの（`organizations`）にする。`organizations ?? []` で作る配列はレンダーごとに新しく、依存に入れると毎レンダー実行になる（react-doctor `exhaustive-deps`）
 - `localStorage` は effect の中でだけ触る（コンポーネントは SSR される）
 
 ## 3. ファイル

@@ -32,7 +32,7 @@
 
 - Produces: `saveLastWorkspaceId(id: string): void`、`loadLastWorkspaceId(): string | null`。キー `"lastWorkspaceId"`。例外は握りつぶす（`localStorage` が無い・投げる環境では no-op / `null`）
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 ```ts
 // lib/workspace-storage.test.ts
@@ -65,12 +65,12 @@ describe("workspace storage", () => {
 });
 ```
 
-- [ ] **Step 2: 失敗を確認**
+- [x] **Step 2: 失敗を確認**
 
 Run: `bun run test:run lib/workspace-storage.test.ts`
 Expected: FAIL — `./workspace-storage` が解決できない
 
-- [ ] **Step 3: 実装**
+- [x] **Step 3: 実装**
 
 ```ts
 // lib/workspace-storage.ts
@@ -98,12 +98,12 @@ export function loadLastWorkspaceId(): string | null {
 }
 ```
 
-- [ ] **Step 4: 成功を確認**
+- [x] **Step 4: 成功を確認**
 
 Run: `bun run test:run lib/workspace-storage.test.ts`
 Expected: PASS（3 件）
 
-- [ ] **Step 5: コミット**
+- [x] **Step 5: コミット**
 
 ```bash
 git add lib/workspace-storage.ts lib/workspace-storage.test.ts
@@ -126,7 +126,7 @@ git commit -m "feat(workspace): add localStorage helpers for the last active wor
 - Consumes: Task 1 の `saveLastWorkspaceId` / `loadLastWorkspaceId`
 - Produces: `OrgSwitcher({ activeOrganizationId: string | null; userId: string })`
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `components/app-sidebar.test.tsx` の `beforeEach` に `localStorage.clear();` を足す（ファイル内でテスト間に保存値が漏れないように）。`import { loadLastWorkspaceId, saveLastWorkspaceId } from "@/lib/workspace-storage";` を足す。`personalAndTeam` の `o1` に `personalForUserId: "u1"` を足す（`signInWith` のユーザーは `u1`）:
 
@@ -209,12 +209,12 @@ describe("last workspace", () => {
 });
 ```
 
-- [ ] **Step 2: 失敗を確認**
+- [x] **Step 2: 失敗を確認**
 
 Run: `bun run test:run components/app-sidebar.test.tsx`
 Expected: 新規 6 件のうち "remembers" / "restores" / "forgets" / "stays quiet" が FAIL（保存も復元も起きない）。"leaves ... alone" は保存の期待（`"o2"`）で FAIL。"outside the list" は先に PASS してよい
 
-- [ ] **Step 3: `OrgSwitcher` を実装**
+- [x] **Step 3: `OrgSwitcher` を実装**
 
 `components/org-switcher.tsx` を次のように変える。`switchTo` を早期 return の上に移し、`silent` で toast を抑える。effect は `active` / `list` が揃ってから動く。
 
@@ -321,7 +321,7 @@ export function OrgSwitcher({
 
 `eslint-disable` が `bun lint:check` で不要（`react-hooks/exhaustive-deps` が `switchTo` を求めない）なら、行ごと外す。逆に `active` を依存に入れることで lint が `active.id` を求めるなどの指摘があれば、その指摘に従う。
 
-- [ ] **Step 4: `AppSidebar` から `userId` を渡す**
+- [x] **Step 4: `AppSidebar` から `userId` を渡す**
 
 `components/app-sidebar.tsx:51`:
 
@@ -332,19 +332,19 @@ export function OrgSwitcher({
 />
 ```
 
-- [ ] **Step 5: 成功を確認**
+- [x] **Step 5: 成功を確認**
 
 Run: `bun run test:run components/app-sidebar.test.tsx lib/workspace-storage.test.ts`
 Expected: 全件 PASS。既存の "switches the active workspace ..." と "reports a failed switch ..." も通る（`personalAndTeam` に `personalForUserId` を足しても `localStorage` が空なので復元は走らない）
 
-- [ ] **Step 6: 型・lint・整形**
+- [x] **Step 6: 型・lint・整形**
 
 Run: `bunx tsc --noEmit`（`lib/evidence-filters.test.ts:79` 以外にエラーがないこと。`active.personalForUserId` が型に無ければ `lib/auth-client.ts` の `additionalFields` 推論を確認する — `WorkspaceSettingsPageClient.tsx:63` が同じ項目を読めているので通るはず）
 Run: `bun lint:check`
 Run: `bunx prettier --check components/org-switcher.tsx components/app-sidebar.tsx components/app-sidebar.test.tsx lib/workspace-storage.ts lib/workspace-storage.test.ts`
 Expected: すべて成功
 
-- [ ] **Step 7: `docs/frontend-map.md` を更新**
+- [x] **Step 7: `docs/frontend-map.md` を更新**
 
 `docs/frontend-map.md:24-26` の段落を次に置き換える:
 
@@ -357,7 +357,7 @@ and, when a fresh session lands on the personal workspace, switches back to
 the remembered one if the user still belongs to it (#333).
 ```
 
-- [ ] **Step 8: コミット**
+- [x] **Step 8: コミット**
 
 ```bash
 git add components/org-switcher.tsx components/app-sidebar.tsx components/app-sidebar.test.tsx docs/frontend-map.md
@@ -370,21 +370,21 @@ Closes #333"
 
 ### Task 3: 仕上げ
 
-- [ ] **Step 1: spec が実態と一致していることを確認**
+- [x] **Step 1: spec が実態と一致していることを確認**
 
 `docs/superpowers/specs/2026-09-29-restore-last-workspace-design.md` §2.2（4 条件、再試行なし、旧ユーザーの但し書き）と §3（テストは `app-sidebar.test.tsx`、`typeof window` ガードなし）は dig で反映済み。実装と食い違いがあれば spec を直す。
 
-- [ ] **Step 2: react-doctor**
+- [x] **Step 2: react-doctor**
 
 Run: `npx react-doctor@latest . --scope changed`
 Expected: 変更ファイルに指摘なし。指摘があれば直してから次へ
 
-- [ ] **Step 3: 全体テスト**
+- [x] **Step 3: 全体テスト**
 
 Run: `bun run test:run`
 Expected: PASS
 
-- [ ] **Step 4: コミット**
+- [x] **Step 4: コミット**
 
 spec に修正があった場合のみ:
 
