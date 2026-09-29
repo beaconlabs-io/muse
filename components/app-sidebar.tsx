@@ -48,7 +48,10 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         {session ? (
-          <OrgSwitcher activeOrganizationId={session.session.activeOrganizationId ?? null} />
+          <OrgSwitcher
+            activeOrganizationId={session.session.activeOrganizationId ?? null}
+            userId={session.user.id}
+          />
         ) : (
           <SidebarLogo />
         )}

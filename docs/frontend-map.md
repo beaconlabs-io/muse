@@ -23,7 +23,10 @@ for details. For the canvas subsystem see
 
 `OrgSwitcher` is the sidebar's workspace switcher (account-pages spec
 §OrgSwitcher) — a dropdown of the signed-in user's organizations, falling
-back to `SidebarLogo` when signed out or the list hasn't loaded.
+back to `SidebarLogo` when signed out or the list hasn't loaded. It also
+remembers the active workspace in localStorage (`lib/workspace-storage.ts`)
+and, when a fresh session lands on the personal workspace, switches back to
+the remembered one if the user still belongs to it (#333).
 
 ### `components/evidence/`
 
