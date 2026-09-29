@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { logicModelKeys } from "@/lib/logic-model-queries";
+import { loadLastWorkspaceId, saveLastWorkspaceId } from "@/lib/workspace-storage";
 import en from "@/messages/en.json";
 
 const { usePathname, useIsMobile, useSession, useListOrganizations, setActive } = vi.hoisted(
@@ -51,6 +52,7 @@ vi.mock("@/lib/auth-client", () => ({
 }));
 
 beforeEach(() => {
+  localStorage.clear();
   useSession.mockReturnValue({ data: null, isPending: true });
   useListOrganizations.mockReturnValue({ data: [], isPending: false });
   // The real client resolves to { data, error } instead of throwing.
@@ -95,8 +97,8 @@ function signInWith(organizations: unknown[] | null) {
 }
 
 const personalAndTeam = [
-  { id: "o1", name: "Personal", slug: "personal" },
-  { id: "o2", name: "Team", slug: "team" },
+  { id: "o1", name: "Personal", slug: "personal", personalForUserId: "u1" },
+  { id: "o2", name: "Team", slug: "team", personalForUserId: null },
 ];
 
 async function switchToTeam() {
@@ -219,5 +221,73 @@ describe("AppSidebar", () => {
     await switchToTeam();
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to switch workspace"));
     expect(invalidate).not.toHaveBeenCalled();
+  });
+
+  describe("last workspace", () => {
+    it("remembers the active workspace", async () => {
+      signInWith(personalAndTeam);
+      renderSidebar("/");
+      await waitFor(() => expect(loadLastWorkspaceId()).toBe("o1"));
+      expect(setActive).not.toHaveBeenCalled();
+    });
+
+    it("restores the remembered workspace after landing on the personal one", async () => {
+      const invalidate = vi.spyOn(QueryClient.prototype, "invalidateQueries");
+      saveLastWorkspaceId("o2");
+      signInWith(personalAndTeam);
+      renderSidebar("/");
+      await waitFor(() => expect(setActive).toHaveBeenCalledWith({ organizationId: "o2" }));
+      expect(setActive).toHaveBeenCalledTimes(1);
+      await waitFor(() =>
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: logicModelKeys.list() }),
+      );
+    });
+
+    it("leaves a non-personal active workspace alone (e.g. right after accepting an invite)", () => {
+      saveLastWorkspaceId("o1");
+      useSession.mockReturnValue({
+        data: {
+          user: { id: "u1", name: "U", email: "u@example.com" },
+          session: { activeOrganizationId: "o2" },
+        },
+        isPending: false,
+      });
+      useListOrganizations.mockReturnValue({ data: personalAndTeam, isPending: false });
+      renderSidebar("/");
+      expect(setActive).not.toHaveBeenCalled();
+      expect(loadLastWorkspaceId()).toBe("o2");
+    });
+
+    it("forgets a workspace the user no longer belongs to", () => {
+      saveLastWorkspaceId("gone");
+      signInWith(personalAndTeam);
+      renderSidebar("/");
+      expect(setActive).not.toHaveBeenCalled();
+      expect(loadLastWorkspaceId()).toBe("o1");
+    });
+
+    it("stays quiet when the restore fails", async () => {
+      setActive.mockResolvedValue({ data: null, error: { message: "x" } });
+      saveLastWorkspaceId("o2");
+      signInWith(personalAndTeam);
+      renderSidebar("/");
+      await waitFor(() => expect(setActive).toHaveBeenCalledWith({ organizationId: "o2" }));
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it("does not restore while the session points at a workspace outside the list", () => {
+      saveLastWorkspaceId("o2");
+      useSession.mockReturnValue({
+        data: {
+          user: { id: "u1", name: "U", email: "u@example.com" },
+          session: { activeOrganizationId: "removed" },
+        },
+        isPending: false,
+      });
+      useListOrganizations.mockReturnValue({ data: personalAndTeam, isPending: false });
+      renderSidebar("/");
+      expect(setActive).not.toHaveBeenCalled();
+      expect(loadLastWorkspaceId()).toBe("o2");
+    });
   });
 });

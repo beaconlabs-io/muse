@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -23,20 +23,59 @@ import {
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 import { logicModelKeys } from "@/lib/logic-model-queries";
+import { loadLastWorkspaceId, saveLastWorkspaceId } from "@/lib/workspace-storage";
 
 /**
  * アクティブなワークスペースの表示と切替（account-pages spec の OrgSwitcher）。
  * ログイン中だけ描画する。一覧が読み込み中か取得に失敗したときはホームへのリンクを残す。
  * 「ワークスペースを作成」はダイアログで名前だけを聞く（段階 4）。
+ *
+ * 最後にアクティブだったワークスペースを localStorage に覚え、再ログイン直後（backend は
+ * 必ず個人用に着地させる）に所属が残っていればそこへ戻す（restore-last-workspace spec §2）。
  */
-export function OrgSwitcher({ activeOrganizationId }: { activeOrganizationId: string | null }) {
+export function OrgSwitcher({
+  activeOrganizationId,
+  userId,
+}: {
+  activeOrganizationId: string | null;
+  userId: string;
+}) {
   const t = useTranslations("orgSwitcher");
   const { isMobile } = useSidebar();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const { data: organizations } = authClient.useListOrganizations();
   const list = organizations ?? [];
-  const active = list.find((o) => o.id === activeOrganizationId) ?? list[0];
+  // list[0] は表示用のフォールバック。list-organizations は orderBy なしなので、順序に意味はない
+  const found = list.find((o) => o.id === activeOrganizationId);
+  const active = found ?? list[0];
+
+  // 保存値を読むのはマウントごとに 1 回。ユーザーが自分で切り替えたときに前回の保存値へ
+  // 戻してしまわないため。保存は復元より先で、復元に失敗しても再試行はしない（ベストエフォート）。
+  const restoreTried = useRef(false);
+  useEffect(() => {
+    if (!found) return;
+    const stored = restoreTried.current ? null : loadLastWorkspaceId();
+    restoreTried.current = true;
+    saveLastWorkspaceId(found.id);
+    // 「アクティブが個人用 かつ 保存値が別の所属」はログイン直後だけ。招待受諾のあとは
+    // 受諾した組織がアクティブなので、ここで保存値に戻して受諾を打ち消すことはない。
+    if (
+      stored &&
+      stored !== found.id &&
+      found.personalForUserId === userId &&
+      organizations?.some((o) => o.id === stored)
+    ) {
+      // 失敗は無音。ページ表示時の toast は雑音になる
+      void authClient.organization
+        .setActive({ organizationId: stored })
+        .then(({ error }) =>
+          error ? undefined : queryClient.invalidateQueries({ queryKey: logicModelKeys.list() }),
+        )
+        .catch(() => undefined);
+    }
+  }, [found, organizations, userId, queryClient]);
+
   if (!active) return <SidebarLogo />;
 
   const switchTo = async (organizationId: string) => {
