@@ -6,6 +6,7 @@ import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { CreateWorkspaceDialog } from "@/components/create-workspace-dialog";
+import { SidebarIdentitySkeleton } from "@/components/sidebar-identity-skeleton";
 import { SidebarLogo } from "@/components/sidebar-logo";
 import {
   DropdownMenu,
@@ -27,7 +28,8 @@ import { loadLastWorkspaceId, saveLastWorkspaceId } from "@/lib/workspace-storag
 
 /**
  * アクティブなワークスペースの表示と切替（account-pages spec の OrgSwitcher）。
- * ログイン中だけ描画する。一覧が読み込み中か取得に失敗したときはホームへのリンクを残す。
+ * ログイン中だけ描画する。一覧の読み込み中と、切替（手動・復元）がセッションに反映されるまでは
+ * 切替ボタンと同じ形のスケルトンを出し、取得に失敗したときはホームへのリンクを残す。
  * 「ワークスペースを作成」はダイアログで名前だけを聞く（段階 4）。
  *
  * 最後にアクティブだったワークスペースを localStorage に覚え、再ログイン直後（backend は
@@ -44,11 +46,15 @@ export function OrgSwitcher({
   const { isMobile } = useSidebar();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
-  const { data: organizations } = authClient.useListOrganizations();
+  const { data: organizations, isPending } = authClient.useListOrganizations();
   const list = organizations ?? [];
   // list[0] は表示用のフォールバック。list-organizations は orderBy なしなので、順序に意味はない
   const found = list.find((o) => o.id === activeOrganizationId);
   const active = found ?? list[0];
+  // setActive 後にセッションが再取得され activeOrganizationId が変わるまでの間、古い名前を出さない。
+  // 目標と一致した時点で自然に解ける。失敗時は null に戻す
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const switching = pendingId !== null && pendingId !== active?.id;
 
   // 保存値を読むのはマウントごとに 1 回。ユーザーが自分で切り替えたときに前回の保存値へ
   // 戻してしまわないため。保存は復元より先で、復元に失敗しても再試行はしない（ベストエフォート）。
@@ -67,27 +73,36 @@ export function OrgSwitcher({
       organizations?.some((o) => o.id === stored)
     ) {
       // 失敗は無音。ページ表示時の toast は雑音になる
+      setPendingId(stored);
       void authClient.organization
         .setActive({ organizationId: stored })
-        .then(({ error }) =>
-          error ? undefined : queryClient.invalidateQueries({ queryKey: logicModelKeys.list() }),
-        )
-        .catch(() => undefined);
+        .then(({ error }) => {
+          if (error) {
+            setPendingId(null);
+            return;
+          }
+          return queryClient.invalidateQueries({ queryKey: logicModelKeys.list() });
+        })
+        .catch(() => setPendingId(null));
     }
   }, [found, organizations, userId, queryClient]);
 
+  if ((!active && isPending) || switching) return <SidebarIdentitySkeleton />;
   if (!active) return <SidebarLogo />;
 
   const switchTo = async (organizationId: string) => {
     if (organizationId === active.id) return;
+    setPendingId(organizationId);
     try {
       // The real client resolves to { data, error }; a backend that is down rejects.
       const { error } = await authClient.organization.setActive({ organizationId });
       if (error) {
+        setPendingId(null);
         toast.error(t("switchFailed"));
         return;
       }
     } catch {
+      setPendingId(null);
       toast.error(t("switchFailed"));
       return;
     }

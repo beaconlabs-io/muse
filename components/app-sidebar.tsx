@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { AuthMenu } from "@/components/auth-menu";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OrgSwitcher } from "@/components/org-switcher";
+import { SidebarIdentitySkeleton } from "@/components/sidebar-identity-skeleton";
 import { SidebarLogo } from "@/components/sidebar-logo";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -33,7 +34,7 @@ export function AppSidebar() {
   // On mobile the sidebar is a sheet that stays open across client-side
   // navigation, so close it whenever a link is followed.
   const closeMobile = () => setOpenMobile(false);
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
   // Organization トグル。配下のページを開いている間は開いたままにする（account-pages spec）
   const inOrganization = pathname.startsWith("/settings/organization");
   const [organizationOpen, setOrganizationOpen] = useState(inOrganization);
@@ -47,7 +48,10 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        {session ? (
+        {/* リロード直後にロゴ→スケルトン→切替ボタンと 2 段階で変わらないよう、セッション確定中もスケルトン */}
+        {sessionPending ? (
+          <SidebarIdentitySkeleton />
+        ) : session ? (
           <OrgSwitcher
             activeOrganizationId={session.session.activeOrganizationId ?? null}
             userId={session.user.id}

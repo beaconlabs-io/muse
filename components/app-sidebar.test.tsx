@@ -134,9 +134,16 @@ describe("AppSidebar", () => {
     await waitFor(() => expect(screen.queryByRole("link", { name: "Canvas" })).toBeNull());
   });
 
+  it("shows a header skeleton instead of the home link while the session is pending", () => {
+    const { container } = renderSidebar("/");
+    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /MUSE/ })).not.toBeInTheDocument();
+  });
+
   it("hides Logic models and the workspace switcher when signed out", () => {
     useSession.mockReturnValue({ data: null, isPending: false });
     renderSidebar("/");
+    expect(screen.getByRole("link", { name: /MUSE/ })).toHaveAttribute("href", "/");
     expect(screen.queryByRole("link", { name: "Logic models" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Organization" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Workspace/ })).toBeNull();
@@ -189,8 +196,15 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("button", { name: /Personal/ })).toBeInTheDocument();
   });
 
-  it("keeps the home link while the workspaces have not loaded", () => {
+  it("shows a skeleton while the workspaces are loading", () => {
     signInWith(null);
+    const { container } = renderSidebar("/");
+    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /MUSE/ })).not.toBeInTheDocument();
+  });
+
+  it("keeps the home link when the workspace list failed to load", () => {
+    signInWith([]);
     renderSidebar("/");
     expect(screen.getByRole("link", { name: /MUSE/ })).toHaveAttribute("href", "/");
   });
@@ -207,6 +221,17 @@ describe("AppSidebar", () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
+  it("shows a skeleton until the session reflects the switched workspace", async () => {
+    signInWith(personalAndTeam);
+    const { container } = renderSidebar("/");
+    await switchToTeam();
+    // setActive resolved, but the session still says "Personal" is active.
+    await waitFor(() =>
+      expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument(),
+    );
+    expect(screen.queryByRole("button", { name: /Personal/ })).not.toBeInTheDocument();
+  });
+
   it.each([
     [
       "resolves with an error",
@@ -221,6 +246,8 @@ describe("AppSidebar", () => {
     await switchToTeam();
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to switch workspace"));
     expect(invalidate).not.toHaveBeenCalled();
+    // The skeleton clears so the user can try again.
+    expect(screen.getByRole("button", { name: /Personal/ })).toBeInTheDocument();
   });
 
   describe("last workspace", () => {
