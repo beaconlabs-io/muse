@@ -189,8 +189,15 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("button", { name: /Personal/ })).toBeInTheDocument();
   });
 
-  it("keeps the home link while the workspaces have not loaded", () => {
+  it("shows a skeleton while the workspaces are loading", () => {
     signInWith(null);
+    const { container } = renderSidebar("/");
+    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /MUSE/ })).not.toBeInTheDocument();
+  });
+
+  it("keeps the home link when the workspace list failed to load", () => {
+    signInWith([]);
     renderSidebar("/");
     expect(screen.getByRole("link", { name: /MUSE/ })).toHaveAttribute("href", "/");
   });

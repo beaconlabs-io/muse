@@ -21,13 +21,15 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { authClient } from "@/lib/auth-client";
 import { logicModelKeys } from "@/lib/logic-model-queries";
 import { loadLastWorkspaceId, saveLastWorkspaceId } from "@/lib/workspace-storage";
 
 /**
  * アクティブなワークスペースの表示と切替（account-pages spec の OrgSwitcher）。
- * ログイン中だけ描画する。一覧が読み込み中か取得に失敗したときはホームへのリンクを残す。
+ * ログイン中だけ描画する。一覧の読み込み中は切替ボタンと同じ形のスケルトンを出し、
+ * 取得に失敗したときはホームへのリンクを残す。
  * 「ワークスペースを作成」はダイアログで名前だけを聞く（段階 4）。
  *
  * 最後にアクティブだったワークスペースを localStorage に覚え、再ログイン直後（backend は
@@ -44,7 +46,7 @@ export function OrgSwitcher({
   const { isMobile } = useSidebar();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
-  const { data: organizations } = authClient.useListOrganizations();
+  const { data: organizations, isPending } = authClient.useListOrganizations();
   const list = organizations ?? [];
   // list[0] は表示用のフォールバック。list-organizations は orderBy なしなので、順序に意味はない
   const found = list.find((o) => o.id === activeOrganizationId);
@@ -76,6 +78,24 @@ export function OrgSwitcher({
     }
   }, [found, organizations, userId, queryClient]);
 
+  // 実物と同じ SidebarMenuButton size="lg" に載せると、アイコン折りたたみ時の 32px 角も揃う
+  if (!active && isPending) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" asChild>
+            <div aria-busy="true">
+              <Skeleton className="size-8 shrink-0 rounded-lg" />
+              <div className="grid flex-1 gap-1.5">
+                <Skeleton className="h-3.5 w-3/5" />
+                <Skeleton className="h-3 w-2/5" />
+              </div>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
   if (!active) return <SidebarLogo />;
 
   const switchTo = async (organizationId: string) => {
