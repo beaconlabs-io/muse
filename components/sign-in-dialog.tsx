@@ -15,8 +15,20 @@ import { authClient } from "@/lib/auth-client";
 
 type Provider = "google" | "github";
 
-/** Google / GitHub sign-in in a dialog. `children` is rendered as the trigger. */
-export function SignInDialog({ children }: { children: React.ReactNode }) {
+/**
+ * Google / GitHub sign-in in a dialog. `children`, when given, is rendered as
+ * the trigger. Pass `open` / `onOpenChange` to open it from code instead (the
+ * recipe provider does, when a signed-out user starts a generation).
+ */
+export function SignInDialog({
+  children,
+  open,
+  onOpenChange,
+}: {
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const t = useTranslations("auth");
 
   const signIn = async (provider: Provider) => {
@@ -39,8 +51,8 @@ export function SignInDialog({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {children ? <DialogTrigger asChild>{children}</DialogTrigger> : null}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader className="sm:text-center">
           <DialogTitle>{t("signInTitle")}</DialogTitle>

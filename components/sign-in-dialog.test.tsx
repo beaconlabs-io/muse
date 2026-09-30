@@ -63,3 +63,28 @@ describe("SignInDialog", () => {
     );
   });
 });
+
+describe("SignInDialog (controlled)", () => {
+  it("opens from the open prop without a trigger and reports closing", async () => {
+    const onOpenChange = vi.fn();
+    render(
+      <NextIntlClientProvider locale="en" messages={en}>
+        <SignInDialog open onOpenChange={onOpenChange} />
+      </NextIntlClientProvider>,
+    );
+
+    expect(await screen.findByRole("button", { name: "Sign in with Google" })).toBeInTheDocument();
+    screen.getByRole("button", { name: "Close" }).click();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("renders nothing while open is false", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={en}>
+        <SignInDialog open={false} onOpenChange={vi.fn()} />
+      </NextIntlClientProvider>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Sign in with Google" })).not.toBeInTheDocument();
+  });
+});
