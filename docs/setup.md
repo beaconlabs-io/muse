@@ -365,12 +365,15 @@ interact.
 
 ## Troubleshooting
 
-- **404 on generation, recipe, evidence search or IPFS upload** —
+- **404 on generation, recipe or IPFS upload** —
   `NEXT_PUBLIC_API_BASE_URL` was unset at build time, so the app is calling
   same-origin routes that live in the backend now. Rebuild with the variable
   set; changing it at runtime has no effect.
-- **401 from the backend** — `BOT_API_KEY` is set on the backend but the
-  caller did not send the `x-api-key` header.
+- **401 from the generation streams** — the request carried no valid
+  session. Sign in again. The app shows this as an expired session; if it
+  happens right after signing in, check that the app and
+  `NEXT_PUBLIC_API_BASE_URL` share a registrable domain, since the session
+  cookie is `SameSite=Lax`.
 - **Workflow times out after 5 minutes** — raise `WORKFLOW_TIMEOUT_MS` in
   `lib/constants.ts` if you are adding longer-running steps. The client abort
   is the only limit now; Workers imposes no wall-clock cap.

@@ -14,26 +14,27 @@ see #306).
 
 ## Routes
 
-| Method                    | Path                               | Purpose                                                                                                                                                                                                                         | Entry file                                           |
-| ------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| POST                      | `/api/workflow/stream`             | Streams logic-model generation events over SSE. Accepts JSON `{goal}` **or** multipart/form-data with an uploaded PDF/image (≤4 MB) forwarded to Gemini 2.5 Pro as multimodal input (see [File upload path](#file-upload-path)) | `muse-backend` `src/routes/workflow.ts`              |
-| POST                      | `/api/recipe/stream`               | Streams measurement-recipe generation events over SSE. Input: `{ logicModelTitle, metrics[], locale }`. Wraps `recipeWorkflow` (single-step LLM call) and emits the same step-start / step-finish / _-error / _-complete shape  | `muse-backend` `src/routes/recipe.ts`                |
-| POST                      | `/api/compact`                     | Turns a chat history into a logic model, uploads canvas JSON to IPFS, returns canvas URL                                                                                                                                        | `muse-backend` `src/routes/compact.ts`               |
-| POST                      | `/api/evidence/search`             | Natural-language evidence search backed by the Conversation Bot Agent; optional external paper lookup                                                                                                                           | `muse-backend` `src/routes/evidence.ts`              |
-| POST                      | `/api/upload-to-ipfs`              | Uploads canvas JSON (Zod-validated) to Pinata IPFS. The muse frontend stopped calling this route on 2026-09-15 (canvases now save to the DB); whether the route itself stays is a separate issue                                | `muse-backend` `src/routes/ipfs.ts`                  |
-| POST                      | `/api/upload-image-to-ipfs`        | Uploads a ≤2 MB image (multipart) to Pinata IPFS. The muse frontend stopped calling this route on 2026-09-15; whether the route itself stays is a separate issue                                                                | `muse-backend` `src/routes/ipfs.ts`                  |
-| GET/POST/PUT/PATCH/DELETE | `/api/logic-models/*`              | Logic model CRUD, version history and sharing (create, save version, restore, rename, list/put/delete shares, toggle link). Session required                                                                                    | `muse-backend`, called from `lib/logic-model-api.ts` |
-| GET                       | `/api/shared-logic-models/:token`  | Read-only fetch of a link-shared logic model. No session                                                                                                                                                                        | `muse-backend`, called from `lib/logic-model-api.ts` |
-| PUT                       | `/api/workspaces/:id/private-mode` | Toggle a workspace's private mode (owner or admin); enabling revokes its share links. Session required                                                                                                                          | `muse-backend`, called from `lib/logic-model-api.ts` |
+| Method                    | Path                               | Purpose                                                                                                                                                                                                                                           | Entry file                                           |
+| ------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| POST                      | `/api/workflow/stream`             | Streams logic-model generation events over SSE. Accepts JSON `{goal}` **or** multipart/form-data with an uploaded PDF/image (≤4 MB) forwarded to Gemini 2.5 Pro as multimodal input (see [File upload path](#file-upload-path)). Session required | `muse-backend` `src/routes/workflow.ts`              |
+| POST                      | `/api/recipe/stream`               | Streams measurement-recipe generation events over SSE. Input: `{ logicModelTitle, metrics[], locale }`. Wraps `recipeWorkflow` (single-step LLM call) and emits the same step-start / step-finish / _-error / _-complete shape. Session required  | `muse-backend` `src/routes/recipe.ts`                |
+| POST                      | `/api/upload-to-ipfs`              | Uploads canvas JSON (Zod-validated) to Pinata IPFS. The muse frontend stopped calling this route on 2026-09-15 (canvases now save to the DB); whether the route itself stays is a separate issue                                                  | `muse-backend` `src/routes/ipfs.ts`                  |
+| POST                      | `/api/upload-image-to-ipfs`        | Uploads a ≤2 MB image (multipart) to Pinata IPFS. The muse frontend stopped calling this route on 2026-09-15; whether the route itself stays is a separate issue                                                                                  | `muse-backend` `src/routes/ipfs.ts`                  |
+| GET/POST/PUT/PATCH/DELETE | `/api/logic-models/*`              | Logic model CRUD, version history and sharing (create, save version, restore, rename, list/put/delete shares, toggle link). Session required                                                                                                      | `muse-backend`, called from `lib/logic-model-api.ts` |
+| GET                       | `/api/shared-logic-models/:token`  | Read-only fetch of a link-shared logic model. No session                                                                                                                                                                                          | `muse-backend`, called from `lib/logic-model-api.ts` |
+| PUT                       | `/api/workspaces/:id/private-mode` | Toggle a workspace's private mode (owner or admin); enabling revokes its share links. Session required                                                                                                                                            | `muse-backend`, called from `lib/logic-model-api.ts` |
 
 ## Auth
 
 Auth is enforced by the backend service, not by this app.
 
-- `/api/compact` and `/api/evidence/search` are gated by `BOT_API_KEY` when
-  it is set there. Callers send an `x-api-key` header. Unset means the routes
-  accept unauthenticated requests.
-- The stream and IPFS routes are unauthenticated.
+- `/api/workflow/stream` and `/api/recipe/stream` require a session. The
+  hooks send the Better Auth cookie via `credentials: "include"`; a 401 sets
+  `unauthorized` on the hook, and the UI shows it as an expired session and
+  refetches the session. Signed-out users never reach the streams: the
+  generation dialog swaps its submit button for a sign-in trigger, and
+  `RecipeProvider.triggerGeneration` opens the sign-in dialog instead.
+- The IPFS routes are unauthenticated.
 - `/api/logic-models/*` requires a session: the client sends the Better
   Auth cookie via `credentials: "include"` (see `lib/logic-model-api.ts`).
   `/api/shared-logic-models/:token` needs no session.
@@ -43,8 +44,7 @@ Auth is enforced by the backend service, not by this app.
 Request bodies are validated with Zod; the canonical schemas live next to
 the shared types:
 
-- `types/` — `CanvasDataSchema`, `CompactRequestSchema`,
-  `EvidenceSearchRequestSchema`, `CompactResponse`, `EvidenceSearchResponse`,
+- `types/` — `CanvasDataSchema`,
   `RecipeSchema`, `RecipeMetricContextSchema`, `RecipeWorkflowInputSchema`,
   `RecipeLocaleSchema`, `RECIPE_TARGET_CARD_TYPES`
 - `types/workflow-events.ts` — `WorkflowSSEEvent` union for streaming events
@@ -117,7 +117,7 @@ as before.
 
 ## Workflow error handling
 
-`/api/workflow/stream` (SSE) and `/api/compact` (REST) report a category
+`/api/workflow/stream` and `/api/recipe/stream` (SSE) report a category
 alongside every failure so the UI can render locale-aware messages instead of
 a generic "Workflow failed". Classification happens in the backend; this app
 holds the category union in `lib/workflow-errors.ts` and maps it to a
@@ -165,12 +165,6 @@ Step-level and workflow-level failures emit:
 `useWorkflowStream`) looks up the matching `tErrors(category)` translation
 to render a user-facing message, while `error` / `rawError` are kept for
 logs and the "show details" affordance.
-
-### REST shape (`/api/compact`)
-
-Returns `5xx` JSON of the form `{ error, errorCategory }` where
-`errorCategory` is the same enum. Callers (e.g. the bot integration) can
-choose to translate or surface the raw message.
 
 ### UI wiring
 

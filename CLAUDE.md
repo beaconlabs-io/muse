@@ -128,7 +128,7 @@ For detailed technical information, see:
 
 **Operations**
 
-- `docs/api-routes.md` - HTTP endpoints (workflow/stream, compact, evidence, IPFS, OG images)
+- `docs/api-routes.md` - HTTP endpoints (workflow/stream, recipe/stream, IPFS, OG images)
 - `docs/setup.md` - Local setup, environment variables grouped by concern
 - `docs/testing.md` - Vitest conventions, patterns (env stubbing, `it.each`, factories), CI integration
 - `docs/i18n.md` - next-intl wiring and agent output language interaction

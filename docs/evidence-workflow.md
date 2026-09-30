@@ -209,7 +209,7 @@ Evidence is semantically matched to logic model arrows (causal relationships) us
    - Gray default edges (#6b7280) for relationships with no evidence
    - Evidence dialog with two sections: internal evidence (green) and academic papers (blue)
    - Clickable links to `/evidence/{id}` for internal, DOI/URL links for external
-5. **External academic papers** (when enabled via `EXTERNAL_SEARCH_ENABLED` or compact API):
+5. **External academic papers** (when enabled via `EXTERNAL_SEARCH_ENABLED`):
    - Edges with fewer than 1 internal evidence match trigger multi-query Semantic Scholar API search
    - LLM (Gemini 2.5 Flash) generates two queries per edge: concept keywords + causal relationship phrase
    - Searches filtered by DPG/EBP-relevant fields of study (Medicine, Sociology, Education, etc.) with automatic fallback
