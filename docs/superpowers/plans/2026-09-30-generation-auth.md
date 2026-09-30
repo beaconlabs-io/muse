@@ -376,6 +376,20 @@ spec §3.1、§3.3、§3.5。
 
 直前の行の末尾にカンマを足すのを忘れない。
 
+ツアーの送信ステップの本文（`tour.steps.genModalSubmit.content`）を、ログイン前の「Sign in to generate」とログイン後の「Generate」のどちらのボタンにも合う文言に書き換える（spec §3.5）。`title` は変えない。
+
+`messages/en.json`：
+
+```json
+        "content": "This button starts the generation: the AI drafts a full logic model with evidence, right on the canvas. Generating requires signing in."
+```
+
+`messages/ja.json`：
+
+```json
+        "content": "このボタンで生成を始めます。AIがエビデンス付きのロジックモデルの下書きをキャンバス上に作成します。生成にはログインが必要です。"
+```
+
 - [ ] **Step 2: 失敗するテストを書く**
 
 `components/canvas/GenerateLogicModelDialog.test.tsx` を作る。
@@ -676,15 +690,29 @@ describe("RecipeProvider", () => {
       screen.queryByRole("button", { name: en.auth.signInWithGoogle }),
     ).not.toBeInTheDocument();
   });
+
+  it("does nothing while the session is still loading", () => {
+    useSession.mockReturnValue({ data: null, isPending: true, refetch: vi.fn() });
+    renderProvider();
+
+    fireEvent.click(screen.getByRole("button", { name: "trigger" }));
+
+    expect(
+      screen.queryByRole("button", { name: en.auth.signInWithGoogle }),
+    ).not.toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });
 ```
+
+3 件目は、読み込み中のログイン済みユーザーにサインインのダイアログを誤って出さないことを確かめる（spec §3.2）。
 
 2 件目は、ノードが空なのでメトリクス不足のトーストで止まり、fetch には届かない。確かめたいのは「ログイン中はサインインのダイアログを出さない」ことだけである。
 
 - [ ] **Step 2: 失敗を確かめる**
 
 Run: `bun run test:run components/canvas/context/RecipeContext.test.tsx`
-Expected: FAIL（1 件目。サインインのダイアログが開かない）
+Expected: FAIL（1 件目。サインインのダイアログが開かない）。3 件目は今の実装でも通る（読み込み中も含め、ノードが空なのでトーストで止まる）が、Step 3 の変更後も通り続けることを確かめるために置く
 
 - [ ] **Step 3: `RecipeProvider` を変える**
 
@@ -710,13 +738,18 @@ unauthorized: boolean;
 // Recipe generation needs a session (spec §3.2). Every entry point (the
 // recipe tab's generate / regenerate / retry and the header menu's
 // regenerate) goes through triggerGeneration, so this is the one gate.
-const { data: session, refetch: refetchSession } = authClient.useSession();
+const {
+  data: session,
+  isPending: sessionPending,
+  refetch: refetchSession,
+} = authClient.useSession();
 const [signInOpen, setSignInOpen] = useState(false);
 ```
 
-`triggerGeneration` の `if (stream.status === "running") return;` の直後に足し、依存配列に `session` を足す。
+`triggerGeneration` の `if (stream.status === "running") return;` の直後に足し、依存配列に `session` と `sessionPending` を足す。読み込み中は何もしない。サインイン側に倒すと、ログイン済みのユーザーにもダイアログが開いてしまう。
 
 ```tsx
+if (sessionPending) return;
 if (!session) {
   setSignInOpen(true);
   return;
@@ -796,6 +829,8 @@ spec §3.4、§6.2。
 - Modify: `docs/api-routes.md`
 - Modify: `docs/setup.md`
 - Modify: `docs/testing.md`
+- Modify: `CLAUDE.md`
+- Modify: `docs/evidence-workflow.md`
 
 **Interfaces:**
 
@@ -848,6 +883,10 @@ Expected: 該当なし
 
 同じ項目の 1 つ前の「404 on generation, recipe, evidence search or IPFS upload」を「404 on generation, recipe or IPFS upload」にする。
 
+`CLAUDE.md` の Additional Documentation の `docs/api-routes.md` の説明「(workflow/stream, compact, evidence, IPFS, OG images)」を「(workflow/stream, recipe/stream, IPFS, OG images)」にする。
+
+`docs/evidence-workflow.md` の外部論文検索の項目「(when enabled via `EXTERNAL_SEARCH_ENABLED` or compact API)」から「or compact API」を外す。
+
 `docs/testing.md`：
 
 - `vi.stubEnv` の例の `expect(apiUrl("/api/compact")).toBe("/api/compact");` を `expect(apiUrl("/api/recipe/stream")).toBe("/api/recipe/stream");` にする
@@ -868,7 +907,7 @@ Expected: すべて成功
 - [ ] **Step 5: コミット**
 
 ```bash
-git add types/index.ts lib/constants.ts docs/api-routes.md docs/setup.md docs/testing.md
+git add types/index.ts lib/constants.ts docs/api-routes.md docs/setup.md docs/testing.md CLAUDE.md docs/evidence-workflow.md
 git commit -F - <<'EOF'
 chore: drop the compact and evidence search leftovers
 
@@ -888,6 +927,8 @@ EOF
 - [ ] **Step 7: 画面で確かめる**
 
 backend をローカルで起動し（`backend/` で `bun dev`、localhost:8787）、muse を `NEXT_PUBLIC_API_BASE_URL=http://localhost:8787` で起動して（`bun dev`）、次を確かめる。backend 側はこの時点で Task 1 まで入っていればよい。
+
+前提：ローカルの backend で生成を試すには、`backend/.dev.vars` に `DATABASE_URL`、`BETTER_AUTH_SECRET`、Google か GitHub の OAuth の値、`GOOGLE_GENERATIVE_AI_API_KEY` が揃っている必要がある。生成がログイン必須になったためである。揃っていなければ、この Step はユーザーに依頼する（エージェントは `.dev.vars` に触れない）。
 
 1. 未ログインで `/en/canvas` を開くと、ツアーが生成ダイアログの入力欄、オプション、「Sign in to generate」ボタンの順に指す
 2. 未ログインで生成ダイアログを開くと、注記と「Sign in to generate」が出る。押すとサインインのダイアログが開く
