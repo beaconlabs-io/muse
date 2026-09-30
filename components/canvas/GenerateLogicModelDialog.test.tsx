@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { StepProcessDialogProvider } from "@/components/step-process-dialog";
@@ -84,5 +84,30 @@ describe("GenerateLogicModelDialog", () => {
       await screen.findByRole("button", { name: en.generate.signInToGenerate }),
     ).toBeInTheDocument();
     expect(screen.queryByText(en.generate.signInRequired)).not.toBeInTheDocument();
+  });
+
+  it("shows the session-expired message and refetches the session once on a 401", async () => {
+    const refetch = vi.fn();
+    useSession.mockReturnValue({ ...signedIn, refetch });
+    // A real response never lands before the step list is initialised; an
+    // instant mock does, and the error would then have no step to attach to.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return Response.json({ error: "Unauthorized" }, { status: 401 });
+      }),
+    );
+    try {
+      openDialog();
+
+      fireEvent.change(await screen.findByRole("textbox"), { target: { value: "Reduce dropout" } });
+      fireEvent.click(screen.getByRole("button", { name: en.generate.generateButton }));
+
+      expect(await screen.findByText(en.auth.sessionExpired)).toBeInTheDocument();
+      await waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

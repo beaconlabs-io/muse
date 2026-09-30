@@ -114,6 +114,7 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
       if (stream.status === "running") return;
       if (sessionPending) return;
       if (!session) {
+        setWaitingFlag(false);
         setSignInOpen(true);
         return;
       }
