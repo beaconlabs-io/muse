@@ -223,7 +223,7 @@ The backend's `src/infrastructure/ai/vercel/evidence-matcher.ts` is the entry po
 logic model generation workflow. It:
 
 1. Loads the full internal evidence library via
-   the backend's evidence access helpers (`src/infrastructure/ai/vercel/evidence-matcher.ts`).
+   the backend's evidence access helpers (`src/infrastructure/ai/vercel/tools/get-all-evidence-tool.ts`, `getAllEvidenceSummaries`).
 2. Sends all arrows + library to the Evidence Search Agent in a single LLM
    call (the Agent activates the `evidence-matching` skill for scoring).
 3. Returns structured JSON (arrowId → matches) that is then fed into
