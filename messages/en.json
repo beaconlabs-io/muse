@@ -22,7 +22,8 @@
     "signInDescription": "Sign in or create an account with Google or GitHub.",
     "account": "Account",
     "organization": "Organization",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "sessionExpired": "Your session has expired. Please sign in again."
   },
   "hero": {
     "title": "MUSE",
@@ -100,7 +101,9 @@
     "fileNotStored": "Your file is processed in memory and never stored on our servers.",
     "fileRequired": "Please select a file",
     "fileTypeInvalid": "Unsupported file type. Allowed: PDF, PNG, JPG, WebP.",
-    "fileTooLarge": "File is too large."
+    "fileTooLarge": "File is too large.",
+    "signInRequired": "Sign in to generate a logic model with AI.",
+    "signInToGenerate": "Sign in to generate"
   },
   "addNode": {
     "editTitle": "Edit Logic Node",
@@ -498,7 +501,7 @@
       },
       "genModalSubmit": {
         "title": "Generate",
-        "content": "Hit Generate and the AI drafts a full logic model with evidence, right on the canvas."
+        "content": "This button starts the generation: the AI drafts a full logic model with evidence, right on the canvas. Generating requires signing in."
       },
       "addNode": {
         "title": "Add a card",

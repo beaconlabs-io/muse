@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import * as z from "zod";
 import { GenerationTimeInfo } from "@/components/canvas/GenerationTimeInfo";
 import { useTourController } from "@/components/canvas/tour/TourController";
+import { SignInDialog } from "@/components/sign-in-dialog";
 import { useStepProcessDialogContext } from "@/components/step-process-dialog";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -35,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Card, Arrow, Metric } from "@/types";
 import { useWorkflowStream } from "@/hooks/useWorkflowStream";
+import { authClient } from "@/lib/auth-client";
 import {
   EXTERNAL_SEARCH_ENABLED,
   FILE_UPLOAD_ALLOWED_MIME_TYPES,
@@ -172,6 +174,16 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
   const t = useTranslations("generate");
   const tCanvas = useTranslations("canvas");
   const tCommon = useTranslations("common");
+  const tAuth = useTranslations("auth");
+  // Generation needs a session (spec §3.1). While the session is loading we
+  // fall back to the sign-in button, like the canvas Save button, but only
+  // show the notice once we know the user is signed out.
+  const {
+    data: session,
+    isPending: sessionPending,
+    refetch: refetchSession,
+  } = authClient.useSession();
+  const signedOut = !sessionPending && !session;
 
   function buildProgressSteps(enableExternalSearch: boolean) {
     return [
@@ -224,6 +236,7 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     stepEvents,
     startWorkflow,
     cancel,
+    unauthorized,
   } = useWorkflowStream();
   const tErrors = useTranslations("workflowErrors");
 
@@ -315,6 +328,13 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
       if (hasHandledErrorRef.current) return;
       hasHandledErrorRef.current = true;
       const errorStepId = failedStepId || "generate-logic-model";
+      if (unauthorized) {
+        // The session expired while the page was open (spec §3.3). Refetching
+        // flips the footer back to the sign-in button.
+        setDialogStep(errorStepId, "error", tAuth("sessionExpired"));
+        void refetchSession();
+        return;
+      }
       const userMessage = errorCategory ? tErrors(errorCategory) : error || tErrors("unknown");
       const fullMessage =
         rawError && rawError !== userMessage ? `${userMessage}\n---\n${rawError}` : userMessage;
@@ -338,6 +358,9 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
     setStepDialogOpen,
     form,
     tErrors,
+    unauthorized,
+    tAuth,
+    refetchSession,
   ]);
 
   const handleModeChange = (nextMode: string) => {
@@ -422,6 +445,11 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
           <GenerationTimeInfo />
+          {signedOut ? (
+            <p className="text-muted-foreground bg-muted rounded-md px-3 py-2 text-sm">
+              {t("signInRequired")}
+            </p>
+          ) : null}
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -658,14 +686,22 @@ export function GenerateLogicModelDialog({ onGenerate }: GenerateLogicModelDialo
               >
                 {tCommon("cancel")}
               </Button>
-              <Button
-                type="submit"
-                className="cursor-pointer"
-                disabled={isRunning}
-                data-tour="gen-modal-submit"
-              >
-                {t("generateButton")}
-              </Button>
+              {session ? (
+                <Button
+                  type="submit"
+                  className="cursor-pointer"
+                  disabled={isRunning}
+                  data-tour="gen-modal-submit"
+                >
+                  {t("generateButton")}
+                </Button>
+              ) : (
+                <SignInDialog>
+                  <Button type="button" className="cursor-pointer" data-tour="gen-modal-submit">
+                    {t("signInToGenerate")}
+                  </Button>
+                </SignInDialog>
+              )}
             </DialogFooter>
           </form>
         </Form>
