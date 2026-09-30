@@ -6,8 +6,8 @@ repo root for the authoritative variable list.
 ## Prerequisites
 
 - Node.js 20+ and [Bun](https://bun.sh/) (package manager + runtime for dev/build)
-- A reachable `muse-backend` service for logic model generation, recipes,
-  evidence search and IPFS uploads (see [Backend service](#backend-service));
+- A reachable `muse-backend` service for logic model generation, recipes
+  and IPFS uploads (see [Backend service](#backend-service));
   optional for UI-only work
 
 ## Quickstart
@@ -43,7 +43,7 @@ in parentheses.
 ### Backend service
 
 - `NEXT_PUBLIC_API_BASE_URL` — base URL of the `muse-backend` service that
-  serves logic model generation, recipes, evidence search and IPFS uploads.
+  serves logic model generation, recipes and IPFS uploads.
   Unset means same-origin, which no longer resolves: those routes were
   removed from this app
 

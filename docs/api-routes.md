@@ -2,7 +2,7 @@
 
 Reference map for the HTTP endpoints this app talks to.
 
-Logic model generation, recipes, evidence search, IPFS uploads and logic
+Logic model generation, recipes, IPFS uploads and logic
 model storage/sharing are served by the separate `muse-backend` service
 (Hono on Cloudflare Workers), reached through `NEXT_PUBLIC_API_BASE_URL`.
 The request, response and SSE shapes documented here are the contract this
@@ -195,7 +195,7 @@ logs and the "show details" affordance.
 - File upload constants & MIME whitelist → `lib/constants.ts`
   (`FILE_UPLOAD_ALLOWED_MIME_TYPES`, `FILE_UPLOAD_MAX_BYTES`,
   `VERCEL_REQUEST_BODY_LIMIT_BYTES`)
-- Evidence search internals → `muse-backend`, `src/lib/evidence-search-batch.ts` + the conversation bot agent
+- Evidence matching internals → `muse-backend`, `src/infrastructure/ai/vercel/evidence-matcher.ts`
 - External papers → `muse-backend`, `src/lib/external-paper-search.ts` + `src/lib/academic/`
 - IPFS client → `muse-backend`, `src/lib/pinata.ts`. This app no longer
   uploads to IPFS; `utils/ipfs.ts` only reads a pinned canvas

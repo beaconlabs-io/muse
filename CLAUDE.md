@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Backend Service
 
-AI processing (logic model generation, recipes, evidence search) lives in the separate
+AI processing (logic model generation, recipes) lives in the separate
 `muse-backend` service (Hono on Cloudflare Workers), not in this repository. Point the frontend at
 it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 

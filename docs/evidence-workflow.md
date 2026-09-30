@@ -197,7 +197,7 @@ The GitHub Actions workflow requires:
 
 Evidence is semantically matched to logic model arrows (causal relationships) using:
 
-1. **LLM-based matching** - Uses `gemini-2.5-pro` via the backend's `src/lib/evidence-search-batch.ts`
+1. **LLM-based matching** - Uses `gemini-2.5-pro` via the backend's `src/infrastructure/ai/vercel/evidence-matcher.ts`
 2. **Batch processing** - Single LLM call evaluates all arrows together (not parallel N+1)
 3. **Match criteria**:
    - Intervention in evidence aligns with arrow source
@@ -219,12 +219,11 @@ Evidence is semantically matched to logic model arrows (causal relationships) us
 
 ### Batch search pipeline
 
-The backend's `src/lib/evidence-search-batch.ts` is the single entry point used by both the
-workflow (`muse-backend`, `src/ai/workflows/logic-model-with-evidence.ts`) and the
-Conversation Bot Agent's tooling. It:
+The backend's `src/infrastructure/ai/vercel/evidence-matcher.ts` is the entry point used by the
+logic model generation workflow. It:
 
 1. Loads the full internal evidence library via
-   the backend's evidence access helpers (`src/lib/evidence-search-batch.ts`).
+   the backend's evidence access helpers (`src/infrastructure/ai/vercel/evidence-matcher.ts`).
 2. Sends all arrows + library to the Evidence Search Agent in a single LLM
    call (the Agent activates the `evidence-matching` skill for scoring).
 3. Returns structured JSON (arrowId → matches) that is then fed into
@@ -298,7 +297,7 @@ This approach makes Muse's logic models more rigorous and honest. It clearly dis
 - Validation script: `.github/scripts/validate-evidence.ts` (in evidence repository)
 - Type definitions: `types/index.ts` (Zod schemas)
 - Evidence parsing: `lib/evidence.ts`
-- Evidence search: `muse-backend`, `src/lib/evidence-search-batch.ts`
+- Evidence matching: `muse-backend`, `src/infrastructure/ai/vercel/evidence-matcher.ts`
 - External paper search: `muse-backend`, `src/lib/external-paper-search.ts` (multi-query orchestration, quality ranking)
 - Semantic Scholar client: `muse-backend`, `src/lib/academic/semantic-scholar.ts` (fieldsOfStudy/publicationTypes filter with fallback)
 - Query extraction: `muse-backend`, `src/lib/academic/extract-search-keywords.ts` (generates 2 queries: keywords + causal)
