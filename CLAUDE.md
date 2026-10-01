@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Backend Service
 
-AI processing (logic model generation, recipes, evidence search) lives in the separate
+AI processing (logic model generation, recipes) lives in the separate
 `muse-backend` service (Hono on Cloudflare Workers), not in this repository. Point the frontend at
 it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 
@@ -63,6 +63,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `app/` - Next.js App Router pages and API routes
 - `app/[lang]/` - Locale-routed pages (en, ja) via next-intl
 - `app/[lang]/canvas/` - Interactive logic model builder with React Flow
+- `app/[lang]/logic-models/` - Workspace list of saved logic models
 - `app/[lang]/evidence/` - Evidence browsing and detail pages
 - `app/[lang]/effects/` - Effects/outcomes listing page
 - `app/[lang]/search/` - Evidence search and filtering
@@ -74,7 +75,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `components/tooltip/` - Tooltip components
 - `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
 - `hooks/` - Custom React hooks including blockchain integration and SSE workflow streaming (`useWorkflowStream`)
-- `lib/` - Shared utilities, configuration, and the backend API client (`lib/api-client.ts`)
+- `lib/` - Shared utilities, configuration, and the backend API client (`lib/api-client.ts`, `lib/logic-model-api.ts`)
 - `types/` - TypeScript definitions for Evidence, Attestation, graph structures
 - `utils/` - Configuration and helper functions
 - `tests/` - Vitest global setup (e.g., `@testing-library/jest-dom` extensions)
@@ -127,7 +128,7 @@ For detailed technical information, see:
 
 **Operations**
 
-- `docs/api-routes.md` - HTTP endpoints (workflow/stream, compact, evidence, IPFS, OG images)
+- `docs/api-routes.md` - HTTP endpoints (workflow/stream, recipe/stream, IPFS, OG images)
 - `docs/setup.md` - Local setup, environment variables grouped by concern
 - `docs/testing.md` - Vitest conventions, patterns (env stubbing, `it.each`, factories), CI integration
 - `docs/i18n.md` - next-intl wiring and agent output language interaction
