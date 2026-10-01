@@ -187,7 +187,8 @@ export function ShareDialog({
             </Select>
             <Button
               size="sm"
-              disabled={!memberToAdd || putShare.isPending}
+              disabled={!memberToAdd}
+              loading={putShare.isPending}
               onClick={() => {
                 putShare.mutate({ userId: memberToAdd, role: roleToAdd });
                 setMemberToAdd("");

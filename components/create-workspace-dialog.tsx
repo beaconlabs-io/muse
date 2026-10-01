@@ -88,7 +88,7 @@ export function CreateWorkspaceDialog({
             />
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={!trimmed || create.isPending}>
+            <Button type="submit" disabled={!trimmed} loading={create.isPending}>
               {t("create")}
             </Button>
           </DialogFooter>

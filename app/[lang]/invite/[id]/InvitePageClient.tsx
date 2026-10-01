@@ -90,7 +90,7 @@ export function InvitePageClient({ invitationId }: { invitationId: string }) {
                   : t("roleMember"),
           })}
         </p>
-        <Button disabled={accept.isPending} onClick={() => accept.mutate()}>
+        <Button loading={accept.isPending} onClick={() => accept.mutate()}>
           {t("accept")}
         </Button>
       </>

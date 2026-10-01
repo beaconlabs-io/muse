@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { Download, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { Download, RefreshCw, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useCanvasOperations, useCanvasState, useRecipe } from "./context";
@@ -49,8 +49,7 @@ export function ContextActions({ activeTab }: ContextActionsProps) {
 
   if (recipe.phase === "running") {
     return (
-      <Button size="sm" variant="outline" disabled className="cursor-not-allowed">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      <Button size="sm" variant="outline" loading className="cursor-not-allowed">
         {t("statusGenerating")}
       </Button>
     );
@@ -72,14 +71,10 @@ export function ContextActions({ activeTab }: ContextActionsProps) {
         <Button
           size="sm"
           onClick={handleDownload}
-          disabled={recipe.downloadingHtml}
+          loading={recipe.downloadingHtml}
           className="cursor-pointer"
         >
-          {recipe.downloadingHtml ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="mr-2 h-4 w-4" />
-          )}
+          {!recipe.downloadingHtml && <Download className="mr-2 h-4 w-4" />}
           {t("downloadHtml")}
         </Button>
       </div>

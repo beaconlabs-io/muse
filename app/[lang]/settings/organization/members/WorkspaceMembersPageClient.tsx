@@ -282,7 +282,7 @@ function Members({ organizationId, userId }: { organizationId: string; userId: s
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button type="submit" disabled={!inviteEmail.trim() || invite.isPending}>
+                    <Button type="submit" disabled={!inviteEmail.trim()} loading={invite.isPending}>
                       {t("invite")}
                     </Button>
                   </form>
@@ -327,6 +327,7 @@ function Members({ organizationId, userId }: { organizationId: string; userId: s
                             size="sm"
                             className="text-muted-foreground hover:text-destructive"
                             disabled={cancel.isPending}
+                            loading={cancel.isPending && cancel.variables === i.id}
                             onClick={() => cancel.mutate(i.id)}
                           >
                             {t("cancel")}

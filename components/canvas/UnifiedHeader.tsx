@@ -188,10 +188,11 @@ export const UnifiedHeader = memo(({ activeTab }: UnifiedHeaderProps) => {
               <Button
                 size="sm"
                 onClick={handleSave}
-                disabled={!dirty || logicModel.saving}
+                disabled={!dirty}
+                loading={logicModel.saving}
                 className="cursor-pointer"
               >
-                <Save className="mr-1 h-4 w-4" />
+                {!logicModel.saving && <Save className="mr-1 h-4 w-4" />}
                 {logicModel.saving ? tModel("saving") : tModel("save")}
               </Button>
             ) : (

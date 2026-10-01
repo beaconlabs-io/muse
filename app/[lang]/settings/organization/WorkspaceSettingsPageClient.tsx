@@ -146,6 +146,7 @@ function WorkspaceSettings({ organizationId, userId }: { organizationId: string;
               key={organization.name}
               name={organization.name}
               disabled={!canManage || rename.isPending}
+              saving={rename.isPending}
               onSave={(name) => rename.mutate(name)}
             />
             <div className="grid gap-1.5 border-t pt-5">
@@ -233,10 +234,12 @@ function WorkspaceSettings({ organizationId, userId }: { organizationId: string;
 function NameForm({
   name,
   disabled,
+  saving,
   onSave,
 }: {
   name: string;
   disabled: boolean;
+  saving: boolean;
   onSave: (name: string) => void;
 }) {
   const t = useTranslations("workspaceSettings");
@@ -261,7 +264,7 @@ function NameForm({
           onChange={(e) => setDraft(e.target.value)}
         />
         {dirty && (
-          <Button type="submit" disabled={disabled}>
+          <Button type="submit" disabled={disabled} loading={saving}>
             {t("save")}
           </Button>
         )}
