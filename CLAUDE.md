@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Backend Service
 
-AI processing (logic model generation, recipes, evidence search) lives in the separate
+AI processing (logic model generation, recipes) lives in the separate
 `muse-backend` service (Hono on Cloudflare Workers), not in this repository. Point the frontend at
 it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 
@@ -128,7 +128,7 @@ For detailed technical information, see:
 
 **Operations**
 
-- `docs/api-routes.md` - HTTP endpoints (workflow/stream, compact, evidence, IPFS, OG images)
+- `docs/api-routes.md` - HTTP endpoints (workflow/stream, recipe/stream, IPFS, OG images)
 - `docs/setup.md` - Local setup, environment variables grouped by concern
 - `docs/testing.md` - Vitest conventions, patterns (env stubbing, `it.each`, factories), CI integration
 - `docs/i18n.md` - next-intl wiring and agent output language interaction

@@ -26,12 +26,6 @@ export const MAX_CANVAS_SIZE = 5 * 1024 * 1024;
 /** Timeout for workflow execution in milliseconds (5 minutes) */
 export const WORKFLOW_TIMEOUT_MS = 300_000;
 
-/** Maximum number of chat messages accepted in a compact request */
-export const MAX_CHAT_HISTORY_LENGTH = 500;
-
-/** Maximum number of agent reasoning steps for evidence search */
-export const EVIDENCE_SEARCH_MAX_STEPS = 5;
-
 /**
  * Evidence Strength Levels (Maryland Scientific Methods Scale)
  * Single source of truth for strength-related constants.

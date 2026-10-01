@@ -109,6 +109,7 @@ export function HistorySheet({
                       size="sm"
                       variant="outline"
                       disabled={restore.isPending}
+                      loading={restore.isPending && restore.variables === v.versionNo}
                       onClick={() => requestRestore(v.versionNo)}
                     >
                       {t("restore")}

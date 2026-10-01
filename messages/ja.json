@@ -22,7 +22,8 @@
     "signInDescription": "Google または GitHub でログイン、またはアカウントを作成します。",
     "account": "アカウント",
     "organization": "組織",
-    "notifications": "通知"
+    "notifications": "通知",
+    "sessionExpired": "ログインの有効期限が切れました。もう一度ログインしてください。"
   },
   "hero": {
     "title": "MUSE",
@@ -100,7 +101,9 @@
     "fileNotStored": "ファイルはメモリ上で処理され、サーバーには保存されません。",
     "fileRequired": "ファイルを選択してください",
     "fileTypeInvalid": "対応していないファイル形式です。PDF・PNG・JPG・WebP を選択してください。",
-    "fileTooLarge": "ファイルサイズが大きすぎます。"
+    "fileTooLarge": "ファイルサイズが大きすぎます。",
+    "signInRequired": "AI による生成にはログインが必要です。",
+    "signInToGenerate": "ログインして生成"
   },
   "addNode": {
     "editTitle": "ロジックノードを編集",
@@ -498,7 +501,7 @@
       },
       "genModalSubmit": {
         "title": "生成する",
-        "content": "「生成」を押すと、AIがエビデンス付きのロジックモデルの下書きをキャンバス上に作成します。"
+        "content": "このボタンで生成を始めます。AIがエビデンス付きのロジックモデルの下書きをキャンバス上に作成します。生成にはログインが必要です。"
       },
       "addNode": {
         "title": "カードを追加",
