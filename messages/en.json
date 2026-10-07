@@ -5,7 +5,9 @@
     "logicModels": "Logic models",
     "organization": "Organization",
     "organizationSettings": "Settings",
-    "members": "Members"
+    "members": "Members",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy"
   },
   "orgSwitcher": {
     "label": "Workspace",

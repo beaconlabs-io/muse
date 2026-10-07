@@ -123,6 +123,14 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="group-data-[collapsible=icon]:hidden">
+        <nav className="text-muted-foreground flex gap-3 px-2 text-xs">
+          <Link href="/terms" onClick={closeMobile} className="hover:underline">
+            {t("terms")}
+          </Link>
+          <Link href="/privacy" onClick={closeMobile} className="hover:underline">
+            {t("privacy")}
+          </Link>
+        </nav>
         <LanguageSwitcher />
         <AuthMenu />
       </SidebarFooter>

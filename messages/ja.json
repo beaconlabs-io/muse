@@ -5,7 +5,9 @@
     "logicModels": "ロジックモデル",
     "organization": "組織",
     "organizationSettings": "設定",
-    "members": "メンバー"
+    "members": "メンバー",
+    "terms": "利用規約",
+    "privacy": "プライバシーポリシー"
   },
   "orgSwitcher": {
     "label": "ワークスペース",
