@@ -236,10 +236,10 @@ Notes:
 Two Workers, both on the `beaconlabs-admin` account (`account_id` is pinned in
 `wrangler.jsonc` so a deploy can never land on a personal account):
 
-| Branch | wrangler env | Worker                  | Served at                | Triggered by            |
-| ------ | ------------ | ----------------------- | ------------------------ | ----------------------- |
-| `dev`  | `staging`    | `muse-frontend-staging` | `dev.muse.beaconlabs.io` | a PR merged into `dev`  |
-| `main` | `production` | `muse-frontend-prod`    | `muse.beaconlabs.io`     | a PR merged into `main` |
+| Branch | wrangler env | Worker                  | Served at            | Triggered by            |
+| ------ | ------------ | ----------------------- | -------------------- | ----------------------- |
+| `dev`  | `staging`    | `muse-frontend-staging` | `dev.musecanvas.app` | a PR merged into `dev`  |
+| `main` | `production` | `muse-frontend-prod`    | `muse.beaconlabs.io` | a PR merged into `main` |
 
 Both hostnames are **custom domains** declared in `wrangler.jsonc`
 (`env.*.routes`), which makes Cloudflare own their DNS records — a proxied
@@ -254,7 +254,7 @@ Two things to know before touching either hostname:
   a conflict fails the merge rather than prompting.
 - Declaring any route flips wrangler's workers.dev default to **off**. Staging
   needs it back on (`workers_dev: true`), because the PR preview URLs live on
-  that same subdomain; production leaves it off, so `muse.beaconlabs.io` is its
+  that same subdomain; production leaves it off, so `musecanvas.app` is its
   only public hostname — and the CI smoke test runs against that hostname, not
   a workers.dev one.
 
@@ -350,7 +350,7 @@ what a missing production override looks like.
 #### Known gap for PR previews
 
 The backend allows CORS origins by exact match (`ALLOWED_ORIGINS`), and its
-staging list holds `https://dev.muse.beaconlabs.io`. Staging answers on exactly
+staging list holds `https://dev.musecanvas.app`. Staging answers on exactly
 that origin now, so its backend calls pass. **PR previews still do not**: their
 URLs are per-PR workers.dev hostnames that no exact-match list can cover, so a
 preview renders and routes correctly while every backend call from the browser

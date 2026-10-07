@@ -25,7 +25,7 @@ it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 - `bun run build:worker` - Build the app into a Worker with `@opennextjs/cloudflare` (output: `.open-next/`)
 - `bun run preview` - Build and run the Worker locally via `wrangler dev`
 - `bun run deploy:staging` / `bun run deploy:production` - Break-glass manual deploy. Normally CI deploys; see `docs/setup.md`
-- Deploys are merge-driven: `dev` → `muse-frontend-staging` (`dev.muse.beaconlabs.io`), `main` → `muse-frontend-prod` (`muse.beaconlabs.io`), PRs upload preview versions (`.github/workflows/deploy-worker.yml`, `quality.yml`)
+- Deploys are merge-driven: `dev` → `muse-frontend-staging` (`dev.musecanvas.app`), `main` → `muse-frontend-prod` (`musecanvas.app`), PRs upload preview versions (`.github/workflows/deploy-worker.yml`, `quality.yml`)
 - Both hostnames are Cloudflare-managed custom domains declared in `wrangler.jsonc`; roll a bad release back with `bunx wrangler rollback --env <env>`, see `docs/setup.md`
 - Config: `open-next.config.ts` (no caching bindings, but overrides the incremental cache with `staticAssetsIncrementalCache`) + `wrangler.jsonc`; see `docs/setup.md`
 - Always deploy through `opennextjs-cloudflare`, never plain `wrangler deploy` — the latter skips the prerender cache and 404s every evidence page
@@ -132,3 +132,13 @@ For detailed technical information, see:
 - `docs/setup.md` - Local setup, environment variables grouped by concern
 - `docs/testing.md` - Vitest conventions, patterns (env stubbing, `it.each`, factories), CI integration
 - `docs/i18n.md` - next-intl wiring and agent output language interaction
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

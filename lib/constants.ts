@@ -3,8 +3,8 @@
  */
 export const BASE_URL =
   process.env.NEXT_PUBLIC_ENV === "production"
-    ? "https://muse.beaconlabs.io"
-    : "https://dev.muse.beaconlabs.io";
+    ? "https://musecanvas.app"
+    : "https://dev.musecanvas.app";
 
 /**
  * Evidence Search Configuration Constants
