@@ -239,7 +239,7 @@ Two Workers, both on the `beaconlabs-admin` account (`account_id` is pinned in
 | Branch | wrangler env | Worker                  | Served at            | Triggered by            |
 | ------ | ------------ | ----------------------- | -------------------- | ----------------------- |
 | `dev`  | `staging`    | `muse-frontend-staging` | `dev.musecanvas.app` | a PR merged into `dev`  |
-| `main` | `production` | `muse-frontend-prod`    | `muse.beaconlabs.io` | a PR merged into `main` |
+| `main` | `production` | `muse-frontend-prod`    | `musecanvas.app`     | a PR merged into `main` |
 
 Both hostnames are **custom domains** declared in `wrangler.jsonc`
 (`env.*.routes`), which makes Cloudflare own their DNS records — a proxied
