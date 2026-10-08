@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,7 @@ export function SignInDialog({
   onOpenChange?: (open: boolean) => void;
 }) {
   const t = useTranslations("auth");
+  const locale = useLocale();
 
   const signIn = async (provider: Provider) => {
     const failed = (code: string) => toast.error(t("signInFailed", { code }));
@@ -68,6 +69,20 @@ export function SignInDialog({
             {t("signInWithGithub")}
           </Button>
         </div>
+        <p className="text-muted-foreground text-center text-xs">
+          {t.rich("signInConsent", {
+            terms: (chunks) => (
+              <a href={`/${locale}/terms`} className="underline" target="_blank">
+                {chunks}
+              </a>
+            ),
+            privacy: (chunks) => (
+              <a href={`/${locale}/privacy`} className="underline" target="_blank">
+                {chunks}
+              </a>
+            ),
+          })}
+        </p>
       </DialogContent>
     </Dialog>
   );

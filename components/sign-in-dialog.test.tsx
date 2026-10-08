@@ -41,6 +41,18 @@ describe("SignInDialog", () => {
     });
   });
 
+  it("links the terms and privacy policy for the current locale", async () => {
+    openDialog();
+    expect(await screen.findByRole("link", { name: "Terms of Service" })).toHaveAttribute(
+      "href",
+      "/en/terms",
+    );
+    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
+      "href",
+      "/en/privacy",
+    );
+  });
+
   it("reports a request the backend rejected", async () => {
     signIn.social.mockResolvedValue({
       data: null,
