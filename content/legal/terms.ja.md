@@ -114,4 +114,4 @@ IPFS は分散型の保存方式であり、当法人が管理する保存やリ
 
 - 一般社団法人Beacon Labs
 - メール：info@beaconlabs.io
-- 運営者情報：お問い合わせページ
+- 運営者情報：[お問い合わせページ](https://beaconlabs.io/contact)
