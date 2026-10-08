@@ -22,6 +22,7 @@
     "signIn": "ログイン",
     "signInTitle": "MUSE にログイン",
     "signInDescription": "Google または GitHub でログイン、またはアカウントを作成します。",
+    "signInConsent": "ログインすることで、<terms>利用規約</terms>と<privacy>プライバシーポリシー</privacy>に同意したものとみなされます。",
     "account": "アカウント",
     "organization": "組織",
     "notifications": "通知",
