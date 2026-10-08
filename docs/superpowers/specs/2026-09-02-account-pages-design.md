@@ -96,6 +96,10 @@ shadcn の TeamSwitcher パターンを `SidebarHeader` に置く。
 
 フッターの NavUser メニューは Account と Sign out の 2 項目にする。
 組織の設定はサイドバー本体から辿れるので重複させない。
+
+**Revision 2026-10-08**: Organization は Link として残す（Account、Organization、Sign out の 3 項目）。
+サイドバーを折りたたんでいるときの入口を 1 つ確保するためで、段階 3c の実装時に決めた
+（backend `docs/superpowers/specs/2026-10-08-account-page-and-deletion-design.md`）。
 既存の disabled 項目（アカウント、組織、通知）は段階 3c で置き換える。
 
 ## Access control
@@ -133,7 +137,7 @@ shadcn の TeamSwitcher パターンを `SidebarHeader` に置く。
 | `nav.members`              | Members      | メンバー       | 4    |
 | `auth.account`             | Account      | アカウント     | 3c   |
 
-`auth.organization` と `auth.notifications` は段階 3c で削除する。
+`auth.notifications` は段階 3c で削除する。`auth.organization` は Revision 2026-10-08 で残すことにした。
 
 ## Tests
 
