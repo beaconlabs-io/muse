@@ -29,6 +29,7 @@ it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 - Both hostnames are Cloudflare-managed custom domains declared in `wrangler.jsonc`; roll a bad release back with `bunx wrangler rollback --env <env>`, see `docs/setup.md`
 - Config: `open-next.config.ts` (no caching bindings, but overrides the incremental cache with `staticAssetsIncrementalCache`) + `wrangler.jsonc`; see `docs/setup.md`
 - Always deploy through `opennextjs-cloudflare`, never plain `wrangler deploy` — the latter skips the prerender cache and 404s every evidence page
+- Bump `next` and `@opennextjs/cloudflare` together: each OpenNext patch pins a Next floor, and a Next bump alone 404s every prerendered page on the deployed Worker (`x-nextjs-prerender: 1`, cache MISS) while `bun run build` stays green — `bun run preview` is the only local check that catches it
 - The Worker has no `vars` and no secrets: everything the app reads is a `NEXT_PUBLIC_*` value inlined at build time, so each environment needs its own build
 - The build inlines every variable from the `.env*` files into the uploaded Worker, so keep `.env*` to `NEXT_PUBLIC_*` values only — this app has no server-side values (those live in `muse-backend`); see `docs/setup.md`
 
