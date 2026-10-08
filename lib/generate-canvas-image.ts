@@ -86,7 +86,7 @@ export async function composeExportImage({
   ctx.fillStyle = "#64748b";
   ctx.textAlign = "right";
   ctx.fillText(
-    "muse.beaconlabs.io",
+    "musecanvas.app",
     outputWidth - EXPORT_PADDING_X,
     EXPORT_HEADER_HEIGHT + sourceImg.height + EXPORT_FOOTER_HEIGHT / 2,
   );
