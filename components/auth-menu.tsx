@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Building2, ChevronsUpDown, LogIn, LogOut, UserRound } from "lucide-react";
+import { Building2, ChevronsUpDown, LogIn, LogOut, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SidebarIdentitySkeleton } from "@/components/sidebar-identity-skeleton";
 import { SignInDialog } from "@/components/sign-in-dialog";
@@ -20,6 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Link } from "@/i18n/routing";
 import { authClient } from "@/lib/auth-client";
 
 function initials(name: string, fallback: string) {
@@ -32,7 +33,8 @@ function initials(name: string, fallback: string) {
 
 export function AuthMenu() {
   const t = useTranslations("auth");
-  const { isMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const closeMobile = () => setOpenMobile(false);
   const { data: session, isPending } = authClient.useSession();
 
   // 未ログインでもここに描画されるので、ログインボタンが出るまでの一瞬もスケルトンになる
@@ -91,19 +93,18 @@ export function AuthMenu() {
               {identity}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* Disabled until the pages exist; swap to <Link> items then. */}
             <DropdownMenuGroup>
-              <DropdownMenuItem disabled>
-                <UserRound />
-                {t("account")}
+              <DropdownMenuItem asChild>
+                <Link href="/settings/account" onClick={closeMobile}>
+                  <UserRound />
+                  {t("account")}
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <Building2 />
-                {t("organization")}
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <Bell />
-                {t("notifications")}
+              <DropdownMenuItem asChild>
+                <Link href="/settings/organization" onClick={closeMobile}>
+                  <Building2 />
+                  {t("organization")}
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

@@ -25,7 +25,6 @@
     "signInConsent": "ログインすることで、<terms>利用規約</terms>と<privacy>プライバシーポリシー</privacy>に同意したものとみなされます。",
     "account": "アカウント",
     "organization": "組織",
-    "notifications": "通知",
     "sessionExpired": "ログインの有効期限が切れました。もう一度ログインしてください。"
   },
   "hero": {
@@ -222,6 +221,32 @@
     "deleteTitle": "{name} を削除しますか？",
     "deleted": "ワークスペースを削除しました",
     "deleteFailed": "削除に失敗しました"
+  },
+  "accountSettings": {
+    "title": "アカウント",
+    "description": "プロフィールとログイン方法",
+    "signInToView": "アカウントを見るにはログインしてください",
+    "profile": "プロフィール",
+    "profileDescription": "ワークスペースのメンバーに表示される情報",
+    "name": "名前",
+    "email": "メールアドレス",
+    "save": "保存",
+    "saved": "保存しました",
+    "saveFailed": "保存に失敗しました",
+    "connected": "ログイン方法",
+    "connectedDescription": "このアカウントに連携されたプロバイダ",
+    "loadAccountsFailed": "ログイン方法の読み込みに失敗しました",
+    "linked": "連携済み",
+    "notLinked": "未連携",
+    "dangerZone": "危険な操作",
+    "dangerZoneDescription": "元に戻せません。",
+    "delete": "アカウントを削除",
+    "deleteDescription": "個人用ワークスペースと中のロジックモデルを削除します。チームのワークスペースの共有済みモデルはオーナーに引き継がれ、それ以外は削除されます。",
+    "deleteTitle": "アカウントを削除しますか？",
+    "deleted": "アカウントを削除しました",
+    "deleteFailed": "アカウントの削除に失敗しました",
+    "deleteSessionExpired": "アカウントを削除するにはログインし直してください。",
+    "deleteSoleOwner": "{workspaces} の唯一のオーナーです。先に他のオーナーを追加するか削除してください。"
   },
   "createWorkspace": {
     "title": "ワークスペースを作成",
