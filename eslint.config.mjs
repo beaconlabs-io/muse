@@ -14,6 +14,7 @@ export default [
       ".open-next/**",
       ".wrangler/**",
       "public/**",
+      ".claude/**",
       "**/components/ui/**",
     ],
   },

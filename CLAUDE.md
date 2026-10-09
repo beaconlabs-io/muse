@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Backend Service
 
-AI processing (logic model generation, recipes, evidence search) lives in the separate
+AI processing (logic model generation, recipes) lives in the separate
 `muse-backend` service (Hono on Cloudflare Workers), not in this repository. Point the frontend at
 it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 
@@ -25,10 +25,11 @@ it with `NEXT_PUBLIC_API_BASE_URL`; see `docs/api-routes.md`.
 - `bun run build:worker` - Build the app into a Worker with `@opennextjs/cloudflare` (output: `.open-next/`)
 - `bun run preview` - Build and run the Worker locally via `wrangler dev`
 - `bun run deploy:staging` / `bun run deploy:production` - Break-glass manual deploy. Normally CI deploys; see `docs/setup.md`
-- Deploys are merge-driven: `dev` → `muse-frontend-staging` (`dev.muse.beaconlabs.io`), `main` → `muse-frontend-prod` (`muse.beaconlabs.io`), PRs upload preview versions (`.github/workflows/deploy-worker.yml`, `quality.yml`)
+- Deploys are merge-driven: `dev` → `muse-frontend-staging` (`dev.musecanvas.app`), `main` → `muse-frontend-prod` (`musecanvas.app`), PRs upload preview versions (`.github/workflows/deploy-worker.yml`, `quality.yml`)
 - Both hostnames are Cloudflare-managed custom domains declared in `wrangler.jsonc`; roll a bad release back with `bunx wrangler rollback --env <env>`, see `docs/setup.md`
 - Config: `open-next.config.ts` (no caching bindings, but overrides the incremental cache with `staticAssetsIncrementalCache`) + `wrangler.jsonc`; see `docs/setup.md`
 - Always deploy through `opennextjs-cloudflare`, never plain `wrangler deploy` — the latter skips the prerender cache and 404s every evidence page
+- Bump `next` and `@opennextjs/cloudflare` together: each OpenNext patch pins a Next floor, and a Next bump alone 404s every prerendered page on the deployed Worker (`x-nextjs-prerender: 1`, cache MISS) while `bun run build` stays green — `bun run preview` is the only local check that catches it
 - The Worker has no `vars` and no secrets: everything the app reads is a `NEXT_PUBLIC_*` value inlined at build time, so each environment needs its own build
 - The build inlines every variable from the `.env*` files into the uploaded Worker, so keep `.env*` to `NEXT_PUBLIC_*` values only — this app has no server-side values (those live in `muse-backend`); see `docs/setup.md`
 
@@ -63,6 +64,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `app/` - Next.js App Router pages and API routes
 - `app/[lang]/` - Locale-routed pages (en, ja) via next-intl
 - `app/[lang]/canvas/` - Interactive logic model builder with React Flow
+- `app/[lang]/logic-models/` - Workspace list of saved logic models
 - `app/[lang]/evidence/` - Evidence browsing and detail pages
 - `app/[lang]/effects/` - Effects/outcomes listing page
 - `app/[lang]/search/` - Evidence search and filtering
@@ -74,7 +76,7 @@ Muse is a Next.js 16 application for evidence-based impact planning using Theory
 - `components/tooltip/` - Tooltip components
 - `components/ui/` - shadcn/ui primitives (auto-generated, avoid manual edits)
 - `hooks/` - Custom React hooks including blockchain integration and SSE workflow streaming (`useWorkflowStream`)
-- `lib/` - Shared utilities, configuration, and the backend API client (`lib/api-client.ts`)
+- `lib/` - Shared utilities, configuration, and the backend API client (`lib/api-client.ts`, `lib/logic-model-api.ts`)
 - `types/` - TypeScript definitions for Evidence, Attestation, graph structures
 - `utils/` - Configuration and helper functions
 - `tests/` - Vitest global setup (e.g., `@testing-library/jest-dom` extensions)
@@ -127,7 +129,17 @@ For detailed technical information, see:
 
 **Operations**
 
-- `docs/api-routes.md` - HTTP endpoints (workflow/stream, compact, evidence, IPFS, OG images)
+- `docs/api-routes.md` - HTTP endpoints (workflow/stream, recipe/stream, IPFS, OG images)
 - `docs/setup.md` - Local setup, environment variables grouped by concern
 - `docs/testing.md` - Vitest conventions, patterns (env stubbing, `it.each`, factories), CI integration
 - `docs/i18n.md` - next-intl wiring and agent output language interaction
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

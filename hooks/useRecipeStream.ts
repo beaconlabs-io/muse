@@ -16,6 +16,8 @@ interface RecipeStreamState {
   errorCategory: ErrorCategory | null;
   failedStepId: string | null;
   recipe: Recipe | null;
+  /** The backend answered 401: the session is missing or expired (spec §3.3). */
+  unauthorized: boolean;
 }
 
 const initialState: RecipeStreamState = {
@@ -25,6 +27,7 @@ const initialState: RecipeStreamState = {
   errorCategory: null,
   failedStepId: null,
   recipe: null,
+  unauthorized: false,
 };
 
 export function useRecipeStream() {
@@ -65,9 +68,20 @@ export function useRecipeStream() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
           signal: abortController.signal,
+          credentials: "include",
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            // requireWorkspace rejected the session before the stream opened.
+            setState((prev) => ({
+              ...prev,
+              status: "error",
+              error: "Unauthorized",
+              unauthorized: true,
+            }));
+            return;
+          }
           const errorBody = await response.json().catch(() => ({}));
           const errorMessage = (errorBody as Record<string, string>).error;
           // The API route's in-flight de-dup returns 429 for the *same* input

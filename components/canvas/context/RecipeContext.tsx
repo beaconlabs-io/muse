@@ -13,11 +13,13 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { CardNodeData } from "@/components/canvas/CardNode";
+import { SignInDialog } from "@/components/sign-in-dialog";
 import type { ErrorCategory } from "@/lib/workflow-errors";
 import type { Metric, Recipe, RecipeLocale } from "@/types";
 import type { Node } from "@xyflow/react";
 import { useCanvasImage } from "@/hooks/useCanvasImage";
 import { useRecipeStream } from "@/hooks/useRecipeStream";
+import { authClient } from "@/lib/auth-client";
 import { clearRecipeState, loadRecipeState, saveRecipeState } from "@/lib/recipe/storage";
 import { collectMetricContexts, deriveLogicModelTitle } from "@/lib/recipe-helpers";
 
@@ -36,6 +38,8 @@ export interface RecipeContextValue {
   error: string | null;
   errorCategory: ErrorCategory | null;
   failedStepId: string | null;
+  /** The last run was rejected with 401: the session expired (spec §3.3). */
+  unauthorized: boolean;
   downloadingHtml: boolean;
 
   triggerGeneration: (args: TriggerGenerationArgs) => void;
@@ -63,6 +67,16 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
   const [waitingForLogicModel, setWaitingFlag] = useState(false);
   const [stale, setStale] = useState(false);
   const [downloadingHtml, setDownloadingHtml] = useState(false);
+
+  // Recipe generation needs a session (spec §3.2). Every entry point (the
+  // recipe tab's generate / regenerate / retry and the header menu's
+  // regenerate) goes through triggerGeneration, so this is the one gate.
+  const {
+    data: session,
+    isPending: sessionPending,
+    refetch: refetchSession,
+  } = authClient.useSession();
+  const [signInOpen, setSignInOpen] = useState(false);
 
   const phase: RecipePhase = useMemo(() => {
     if (stream.status === "error") return "error";
@@ -98,6 +112,12 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
   const triggerGeneration = useCallback(
     ({ nodes, cardMetrics }: TriggerGenerationArgs) => {
       if (stream.status === "running") return;
+      if (sessionPending) return;
+      if (!session) {
+        setWaitingFlag(false);
+        setSignInOpen(true);
+        return;
+      }
       const metrics = collectMetricContexts(nodes, cardMetrics);
       if (metrics.length === 0) {
         toast.error(t("noMetricsBody"));
@@ -109,7 +129,7 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
       setStale(false);
       void stream.start({ logicModelTitle: title, metrics, locale: recipeLocale });
     },
-    [recipeLocale, stream, t],
+    [recipeLocale, session, sessionPending, stream, t],
   );
 
   const downloadHtml = useCallback(
@@ -117,7 +137,7 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
       if (!stream.recipe) return;
       setDownloadingHtml(true);
       try {
-        const imageResult = await generateImage(nodes, "export").catch(() => null);
+        const imageResult = await generateImage(nodes).catch(() => null);
         const { generateRecipeHtml, downloadRecipeHtml } =
           await import("@/lib/generate-recipe-html");
         const html = generateRecipeHtml({
@@ -150,6 +170,16 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
     prevStatusRef.current = stream.status;
   }, [stream.status]);
 
+  // A 401 means the session expired while the page was open; refetch once so
+  // the next trigger opens the sign-in dialog instead of hitting the stream.
+  const prevUnauthorizedRef = useRef(false);
+  useEffect(() => {
+    if (stream.unauthorized && !prevUnauthorizedRef.current) {
+      void refetchSession();
+    }
+    prevUnauthorizedRef.current = stream.unauthorized;
+  }, [stream.unauthorized, refetchSession]);
+
   const hasHydrated = useRef(false);
   useEffect(() => {
     if (hasHydrated.current) return;
@@ -177,6 +207,7 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
       error: stream.error,
       errorCategory: stream.errorCategory,
       failedStepId: stream.failedStepId,
+      unauthorized: stream.unauthorized,
       downloadingHtml,
       triggerGeneration,
       setWaitingForLogicModel,
@@ -193,6 +224,7 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
       stream.error,
       stream.errorCategory,
       stream.failedStepId,
+      stream.unauthorized,
       downloadingHtml,
       triggerGeneration,
       setWaitingForLogicModel,
@@ -203,7 +235,12 @@ export function RecipeProvider({ children }: RecipeProviderProps) {
     ],
   );
 
-  return <RecipeContext.Provider value={value}>{children}</RecipeContext.Provider>;
+  return (
+    <RecipeContext.Provider value={value}>
+      {children}
+      <SignInDialog open={signInOpen} onOpenChange={setSignInOpen} />
+    </RecipeContext.Provider>
+  );
 }
 
 export function useRecipe(): RecipeContextValue {

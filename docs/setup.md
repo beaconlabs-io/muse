@@ -6,8 +6,8 @@ repo root for the authoritative variable list.
 ## Prerequisites
 
 - Node.js 20+ and [Bun](https://bun.sh/) (package manager + runtime for dev/build)
-- A reachable `muse-backend` service for logic model generation, recipes,
-  evidence search and IPFS uploads (see [Backend service](#backend-service));
+- A reachable `muse-backend` service for logic model generation, recipes
+  and IPFS uploads (see [Backend service](#backend-service));
   optional for UI-only work
 
 ## Quickstart
@@ -43,7 +43,7 @@ in parentheses.
 ### Backend service
 
 - `NEXT_PUBLIC_API_BASE_URL` — base URL of the `muse-backend` service that
-  serves logic model generation, recipes, evidence search and IPFS uploads.
+  serves logic model generation, recipes and IPFS uploads.
   Unset means same-origin, which no longer resolves: those routes were
   removed from this app
 
@@ -236,10 +236,10 @@ Notes:
 Two Workers, both on the `beaconlabs-admin` account (`account_id` is pinned in
 `wrangler.jsonc` so a deploy can never land on a personal account):
 
-| Branch | wrangler env | Worker                  | Served at                | Triggered by            |
-| ------ | ------------ | ----------------------- | ------------------------ | ----------------------- |
-| `dev`  | `staging`    | `muse-frontend-staging` | `dev.muse.beaconlabs.io` | a PR merged into `dev`  |
-| `main` | `production` | `muse-frontend-prod`    | `muse.beaconlabs.io`     | a PR merged into `main` |
+| Branch | wrangler env | Worker                  | Served at            | Triggered by            |
+| ------ | ------------ | ----------------------- | -------------------- | ----------------------- |
+| `dev`  | `staging`    | `muse-frontend-staging` | `dev.musecanvas.app` | a PR merged into `dev`  |
+| `main` | `production` | `muse-frontend-prod`    | `musecanvas.app`     | a PR merged into `main` |
 
 Both hostnames are **custom domains** declared in `wrangler.jsonc`
 (`env.*.routes`), which makes Cloudflare own their DNS records — a proxied
@@ -254,7 +254,7 @@ Two things to know before touching either hostname:
   a conflict fails the merge rather than prompting.
 - Declaring any route flips wrangler's workers.dev default to **off**. Staging
   needs it back on (`workers_dev: true`), because the PR preview URLs live on
-  that same subdomain; production leaves it off, so `muse.beaconlabs.io` is its
+  that same subdomain; production leaves it off, so `musecanvas.app` is its
   only public hostname — and the CI smoke test runs against that hostname, not
   a workers.dev one.
 
@@ -350,7 +350,7 @@ what a missing production override looks like.
 #### Known gap for PR previews
 
 The backend allows CORS origins by exact match (`ALLOWED_ORIGINS`), and its
-staging list holds `https://dev.muse.beaconlabs.io`. Staging answers on exactly
+staging list holds `https://dev.musecanvas.app`. Staging answers on exactly
 that origin now, so its backend calls pass. **PR previews still do not**: their
 URLs are per-PR workers.dev hostnames that no exact-match list can cover, so a
 preview renders and routes correctly while every backend call from the browser
@@ -365,12 +365,15 @@ interact.
 
 ## Troubleshooting
 
-- **404 on generation, recipe, evidence search or IPFS upload** —
+- **404 on generation, recipe or IPFS upload** —
   `NEXT_PUBLIC_API_BASE_URL` was unset at build time, so the app is calling
   same-origin routes that live in the backend now. Rebuild with the variable
   set; changing it at runtime has no effect.
-- **401 from the backend** — `BOT_API_KEY` is set on the backend but the
-  caller did not send the `x-api-key` header.
+- **401 from the generation streams** — the request carried no valid
+  session. Sign in again. The app shows this as an expired session; if it
+  happens right after signing in, check that the app and
+  `NEXT_PUBLIC_API_BASE_URL` share a registrable domain, since the session
+  cookie is `SameSite=Lax`.
 - **Workflow times out after 5 minutes** — raise `WORKFLOW_TIMEOUT_MS` in
   `lib/constants.ts` if you are adding longer-running steps. The client abort
   is the only limit now; Workers imposes no wall-clock cap.

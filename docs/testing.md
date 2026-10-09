@@ -83,7 +83,7 @@ import { describe, expect, it, vi } from "vitest";
 it("returns the path unchanged when NEXT_PUBLIC_API_BASE_URL is unset", () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "");
 
-  expect(apiUrl("/api/compact")).toBe("/api/compact");
+  expect(apiUrl("/api/recipe/stream")).toBe("/api/recipe/stream");
 });
 ```
 
@@ -137,10 +137,8 @@ Construct a `NextRequest` directly; no test server needed.
 ```ts
 import { NextRequest } from "next/server";
 
-const createRequest = (apiKey?: string) =>
-  new NextRequest("https://muse.test/api/compact", {
-    headers: apiKey ? { "x-api-key": apiKey } : undefined,
-  });
+const createRequest = (id: string) =>
+  new NextRequest(`https://muse.test/api/og/evidence?id=${encodeURIComponent(id)}`);
 ```
 
 ### Response shape assertions
