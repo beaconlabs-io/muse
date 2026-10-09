@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, type ComponentProps } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -19,6 +19,10 @@ vi.mock("@/lib/auth-client", () => ({
 }));
 
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => useIsMobile() }));
+
+vi.mock("@/i18n/routing", () => ({
+  Link: ({ href, ...props }: ComponentProps<"a">) => <a href={href} {...props} />,
+}));
 
 beforeEach(() => {
   // SidebarProvider の useIsMobile は window.matchMedia を呼ぶが jsdom にはない。
@@ -103,6 +107,21 @@ describe("AuthMenu", () => {
     });
     renderMenu();
     expect(screen.getByRole("button")).toHaveTextContent("A");
+  });
+
+  it("links to the account and organization pages", () => {
+    useSession.mockReturnValue(ada);
+    renderMenu();
+    fireEvent.keyDown(screen.getByRole("button", { name: /Ada Lovelace/ }), { key: "Enter" });
+    expect(screen.getByRole("menuitem", { name: "Account" })).toHaveAttribute(
+      "href",
+      "/settings/account",
+    );
+    expect(screen.getByRole("menuitem", { name: "Organization" })).toHaveAttribute(
+      "href",
+      "/settings/organization",
+    );
+    expect(screen.queryByRole("menuitem", { name: "Notifications" })).toBeNull();
   });
 
   it("signs out from the account menu", () => {

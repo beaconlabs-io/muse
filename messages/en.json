@@ -25,7 +25,6 @@
     "signInConsent": "By signing in, you agree to the <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.",
     "account": "Account",
     "organization": "Organization",
-    "notifications": "Notifications",
     "sessionExpired": "Your session has expired. Please sign in again."
   },
   "hero": {
@@ -222,6 +221,32 @@
     "deleteTitle": "Delete {name}?",
     "deleted": "Workspace deleted",
     "deleteFailed": "Failed to delete"
+  },
+  "accountSettings": {
+    "title": "Account",
+    "description": "Your profile and sign-in methods",
+    "signInToView": "Sign in to see your account",
+    "profile": "Profile",
+    "profileDescription": "How you appear to workspace members.",
+    "name": "Name",
+    "email": "Email",
+    "save": "Save",
+    "saved": "Saved",
+    "saveFailed": "Failed to save",
+    "connected": "Sign-in methods",
+    "connectedDescription": "Providers linked to this account.",
+    "loadAccountsFailed": "Failed to load sign-in methods",
+    "linked": "Linked",
+    "notLinked": "Not linked",
+    "dangerZone": "Danger zone",
+    "dangerZoneDescription": "This cannot be undone.",
+    "delete": "Delete account",
+    "deleteDescription": "Deletes your personal workspace and its logic models. Shared models in team workspaces pass to an owner; the rest are deleted.",
+    "deleteTitle": "Delete your account?",
+    "deleted": "Account deleted",
+    "deleteFailed": "Failed to delete the account",
+    "deleteSessionExpired": "Sign in again to delete your account.",
+    "deleteSoleOwner": "You are the only owner of {workspaces}. Add another owner or delete it first."
   },
   "createWorkspace": {
     "title": "Create a workspace",

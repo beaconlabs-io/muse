@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { NameForm } from "@/components/name-form";
 import { SettingsSection } from "@/components/settings-section";
 import { SignInPrompt } from "@/components/sign-in-prompt";
 import {
@@ -18,7 +19,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
@@ -144,7 +144,10 @@ function WorkspaceSettings({ organizationId, userId }: { organizationId: string;
           <SettingsSection title={t("general")} description={t("generalDescription")}>
             <NameForm
               key={organization.name}
+              id="workspace-name"
               name={organization.name}
+              label={t("name")}
+              saveLabel={t("save")}
               disabled={!canManage || rename.isPending}
               saving={rename.isPending}
               onSave={(name) => rename.mutate(name)}
@@ -227,48 +230,5 @@ function WorkspaceSettings({ organizationId, userId }: { organizationId: string;
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
-}
-
-/** 変更があるときだけ Save を出す。key={name} で保存後の値に追従させる */
-function NameForm({
-  name,
-  disabled,
-  saving,
-  onSave,
-}: {
-  name: string;
-  disabled: boolean;
-  saving: boolean;
-  onSave: (name: string) => void;
-}) {
-  const t = useTranslations("workspaceSettings");
-  const [draft, setDraft] = useState(name);
-  const trimmed = draft.trim();
-  const dirty = trimmed !== name && trimmed.length > 0;
-  return (
-    <form
-      className="grid gap-1.5"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (dirty) onSave(trimmed);
-      }}
-    >
-      <Label htmlFor="workspace-name">{t("name")}</Label>
-      <div className="flex gap-2">
-        <Input
-          id="workspace-name"
-          value={draft}
-          disabled={disabled}
-          maxLength={100}
-          onChange={(e) => setDraft(e.target.value)}
-        />
-        {dirty && (
-          <Button type="submit" disabled={disabled} loading={saving}>
-            {t("save")}
-          </Button>
-        )}
-      </div>
-    </form>
   );
 }
