@@ -9,6 +9,7 @@ import { collectMetricContexts, countRecipeTargetCards } from "@/lib/recipe-help
 
 export function RecipePanel() {
   const t = useTranslations("recipe");
+  const tAuth = useTranslations("auth");
   const { nodes, cardMetrics } = useCanvasState();
   const recipe = useRecipe();
 
@@ -50,7 +51,9 @@ export function RecipePanel() {
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <div className="space-y-1">
               <p className="font-medium">{t("errorTitle")}</p>
-              <p className="text-xs">{recipe.error || t("errorBody")}</p>
+              <p className="text-xs">
+                {recipe.unauthorized ? tAuth("sessionExpired") : recipe.error || t("errorBody")}
+              </p>
             </div>
           </div>
         </div>

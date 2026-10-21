@@ -215,7 +215,7 @@ jobs:
           # Reduce whichever shape wrangler reported to a bare origin. A
           # workers.dev target arrives as a full URL; a custom-domain target
           # arrives as a hostname wrangler annotates in place —
-          # "muse.beaconlabs.io (custom domain)" — and the annotation has to go,
+          # "musecanvas.app (custom domain)" — and the annotation has to go,
           # or every curl below dies on a malformed URL (#300).
           host=${url#*://}
           host=${host%%/*}

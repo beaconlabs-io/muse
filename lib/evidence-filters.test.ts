@@ -76,7 +76,9 @@ describe("filterEvidence", () => {
       createEvidence({ evidence_id: "missing-results", results: undefined }),
       createEvidence({
         evidence_id: "missing-outcome",
-        results: [{ intervention: "training", outcome_variable: "employment", outcome: undefined }],
+        results: [
+          { intervention: "training", outcome_variable: "employment" },
+        ] as Evidence["results"],
       }),
       createEvidence({ evidence_id: "missing-strength", strength: undefined }),
     ];

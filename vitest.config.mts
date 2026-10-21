@@ -20,6 +20,7 @@ export default defineConfig({
       "**/dist/**",
       "**/coverage/**",
       "**/components/ui/**",
+      "**/.claude/**",
     ],
     coverage: {
       provider: "v8",

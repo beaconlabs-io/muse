@@ -1,6 +1,6 @@
 /**
  * Base URL of the muse-backend service, which serves logic model generation,
- * recipes, evidence search and IPFS uploads.
+ * recipes and IPFS uploads.
  *
  * NEXT_PUBLIC_API_BASE_URL is required: the routes it points at were removed
  * from this app, so leaving it unset falls back to same-origin and every call

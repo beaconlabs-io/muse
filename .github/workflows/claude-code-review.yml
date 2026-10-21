@@ -2,53 +2,191 @@ name: Claude Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+    types: [opened, synchronize, ready_for_review]
+
+# 連続 push で run が並走すると、遅い run が古いスナップショットのレビューで
+# 最新のコメントを --edit-last で上書きしてしまうため、同一 PR では最新 run だけを走らせる
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   claude-review:
-    # Release PRs are opened by github-actions[bot] and only re-merge commits that
-    # were already reviewed on their own PRs. Skip them here: claude-code-action
-    # hard-fails on bot actors, which would turn every release PR red.
-    if: github.event.pull_request.user.type != 'Bot'
-
+    # bot が自動作成する PR（リリース PR 等）はレビュー対象外。
+    # claude-code-action は bot 起点だと allowed_bots 未指定でエラー終了するため、ジョブごとスキップする。
+    # ドラフトもここで弾く（プロンプト側の無言終了に任せると、事後検証が誤って赤になるうえ実行課金も無駄）
+    if: github.event.pull_request.user.type != 'Bot' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
+      # 検証スキップ理由の通知コメントを GITHUB_TOKEN で投稿するため write
+      pull-requests: write
       issues: read
       id-token: write
+
+    env:
+      # secrets コンテキストは step の if: では参照できないため、job env で真偽値に落としておく
+      HAS_FALLBACK_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_FALLBACK != '' }}
+      # 本命／フォールバックの 2 ステップで同一のプロンプト・引数を使うため、ここに一度だけ定義する
+      # --disallowed-tools でサブエージェント（Task/Agent）を機構的に禁止する。
+      # プロンプトでの禁止では不十分 — エージェントがバックグラウンドで
+      # サブエージェントを起動し「完了を待つ」でターンを終えると、非対話実行はそこで
+      # セッションが終わり、コメント未投稿のままジョブが落ちる
+      REVIEW_CLAUDE_ARGS: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(git log:*),Bash(git blame:*),Bash(git show:*),Bash(git diff:*)" --disallowed-tools "Task,Agent"'
+      REVIEW_PROMPT: |
+        REPO: ${{ github.repository }}
+        PR NUMBER: ${{ github.event.pull_request.number }}
+        HEAD SHA: ${{ github.event.pull_request.head.sha }}
+
+        このプルリクエストをコードレビューしてください。以下の手順と基準に従うこと。
+
+        ## 出力の言語と報告方法
+
+        - レビューの出力（要約・指摘・コメント）はすべて日本語で書く。コード・識別子・ファイルパス・引用は原文のまま残す。
+        - インラインコメントは投稿しない。報告は `gh pr comment` によるサマリコメント 1 件だけで行う。
+        - ビルド・型チェック・テスト・lint は実行しない（別の CI ジョブが担う）。
+        - 最初に todo リストを作ってから進める。
+
+        ## 手順
+
+        1. 対象確認: PR が次のいずれかに該当するなら、何もせず終了する。
+           (a) クローズ済み、(b) ドラフト、(c) 自動生成 PR などレビュー不要なもの、
+           (d) 既にこのレビューのコメント（本文が「### コードレビュー」で始まるコメント）があり、その後に新しいコミットが積まれていない。
+        2. `gh pr view` と `gh pr diff` で PR の文脈と差分を取得し、変更の要約を把握する。
+           PR 本文の `Closes #N` が指す issue を `gh issue view` で読み、変更の意図を把握する。
+           過去のこのレビューのコメントがあれば読む。レビューは最新の差分全体に対して行い、報告済みの指摘は解決されていれば落とし、未解決なら維持する（コメントは手順 7 で 1 件に更新する）。
+        3. ルートの CLAUDE.md と、変更されたファイルのディレクトリにある CLAUDE.md を確認する。
+        4. 次の観点で差分を順番にレビューし、指摘候補を挙げる。
+           サブエージェント（Task/Agent ツール）は使わない（引数側でも無効化してある）。
+           バックグラウンド実行を待つ形でターンを終えると、非対話実行ではそこでセッションが終わり、コメント未投稿のままジョブが失敗する。
+           a. CLAUDE.md 準拠。CLAUDE.md はコードを書く Claude 向けの指針なので、レビューに適用できる項目だけを根拠にする。
+           b. 明白なバグ。差分そのものに集中し、大きなバグを優先する。細かい指摘は避ける。
+           c. 履歴的文脈。git blame・git log で変更箇所の経緯を確認し、意図的な仕様を壊していないかを見る。
+           d. 過去の関連 PR。同じファイルに触れた過去 PR のレビューコメントで、今回にも当てはまるものを探す。
+           e. コードコメント。変更ファイル内のコメントに書かれたガイダンスに反していないかを確認する。
+        5. 各指摘候補に確信度 0〜100 を付ける。CLAUDE.md 起因の指摘は、CLAUDE.md がその問題を実際に明記しているか再確認する。
+           - 0: 誤検知。軽い検証にも耐えない、または既存の問題。
+           - 25: 実在するかもしれないが、検証できなかった。CLAUDE.md に明記されていないスタイル指摘もここ。
+           - 50: 実在は確認できたが、些細か、実運用でほぼ踏まない。
+           - 75: 再確認して実在をほぼ確信した重要な問題。実運用で踏む可能性が高いか、CLAUDE.md に明記された違反。
+           - 100: 確実に実在し、頻繁に踏む。証拠が直接裏付けている。
+        6. 確信度 75 未満の指摘は捨て、残りを重要度順に並べて最大 5 件に絞る。指摘が残らない場合も、指摘なしの報告を手順 7 で投稿する。
+        7. 手順 1 の対象確認を繰り返し、PR がまだレビュー対象であることを確かめてからコメントする。
+           自分の最新コメントがこのレビューのコメント（「### コードレビュー」で始まる）なら `gh pr comment --edit-last` で更新する。
+           それ以外（レビューコメントがない、または自分の最新コメントが別用途のもの）なら `gh pr comment` で新規投稿する。
+           `--edit-last` は自分の最新コメントを対象にするため、別用途のコメントを誤って上書きしないこと。レビューコメントは常に最新の 1 件だけを維持する。
+
+        ## 誤検知の例（手順 4・5 で除外する）
+
+        - 既存の問題（この PR で持ち込まれたものではない）
+        - バグに見えるが実際はバグでないもの
+        - シニアエンジニアなら指摘しない細かな好みの問題
+        - linter・型チェッカ・コンパイラが捕まえる問題（import 漏れ、型エラー、整形など）
+        - CLAUDE.md で明示されていない一般的な品質論（テスト不足、一般的なセキュリティ、ドキュメント不足など）
+        - lint ignore コメントなど、コード側で明示的に抑制されている問題
+        - 変更の意図に含まれると考えられる仕様変更
+        - この PR で変更していない行の問題
+
+        ## コメントの書き方
+
+        - 簡潔に書く。絵文字は使わない。
+        - 指摘の有無に関わらず、末尾（🤖 行の直前）に必ず「レビュー済みコミット: <full SHA>」の行を入れる。
+          後続の CI ステップがこの行の SHA でコメントの投稿を検証するため、省略するとジョブが失敗する。
+        - コメントに埋める full SHA は、リンク・フッタともプロンプト冒頭の HEAD SHA をそのまま使う。
+          checkout はマージ ref のため、ローカルの git から取った SHA は head と一致しない。
+        - 各指摘には該当コードへのリンクを付ける。形式: https://github.com/owner/repo/blob/<full SHA>/path/to/file#L10-L15
+          - full SHA が必須。$(git rev-parse HEAD) のようなコマンド展開はコメント上では動かないので、SHA を直接埋め込む。
+          - 指摘行の前後 1 行以上を範囲に含める。
+          - 投稿前に `git show <full SHA>:<path>` で該当行を表示し、リンクの行番号が指摘対象の行と一致することを確認する。diff 上の行番号をそのまま使わない。
+        - フォーマット（指摘が 2 件の場合の例）:
+
+        ### コードレビュー
+
+        指摘 2 件:
+
+        1. <指摘の簡潔な説明>（CLAUDE.md「<該当箇所の引用>」）
+
+        <コードリンク>
+
+        2. <指摘の簡潔な説明>（<根拠となるファイル・コード>）
+
+        <コードリンク>
+
+        レビュー済みコミット: <full SHA>
+
+        🤖 Generated with [Claude Code](https://claude.ai/code)
+
+        - 指摘がない場合のフォーマット:
+
+        ### コードレビュー
+
+        指摘なし（レビュー済みコミット: <full SHA>）
+
+        🤖 Generated with [Claude Code](https://claude.ai/code)
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          # レビューの「履歴的文脈」観点で git log / git blame を使うため全履歴を取得する
+          fetch-depth: 0
+
+      # 本命トークンでの実行。失敗してもここではジョブを落とさず、次のフォールバックに回す
       - name: Run Claude Code Review
         id: claude-review
+        continue-on-error: true
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: |
-            REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
-
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
-
-            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
-
-            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
-
+          prompt: ${{ env.REVIEW_PROMPT }}
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
-          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
+          claude_args: ${{ env.REVIEW_CLAUDE_ARGS }}
+          # コメントが投稿されない run の原因（permission denial 等）をログから追えるようにする
+          show_full_output: true
+
+      # 本命トークンが使用量上限・失効などで失敗した場合のフォールバック。
+      # フォールバック用シークレット未設定なら丸ごとスキップされる（ジョブは緑のまま）
+      - name: Run Claude Code Review (fallback token)
+        if: steps.claude-review.outcome == 'failure' && env.HAS_FALLBACK_TOKEN == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_FALLBACK }}
+          prompt: ${{ env.REVIEW_PROMPT }}
+          claude_args: ${{ env.REVIEW_CLAUDE_ARGS }}
+          show_full_output: true
+
+      # 事後検証: 今回の head SHA に対するレビューコメントが実際に投稿されたかを確認する。
+      # エージェントは投稿できないまま（permission denial 等）でも success で終わるため、
+      # ここで落とさないと「ジョブは緑なのにコメントがない」が検知できない
+      - name: Verify review comment posted
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          state=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json state --jq '.state')
+          if [ "$state" != "OPEN" ]; then
+            echo "PR is $state; review comment not required."
+            exit 0
+          fi
+          # claude-code-action は、この workflow ファイル自体を変更している PR では
+          # セキュリティ検証（デフォルトブランチとの内容一致）により実行をスキップするため、
+          # コメントが出ないのが正常。検証も合わせてスキップし、理由を PR にコメントで残す
+          if gh pr diff "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --name-only \
+            | grep -qx '.github/workflows/claude-code-review.yml'; then
+            echo "PR modifies this workflow; claude-code-action skips execution on such PRs."
+            marker='<!-- claude-review-skipped -->'
+            if ! gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json comments \
+              --jq '.comments[].body' | grep -qF "$marker"; then
+              gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$marker
+          ### コードレビュー（スキップ）
+
+          この PR は claude-code-review.yml 自体を変更しているため、claude-code-action がセキュリティ検証（デフォルトブランチとの内容一致チェック）により実行をスキップしました。自動レビューはマージ後の PR から再開されます。この PR をレビューしたい場合は \`@claude review\` とコメントしてください。"
+            fi
+            exit 0
+          fi
+          gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json comments \
+            --jq '.comments[] | select(.author.login == "claude" and (.body | startswith("### コードレビュー"))) | .body' \
+            | grep -q "$HEAD_SHA" \
+            || { echo "::error::head $HEAD_SHA に対するレビューコメントが投稿されていない"; exit 1; }

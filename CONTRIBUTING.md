@@ -90,7 +90,7 @@ refactor: extract evidence search into batch processor
 1. **Fork** the repository and create a branch from `dev`:
 
    ```bash
-   git checkout -b feature/your-feature dev
+   git checkout -b feat/your-feature dev
    ```
 
 2. **Make your changes**, adding tests alongside them, then run the same checks CI runs:
@@ -113,7 +113,7 @@ refactor: extract evidence search into batch processor
 
 | Prefix      | Use case                  |
 | ----------- | ------------------------- |
-| `feature/`  | New features              |
+| `feat/`     | New features              |
 | `fix/`      | Bug fixes                 |
 | `chore/`    | Maintenance, dependencies |
 | `refactor/` | Code restructuring        |
