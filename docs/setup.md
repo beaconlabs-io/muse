@@ -58,6 +58,11 @@ to this app.
   `muse/` unless you are running attestation scripts locally
 - `NEXT_PUBLIC_ENV` — `development` or `production`; switches the
   canonical base URL (see `lib/constants.ts`)
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` — Turnstile sitekey for the sign-in dialog.
+  Leave unset in deployed builds (the production widget's key is the
+  fallback; it covers `musecanvas.app` and its subdomains). Locally set
+  Cloudflare's test key `1x00000000000000000000AA`, paired with the backend's
+  test `TURNSTILE_SECRET` in `.dev.vars` — localhost is not on the widget
 
 ### Feature flags
 

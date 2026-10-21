@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,95 @@ import {
 import { authClient } from "@/lib/auth-client";
 
 type Provider = "google" | "github";
+
+// Public value. The widget is registered for musecanvas.app (subdomains
+// included); local development sets Cloudflare's test sitekey instead, since
+// localhost is deliberately not on the production widget.
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAAFeijQhTo0o7arBw";
+
+// Must match `expectedAction` in muse-backend's captcha plugin.
+const TURNSTILE_ACTION = "sign-in";
+
+interface Turnstile {
+  render(
+    container: HTMLElement,
+    options: {
+      sitekey: string;
+      action: string;
+      callback: (token: string) => void;
+      "expired-callback": () => void;
+      "error-callback": () => void;
+    },
+  ): string;
+  remove(widgetId: string): void;
+}
+
+declare global {
+  interface Window {
+    turnstile?: Turnstile;
+  }
+}
+
+let turnstileScript: Promise<Turnstile> | undefined;
+
+/** Loads the Turnstile script once per page; a failed load can be retried. */
+function loadTurnstile(): Promise<Turnstile> {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  turnstileScript ??= new Promise<Turnstile>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.onload = () =>
+      window.turnstile ? resolve(window.turnstile) : reject(new Error("turnstile"));
+    script.onerror = () => {
+      script.remove();
+      turnstileScript = undefined;
+      reject(new Error("turnstile"));
+    };
+    document.head.append(script);
+  });
+  return turnstileScript;
+}
+
+/**
+ * Renders a Turnstile widget and reports its token (null while there is none).
+ * Tokens are single-use: remount it with a new `key` to get a fresh one.
+ */
+function TurnstileWidget({
+  onToken,
+  onLoadError,
+}: {
+  onToken: (token: string | null) => void;
+  onLoadError: () => void;
+}) {
+  const container = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let widgetId: string | undefined;
+    let cancelled = false;
+    loadTurnstile().then(
+      (turnstile) => {
+        if (cancelled || !container.current) return;
+        widgetId = turnstile.render(container.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          action: TURNSTILE_ACTION,
+          callback: onToken,
+          "expired-callback": () => onToken(null),
+          "error-callback": () => onToken(null),
+        });
+      },
+      () => {
+        if (!cancelled) onLoadError();
+      },
+    );
+    return () => {
+      cancelled = true;
+      if (widgetId) window.turnstile?.remove(widgetId);
+    };
+    // Rendered once per mount; the callbacks only call parent state setters.
+  }, []);
+
+  return <div ref={container} className="flex min-h-[65px] justify-center" />;
+}
 
 /**
  * Google / GitHub sign-in in a dialog. `children`, when given, is rendered as
@@ -31,9 +121,17 @@ export function SignInDialog({
 }) {
   const t = useTranslations("auth");
   const locale = useLocale();
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // Bumped after a failed attempt: the token was spent, so remount the widget.
+  const [widgetKey, setWidgetKey] = useState(0);
 
   const signIn = async (provider: Provider) => {
-    const failed = (code: string) => toast.error(t("signInFailed", { code }));
+    if (!captchaToken) return;
+    const failed = (code: string) => {
+      toast.error(t("signInFailed", { code }));
+      setCaptchaToken(null);
+      setWidgetKey((key) => key + 1);
+    };
     // Better Auth redirects from the backend host, so the URLs must be
     // absolute. Both point back at this page: success lands here signed in,
     // an OAuth failure lands here with ?error=, which AuthErrorToast shows.
@@ -43,6 +141,7 @@ export function SignInDialog({
         provider,
         callbackURL: here,
         errorCallbackURL: here,
+        fetchOptions: { headers: { "x-captcha-response": captchaToken } },
       });
       // A rejected origin resolves with `error`; a backend that is down rejects.
       if (error) failed(error.code ?? error.message ?? String(error.status));
@@ -60,15 +159,20 @@ export function SignInDialog({
           <DialogDescription>{t("signInDescription")}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
-          <Button variant="outline" onClick={() => void signIn("google")}>
+          <Button variant="outline" disabled={!captchaToken} onClick={() => void signIn("google")}>
             <GoogleIcon />
             {t("signInWithGoogle")}
           </Button>
-          <Button variant="outline" onClick={() => void signIn("github")}>
+          <Button variant="outline" disabled={!captchaToken} onClick={() => void signIn("github")}>
             <GitHubIcon />
             {t("signInWithGithub")}
           </Button>
         </div>
+        <TurnstileWidget
+          key={widgetKey}
+          onToken={setCaptchaToken}
+          onLoadError={() => toast.error(t("signInFailed", { code: "verification" }))}
+        />
         <p className="text-muted-foreground text-center text-xs">
           {t.rich("signInConsent", {
             terms: (chunks) => (
