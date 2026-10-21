@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Link } from "@/i18n/routing";
 import { authClient } from "@/lib/auth-client";
+import { clearLocalUserData } from "@/lib/local-user-data";
 
 function initials(name: string, fallback: string) {
   return (name.trim() || fallback)
@@ -36,6 +37,17 @@ export function AuthMenu() {
   const { isMobile, setOpenMobile } = useSidebar();
   const closeMobile = () => setOpenMobile(false);
   const { data: session, isPending } = authClient.useSession();
+
+  // 下書きなどを消してからフルリロードし、メモリ上のキャンバスとクエリキャッシュも捨てる
+  const signOut = () =>
+    authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          clearLocalUserData();
+          window.location.assign("/");
+        },
+      },
+    });
 
   // 未ログインでもここに描画されるので、ログインボタンが出るまでの一瞬もスケルトンになる
   if (isPending) return <SidebarIdentitySkeleton round />;
@@ -108,7 +120,7 @@ export function AuthMenu() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => void authClient.signOut()}>
+            <DropdownMenuItem onSelect={() => void signOut()}>
               <LogOut />
               {t("signOut")}
             </DropdownMenuItem>
