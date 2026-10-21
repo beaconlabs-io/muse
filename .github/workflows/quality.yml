@@ -49,24 +49,64 @@ jobs:
       - name: Test
         run: bun run test:run
 
-  preview:
-    name: Build / Preview deploy
-    # Push runs exist for lint/test only (see the trigger comment above); a
-    # preview needs a PR to alias and comment on.
+  # The PR's build check, kept apart from `preview` so it runs without waiting
+  # for the `preview` environment's approval. `preview` builds again: handing
+  # it this job's output would not save running PR code with the token, since
+  # the upload executes OpenNext's compiled config from that output anyway.
+  build:
+    name: Build Worker
     if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HUSKY: "0"
+      NEXT_PUBLIC_ENV: ${{ vars.NEXT_PUBLIC_ENV || 'development' }}
+      NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://example.invalid' }}
+      NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED: ${{ vars.NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.5
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The Worker build rather than plain `next build`: it is the same
+      # `next build` plus the OpenNext bundling step, so it catches Workers-only
+      # breakage (unsupported middleware, bundle size) at PR time instead of on
+      # the deploy that follows the merge.
+      - name: Build Worker
+        run: bun run build:worker
+
+  preview:
+    name: Preview deploy
+    # Push runs exist for lint/test only (see the trigger comment above); a
+    # preview needs a PR to alias and comment on. Waiting on `build` keeps a
+    # reviewer from being asked to approve a PR that does not build.
+    if: github.event_name == 'pull_request'
+    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
       pull-requests: write
+    # The Cloudflare token can edit every Worker on the account, production
+    # included, and this job runs the PR's own code and its own copy of this
+    # file — so no condition written here can keep a PR author away from the
+    # secret. It lives on the `preview` GitHub Environment instead, whose
+    # required reviewers GitHub enforces before the job starts. Not `staging`:
+    # a PR must not appear in staging's deployment history.
+    environment: preview
     env:
       HUSKY: "0"
-      # The Worker build is also this PR's build check, so it runs even when the
-      # preview upload below is skipped. Repository-level variables hold the
-      # staging values (the production overrides live in the `production` GitHub
-      # Environment, which this job deliberately does not join — a PR must not
-      # appear in staging's deployment history). The fallbacks keep the build
-      # working in a fork or clone with no variables configured.
+      # Repository-level variables hold the staging values (the production
+      # overrides live in the `production` GitHub Environment, which neither PR
+      # job joins). The fallbacks keep the build working in a fork or clone with
+      # no variables configured.
       NEXT_PUBLIC_ENV: ${{ vars.NEXT_PUBLIC_ENV || 'development' }}
       NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://example.invalid' }}
       NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED: ${{ vars.NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED }}
@@ -85,10 +125,6 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # Builds the Worker rather than plain `next build`: it is the same
-      # `next build` plus the OpenNext bundling step, so it catches Workers-only
-      # breakage (unsupported middleware, bundle size) at PR time instead of on
-      # the deploy that follows the merge.
       - name: Build Worker
         run: bun run build:worker
 
