@@ -267,7 +267,9 @@ Deploys are **merge-driven**: `.github/workflows/deploy-worker.yml` runs on
 `pull_request: closed` and does nothing unless the PR was actually merged. A
 direct push to `dev` or `main` deploys nothing — use the workflow's manual
 `workflow_dispatch` (pick an environment; it deploys the branch you run it from)
-if you ever need to ship something that did not arrive via a PR.
+if you ever need to ship something that did not arrive via a PR. Each
+environment's deployment-branch policy limits that to `dev` for staging and
+`main` for production.
 
 Each run re-runs `lint:check` and `test:run` against the merged branch, builds
 the Worker, deploys with `opennextjs-cloudflare deploy -e <env>`, then smoke
@@ -320,13 +322,28 @@ a separate, manual procedure, and it exists only while the Vercel project does
 
 #### Repository configuration
 
-One secret, on the repository:
+One secret, `CLOUDFLARE_API_TOKEN` (Workers Scripts: Edit on the
+`beaconlabs-admin` account), set on **GitHub Environments, never on the
+repository**. That permission has no per-script scope, so any copy of the token
+can overwrite `muse-frontend-prod`; and a `pull_request` run uses the workflow
+file from the PR itself, so a repository-level secret is readable by anyone who
+can push a branch. Environment secrets are released only after the
+environment's protection rules pass, which a workflow edit cannot skip:
 
-- `CLOUDFLARE_API_TOKEN` — needs Workers Scripts: Edit on the
-  `beaconlabs-admin` account. Fork PRs never see it, so their preview upload is
-  skipped with a warning while the build still runs — and merging a fork PR
-  makes `deploy-worker.yml` fail fast with instructions to ship the merge via
-  `workflow_dispatch` instead.
+| Environment  | Used by                         | Protection rules                                                                  |
+| ------------ | ------------------------------- | --------------------------------------------------------------------------------- |
+| `staging`    | `deploy-worker.yml`             | Deployment branches: `dev` only                                                   |
+| `production` | `deploy-worker.yml`             | Deployment branches: `main` only                                                  |
+| `preview`    | `quality.yml` (PR preview jobs) | Required reviewers; **no** branch restriction (PR runs use `refs/pull/<n>/merge`) |
+
+A PR's preview job therefore waits for a reviewer's approval on every push;
+lint, test and the Worker build check (`quality.yml`'s `build` job) run without
+it. Approve only after reading
+what the PR changes in `.github/`, `package.json` scripts and the build config,
+since that code runs with the token. Fork PRs never see the secret, so their
+preview upload is skipped with a warning — and merging a fork PR makes
+`deploy-worker.yml` fail fast with instructions to ship the merge via
+`workflow_dispatch` instead.
 
 The build-time variables are **GitHub variables**, not secrets — every one of
 them is inlined into a public client bundle:
@@ -338,10 +355,11 @@ them is inlined into a public client bundle:
 | `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` | repo, optional                                        |
 
 The repository-level values are the **staging** ones, so PR previews (which join
-no GitHub Environment, to keep PRs out of staging's deployment history) pick them
-up automatically; the `production` environment overrides what differs. Both
+the `preview` environment rather than `staging`, to keep PRs out of staging's
+deployment history) pick them up automatically; the `production` environment
+overrides what differs. Both
 GitHub Environments still have to exist — the deploy job joins them for the
-deployment history and the URL on the repo sidebar.
+deployment history, the URL on the repo sidebar and the token.
 
 Staging deliberately reuses `development` as its `NEXT_PUBLIC_ENV` value: the
 code branches only on `development` vs `production` (`lib/constants.ts`), so a
