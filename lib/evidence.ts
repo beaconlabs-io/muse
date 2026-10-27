@@ -31,29 +31,65 @@ export const getEvidenceBySlug = cache(
 
     if (!bundled || !meta) return undefined;
 
-    // Compile raw MDX content with plugins for rich rendering
-    const { content } = await compileMDX({
-      source: bundled.raw, // full MDX source including frontmatter
-      options: {
-        parseFrontmatter: true,
-        mdxOptions: {
-          remarkPlugins: [remarkGfm, remarkMath],
-          rehypePlugins: [
-            rehypeSlug,
-            [rehypeToc, { headings: ["h2", "h3"] }],
-            [rehypeAutolinkHeadings, { behavior: "wrap" }],
-            [rehypeKatex, { output: "mathml" }],
-            // highlight.js, not shiki: shiki bundles every grammar (~9 MB) and
-            // its WASM engine cannot start on the Workers runtime.
-            rehypeHighlight,
-          ],
-        },
-      },
-    });
+    const content = await compileEvidenceMdx(bundled.raw);
 
     return { meta, content };
   },
 );
+
+// Evidence bodies come from community PRs, so raw HTML that can run script or
+// load another document must not reach the app origin. MDX keeps lowercase JSX
+// tags as-is (a `components` map does not replace them), so they are removed
+// from the tree instead, whether they arrive as JSX or as a plain hast element.
+const BLOCKED_TAGS = new Set([
+  "script",
+  "iframe",
+  "frame",
+  "object",
+  "embed",
+  "style",
+  "link",
+  "meta",
+  "base",
+  "form",
+]);
+
+type HastNode = { type: string; tagName?: string; name?: string | null; children?: HastNode[] };
+
+function rehypeDropBlockedTags() {
+  const isBlocked = (node: HastNode) =>
+    BLOCKED_TAGS.has((node.type === "element" ? node.tagName : node.name) ?? "");
+  const prune = (node: HastNode) => {
+    if (!node.children) return;
+    node.children = node.children.filter((child) => !isBlocked(child));
+    node.children.forEach(prune);
+  };
+  return prune;
+}
+
+/** Compile an evidence MDX source (frontmatter included) with the evidence page plugins */
+export async function compileEvidenceMdx(source: string): Promise<React.ReactElement> {
+  const { content } = await compileMDX({
+    source,
+    options: {
+      parseFrontmatter: true,
+      mdxOptions: {
+        remarkPlugins: [remarkGfm, remarkMath],
+        rehypePlugins: [
+          rehypeDropBlockedTags,
+          rehypeSlug,
+          [rehypeToc, { headings: ["h2", "h3"] }],
+          [rehypeAutolinkHeadings, { behavior: "wrap" }],
+          [rehypeKatex, { output: "mathml" }],
+          // highlight.js, not shiki: shiki bundles every grammar (~9 MB) and
+          // its WASM engine cannot start on the Workers runtime.
+          rehypeHighlight,
+        ],
+      },
+    },
+  });
+  return content;
+}
 
 /**
  * Get evidence frontmatter by slug without compiling MDX.

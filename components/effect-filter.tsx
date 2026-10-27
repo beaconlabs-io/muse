@@ -47,7 +47,7 @@ export function EffectFilter({ selectedEffects, onEffectsChange }: EffectFilterP
           <Button variant="outline" size="sm" className="h-10 cursor-pointer">
             {tFilters("effects")}
             {selectedEffects.length > 0 && (
-              <Badge variant="secondary" className="ml-2 rounded-full">
+              <Badge variant="secondary" className="ml-2">
                 {selectedEffects.length}
               </Badge>
             )}

@@ -4,7 +4,7 @@ import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Pencil, BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCanvasOperations } from "./context";
+import { useCanvasOperations, useCanvasState } from "./context";
 import type { Metric } from "@/types";
 import { NODE_TYPE_MAP, type NodeTypeValue } from "@/lib/canvas/node-types";
 
@@ -23,6 +23,7 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
   const tAddNode = useTranslations("addNode");
   // Get operations from context
   const { deleteCard, openEditDialog } = useCanvasOperations();
+  const { readOnly } = useCanvasState();
 
   // Get type config (label and icon)
   const typeConfig = data.type ? NODE_TYPE_MAP[data.type as NodeTypeValue] : null;
@@ -30,11 +31,13 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
   const TypeIcon = typeConfig?.icon;
 
   const handleDoubleClick = () => {
+    if (readOnly) return;
     // Open edit dialog
     openEditDialog(data.id);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (readOnly) return;
     if (e.key === "Delete" || e.key === "Backspace") {
       deleteCard(data.id);
     }
@@ -109,16 +112,18 @@ export const CardNode = memo(({ data, selected }: NodeProps & { data: CardNodeDa
       </div>
 
       {/* Edit button (visible on hover) */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          openEditDialog(data.id);
-        }}
-        className="absolute -top-3 -right-3 hidden h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gray-500 text-white group-hover:flex hover:bg-gray-600"
-        title={tAddNode("editTitle")}
-      >
-        <Pencil className="h-6 w-6" aria-hidden="true" />
-      </button>
+      {!readOnly && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            openEditDialog(data.id);
+          }}
+          className="absolute -top-3 -right-3 hidden h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gray-500 text-white group-hover:flex hover:bg-gray-600"
+          title={tAddNode("editTitle")}
+        >
+          <Pencil className="h-6 w-6" aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 });
