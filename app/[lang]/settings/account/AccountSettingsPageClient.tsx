@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authClient } from "@/lib/auth-client";
+import { clearLocalUserData } from "@/lib/local-user-data";
 
 const PROVIDERS = [
   { id: "google", label: "Google" },
@@ -62,6 +63,7 @@ export function AccountSettingsPageClient() {
     },
     onSuccess: () => {
       toast.success(t("deleted"));
+      clearLocalUserData();
       window.location.assign("/");
     },
     onError: (error: Error & { code?: string }) => {
