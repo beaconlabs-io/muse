@@ -263,13 +263,15 @@ Two things to know before touching either hostname:
   only public hostname — and the CI smoke test runs against that hostname, not
   a workers.dev one.
 
-Deploys are **merge-driven**: `.github/workflows/deploy-worker.yml` runs on
-`pull_request: closed` and does nothing unless the PR was actually merged. A
-direct push to `dev` or `main` deploys nothing — use the workflow's manual
-`workflow_dispatch` (pick an environment; it deploys the branch you run it from)
-if you ever need to ship something that did not arrive via a PR. Each
-environment's deployment-branch policy limits that to `dev` for staging and
-`main` for production.
+Deploys are **merge-driven**: `.github/workflows/deploy-worker.yml` runs on a
+push to `dev` or `main`, and rulesets on both branches (require a pull request,
+block force pushes) make a merged PR the only such push. It deliberately does
+not run on `pull_request: closed`: that run's ref is `refs/pull/<n>/merge`,
+which the environments' branch policies reject, and the run would execute the
+closed PR's own copy of the workflow with the token. To redeploy without a new
+merge, use the workflow's manual `workflow_dispatch` (pick an environment; it
+deploys the branch you run it from). Each environment's deployment-branch
+policy limits that to `dev` for staging and `main` for production.
 
 Each run re-runs `lint:check` and `test:run` against the merged branch, builds
 the Worker, deploys with `opennextjs-cloudflare deploy -e <env>`, then smoke
@@ -338,12 +340,17 @@ environment's protection rules pass, which a workflow edit cannot skip:
 
 A PR's preview job therefore waits for a reviewer's approval on every push;
 lint, test and the Worker build check (`quality.yml`'s `build` job) run without
-it. Approve only after reading
-what the PR changes in `.github/`, `package.json` scripts and the build config,
-since that code runs with the token. Fork PRs never see the secret, so their
-preview upload is skipped with a warning — and merging a fork PR makes
-`deploy-worker.yml` fail fast with instructions to ship the merge via
-`workflow_dispatch` instead.
+it. Approve only after reading what the PR changes in `.github/`,
+`package.json` scripts and the build config, since that code runs with the
+token. Fork PRs never see the secret, so their preview upload is skipped with a
+warning; once merged, a fork PR deploys like any other, since the deploy runs on
+the resulting push.
+
+The `dev` and `main` rulesets (Settings → Rules → Rulesets) are part of this
+setup, not an extra: the branch policies above trust whatever is on those
+branches, so without "Require a pull request before merging" and "Block force
+pushes" anyone with write access could push straight to `dev` and deploy it with
+the token.
 
 The build-time variables are **GitHub variables**, not secrets — every one of
 them is inlined into a public client bundle:

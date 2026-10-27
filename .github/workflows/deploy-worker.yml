@@ -1,11 +1,14 @@
 name: Deploy Worker
 
-# Deploys are merge-driven, not push-driven: only a merged PR into dev/main
-# ships. A direct push to those branches deploys nothing — use the manual
-# dispatch below if you ever need to ship something that did not arrive via PR.
+# Deploys run on push to dev/main, which is what merging a PR does. Rulesets on
+# both branches require a PR and block force pushes, so in practice only a
+# merged PR ships. Not `pull_request: closed`: that run's ref is
+# `refs/pull/<n>/merge`, which the environments' branch policies reject — and
+# allowing it would hand the token to any closed PR's own copy of this file.
+# The manual dispatch below redeploys a branch (the policies allow only dev to
+# staging and main to production).
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [dev, main]
   workflow_dispatch:
     inputs:
@@ -16,7 +19,7 @@ on:
         required: true
 
 concurrency:
-  group: deploy-worker-${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.event.pull_request.base.ref == 'main' && 'production' || 'staging') }}
+  group: deploy-worker-${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'production' || 'staging') }}
   cancel-in-progress: false
 
 permissions:
@@ -27,11 +30,8 @@ defaults:
     shell: bash
 
 jobs:
-  # Closing a PR without merging also fires `closed`, so every job is gated on
-  # the merge actually having happened.
   resolve:
     name: Resolve target
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     outputs:
       environment: ${{ steps.pick.outputs.environment }}
@@ -45,26 +45,26 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           DISPATCH_ENV: ${{ inputs.environment }}
-          DISPATCH_REF: ${{ github.ref_name }}
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
           REPO_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
         run: |
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             environment="$DISPATCH_ENV"
-            ref="$DISPATCH_REF"
-          elif [ "$BASE_REF" = "main" ]; then
+          elif [ "$REF_NAME" = "main" ]; then
             environment=production
-            ref=main
           else
             environment=staging
-            ref=dev
           fi
+          # The pushed (or dispatched) commit itself, not the branch tip, so a
+          # later push cannot slip into this run's build.
+          ref="$SHA"
           {
             echo "environment=$environment"
             echo "ref=$ref"
             echo "repo_api_base_url=$REPO_API_BASE_URL"
           } >> "$GITHUB_OUTPUT"
-          echo "Deploying branch '$ref' to '$environment'"
+          echo "Deploying '$REF_NAME' ($ref) to '$environment'"
 
   deploy:
     name: Deploy ${{ needs.resolve.outputs.environment }}
@@ -80,21 +80,17 @@ jobs:
     # workflow edited on some branch cannot read it. Each environment's
     # deployment-branch policy (`staging` ← dev, `production` ← main) is what
     # stops a manual dispatch from shipping an arbitrary branch. There are no
-    # approvals: a merged PR ships straight through by design; the PR review is
-    # the gate.
+    # approvals: a merged PR ships straight through by design; the PR review,
+    # enforced by the branch rulesets, is the gate.
     environment:
       name: ${{ needs.resolve.outputs.environment }}
       url: ${{ steps.deploy.outputs.url }}
     env:
       # husky's `prepare` script has no hooks to install on a CI checkout.
       HUSKY: "0"
-      # GitHub withholds secrets from pull_request runs of fork PRs — including
-      # the `closed` event that fires on merge. `secrets` cannot be read from an
-      # `if:`, so it is mapped to a flag here. (Checking the secret rather than
-      # `head.repo.fork` also covers a deleted fork, where `head.repo` is null,
-      # and an environment where the secret was never configured.) It is read
-      # here, not in `resolve`, because only a job that joins the environment
-      # sees the environment's secrets.
+      # `secrets` cannot be read from an `if:`, so it is mapped to a flag here.
+      # It is read here, not in `resolve`, because only a job that joins the
+      # environment sees the environment's secrets.
       HAS_CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
       # Every value this app reads at runtime is a NEXT_PUBLIC_* string inlined
       # into the bundle by `next build`, so the environment split happens here,
@@ -107,13 +103,13 @@ jobs:
       NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
       NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED: ${{ vars.NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED }}
     steps:
-      # Without this, a merged fork PR would pass ~10 minutes of lint/test/build
-      # and only then fail at the deploy step with an empty token, leaving the
-      # environment silently stale behind a red run. Fail fast and loudly.
+      # Without this, a missing environment secret would pass ~10 minutes of
+      # lint/test/build and only then fail at the deploy step with an empty
+      # token. Fail fast and loudly.
       - name: Refuse to run without a Cloudflare token
         if: env.HAS_CLOUDFLARE_TOKEN != 'true'
         run: |
-          echo "::error::CLOUDFLARE_API_TOKEN is not available to this run (fork-originated PR, or the secret is not configured on the '${{ needs.resolve.outputs.environment }}' environment), so nothing can deploy. Ship this merge manually: Actions → Deploy Worker → 'Run workflow' from the merged branch."
+          echo "::error::CLOUDFLARE_API_TOKEN is not available to this run (the secret is not configured on the '${{ needs.resolve.outputs.environment }}' environment), so nothing can deploy. Add it, then re-run this workflow."
           exit 1
 
       - uses: actions/checkout@v4
