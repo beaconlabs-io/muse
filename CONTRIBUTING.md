@@ -62,10 +62,11 @@ See [docs/testing.md](./docs/testing.md) for patterns, fixtures, and troubleshoo
 
 ### Continuous Integration
 
-`.github/workflows/quality.yml` runs two jobs on every pull request (and its lint/test half again on every push to `dev`/`main`):
+`.github/workflows/quality.yml` runs three jobs on every pull request (and its lint/test half again on every push to `dev`/`main`):
 
 - **Lint / Test** — `bun install --frozen-lockfile`, `bun run lint:check`, `bun run test:run`
-- **Build / Preview deploy** — `bun run build:worker` (the Cloudflare Worker build, which is also the PR's build check), then an upload of the build as a preview version of the staging Worker; the preview URLs are commented on the PR. Fork PRs skip the upload (no Cloudflare token) but still build.
+- **Build Worker** — `bun run build:worker` (the Cloudflare Worker build), the PR's build check.
+- **Preview deploy** — after a reviewer approves the `preview` environment, rebuilds and uploads the build as a preview version of the staging Worker; the preview URLs are commented on the PR. Fork PRs skip the upload (no Cloudflare token).
 
 React Doctor and Claude Code Review also post advisory comments on pull requests (React Doctor only on PRs targeting `dev`). Merging a PR into `dev` or `main` triggers `.github/workflows/deploy-worker.yml`, which re-runs lint and tests against the merged branch before deploying — see [docs/setup.md](./docs/setup.md#environments-and-deploys).
 
