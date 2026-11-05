@@ -17,6 +17,8 @@ interface WorkflowStreamState {
   rawError: string | null;
   failedStepId: string | null;
   canvasData: CanvasData | null;
+  /** The backend answered 401: the session is missing or expired (spec §3.3). */
+  unauthorized: boolean;
 }
 
 interface StepEvent {
@@ -35,6 +37,7 @@ export function useWorkflowStream() {
     rawError: null,
     failedStepId: null,
     canvasData: null,
+    unauthorized: false,
   });
 
   const [stepEvents, setStepEvents] = useState<StepEvent[]>([]);
@@ -72,6 +75,7 @@ export function useWorkflowStream() {
         rawError: null,
         failedStepId: null,
         canvasData: null,
+        unauthorized: false,
       });
       setStepEvents([]);
 
@@ -98,6 +102,7 @@ export function useWorkflowStream() {
                   method: "POST",
                   body: formData,
                   signal: abortController.signal,
+                  credentials: "include",
                 };
               })()
             : {
@@ -109,11 +114,24 @@ export function useWorkflowStream() {
                   enableMetrics,
                 }),
                 signal: abortController.signal,
+                credentials: "include",
               };
 
         const response = await fetch(apiUrl("/api/workflow/stream"), fetchInit);
 
         if (!response.ok) {
+          if (response.status === 401) {
+            // requireWorkspace rejected the session before the stream opened.
+            // Keep it apart from generation failures so the UI can ask the
+            // user to sign in again instead of showing "Unauthorized".
+            setState((prev) => ({
+              ...prev,
+              status: "error",
+              error: "Unauthorized",
+              unauthorized: true,
+            }));
+            return;
+          }
           const errorBody = await response.json().catch(() => ({}));
           throw new Error((errorBody as Record<string, string>).error || `HTTP ${response.status}`);
         }
@@ -191,6 +209,7 @@ export function useWorkflowStream() {
       rawError: null,
       failedStepId: null,
       canvasData: null,
+      unauthorized: false,
     });
   }, []);
 

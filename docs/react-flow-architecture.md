@@ -36,12 +36,13 @@ const edgeTypes = {
 ```
 ReactFlowProvider                ← required by useReactFlow() in CanvasProvider
   └─ RecipeProvider              ← owns recipe stream state + stale flag
-       └─ CanvasProvider         ← owns nodes / edges / cardMetrics
-            └─ ReactFlowCanvasInner
-                 └─ Tabs (controlled, value=activeTab)
-                      ├─ UnifiedHeader                          ← tabs + context actions + More dropdown
-                      ├─ TabsContent value="canvas" forceMount → ReactFlow
-                      └─ TabsContent value="recipe"           → RecipePanel
+       └─ LogicModelProvider     ← owns id / title / access / save / rename (the saved document)
+            └─ CanvasProvider    ← owns nodes / edges / cardMetrics / readOnly / dirty / local draft
+                 └─ ReactFlowCanvasInner
+                      └─ Tabs (controlled, value=activeTab)
+                           ├─ UnifiedHeader                          ← tabs + context actions + More dropdown
+                           ├─ TabsContent value="canvas" forceMount → ReactFlow
+                           └─ TabsContent value="recipe"           → RecipePanel
 ```
 
 `RecipeProvider` sits **outside** `CanvasProvider` so `CanvasContext` can
@@ -49,6 +50,14 @@ call `useRecipe()` to wire stale detection and auto-start without
 creating a circular import. `RecipeProvider` never reads canvas state
 directly — callers pass `{ nodes, cardMetrics }` into
 `recipe.triggerGeneration(args)`.
+
+`LogicModelProvider` sits **outside** `CanvasProvider` too: it holds the
+document identity (id, title, access, share/version mutations) and takes a
+snapshot via `CanvasProvider`'s `getSnapshot()` / `markSaved()` rather than
+depending on canvas internals. It is initialized from a `document` prop
+that `ReactFlowCanvas` derives per route (`/canvas`, `/canvas/[id]`,
+`/canvas/<cid>` IPFS, `/canvas/shared/[token]`) — see
+`docs/superpowers/specs/2026-09-15-logic-model-storage-3a-design.md` §2.
 
 ### EvidenceEdge.tsx
 
@@ -464,10 +473,23 @@ See the `muse-backend` repository for the agent-side specification.
 
 ### Persistence
 
-Metrics ride along with the canvas in both localStorage (autosave) and
-the IPFS canvas JSON. `CanvasDataSchema.cardMetrics` is the wire format;
-restoration rebuilds the `cardMetrics` map on canvas hydration so a
-reload (or opening an IPFS-pinned canvas) preserves the metrics view.
+Metrics ride along with the canvas in both the local draft
+(`lib/canvas/storage.ts`, Zod-validated) and the saved logic model.
+`CanvasState.cardMetrics` is the wire format; restoration rebuilds the
+`cardMetrics` map on canvas hydration so a reload, a version restore, or
+opening a read-only canvas (IPFS or link-shared) all preserve the metrics
+view.
+
+The local draft is keyed per model — `draftKey(id)` returns
+`canvasState:<id>` for `/canvas/[id]` and `canvasState:new` for a fresh
+`/canvas`, so switching between logic models cannot leak one model's
+unsaved edits into another. A legacy single-key `canvasState` draft (from
+before per-model keys) is migrated into `canvasState:new` once, on first
+read. `CanvasProvider` takes this key as `storageKey`; `undefined` disables
+draft read/write entirely, which is how the read-only IPFS and
+link-shared views work. Explicit saves go through `LogicModelProvider.save()`
+to the backend (`POST`/`PUT .../versions`, see [api-routes.md](./api-routes.md)),
+not to a draft key.
 
 ## Auto Layout
 

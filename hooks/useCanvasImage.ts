@@ -2,17 +2,15 @@ import { useState, useCallback } from "react";
 import { getNodesBounds, getViewportForBounds, type Node } from "@xyflow/react";
 import { toPng } from "html-to-image";
 import type { CanvasImageResult } from "@/lib/generate-canvas-image";
-import { composeExportImage, generateCanvasImage } from "@/lib/generate-canvas-image";
+import { composeExportImage } from "@/lib/generate-canvas-image";
 
 export type CanvasImageStatus = "idle" | "generating" | "ready" | "error";
-
-export type CanvasImageMode = "export" | "ogp";
 
 export interface UseCanvasImageResult {
   status: CanvasImageStatus;
   result: CanvasImageResult | null;
   error: string | null;
-  generate: (nodes: Node[], mode?: CanvasImageMode) => Promise<CanvasImageResult | null>;
+  generate: (nodes: Node[]) => Promise<CanvasImageResult | null>;
   reset: () => void;
   setResult: (result: CanvasImageResult) => void;
 }
@@ -25,93 +23,80 @@ export function useCanvasImage(): UseCanvasImageResult {
   const [result, setResult] = useState<CanvasImageResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const generate = useCallback(
-    async (nodes: Node[], mode: CanvasImageMode = "ogp"): Promise<CanvasImageResult | null> => {
-      if (nodes.length === 0) {
-        setError("Cannot generate image from empty canvas");
-        setStatus("error");
-        return null;
+  const generate = useCallback(async (nodes: Node[]): Promise<CanvasImageResult | null> => {
+    if (nodes.length === 0) {
+      setError("Cannot generate image from empty canvas");
+      setStatus("error");
+      return null;
+    }
+
+    setStatus("generating");
+    setError(null);
+
+    // If the canvas Tabs panel is `display: none` (e.g. user is on the Recipe
+    // tab), React Flow children collapse to 0×0 and html-to-image emits a
+    // broken capture. Briefly force-layout the panel offscreen so children
+    // measure correctly, then restore on the way out. We avoid
+    // `visibility: hidden` because edge SVG paths inherit it (nodes override
+    // it on their own root) and would render as invisible in the capture.
+    let restorePanel: (() => void) | null = null;
+
+    try {
+      // Get the React Flow viewport element
+      const viewportElement = document.querySelector(".react-flow__viewport") as HTMLElement;
+      if (!viewportElement) {
+        throw new Error("React Flow viewport not found");
       }
 
-      setStatus("generating");
-      setError(null);
-
-      // If the canvas Tabs panel is `display: none` (e.g. user is on the Recipe
-      // tab), React Flow children collapse to 0×0 and html-to-image emits a
-      // broken capture. Briefly force-layout the panel offscreen so children
-      // measure correctly, then restore on the way out. We avoid
-      // `visibility: hidden` because edge SVG paths inherit it (nodes override
-      // it on their own root) and would render as invisible in the capture.
-      let restorePanel: (() => void) | null = null;
-
-      try {
-        // Get the React Flow viewport element
-        const viewportElement = document.querySelector(".react-flow__viewport") as HTMLElement;
-        if (!viewportElement) {
-          throw new Error("React Flow viewport not found");
-        }
-
-        const tabPanel = viewportElement.closest('[role="tabpanel"]') as HTMLElement | null;
-        if (tabPanel && getComputedStyle(tabPanel).display === "none") {
-          const originalStyle = tabPanel.getAttribute("style");
-          tabPanel.style.cssText =
-            "display: block !important; position: fixed !important; left: -100000px !important; top: 0 !important; width: 100vw !important; height: 100vh !important; pointer-events: none !important;";
-          restorePanel = () => {
-            if (originalStyle === null) tabPanel.removeAttribute("style");
-            else tabPanel.setAttribute("style", originalStyle);
-          };
-          await new Promise<void>((resolve) =>
-            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-          );
-        }
-
-        // Calculate bounds and viewport for optimal capture
-        const nodesBounds = getNodesBounds(nodes);
-        // Ensure minimum dimensions to prevent division by zero or Infinity
-        const imageWidth = Math.max(nodesBounds.width, 100);
-        const imageHeight = Math.max(nodesBounds.height, 100);
-        const viewport = getViewportForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2, 0.2);
-
-        const isExport = mode === "export";
-        const pixelRatio = isExport ? 2 : 1;
-
-        const sourceDataUrl = await toPng(viewportElement, {
-          backgroundColor: "#f9fafb",
-          width: imageWidth,
-          height: imageHeight,
-          pixelRatio,
-          style: {
-            width: `${imageWidth}px`,
-            height: `${imageHeight}px`,
-            transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
-          },
-        });
-
-        let canvasImageResult: CanvasImageResult;
-
-        if (isExport) {
-          // Export mode: add MUSE credit header/footer without scaling the capture
-          canvasImageResult = await composeExportImage({ sourceDataUrl });
-        } else {
-          // OGP mode: composite into 1200×630 branded image
-          canvasImageResult = await generateCanvasImage({ sourceDataUrl });
-        }
-
-        setResult(canvasImageResult);
-        setStatus("ready");
-        return canvasImageResult;
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to generate image";
-        setError(errorMessage);
-        setStatus("error");
-        console.error("Failed to generate canvas image:", err);
-        return null;
-      } finally {
-        restorePanel?.();
+      const tabPanel = viewportElement.closest('[role="tabpanel"]') as HTMLElement | null;
+      if (tabPanel && getComputedStyle(tabPanel).display === "none") {
+        const originalStyle = tabPanel.getAttribute("style");
+        tabPanel.style.cssText =
+          "display: block !important; position: fixed !important; left: -100000px !important; top: 0 !important; width: 100vw !important; height: 100vh !important; pointer-events: none !important;";
+        restorePanel = () => {
+          if (originalStyle === null) tabPanel.removeAttribute("style");
+          else tabPanel.setAttribute("style", originalStyle);
+        };
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
       }
-    },
-    [],
-  );
+
+      // Calculate bounds and viewport for optimal capture
+      const nodesBounds = getNodesBounds(nodes);
+      // Ensure minimum dimensions to prevent division by zero or Infinity
+      const imageWidth = Math.max(nodesBounds.width, 100);
+      const imageHeight = Math.max(nodesBounds.height, 100);
+      const viewport = getViewportForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2, 0.2);
+
+      const sourceDataUrl = await toPng(viewportElement, {
+        backgroundColor: "#f9fafb",
+        width: imageWidth,
+        height: imageHeight,
+        pixelRatio: 2,
+        style: {
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
+      });
+
+      // Add MUSE credit header/footer without scaling the capture
+      const canvasImageResult = await composeExportImage({ sourceDataUrl });
+
+      setResult(canvasImageResult);
+      setStatus("ready");
+      return canvasImageResult;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to generate image";
+      setError(errorMessage);
+      setStatus("error");
+      console.error("Failed to generate canvas image:", err);
+      return null;
+    } finally {
+      restorePanel?.();
+    }
+  }, []);
 
   const reset = useCallback(() => {
     setStatus("idle");

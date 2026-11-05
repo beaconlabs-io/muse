@@ -375,8 +375,6 @@ Semantic Scholar APIを使用した外部学術論文検索（この項目も mu
   - `evidenceIds: string[]`、`evidenceMetadata: EvidenceMatch[]`、`externalPapers: ExternalPaper[]`で拡張されたArrow型
   - evidenceId、score、confidence、reasoning、strength、hasWarning、title、interventionText、outcomeTextを含むEvidenceMatchインターフェース（`strength` は数値ではなく省略可能な文字列、必須は evidenceId / score / reasoning / hasWarning の4つ）
   - id、title、authors、year、doi、url、abstract、source、citationCount、tldr、influentialCitationCount、fieldsOfStudy、publicationVenueを含むExternalPaperインターフェース
-  - `includeExternalPapers: boolean`オプション付きのEvidenceSearchRequest
-  - オプションの`externalPapers: ExternalPaper[]`付きのEvidenceSearchResponse
   - 検証のために全体で再利用されるCanvasDataSchema
 
 **アーキテクチャの利点:**

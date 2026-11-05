@@ -13,8 +13,8 @@ export async function generateMetadata({
 
 export default function Home() {
   return (
-    <main>
+    <div>
       <Hero />
-    </main>
+    </div>
   );
 }

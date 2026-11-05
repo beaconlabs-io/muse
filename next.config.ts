@@ -17,6 +17,20 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: process.env.NEXT_UNOPTIMIZED_IMAGES === "true",
   },
+  // No page is meant to be embedded, so refuse framing everywhere (clickjacking
+  // on one-click actions such as invite acceptance). X-Frame-Options covers
+  // browsers that predate CSP frame-ancestors.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return localeRedirects();
   },

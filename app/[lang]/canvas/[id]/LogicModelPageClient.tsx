@@ -2,80 +2,92 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { CanvasAccessNotice } from "@/components/canvas/CanvasAccessNotice";
 import { ReactFlowCanvas } from "@/components/canvas/ReactFlowCanvas";
-import { Button } from "@/components/ui/button";
-import type { CanvasData } from "@/types";
-import { Link } from "@/i18n/routing";
+import { ApiError, getLogicModel } from "@/lib/logic-model-api";
+import { logicModelKeys } from "@/lib/logic-model-queries";
 import { fetchFromIPFS, isValidCID } from "@/utils/ipfs";
 
-interface LogicModelPageClientProps {
-  id: string;
+export function LogicModelPageClient({ id }: { id: string }) {
+  return isValidCID(id) ? <IpfsCanvas cid={id} /> : <DbCanvas id={id} />;
 }
 
-export function LogicModelPageClient({ id }: LogicModelPageClientProps) {
+function Loading() {
   const t = useTranslations("canvas");
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600" />
+        <p className="text-gray-600">{t("loadingCanvas")}</p>
+      </div>
+    </div>
+  );
+}
 
-  const {
-    data: canvasData,
-    isLoading,
-    error,
-  } = useQuery<CanvasData>({
-    queryKey: ["canvasData", id],
-    queryFn: () => fetchFromIPFS(id),
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+/** 既存の /canvas/<cid> リンク。IPFS から読み、閲覧のみ（spec §1.1） */
+function IpfsCanvas({ cid }: { cid: string }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["canvasData", cid],
+    queryFn: () => fetchFromIPFS(cid),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 2,
-    enabled: !!isValidCID(id),
   });
-
-  // Show specific error for invalid CID before checking loading state
-  if (!isValidCID(id)) {
+  if (isLoading) return <Loading />;
+  if (error || !data) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-gray-900">{t("invalidCanvasId")}</h1>
-          <p className="mb-4 text-gray-600">{t("invalidCanvasIdDescription")}</p>
-          <Button asChild>
-            <Link href="/canvas">{t("createNewCanvas")}</Link>
-          </Button>
-        </div>
-      </div>
+      <CanvasAccessNotice
+        status="error"
+        message={error instanceof Error ? error.message : undefined}
+      />
     );
   }
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600"></div>
-          <p className="text-gray-600">{t("loadingCanvas")}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !canvasData) {
-    const errorMessage = error instanceof Error ? error.message : "Failed to load canvas";
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-gray-900">{t("canvasNotFound")}</h1>
-          <p className="mb-4 text-gray-600">{errorMessage}</p>
-          <Button asChild>
-            <Link href="/canvas">{t("createNewCanvas")}</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="h-screen w-full">
       <ReactFlowCanvas
-        initialCards={canvasData.cards}
-        initialArrows={canvasData.arrows}
-        initialCardMetrics={canvasData.cardMetrics}
-        disableLocalStorage={true}
+        initialCards={data.cards}
+        initialArrows={data.arrows}
+        initialCardMetrics={data.cardMetrics}
+      />
+    </div>
+  );
+}
+
+function DbCanvas({ id }: { id: string }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: logicModelKeys.detail(id),
+    queryFn: () => getLogicModel(id),
+    retry: (count, err) => !(err instanceof ApiError) && count < 2,
+  });
+  if (isLoading) return <Loading />;
+  if (error instanceof ApiError && (error.status === 401 || error.status === 404)) {
+    return <CanvasAccessNotice status={error.status} />;
+  }
+  if (error || !data) {
+    return (
+      <CanvasAccessNotice
+        status="error"
+        message={error instanceof Error ? error.message : undefined}
+      />
+    );
+  }
+  const latest = data.latest?.canvasData;
+  return (
+    // key で id ごとに Provider を作り直す。router.replace で /canvas から来たとき、
+    // 古い Provider の state（id: null）を引きずらないため
+    <div className="h-screen w-full" key={data.model.id}>
+      <ReactFlowCanvas
+        initialCards={latest?.cards ?? []}
+        initialArrows={latest?.arrows ?? []}
+        initialCardMetrics={latest?.cardMetrics ?? {}}
+        document={{
+          id: data.model.id,
+          title: data.model.title,
+          access: data.access,
+          organizationId: data.model.organizationId,
+          workspaceAccess: data.model.workspaceAccess,
+          linkEnabled: data.model.linkEnabled,
+        }}
       />
     </div>
   );

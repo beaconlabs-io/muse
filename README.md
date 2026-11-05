@@ -170,10 +170,10 @@ For detailed technical information, see:
 
 ## Deployments
 
-|             | URL                                                              |
-| ----------- | ---------------------------------------------------------------- |
-| Production  | [https://muse.beaconlabs.io](https://muse.beaconlabs.io)         |
-| Development | [https://dev.muse.beaconlabs.io](https://dev.muse.beaconlabs.io) |
+|             | URL                                                      |
+| ----------- | -------------------------------------------------------- |
+| Production  | [https://musecanvas.app](https://musecanvas.app)         |
+| Development | [https://dev.musecanvas.app](https://dev.musecanvas.app) |
 
 The app can be built into a Cloudflare Worker with [OpenNext](https://opennext.js.org/cloudflare). Deploys are merge-driven through CI: a PR merged into `dev` ships `muse-frontend-staging`, one merged into `main` ships `muse-frontend-prod`, and open PRs get preview versions (`.github/workflows/deploy-worker.yml`, `quality.yml`); the per-environment wiring lives in `wrangler.jsonc`. `bun run deploy:staging` / `bun run deploy:production` exist as a break-glass manual path. Deploying with a plain `wrangler deploy` is unsupported: it skips the prerender-cache population step, which makes the statically generated evidence pages 404. See [docs/setup.md](./docs/setup.md#cloudflare-workers-opennext) for the Worker and Docker paths.
 

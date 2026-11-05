@@ -1,16 +1,39 @@
 name: Create Release PR
+
+# Deploys are merge-driven, so production ships only through a PR into `main`.
+# Every push to `dev` therefore keeps a single open `dev -> main` PR in sync,
+# and its body doubles as the release notes for that deploy.
 on:
   push:
     branches: [dev]
 
+# One release PR exists at a time; a superseded run has nothing left to say.
+concurrency:
+  group: release-pr
+  cancel-in-progress: true
+
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
+  # Labels are part of the issues API, even when applied to a pull request.
+  issues: write
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  # Runners are UTC. Pin the release date to JST so it matches the team's day.
+  TZ: Asia/Tokyo
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
-  release:
+  release-pr:
+    name: Create or update the release PR
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
+      # Full history: the summary below walks every merge between main and dev.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -18,47 +41,108 @@ jobs:
       - name: Fetch main branch
         run: git fetch origin main:main
 
-      - name: Check for existing PR
-        id: check-pr
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Resolve current state
+        id: state
         run: |
-          existing_pr=$(gh pr list --base main --head dev --json number --jq '.[0].number // ""')
-          echo "existing_pr=$existing_pr" >> $GITHUB_OUTPUT
+          # A push that adds nothing beyond main (a re-run, or a revert that
+          # lands dev back on main) would make `gh pr create` exit non-zero.
+          # Detect it and skip instead of turning the run red.
+          ahead=$(git rev-list --count main..dev)
+          existing_pr=$(gh pr list --base main --head dev --state open --json number --jq '.[0].number // ""')
+          {
+            echo "ahead=$ahead"
+            echo "existing_pr=$existing_pr"
+          } >> "$GITHUB_OUTPUT"
+          if [ "$ahead" -eq 0 ]; then
+            echo "::notice::dev is not ahead of main; nothing to release."
+          fi
+
+      - name: Ensure labels exist
+        if: steps.state.outputs.ahead != '0'
+        run: |
+          gh label create "🏷️ release" --color "0E8A16" --description "Release PR (dev → main)" --force
+          gh label create "🤖 automated" --color "EDEDED" --description "Created by GitHub Actions" --force
 
       - name: Generate release summary
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.state.outputs.ahead != '0'
         run: |
+          # Resolve a PR title through the API. Deliberately NOT `|| true`:
+          # swallowing the error would emit a blank bullet and still go green,
+          # which is worse than the failure it hides. A transient API error is
+          # retried, and an unresolvable title degrades to the branch name from
+          # the merge subject — wrong-looking but true — so one bad lookup never
+          # costs the whole release note.
+          pr_title() {
+            local num=$1 fallback=$2 title
+            for attempt in 1 2 3; do
+              if title=$(gh pr view "$num" --json title --jq '.title' 2>/dev/null) && [ -n "$title" ]; then
+                printf '%s' "$title"
+                return 0
+              fi
+              [ "$attempt" -lt 3 ] && sleep 3
+            done
+            printf 'could not resolve the title of PR #%s after 3 attempts; using %s\n' "$num" "$fallback" >&2
+            printf '%s' "$fallback"
+          }
+
+          # Merged PRs, fetched once: the answer does not depend on which merge
+          # commit is being expanded below. Same degradation policy as
+          # pr_title — retry a transient failure, and if the list still cannot
+          # be fetched, leave the stacked PRs unexpanded rather than let one
+          # bad call take the whole release note down with it.
+          merged_prs=""
+          for attempt in 1 2 3; do
+            merged_prs=$(gh pr list --state merged --limit 100 --json number,title,mergeCommit 2>/dev/null) && break
+            [ "$attempt" -lt 3 ] && sleep 3
+          done
+          if [ -z "$merged_prs" ]; then
+            echo "could not list merged PRs after 3 attempts; stacked PRs will not be expanded" >&2
+            merged_prs='[]'
+          fi
+
           {
             echo "## 🚀 Release $(date +'%Y-%m-%d')"
             echo ""
             echo "### Changes"
             echo ""
 
-            # List merged PRs with nested sub-PRs
+            # One bullet per PR merged into dev. Walking --first-parent keeps
+            # the listing at the level of "what was merged into dev", not every
+            # commit that rode along inside those branches.
             git log main..dev --merges --first-parent --pretty=tformat:"%H %s" \
               | while read -r sha rest; do
-                  pr_num=$(echo "$rest" | grep -oE 'Merge pull request #[0-9]+' | sed 's/Merge pull request #//')
-                  [ -z "$pr_num" ] && continue
-                  title=$(gh pr view "$pr_num" --json title --jq '.title')
+                  pr_num=$(printf '%s' "$rest" | grep -oE 'Merge pull request #[0-9]+' | sed 's/Merge pull request #//') || true
+                  [ -n "$pr_num" ] || continue
+                  # "Merge pull request #N from owner/branch" -> "branch".
+                  branch=${rest#*from }
+                  title=$(pr_title "$pr_num" "${branch#*/}")
+                  # A previous release PR merged back into dev is not a change.
                   case "$title" in *Release*) continue ;; esac
                   echo "- ${title} (#${pr_num})"
 
-                  # Find sub-PRs within this merge
+                  # A stack merged with `gh stack merge` lands as one merge commit;
+                  # its lower PRs share that mergeCommit and have none of their own.
+                  printf '%s' "$merged_prs" \
+                    | jq -r --arg sha "$sha" --arg top "$pr_num" \
+                        '[.[] | select(.mergeCommit.oid == $sha and (.number | tostring) != $top)]
+                         | sort_by(.number)[] | "  - \(.title) (#\(.number))"'
+
+                  # Merges that happened *inside* that feature branch, i.e. the
+                  # sub-PRs. Everything from the merge base to the second parent
+                  # is what the branch accumulated before it landed on dev.
                   merge_base=$(git merge-base "${sha}^1" "${sha}^2" 2>/dev/null) || continue
-                  git log "${merge_base}..${sha}^2" --merges --first-parent --pretty=tformat:"%s" 2>/dev/null \
-                    | grep -v 'from beaconlabs-io/dev' \
+                  sub_prs=$(git log "${merge_base}..${sha}^2" --merges --first-parent --pretty=tformat:"%s" 2>/dev/null \
+                    | grep -vE 'from [^/]+/dev$' \
                     | grep -v 'Merge branch' \
                     | grep -oE 'Merge pull request #[0-9]+' \
-                    | sed 's/Merge pull request #//' \
-                    | while read -r sub_pr; do
-                        sub_title=$(gh pr view "$sub_pr" --json title --jq '.title')
-                        echo "  - ${sub_title} (#${sub_pr})"
-                      done
+                    | sed 's/Merge pull request #//') || true
+                  for sub_pr in $sub_prs; do
+                    sub_title=$(pr_title "$sub_pr" "PR #${sub_pr}")
+                    echo "  - ${sub_title} (#${sub_pr})"
+                  done
                 done
 
-            # List direct (non-merge) commits not part of a merged PR branch
+            # Commits pushed straight to dev never appear as a merge above.
             git log main..dev --no-merges --first-parent --pretty=tformat:"- %s"
 
             echo ""
@@ -67,10 +151,10 @@ jobs:
             echo "🤖 *Automatically generated by GitHub Actions*"
           } > pr_body.md
 
-      - name: Create Release PR
-        if: steps.check-pr.outputs.existing_pr == ''
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          cat pr_body.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create release PR
+        if: steps.state.outputs.ahead != '0' && steps.state.outputs.existing_pr == ''
         run: |
           gh pr create \
             --base main \
@@ -80,10 +164,9 @@ jobs:
             --label "🏷️ release" \
             --label "🤖 automated"
 
-      - name: Update existing Release PR
-        if: steps.check-pr.outputs.existing_pr != ''
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Only the body is refreshed: the title carries the date the release was
+      # opened, and rewriting it on every push would churn notifications.
+      - name: Update existing release PR
+        if: steps.state.outputs.ahead != '0' && steps.state.outputs.existing_pr != ''
         run: |
-          gh pr edit ${{ steps.check-pr.outputs.existing_pr }} \
-            --body-file pr_body.md
+          gh pr edit ${{ steps.state.outputs.existing_pr }} --body-file pr_body.md

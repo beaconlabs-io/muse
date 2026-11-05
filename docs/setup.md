@@ -6,8 +6,8 @@ repo root for the authoritative variable list.
 ## Prerequisites
 
 - Node.js 20+ and [Bun](https://bun.sh/) (package manager + runtime for dev/build)
-- A reachable `muse-backend` service for logic model generation, recipes,
-  evidence search and IPFS uploads (see [Backend service](#backend-service));
+- A reachable `muse-backend` service for logic model generation, recipes
+  and IPFS uploads (see [Backend service](#backend-service));
   optional for UI-only work
 
 ## Quickstart
@@ -43,7 +43,7 @@ in parentheses.
 ### Backend service
 
 - `NEXT_PUBLIC_API_BASE_URL` — base URL of the `muse-backend` service that
-  serves logic model generation, recipes, evidence search and IPFS uploads.
+  serves logic model generation, recipes and IPFS uploads.
   Unset means same-origin, which no longer resolves: those routes were
   removed from this app
 
@@ -58,6 +58,11 @@ to this app.
   `muse/` unless you are running attestation scripts locally
 - `NEXT_PUBLIC_ENV` — `development` or `production`; switches the
   canonical base URL (see `lib/constants.ts`)
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` — Turnstile sitekey for the sign-in dialog.
+  Leave unset in deployed builds (the production widget's key is the
+  fallback; it covers `musecanvas.app` and its subdomains). Locally set
+  Cloudflare's test key `1x00000000000000000000AA`, paired with the backend's
+  test `TURNSTILE_SECRET` in `.dev.vars` — localhost is not on the widget
 
 ### Feature flags
 
@@ -236,10 +241,10 @@ Notes:
 Two Workers, both on the `beaconlabs-admin` account (`account_id` is pinned in
 `wrangler.jsonc` so a deploy can never land on a personal account):
 
-| Branch | wrangler env | Worker                  | Served at                | Triggered by            |
-| ------ | ------------ | ----------------------- | ------------------------ | ----------------------- |
-| `dev`  | `staging`    | `muse-frontend-staging` | `dev.muse.beaconlabs.io` | a PR merged into `dev`  |
-| `main` | `production` | `muse-frontend-prod`    | `muse.beaconlabs.io`     | a PR merged into `main` |
+| Branch | wrangler env | Worker                  | Served at            | Triggered by            |
+| ------ | ------------ | ----------------------- | -------------------- | ----------------------- |
+| `dev`  | `staging`    | `muse-frontend-staging` | `dev.musecanvas.app` | a PR merged into `dev`  |
+| `main` | `production` | `muse-frontend-prod`    | `musecanvas.app`     | a PR merged into `main` |
 
 Both hostnames are **custom domains** declared in `wrangler.jsonc`
 (`env.*.routes`), which makes Cloudflare own their DNS records — a proxied
@@ -254,15 +259,19 @@ Two things to know before touching either hostname:
   a conflict fails the merge rather than prompting.
 - Declaring any route flips wrangler's workers.dev default to **off**. Staging
   needs it back on (`workers_dev: true`), because the PR preview URLs live on
-  that same subdomain; production leaves it off, so `muse.beaconlabs.io` is its
+  that same subdomain; production leaves it off, so `musecanvas.app` is its
   only public hostname — and the CI smoke test runs against that hostname, not
   a workers.dev one.
 
-Deploys are **merge-driven**: `.github/workflows/deploy-worker.yml` runs on
-`pull_request: closed` and does nothing unless the PR was actually merged. A
-direct push to `dev` or `main` deploys nothing — use the workflow's manual
-`workflow_dispatch` (pick an environment; it deploys the branch you run it from)
-if you ever need to ship something that did not arrive via a PR.
+Deploys are **merge-driven**: `.github/workflows/deploy-worker.yml` runs on a
+push to `dev` or `main`, and rulesets on both branches (require a pull request,
+block force pushes) make a merged PR the only such push. It deliberately does
+not run on `pull_request: closed`: that run's ref is `refs/pull/<n>/merge`,
+which the environments' branch policies reject, and the run would execute the
+closed PR's own copy of the workflow with the token. To redeploy without a new
+merge, use the workflow's manual `workflow_dispatch` (pick an environment; it
+deploys the branch you run it from). Each environment's deployment-branch
+policy limits that to `dev` for staging and `main` for production.
 
 Each run re-runs `lint:check` and `test:run` against the merged branch, builds
 the Worker, deploys with `opennextjs-cloudflare deploy -e <env>`, then smoke
@@ -315,13 +324,33 @@ a separate, manual procedure, and it exists only while the Vercel project does
 
 #### Repository configuration
 
-One secret, on the repository:
+One secret, `CLOUDFLARE_API_TOKEN` (Workers Scripts: Edit on the
+`beaconlabs-admin` account), set on **GitHub Environments, never on the
+repository**. That permission has no per-script scope, so any copy of the token
+can overwrite `muse-frontend-prod`; and a `pull_request` run uses the workflow
+file from the PR itself, so a repository-level secret is readable by anyone who
+can push a branch. Environment secrets are released only after the
+environment's protection rules pass, which a workflow edit cannot skip:
 
-- `CLOUDFLARE_API_TOKEN` — needs Workers Scripts: Edit on the
-  `beaconlabs-admin` account. Fork PRs never see it, so their preview upload is
-  skipped with a warning while the build still runs — and merging a fork PR
-  makes `deploy-worker.yml` fail fast with instructions to ship the merge via
-  `workflow_dispatch` instead.
+| Environment  | Used by                         | Protection rules                                                                  |
+| ------------ | ------------------------------- | --------------------------------------------------------------------------------- |
+| `staging`    | `deploy-worker.yml`             | Deployment branches: `dev` only                                                   |
+| `production` | `deploy-worker.yml`             | Deployment branches: `main` only                                                  |
+| `preview`    | `quality.yml` (PR preview jobs) | Required reviewers; **no** branch restriction (PR runs use `refs/pull/<n>/merge`) |
+
+A PR's preview job therefore waits for a reviewer's approval on every push;
+lint, test and the Worker build check (`quality.yml`'s `build` job) run without
+it. Approve only after reading what the PR changes in `.github/`,
+`package.json` scripts and the build config, since that code runs with the
+token. Fork PRs never see the secret, so their preview upload is skipped with a
+warning; once merged, a fork PR deploys like any other, since the deploy runs on
+the resulting push.
+
+The `dev` and `main` rulesets (Settings → Rules → Rulesets) are part of this
+setup, not an extra: the branch policies above trust whatever is on those
+branches, so without "Require a pull request before merging" and "Block force
+pushes" anyone with write access could push straight to `dev` and deploy it with
+the token.
 
 The build-time variables are **GitHub variables**, not secrets — every one of
 them is inlined into a public client bundle:
@@ -333,10 +362,11 @@ them is inlined into a public client bundle:
 | `NEXT_PUBLIC_EXTERNAL_SEARCH_ENABLED` | repo, optional                                        |
 
 The repository-level values are the **staging** ones, so PR previews (which join
-no GitHub Environment, to keep PRs out of staging's deployment history) pick them
-up automatically; the `production` environment overrides what differs. Both
+the `preview` environment rather than `staging`, to keep PRs out of staging's
+deployment history) pick them up automatically; the `production` environment
+overrides what differs. Both
 GitHub Environments still have to exist — the deploy job joins them for the
-deployment history and the URL on the repo sidebar.
+deployment history, the URL on the repo sidebar and the token.
 
 Staging deliberately reuses `development` as its `NEXT_PUBLIC_ENV` value: the
 code branches only on `development` vs `production` (`lib/constants.ts`), so a
@@ -350,7 +380,7 @@ what a missing production override looks like.
 #### Known gap for PR previews
 
 The backend allows CORS origins by exact match (`ALLOWED_ORIGINS`), and its
-staging list holds `https://dev.muse.beaconlabs.io`. Staging answers on exactly
+staging list holds `https://dev.musecanvas.app`. Staging answers on exactly
 that origin now, so its backend calls pass. **PR previews still do not**: their
 URLs are per-PR workers.dev hostnames that no exact-match list can cover, so a
 preview renders and routes correctly while every backend call from the browser
@@ -365,12 +395,15 @@ interact.
 
 ## Troubleshooting
 
-- **404 on generation, recipe, evidence search or IPFS upload** —
+- **404 on generation, recipe or IPFS upload** —
   `NEXT_PUBLIC_API_BASE_URL` was unset at build time, so the app is calling
   same-origin routes that live in the backend now. Rebuild with the variable
   set; changing it at runtime has no effect.
-- **401 from the backend** — `BOT_API_KEY` is set on the backend but the
-  caller did not send the `x-api-key` header.
+- **401 from the generation streams** — the request carried no valid
+  session. Sign in again. The app shows this as an expired session; if it
+  happens right after signing in, check that the app and
+  `NEXT_PUBLIC_API_BASE_URL` share a registrable domain, since the session
+  cookie is `SameSite=Lax`.
 - **Workflow times out after 5 minutes** — raise `WORKFLOW_TIMEOUT_MS` in
   `lib/constants.ts` if you are adding longer-running steps. The client abort
   is the only limit now; Workers imposes no wall-clock cap.

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Onborda, OnbordaProvider, useOnborda } from "onborda";
+import { useCanvasState } from "../context";
 import { TourCard } from "./TourCard";
 import { TourControllerProvider } from "./TourController";
 import { TourSync } from "./TourSync";
@@ -41,6 +42,8 @@ function CanvasTourAutoStart() {
  */
 export function CanvasTour({ children }: { children: React.ReactNode }) {
   const steps = useCanvasTourSteps();
+  // 閲覧専用のキャンバスでは編集操作を案内するツアーを自動で始めない
+  const { readOnly } = useCanvasState();
 
   return (
     <OnbordaProvider>
@@ -55,7 +58,7 @@ export function CanvasTour({ children }: { children: React.ReactNode }) {
           shadowOpacity="0.5"
           cardTransition={{ duration: 0.3, ease: "easeInOut" }}
         >
-          <CanvasTourAutoStart />
+          {!readOnly && <CanvasTourAutoStart />}
           <TourSync />
           {children}
         </Onborda>
